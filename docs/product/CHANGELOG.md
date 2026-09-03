@@ -1,13 +1,26 @@
 # AI Career OS — CHANGELOG
 
-## v1.0 — 2026-09-02
+## 2026-09-03 — Pre-Codex Baseline v1.0
 
-- 冻结 MVP 产品范围。
-- 原 32 个 P0 子需求压缩为 14 个 P0 Capability。
-- Role Comparison、Negative Recommendation、Accountability Mode、历史 Plan 等移入 Backlog。
-- 确立 Dashboard-first、Evidence Before Advice、User in Control 等产品原则。
-- 下一阶段：PRD Final Review → Technical Spec。
+- 合并所有 PRD Review 与 Final Review 结果。
+- 保持 14 个 P0 Capability，不新增产品 P0。
+- 技术方向更新为 Next.js Frontend + FastAPI Backend。
+- 增加 Structured Data + Evidence RAG 双轨架构。
+- 明确 Resume 核心解析不依赖 Embedding。
+- 最终项目计划加入 PostgreSQL + pgvector Evidence RAG，但不阻塞 Core Workflow。
+- 明确 Workflow First, Agent Later。
+- 增加 Git / Repository Bootstrap 作为 Codex 的 TASK-000。
 
-## Unreleased
+## 2026-09-02 — Product Gate Passed
 
-- None.
+- 完成 Product Discovery。
+- 冻结 14 个 P0 Capability。
+- 建立 PRD / Backlog / Decisions / Glossary。
+
+## 2026-09-03 — Technical Gate Passed
+- Frozen RAG defaults.
+- Frozen Error/Retry policy.
+- Frozen Test/Eval strategy.
+- Selected Supabase Auth, Vercel frontend, Railway backend.
+- TECH_SPEC v1.0 frozen.
+- TASK-000 Repository Bootstrap prepared.

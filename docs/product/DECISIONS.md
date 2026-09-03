@@ -1,98 +1,67 @@
 # AI Career OS — DECISIONS
 
-**用途：** 记录“为什么这样做”。  
-这个文件对项目 owner 和以后面试非常重要。
+## Product Decisions
 
-推荐采用轻量 ADR（Architecture / Product Decision Record）格式。
+- **DEC-001**：MVP 聚焦 AI / 大模型职业，而不是所有职业。
+- **DEC-002**：Primary Outcome 是“接下来具体做什么”。
+- **DEC-003**：JD 是岗位显性要求的主要 Source of Truth，社区经验做补充。
+- **DEC-004**：Resume-first + 强制用户确认。
+- **DEC-005**：用户控制权高于 AI 默认排序，使用 Soft Guardrail。
+- **DEC-006**：长期路线粗略，最近 4 周详细。
+- **DEC-007**：日微调、周重规划、用户主动触发优先。
+- **DEC-008**：Dashboard-first，不做 Chatbot-first。
+- **DEC-009**：MVP 手动提供 3–10 个 JD，不做招聘网站抓取。
+- **DEC-010**：32 个 P0 子需求压缩为 14 个 Capability。
+- **DEC-011**：首次 Role Exploration 使用 Built-in Role Profiles；真实 JD 导入后以后者为主。
+- **DEC-012**：Resume Parser 不直接判断技能熟练度。
+- **DEC-013**：Gap 补齐成本只用 LOW / MEDIUM / HIGH。
+- **DEC-014**：MVP Roadmap 不负责完整学习资源推荐。
+- **DEC-015**：Task Completion 不等于 Skill Mastery。
+- **DEC-016**：LLM 用于语言理解、结构化抽取、有证据推理和规划；确定性规则优先用代码。
 
----
+## Technical Decisions
 
-## 写法模板
+### DEC-017 — Next.js Web + FastAPI Backend
+**Decision:** Next.js + TypeScript 负责 Web UI；FastAPI + Python 负责业务、AI、RAG 和数据库。  
+**Why:** 清晰体现 Web → API → AI/DB 的真实工程链路，也方便 Python AI/Eval/PDF 生态。  
+**Trade-off:** 需要维护两个应用和清晰 API Contract。
 
-### DEC-XXX — 决策标题
+### DEC-018 — Core Workflow 不依赖 RAG，但最终项目加入 Evidence RAG
+**Decision:** Resume → Profile → JD → Gap → Plan 先走 Structured Pipeline；最终展示版增加真正用于非结构化 Evidence Retrieval 的 RAG。  
+**Why:** 避免为了 RAG 而 RAG，同时覆盖 AI 岗位面试需要理解的技术点。
 
-**Date:** YYYY-MM-DD  
-**Status:** ACCEPTED / SUPERSEDED / REJECTED  
-**Context:** 当时遇到了什么问题？  
-**Decision:** 最终决定是什么？  
-**Alternatives:** 还考虑过哪些方案？  
-**Why:** 为什么选择当前方案？  
-**Trade-offs:** 为此牺牲了什么？  
-**Revisit When:** 什么条件出现时需要重新评估？
+### DEC-019 — Structured Data 与 Vector Retrieval 双轨
+**Decision:** 精确事实、频率、状态、关系走 PostgreSQL；社区资料、长文本和语义证据检索走 Embedding / Vector Retrieval。  
+**Why:** 向量检索不适合精确统计，结构化查询也不适合大规模语义匹配。
 
----
+### DEC-020 — PostgreSQL + pgvector
+**Decision:** 不额外维护独立 Vector DB。  
+**Why:** 当前数据规模下 pgvector 足够，基础设施更简单。
 
-## DEC-001 — MVP 聚焦 AI / 大模型职业，而不是所有职业
+### DEC-021 — Resume 核心解析不是 Embedding
+**Decision:** PDF → Text Extraction → LLM Structured Output → Confirmed Profile。  
+**Why:** Embedding 解决语义相似度，不负责可靠抽取学历、技能、经历等事实。
 
-**Date:** 2026-09-02  
-**Status:** ACCEPTED  
-**Context:** 产品目标用户包括学生和转行职场人士，但如果第一版支持所有职业，岗位 Taxonomy、Evidence 和 Eval 会无限膨胀。  
-**Decision:** 用户身份可以较宽，但第一版 Domain Boundary 聚焦 AI / 大模型相关岗位。  
-**Alternatives:** 所有职业规划；仅 AI 产品经理。  
-**Why:** 在“范围过宽”和“目标过窄”之间取得平衡。  
-**Trade-offs:** MVP 不能覆盖传统金融、法律、机械等职业。  
-**Revisit When:** AI 岗位闭环验证成功并需要扩大用户群。
+### DEC-022 — Workflow First, Agent Later
+**Decision:** MVP 使用 Deterministic Workflow，不引入自主 Agent。  
+**Revisit When:** Ask Career Coach 需要根据自然语言动态选择工具时。
 
-## DEC-002 — 核心结果选择“接下来具体做什么”
+### DEC-023 — Codex 从 Git / Repository Bootstrap 开始
+**Decision:** 正式业务编码前先执行 TASK-000：Git、仓库结构、`.gitignore`、`.env.example`、README、基础 lint/test、提交规范。  
+**Why:** 项目从第一天就可追踪、可回滚、可 Review。
 
-**Status:** ACCEPTED  
-**Context:** 岗位选择、Gap、行动计划都重要，但必须确定一个 Primary Outcome。  
-**Decision:** Primary User Outcome 为明确下一步行动。  
-**Why:** 用户真正卡点不是缺信息，而是不知道如何行动。  
-**Trade-offs:** 产品不能只做职业测评或 JD 分析，必须走到 Task 层。
+## DEC-024 — RAG 使用可评估的基线参数
+**Decision:** 首版 chunk 约 400–700 tokens、overlap 约 80、top_k=5；这些是 Eval 起点，不宣称为最优值。  
+**Status:** ACCEPTED
 
-## DEC-003 — Evidence 以 JD 为岗位要求 Source of Truth
+## DEC-025 — AI 输出必须先 Validation 再持久化
+**Decision:** Structured Output 未通过 Pydantic Validation 时不得进入正式业务状态。  
+**Status:** ACCEPTED
 
-**Status:** ACCEPTED  
-**Decision:** 判断岗位显性要求时以真实 JD 为主，社区经验为补充。  
-**Why:** 社区经验“活人感”强，但个案不能覆盖市场显性要求。  
-**Trade-offs:** JD 样本量有限，因此输出必须注明“基于用户提供的 N 个 JD”。
+## DEC-026 — Test 与 Eval 分开
+**Decision:** Test 验证软件行为，Eval 验证 AI 输出与检索质量。  
+**Status:** ACCEPTED
 
-## DEC-004 — Resume-first 且强制确认
-
-**Status:** ACCEPTED  
-**Decision:** AI 先解析简历形成 Draft Profile，用户确认后才成为 Confirmed Profile。  
-**Why:** 降低 Onboarding Friction，同时防止 Error Propagation。  
-**Trade-offs:** 比无确认流程多一步操作。
-
-## DEC-005 — 用户控制权高于 AI 排序
-
-**Status:** ACCEPTED  
-**Decision:** 用户可调整 Gap Priority，AI 只做 Soft Guardrail。  
-**Why:** 职业规划是决策支持，不是让 AI 替用户决定人生。  
-**Trade-offs:** 用户可能做出与 AI 推荐不同的选择，但系统应尊重。
-
-## DEC-006 — 规划采用长期粗略 + 最近四周详细
-
-**Status:** ACCEPTED  
-**Decision:** 不一次生成未来半年全部任务。  
-**Why:** 降低计划失真和认知负担，便于动态调整。  
-**Trade-offs:** 长期计划精度较低。
-
-## DEC-007 — 日微调、周重规划、用户主动触发优先
-
-**Status:** ACCEPTED  
-**Decision:** 普通任务偏差只调整近期任务；大 Roadmap 主要在 Weekly Review 或用户主动改变条件时调整。  
-**Why:** 防止 AI 过度重规划造成焦虑和不稳定。  
-**Trade-offs:** 系统不会每一次进度变化都重新求全局最优。
-
-## DEC-008 — Dashboard-first，不做 Chatbot-first
-
-**Status:** ACCEPTED  
-**Decision:** 主体验使用 Dashboard，聊天作为辅助能力。  
-**Why:** 避免产品退化成 ChatGPT Wrapper，并强化 State、Gap、Plan、Progress 的产品结构。  
-**Trade-offs:** 前端需要设计更多结构化页面。
-
-## DEC-009 — MVP 手动提供 JD
-
-**Status:** ACCEPTED  
-**Decision:** 用户手动粘贴 3–10 个 JD；不做招聘网站抓取。  
-**Why:** 优先验证 Intelligence，而不是 Data Acquisition。  
-**Trade-offs:** 初次使用摩擦更高。
-
-## DEC-010 — 32 个 P0 压缩为 14 个 Capability
-
-**Status:** ACCEPTED  
-**Decision:** 按 Critical Path 冻结 14 个 P0 Capability。  
-**Why:** 三周周期内需要先跑通、做聪明、再产品化。  
-**Trade-offs:** 双岗位比较、不推荐解释、监督模式等延后到 P1。
+## DEC-027 — Supabase Auth + Vercel/Railway
+**Decision:** MVP 使用托管认证与部署，避免把精力花在非核心基础设施。  
+**Status:** ACCEPTED

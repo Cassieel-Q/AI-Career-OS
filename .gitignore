@@ -1,0 +1,37 @@
+# dependencies
+node_modules/
+**/node_modules/
+.pnpm-store/
+
+# Next.js
+.next/
+out/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Build and coverage output
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Local tooling
+.DS_Store
+*.log
+
+# Local source packages and legacy kickoff material
+/AI_CAREER_OS_PRE_CODEX_FINAL_v1.0/
+/PROJECT_KICKOFF_AI_CAREER_OS.md
