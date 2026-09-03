@@ -3,6 +3,7 @@ from io import BytesIO
 import fitz
 from fastapi.testclient import TestClient
 
+from app import main
 from app.main import ResumeExtractionResult, app, set_resume_provider
 
 
@@ -23,6 +24,11 @@ class MockResumeProvider:
             experiences=[{"title": "Research Assistant", "organization": "Lab", "evidence_text": "Research Assistant"}],
             certifications=[],
         )
+
+
+class FabricatedEvidenceProvider:
+    def extract(self, evidence_text: str) -> ResumeExtractionResult:
+        return ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Fabricated evidence"}])
 
 
 def test_valid_text_pdf_returns_draft_profile_with_evidence() -> None:
@@ -56,6 +62,33 @@ def test_pdf_without_extractable_text_is_rejected() -> None:
     )
     assert response.status_code == 422
     assert "extractable text" in response.json()["detail"]
+
+
+def test_text_extraction_failure_is_rejected_as_client_error(monkeypatch) -> None:
+    class BrokenDocument:
+        def __iter__(self):
+            return iter([object()])
+
+        def close(self) -> None:
+            pass
+
+    monkeypatch.setattr(main.fitz, "open", lambda **_: BrokenDocument())
+    response = TestClient(app).post(
+        "/api/v1/resumes",
+        files={"file": ("resume.pdf", BytesIO(b"valid-looking input"), "application/pdf")},
+    )
+    assert response.status_code == 422
+    assert "extract" in response.json()["detail"].lower()
+
+
+def test_provider_evidence_must_come_from_pdf_text() -> None:
+    set_resume_provider(FabricatedEvidenceProvider())
+    response = TestClient(app).post(
+        "/api/v1/resumes",
+        files={"file": ("resume.pdf", BytesIO(pdf_bytes("Python")), "application/pdf")},
+    )
+    assert response.status_code == 502
+    assert "evidence" in response.json()["detail"].lower()
 
 
 def test_resume_schema_rejects_missing_evidence() -> None:

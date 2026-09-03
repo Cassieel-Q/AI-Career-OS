@@ -89,7 +89,10 @@ def extract_pdf_text(data: bytes) -> str:
     except Exception as error:
         raise HTTPException(status_code=415, detail="The uploaded file is not a valid PDF") from error
     try:
-        text = "\n".join(page.get_text() for page in document).strip()
+        try:
+            text = "\n".join(page.get_text() for page in document).strip()
+        except Exception as error:
+            raise HTTPException(status_code=422, detail="The PDF text could not be extracted") from error
     finally:
         document.close()
     if not text:
@@ -103,6 +106,16 @@ def get_resume_provider() -> ResumeProvider:
     if not os.getenv("OPENAI_API_KEY"):
         raise HTTPException(status_code=503, detail="Resume extraction service is not configured")
     return OpenAIResumeProvider()
+
+
+def validate_evidence_trace(result: ResumeExtractionResult, source_text: str) -> ResumeExtractionResult:
+    normalized_source = " ".join(source_text.casefold().split())
+    facts = [*result.education, *result.skills, *result.experiences, *result.certifications]
+    for fact in facts:
+        normalized_evidence = " ".join(fact.evidence_text.casefold().split())
+        if normalized_evidence not in normalized_source:
+            raise HTTPException(status_code=502, detail="Resume extraction evidence was not found in the PDF")
+    return result
 
 
 app = FastAPI(title="AI Career OS API", version="0.1.0")
@@ -129,7 +142,8 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeExtractionResult:
     text = extract_pdf_text(data)
     provider = get_resume_provider()
     try:
-        return ResumeExtractionResult.model_validate(provider.extract(text))
+        result = ResumeExtractionResult.model_validate(provider.extract(text))
+        return validate_evidence_trace(result, text)
     except HTTPException:
         raise
     except Exception as error:
