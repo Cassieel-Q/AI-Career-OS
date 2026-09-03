@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
 
 MAX_RESUME_BYTES = 10 * 1024 * 1024
+LOCAL_FRONTEND_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
 
 class Education(BaseModel):
@@ -108,12 +109,36 @@ def get_resume_provider() -> ResumeProvider:
     return OpenAIResumeProvider()
 
 
+def get_allowed_frontend_origins() -> list[str]:
+    configured_origins = [
+        origin.strip().rstrip("/")
+        for origin in os.getenv("FRONTEND_ORIGINS", "").split(",")
+        if origin.strip()
+    ]
+    return list(dict.fromkeys([*LOCAL_FRONTEND_ORIGINS, *configured_origins]))
+
+
+def normalize_text(text: str) -> str:
+    return " ".join(text.casefold().split())
+
+
+def get_primary_fact_value(fact: Education | Skill | Experience | Certification) -> str:
+    if isinstance(fact, Education):
+        return fact.institution
+    if isinstance(fact, Skill):
+        return fact.name
+    if isinstance(fact, Experience):
+        return fact.title
+    return fact.name
+
+
 def validate_evidence_trace(result: ResumeExtractionResult, source_text: str) -> ResumeExtractionResult:
-    normalized_source = " ".join(source_text.casefold().split())
+    normalized_source = normalize_text(source_text)
     facts = [*result.education, *result.skills, *result.experiences, *result.certifications]
     for fact in facts:
-        normalized_evidence = " ".join(fact.evidence_text.casefold().split())
-        if normalized_evidence not in normalized_source:
+        normalized_evidence = normalize_text(fact.evidence_text)
+        normalized_fact = normalize_text(get_primary_fact_value(fact))
+        if normalized_evidence not in normalized_source or normalized_fact not in normalized_evidence:
             raise HTTPException(status_code=502, detail="Resume extraction evidence was not found in the PDF")
     return result
 
@@ -121,7 +146,7 @@ def validate_evidence_trace(result: ResumeExtractionResult, source_text: str) ->
 app = FastAPI(title="AI Career OS API", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=get_allowed_frontend_origins(),
     allow_methods=["POST", "GET"],
     allow_headers=["*"],
 )

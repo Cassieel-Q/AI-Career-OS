@@ -19,9 +19,9 @@ def pdf_bytes(text: str) -> bytes:
 class MockResumeProvider:
     def extract(self, evidence_text: str) -> ResumeExtractionResult:
         return ResumeExtractionResult(
-            education=[{"institution": "Example University", "degree": "MSc", "evidence_text": "MSc"}],
+            education=[{"institution": "Example University", "degree": "MSc", "evidence_text": "Example University MSc"}],
             skills=[{"name": "Python", "evidence_text": "Python", "proficiency": None}],
-            experiences=[{"title": "Research Assistant", "organization": "Lab", "evidence_text": "Research Assistant"}],
+            experiences=[{"title": "Research Assistant", "organization": "Lab", "evidence_text": "Research Assistant Lab"}],
             certifications=[],
         )
 
@@ -31,11 +31,16 @@ class FabricatedEvidenceProvider:
         return ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Fabricated evidence"}])
 
 
+class UnsupportedFactProvider:
+    def extract(self, evidence_text: str) -> ResumeExtractionResult:
+        return ResumeExtractionResult(skills=[{"name": "Kubernetes", "evidence_text": "Python"}])
+
+
 def test_valid_text_pdf_returns_draft_profile_with_evidence() -> None:
     set_resume_provider(MockResumeProvider())
     response = TestClient(app).post(
         "/api/v1/resumes",
-        files={"file": ("resume.pdf", BytesIO(pdf_bytes("MSc Python Research Assistant")), "application/pdf")},
+        files={"file": ("resume.pdf", BytesIO(pdf_bytes("Example University MSc Python Research Assistant Lab")), "application/pdf")},
     )
     assert response.status_code == 200
     body = response.json()
@@ -89,6 +94,26 @@ def test_provider_evidence_must_come_from_pdf_text() -> None:
     )
     assert response.status_code == 502
     assert "evidence" in response.json()["detail"].lower()
+
+
+def test_provider_fact_must_be_supported_by_its_evidence() -> None:
+    set_resume_provider(UnsupportedFactProvider())
+    response = TestClient(app).post(
+        "/api/v1/resumes",
+        files={"file": ("resume.pdf", BytesIO(pdf_bytes("Python")), "application/pdf")},
+    )
+    assert response.status_code == 502
+    assert "evidence" in response.json()["detail"].lower()
+
+
+def test_configured_frontend_origins_are_allowed(monkeypatch) -> None:
+    monkeypatch.setenv("FRONTEND_ORIGINS", "https://app.example.com, https://preview.example.com")
+    assert main.get_allowed_frontend_origins() == [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://app.example.com",
+        "https://preview.example.com",
+    ]
 
 
 def test_resume_schema_rejects_missing_evidence() -> None:
