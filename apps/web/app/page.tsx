@@ -16,7 +16,7 @@ type Profile = {
   >;
 };
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
