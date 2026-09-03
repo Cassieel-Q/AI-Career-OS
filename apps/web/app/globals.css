@@ -79,8 +79,12 @@ h1 {
 
 .upload-panel label,
 h2,
-h3 { font-weight: 700; }
-input[type='file'] { padding: 0.6rem 0; }
+h3 {
+  font-weight: 700;
+}
+input[type="file"] {
+  padding: 0.6rem 0;
+}
 button {
   width: fit-content;
   padding: 0.7rem 1rem;
@@ -91,15 +95,48 @@ button {
   font-weight: 700;
   cursor: pointer;
 }
-button:disabled { opacity: 0.6; cursor: wait; }
-.message { margin: 0; padding: 0.75rem; border-radius: 0.35rem; }
-.error { background: #fff0ee; color: #9d2f24; }
-.file-name, .empty { margin: 0; color: #5d685f; }
-.profile { gap: 1.4rem; }
-.profile h2, .profile-section h3 { margin: 0; }
-.profile-section ul { display: grid; gap: 0.75rem; margin: 0.5rem 0 0; padding: 0; list-style: none; }
-.profile-section li { display: grid; gap: 0.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid #edf1eb; }
-.profile-section li span { color: #5d685f; font-size: 0.9rem; }
+button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.message {
+  margin: 0;
+  padding: 0.75rem;
+  border-radius: 0.35rem;
+}
+.error {
+  background: #fff0ee;
+  color: #9d2f24;
+}
+.file-name,
+.empty {
+  margin: 0;
+  color: #5d685f;
+}
+.profile {
+  gap: 1.4rem;
+}
+.profile h2,
+.profile-section h3 {
+  margin: 0;
+}
+.profile-section ul {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.profile-section li {
+  display: grid;
+  gap: 0.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #edf1eb;
+}
+.profile-section li span {
+  color: #5d685f;
+  font-size: 0.9rem;
+}
 
 .dot {
   width: 0.55rem;
