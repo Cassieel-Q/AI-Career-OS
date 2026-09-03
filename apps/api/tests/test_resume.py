@@ -1,4 +1,6 @@
 from io import BytesIO
+import sys
+from types import SimpleNamespace
 
 import fitz
 from fastapi.testclient import TestClient
@@ -132,3 +134,73 @@ def test_unconfigured_provider_returns_explicit_service_error() -> None:
         files={"file": ("resume.pdf", BytesIO(pdf_bytes("MSc Python")), "application/pdf")},
     )
     assert response.status_code == 503
+
+
+def test_openai_provider_uses_configured_gateway_and_primary_model(monkeypatch) -> None:
+    captured: dict[str, str] = {}
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs: str) -> None:
+            captured.update(kwargs)
+
+    monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=FakeOpenAI))
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://gateway.example/v1")
+    monkeypatch.setenv("OPENAI_MODEL", "gateway-model")
+    monkeypatch.setenv("OPENAI_RESUME_MODEL", "legacy-model")
+
+    provider = main.OpenAIResumeProvider()
+
+    assert captured == {
+        "api_key": "test-key",
+        "base_url": "https://gateway.example/v1",
+    }
+    assert provider.model == "gateway-model"
+
+
+def test_openai_provider_uses_sdk_default_endpoint_without_base_url(monkeypatch) -> None:
+    captured: dict[str, str] = {}
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs: str) -> None:
+            captured.update(kwargs)
+
+    monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=FakeOpenAI))
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
+    monkeypatch.delenv("OPENAI_MODEL", raising=False)
+    monkeypatch.setenv("OPENAI_RESUME_MODEL", "legacy-model")
+
+    provider = main.OpenAIResumeProvider()
+
+    assert captured == {"api_key": "test-key"}
+    assert provider.model == "legacy-model"
+
+
+def test_openai_provider_uses_existing_default_model_when_unconfigured(monkeypatch) -> None:
+    class FakeOpenAI:
+        def __init__(self, **kwargs: str) -> None:
+            pass
+
+    monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=FakeOpenAI))
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.delenv("OPENAI_MODEL", raising=False)
+    monkeypatch.delenv("OPENAI_RESUME_MODEL", raising=False)
+
+    provider = main.OpenAIResumeProvider()
+
+    assert provider.model == "gpt-4o-mini"
+
+
+def test_openai_api_key_is_not_logged(monkeypatch, caplog) -> None:
+    class FakeOpenAI:
+        def __init__(self, **kwargs: str) -> None:
+            pass
+
+    monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=FakeOpenAI))
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+
+    with caplog.at_level("INFO"):
+        main.OpenAIResumeProvider()
+
+    assert "test-key" not in caplog.text

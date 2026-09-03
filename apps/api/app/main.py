@@ -58,8 +58,12 @@ class OpenAIResumeProvider:
     def __init__(self) -> None:
         from openai import OpenAI
 
-        self.client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-        self.model = os.getenv("OPENAI_RESUME_MODEL", "gpt-4o-mini")
+        client_options = {"api_key": os.environ["OPENAI_API_KEY"]}
+        base_url = os.getenv("OPENAI_BASE_URL")
+        if base_url:
+            client_options["base_url"] = base_url
+        self.client = OpenAI(**client_options)
+        self.model = os.getenv("OPENAI_MODEL") or os.getenv("OPENAI_RESUME_MODEL") or "gpt-4o-mini"
 
     def extract(self, evidence_text: str) -> ResumeExtractionResult:
         response = self.client.beta.chat.completions.parse(
