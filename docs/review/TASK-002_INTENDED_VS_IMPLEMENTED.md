@@ -4,6 +4,7 @@
 
 - Task ID: TASK-002 — Profile Confirmation & Supplement
 - Branch: `feature/profile-confirmation`
+- Commit: `adda560`
 - Review basis: design document, frozen PRD/technical specification, pasted
   TASK-002 requirements, implementation diff, and fresh verification output.
 
