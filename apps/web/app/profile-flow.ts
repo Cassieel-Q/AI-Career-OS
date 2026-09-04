@@ -63,6 +63,8 @@ export type ProfileUpdatePayload = {
   certifications: Array<{ id?: string; name: string; issuer: string | null; date: string | null }>;
 };
 
+export type ProfileRequester = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+
 export function toUpdatePayload(profile: Profile): ProfileUpdatePayload {
   return {
     // evidence_text and source_type are intentionally omitted: existing
@@ -108,6 +110,32 @@ export function validateProfileForSave(profile: Profile): string | null {
     if (itemIndex !== -1) return `${section[0].toUpperCase()}${section.slice(1)} item ${itemIndex + 1}: ${label} is required.`;
   }
   return null;
+}
+
+export async function saveProfileRequest(
+  profile: Profile,
+  apiUrl: string,
+  request: ProfileRequester = fetch,
+): Promise<Profile> {
+  const response = await request(`${apiUrl}/api/v1/profiles/${profile.profile_id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(toUpdatePayload(profile)),
+  });
+  return readApiPayload<Profile>(response);
+}
+
+export async function confirmProfileRequest(
+  profile: Profile,
+  dirty: boolean,
+  apiUrl: string,
+  request: ProfileRequester = fetch,
+): Promise<Profile> {
+  const persistedProfile = dirty ? await saveProfileRequest(profile, apiUrl, request) : profile;
+  const response = await request(`${apiUrl}/api/v1/profiles/${persistedProfile.profile_id}/confirm`, {
+    method: "POST",
+  });
+  return readApiPayload<Profile>(response);
 }
 
 export function getProfileIdFromSearch(search: string): string | null {

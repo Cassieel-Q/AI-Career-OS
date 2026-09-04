@@ -3,10 +3,11 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import {
+  confirmProfileRequest,
   getProfileIdFromSearch,
   profileHref,
   readApiPayload,
-  toUpdatePayload,
+  saveProfileRequest,
   validateProfileForSave,
 } from "./profile-flow";
 import type { Education, Experience, Certification, Profile, ProfileItem, Proficiency, Skill } from "./profile-flow";
@@ -29,6 +30,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [saving, setSaving] = useState<"save" | "confirm" | null>(null);
+  const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
     const profileId = getProfileIdFromSearch(window.location.search);
@@ -40,7 +42,10 @@ export default function Home() {
       try {
         const response = await fetch(`${apiUrl}/api/v1/profiles/${profileId}`);
         const payload = await readApiPayload<Profile>(response);
-        if (active) setProfile(payload);
+        if (active) {
+          setProfile(payload);
+          setDirty(false);
+        }
       } catch (loadError) {
         if (active) setError(loadError instanceof Error ? loadError.message : "Profile could not be loaded.");
       } finally {
@@ -56,6 +61,7 @@ export default function Home() {
   function chooseFile(event: ChangeEvent<HTMLInputElement>) {
     setFile(event.target.files?.[0] ?? null);
     setProfile(null);
+    setDirty(false);
     setError("");
     const url = new URL(window.location.href);
     url.searchParams.delete("profile_id");
@@ -71,6 +77,7 @@ export default function Home() {
     setLoading(true);
     setError("");
     setProfile(null);
+    setDirty(false);
     const body = new FormData();
     body.append("file", file);
     try {
@@ -80,6 +87,7 @@ export default function Home() {
       });
       const payload = await readApiPayload<Profile>(response);
       setProfile(payload);
+      setDirty(false);
       window.history.replaceState(null, "", profileHref(window.location.href, payload.profile_id));
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "Resume upload failed.");
@@ -89,6 +97,8 @@ export default function Home() {
   }
 
   function updateItem(section: EditableSection, index: number, field: string, value: string | null) {
+    if (!profile || profile.status === "CONFIRMED") return;
+    setDirty(true);
     setProfile((current) => {
       if (!current || current.status === "CONFIRMED") return current;
       const items = current[section].map((item, itemIndex) =>
@@ -99,6 +109,8 @@ export default function Home() {
   }
 
   function addItem(section: EditableSection) {
+    if (!profile || profile.status === "CONFIRMED") return;
+    setDirty(true);
     setProfile((current) => {
       if (!current || current.status === "CONFIRMED") return current;
       const item = newItem(section);
@@ -107,6 +119,8 @@ export default function Home() {
   }
 
   function deleteItem(section: EditableSection, index: number) {
+    if (!profile || profile.status === "CONFIRMED") return;
+    setDirty(true);
     setProfile((current) => {
       if (!current || current.status === "CONFIRMED") return current;
       return {
@@ -117,8 +131,9 @@ export default function Home() {
   }
 
   async function saveDraft() {
-    if (!profile || profile.status === "CONFIRMED") return;
-    const validationError = validateProfileForSave(profile);
+    const currentProfile = profile;
+    if (!currentProfile || currentProfile.status === "CONFIRMED") return;
+    const validationError = validateProfileForSave(currentProfile);
     if (validationError) {
       setError(validationError);
       return;
@@ -126,13 +141,9 @@ export default function Home() {
     setSaving("save");
     setError("");
     try {
-      const response = await fetch(`${apiUrl}/api/v1/profiles/${profile.profile_id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(toUpdatePayload(profile)),
-      });
-      const payload = await readApiPayload<Profile>(response);
+      const payload = await saveProfileRequest(currentProfile, apiUrl);
       setProfile(payload);
+      setDirty(false);
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Profile could not be saved.");
     } finally {
@@ -141,8 +152,9 @@ export default function Home() {
   }
 
   async function confirmProfile() {
-    if (!profile || profile.status === "CONFIRMED") return;
-    const validationError = validateProfileForSave(profile);
+    const currentProfile = profile;
+    if (!currentProfile || currentProfile.status === "CONFIRMED") return;
+    const validationError = validateProfileForSave(currentProfile);
     if (validationError) {
       setError(validationError);
       return;
@@ -150,11 +162,9 @@ export default function Home() {
     setSaving("confirm");
     setError("");
     try {
-      const response = await fetch(`${apiUrl}/api/v1/profiles/${profile.profile_id}/confirm`, {
-        method: "POST",
-      });
-      const payload = await readApiPayload<Profile>(response);
+      const payload = await confirmProfileRequest(currentProfile, dirty, apiUrl);
       setProfile(payload);
+      setDirty(false);
     } catch (confirmError) {
       setError(confirmError instanceof Error ? confirmError.message : "Profile could not be confirmed.");
     } finally {
