@@ -35,6 +35,11 @@ class FabricatedEvidenceProvider:
         return ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Fabricated evidence"}])
 
 
+class NonexistentEvidenceProvider:
+    def extract(self, evidence_text: str) -> ResumeExtractionResult:
+        return ResumeExtractionResult(skills=[{"name": "Kubernetes", "evidence_text": "Fabricated evidence"}])
+
+
 class UnsupportedFactProvider:
     def extract(self, evidence_text: str) -> ResumeExtractionResult:
         return ResumeExtractionResult(skills=[{"name": "Kubernetes", "evidence_text": "Python"}])
@@ -90,8 +95,18 @@ def test_text_extraction_failure_is_rejected_as_client_error(monkeypatch) -> Non
     assert "extract" in response.json()["detail"].lower()
 
 
-def test_provider_evidence_must_come_from_pdf_text() -> None:
+def test_provider_evidence_is_replaced_with_deterministic_source_anchor() -> None:
     set_resume_provider(FabricatedEvidenceProvider())
+    response = TestClient(app).post(
+        "/api/v1/resumes",
+        files={"file": ("resume.pdf", BytesIO(pdf_bytes("Python")), "application/pdf")},
+    )
+    assert response.status_code == 200
+    assert response.json()["skills"][0]["evidence_text"] == "Python"
+
+
+def test_provider_evidence_not_in_source_diagnostic_is_safe() -> None:
+    set_resume_provider(NonexistentEvidenceProvider())
     response = TestClient(app).post(
         "/api/v1/resumes",
         files={"file": ("resume.pdf", BytesIO(pdf_bytes("Python")), "application/pdf")},
@@ -100,6 +115,7 @@ def test_provider_evidence_must_come_from_pdf_text() -> None:
     detail = response.json()["detail"]
     assert detail == "Resume evidence validation failed: skill[0]: evidence_not_in_source"
     assert "Fabricated evidence" not in detail
+    assert "Kubernetes" not in detail
     assert "Python" not in detail
 
 
@@ -114,6 +130,22 @@ def test_provider_fact_must_be_supported_by_its_evidence() -> None:
     assert detail == "Resume evidence validation failed: skill[0]: fact_not_in_evidence"
     assert "Kubernetes" not in detail
     assert "Python" not in detail
+
+
+def test_anchor_fact_to_source_accepts_valid_model_evidence() -> None:
+    assert main.anchor_fact_to_source("Python", "Python", "Python") == "Python"
+
+
+def test_anchor_fact_to_source_recovers_fact_from_paraphrased_evidence() -> None:
+    assert main.anchor_fact_to_source("Python", "Python", "Experienced with Python programming") == "Python"
+
+
+def test_anchor_fact_to_source_preserves_pdf_whitespace_span() -> None:
+    assert main.anchor_fact_to_source("Python\nDeveloper", "Python", "Python Developer") == "Python\nDeveloper"
+
+
+def test_anchor_fact_to_source_rejects_fact_absent_from_source() -> None:
+    assert main.anchor_fact_to_source("Python", "Kubernetes", "Kubernetes") is None
 
 
 def test_evidence_matching_accepts_exact_excerpt() -> None:

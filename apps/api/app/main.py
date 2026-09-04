@@ -126,9 +126,53 @@ def get_allowed_frontend_origins() -> list[str]:
     return list(dict.fromkeys([*LOCAL_FRONTEND_ORIGINS, *configured_origins]))
 
 
+def _normalize_text_with_spans(text: str) -> tuple[str, list[tuple[int, int]]]:
+    normalized_chars: list[str] = []
+    source_spans: list[tuple[int, int]] = []
+    pending_space: tuple[int, int] | None = None
+
+    for index, character in enumerate(text):
+        compatibility_text = unicodedata.normalize("NFKC", character).replace("\u00a0", " ")
+        for normalized_character in compatibility_text.casefold():
+            if normalized_character.isspace():
+                pending_space = (pending_space[0], index + 1) if pending_space else (index, index + 1)
+                continue
+            if pending_space is not None and normalized_chars:
+                normalized_chars.append(" ")
+                source_spans.append(pending_space)
+            pending_space = None
+            normalized_chars.append(normalized_character)
+            source_spans.append((index, index + 1))
+
+    return "".join(normalized_chars), source_spans
+
+
 def normalize_text(text: str) -> str:
-    normalized = unicodedata.normalize("NFKC", text).replace("\u00a0", " ")
-    return " ".join(normalized.casefold().split())
+    return _normalize_text_with_spans(text)[0]
+
+
+def anchor_fact_to_source(source_text: str, fact_value: str, candidate_evidence: str) -> str | None:
+    normalized_source, source_spans = _normalize_text_with_spans(source_text)
+    normalized_fact = normalize_text(fact_value)
+    normalized_candidate = normalize_text(candidate_evidence)
+    if not normalized_fact:
+        return None
+
+    match_start = -1
+    match_text = ""
+    if normalized_fact in normalized_candidate:
+        match_start = normalized_source.find(normalized_candidate)
+        match_text = normalized_candidate
+    if match_start == -1:
+        match_start = normalized_source.find(normalized_fact)
+        match_text = normalized_fact
+    if match_start == -1:
+        return None
+
+    match_end = match_start + len(match_text) - 1
+    source_start = source_spans[match_start][0]
+    source_end = source_spans[match_end][1]
+    return source_text[source_start:source_end]
 
 
 def get_primary_fact_value(fact: Education | Skill | Experience | Certification) -> str:
@@ -152,17 +196,18 @@ def validate_evidence_trace(result: ResumeExtractionResult, source_text: str) ->
     for category, facts in fact_groups:
         for index, fact in enumerate(facts):
             normalized_evidence = normalize_text(fact.evidence_text)
-            normalized_fact = normalize_text(get_primary_fact_value(fact))
-            if normalized_evidence not in normalized_source:
+            anchored_evidence = anchor_fact_to_source(source_text, get_primary_fact_value(fact), fact.evidence_text)
+            if anchored_evidence is None:
+                failure_reason = (
+                    "evidence_not_in_source"
+                    if normalized_evidence not in normalized_source
+                    else "fact_not_in_evidence"
+                )
                 raise HTTPException(
                     status_code=502,
-                    detail=f"Resume evidence validation failed: {category}[{index}]: evidence_not_in_source",
+                    detail=f"Resume evidence validation failed: {category}[{index}]: {failure_reason}",
                 )
-            if normalized_fact not in normalized_evidence:
-                raise HTTPException(
-                    status_code=502,
-                    detail=f"Resume evidence validation failed: {category}[{index}]: fact_not_in_evidence",
-                )
+            fact.evidence_text = anchored_evidence
     return result
 
 
