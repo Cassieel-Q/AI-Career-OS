@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import unicodedata
 from typing import Protocol
 
 import fitz
@@ -69,7 +70,10 @@ class OpenAIResumeProvider:
         response = self.client.beta.chat.completions.parse(
             model=self.model,
             messages=[
-                {"role": "system", "content": "Extract explicit resume facts only. Preserve evidence_text. Do not infer skill proficiency; proficiency must remain null."},
+                {
+                    "role": "system",
+                    "content": "Extract explicit resume facts only. For every evidence_text, copy a VERBATIM contiguous excerpt from the resume. Do not paraphrase, summarize, translate, or rewrite evidence_text. Preserve evidence_text exactly as shown. Keep evidence excerpts concise. Do not infer skill proficiency; proficiency must remain null.",
+                },
                 {"role": "user", "content": evidence_text},
             ],
             response_format=ResumeExtractionResult,
@@ -123,7 +127,8 @@ def get_allowed_frontend_origins() -> list[str]:
 
 
 def normalize_text(text: str) -> str:
-    return " ".join(text.casefold().split())
+    normalized = unicodedata.normalize("NFKC", text).replace("\u00a0", " ")
+    return " ".join(normalized.casefold().split())
 
 
 def get_primary_fact_value(fact: Education | Skill | Experience | Certification) -> str:

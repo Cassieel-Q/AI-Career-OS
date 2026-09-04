@@ -3,6 +3,8 @@ import sys
 from types import SimpleNamespace
 
 import fitz
+import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from app import main
@@ -108,6 +110,39 @@ def test_provider_fact_must_be_supported_by_its_evidence() -> None:
     assert "evidence" in response.json()["detail"].lower()
 
 
+def test_evidence_matching_accepts_exact_excerpt() -> None:
+    result = ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}])
+
+    assert main.validate_evidence_trace(result, "Python") is result
+
+
+def test_evidence_matching_accepts_pdf_line_break_as_space() -> None:
+    result = ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python Developer"}])
+
+    assert main.validate_evidence_trace(result, "Python\nDeveloper") is result
+
+
+def test_evidence_matching_accepts_repeated_whitespace() -> None:
+    result = ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python SQL"}])
+
+    assert main.validate_evidence_trace(result, "Python\t\t  SQL") is result
+
+
+def test_evidence_matching_normalizes_nbsp_and_unicode_compatibility_forms() -> None:
+    result = ResumeExtractionResult(skills=[{"name": "FastAPI", "evidence_text": "FastAPI Engineer"}])
+
+    assert main.validate_evidence_trace(result, "\u00a0ＦａｓｔＡＰＩ\u00a0Engineer\u00a0") is result
+
+
+def test_evidence_matching_rejects_paraphrased_or_nonexistent_excerpt() -> None:
+    result = ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Created an AI assistant"}])
+
+    with pytest.raises(HTTPException) as error:
+        main.validate_evidence_trace(result, "Built an AI document assistant")
+
+    assert error.value.status_code == 502
+
+
 def test_configured_frontend_origins_are_allowed(monkeypatch) -> None:
     monkeypatch.setenv("FRONTEND_ORIGINS", "https://app.example.com, https://preview.example.com")
     assert main.get_allowed_frontend_origins() == [
@@ -204,3 +239,28 @@ def test_openai_api_key_is_not_logged(monkeypatch, caplog) -> None:
         main.OpenAIResumeProvider()
 
     assert "test-key" not in caplog.text
+
+
+def test_openai_prompt_requires_verbatim_contiguous_evidence(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    class FakeCompletions:
+        def parse(self, **kwargs: object) -> object:
+            captured.update(kwargs)
+            return SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(parsed=ResumeExtractionResult()))]
+            )
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs: str) -> None:
+            self.beta = SimpleNamespace(chat=SimpleNamespace(completions=FakeCompletions()))
+
+    monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=FakeOpenAI))
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+
+    main.OpenAIResumeProvider().extract("Example University")
+    prompt = captured["messages"][0]["content"]
+
+    assert "VERBATIM contiguous excerpt" in prompt
+    assert "Do not paraphrase, summarize, translate, or rewrite evidence_text" in prompt
+    assert "Keep evidence excerpts concise" in prompt
