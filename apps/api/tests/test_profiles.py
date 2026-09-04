@@ -83,6 +83,43 @@ def test_put_edits_adds_and_deletes_items(client: TestClient, persisted_profile)
     assert body["certifications"][0]["source_type"] == "USER_ENTERED"
 
 
+def test_existing_ai_evidence_is_server_owned_and_edit_becomes_user_edited(
+    client: TestClient, persisted_profile
+) -> None:
+    original_skill = persisted_profile.skills[0]
+    response = client.put(
+        f"/api/v1/profiles/{persisted_profile.id}",
+        json={"skills": [{"id": str(original_skill.id), "name": "Python 3"}]},
+    )
+
+    assert response.status_code == 200
+    edited_skill = response.json()["skills"][0]
+    assert edited_skill["evidence_text"] == "Python"
+    assert edited_skill["source_type"] == "USER_EDITED"
+
+
+def test_existing_ai_evidence_cannot_be_replaced_by_put(client: TestClient, persisted_profile) -> None:
+    original_skill = persisted_profile.skills[0]
+    response = client.put(
+        f"/api/v1/profiles/{persisted_profile.id}",
+        json={
+            "skills": [
+                {
+                    "id": str(original_skill.id),
+                    "name": original_skill.name,
+                    "evidence_text": "Untrusted replacement",
+                    "source_type": "USER_EDITED",
+                }
+            ]
+        },
+    )
+
+    assert response.status_code == 200
+    returned_skill = response.json()["skills"][0]
+    assert returned_skill["evidence_text"] == "Python"
+    assert returned_skill["source_type"] == "AI_EXTRACTED"
+
+
 def test_invalid_proficiency_is_rejected(client: TestClient, persisted_profile) -> None:
     response = client.put(
         f"/api/v1/profiles/{persisted_profile.id}",

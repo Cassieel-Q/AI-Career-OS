@@ -6,6 +6,7 @@ from uuid import UUID
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 
 from app import models
 from app.profile_schemas import (
@@ -29,8 +30,11 @@ def _not_found(profile_id: UUID) -> HTTPException:
     return HTTPException(status_code=404, detail=f"Profile {profile_id} was not found")
 
 
-def _get_profile(db: Session, profile_id: UUID) -> models.UserProfile:
-    profile = db.get(models.UserProfile, profile_id)
+def _get_profile(db: Session, profile_id: UUID, *, for_update: bool = False) -> models.UserProfile:
+    statement = select(models.UserProfile).where(models.UserProfile.id == profile_id)
+    if for_update:
+        statement = statement.with_for_update()
+    profile = db.execute(statement).scalar_one_or_none()
     if profile is None:
         raise _not_found(profile_id)
     return profile
@@ -109,12 +113,9 @@ def _has_changed(existing: Any, item: Any, fields: tuple[str, ...]) -> bool:
 def _source_for_item(existing: Any | None, item: Any, fields: tuple[str, ...]) -> str:
     if existing is None:
         return SourceType.USER_ENTERED.value
-    changed = _has_changed(existing, item, fields + ("evidence_text",))
-    if not changed:
-        if item.source_type == SourceType.USER_EDITED:
-            return SourceType.USER_EDITED.value
+    if not _has_changed(existing, item, fields):
         return existing.source_type
-    if item.evidence_text is None:
+    if existing.source_type == SourceType.USER_ENTERED.value:
         return SourceType.USER_ENTERED.value
     return SourceType.USER_EDITED.value
 
@@ -141,7 +142,9 @@ def _replace_collection(
             source_type = _source_for_item(existing, item, fields)
             for field in fields:
                 setattr(existing, field, getattr(item, field))
-            existing.evidence_text = item.evidence_text
+            # Evidence is server-owned once a row exists. The API has no source
+            # resume text on PUT, so accepting a replacement would allow an
+            # AI anchor to be deleted or falsified without re-validation.
             existing.source_type = source_type
             replacement.append(existing)
         else:
@@ -155,7 +158,7 @@ def _replace_collection(
 
 
 def update_draft_profile(db: Session, profile_id: UUID, payload: ProfileUpdate) -> ProfileRead:
-    profile = _get_profile(db, profile_id)
+    profile = _get_profile(db, profile_id, for_update=True)
     if profile.status == ProfileStatus.CONFIRMED.value:
         raise HTTPException(status_code=409, detail="Confirmed profiles cannot be edited")
     _replace_collection(profile, "education", payload.education, ("institution", "degree", "field_of_study", "dates"), models.Education)
@@ -169,7 +172,7 @@ def update_draft_profile(db: Session, profile_id: UUID, payload: ProfileUpdate) 
 
 
 def confirm_profile(db: Session, profile_id: UUID) -> ProfileRead:
-    profile = _get_profile(db, profile_id)
+    profile = _get_profile(db, profile_id, for_update=True)
     if profile.status == ProfileStatus.CONFIRMED.value:
         return _profile_read(profile)
     if not any((profile.education, profile.skills, profile.experiences, profile.certifications)):

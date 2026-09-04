@@ -8,6 +8,7 @@ from uuid import UUID
 import fitz
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -261,12 +262,16 @@ async def upload_resume(
     try:
         result = ResumeExtractionResult.model_validate(provider.extract(text))
         validated_result = validate_evidence_trace(result, text)
-        profile = create_draft_profile(db, validated_result)
-        return get_profile(db, profile.id)
     except HTTPException:
         raise
     except Exception as error:
         raise HTTPException(status_code=502, detail="Resume extraction provider failed") from error
+    try:
+        profile = create_draft_profile(db, validated_result)
+        return get_profile(db, profile.id)
+    except SQLAlchemyError as error:
+        db.rollback()
+        raise HTTPException(status_code=503, detail="Profile persistence failed") from error
 
 
 @app.get("/api/v1/profiles/{profile_id}", response_model=ProfileRead)
