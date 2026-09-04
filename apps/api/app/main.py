@@ -143,12 +143,26 @@ def get_primary_fact_value(fact: Education | Skill | Experience | Certification)
 
 def validate_evidence_trace(result: ResumeExtractionResult, source_text: str) -> ResumeExtractionResult:
     normalized_source = normalize_text(source_text)
-    facts = [*result.education, *result.skills, *result.experiences, *result.certifications]
-    for fact in facts:
-        normalized_evidence = normalize_text(fact.evidence_text)
-        normalized_fact = normalize_text(get_primary_fact_value(fact))
-        if normalized_evidence not in normalized_source or normalized_fact not in normalized_evidence:
-            raise HTTPException(status_code=502, detail="Resume extraction evidence was not found in the PDF")
+    fact_groups = (
+        ("education", result.education),
+        ("skill", result.skills),
+        ("experience", result.experiences),
+        ("certification", result.certifications),
+    )
+    for category, facts in fact_groups:
+        for index, fact in enumerate(facts):
+            normalized_evidence = normalize_text(fact.evidence_text)
+            normalized_fact = normalize_text(get_primary_fact_value(fact))
+            if normalized_evidence not in normalized_source:
+                raise HTTPException(
+                    status_code=502,
+                    detail=f"Resume evidence validation failed: {category}[{index}]: evidence_not_in_source",
+                )
+            if normalized_fact not in normalized_evidence:
+                raise HTTPException(
+                    status_code=502,
+                    detail=f"Resume evidence validation failed: {category}[{index}]: fact_not_in_evidence",
+                )
     return result
 
 

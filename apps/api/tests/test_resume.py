@@ -97,7 +97,10 @@ def test_provider_evidence_must_come_from_pdf_text() -> None:
         files={"file": ("resume.pdf", BytesIO(pdf_bytes("Python")), "application/pdf")},
     )
     assert response.status_code == 502
-    assert "evidence" in response.json()["detail"].lower()
+    detail = response.json()["detail"]
+    assert detail == "Resume evidence validation failed: skill[0]: evidence_not_in_source"
+    assert "Fabricated evidence" not in detail
+    assert "Python" not in detail
 
 
 def test_provider_fact_must_be_supported_by_its_evidence() -> None:
@@ -107,7 +110,10 @@ def test_provider_fact_must_be_supported_by_its_evidence() -> None:
         files={"file": ("resume.pdf", BytesIO(pdf_bytes("Python")), "application/pdf")},
     )
     assert response.status_code == 502
-    assert "evidence" in response.json()["detail"].lower()
+    detail = response.json()["detail"]
+    assert detail == "Resume evidence validation failed: skill[0]: fact_not_in_evidence"
+    assert "Kubernetes" not in detail
+    assert "Python" not in detail
 
 
 def test_evidence_matching_accepts_exact_excerpt() -> None:
