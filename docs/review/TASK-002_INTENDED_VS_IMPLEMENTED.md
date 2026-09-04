@@ -4,7 +4,7 @@
 
 - Task ID: TASK-002 — Profile Confirmation & Supplement
 - Branch: `feature/profile-confirmation`
-- Commit: `adda560`
+- Commits: `adda560`, `8c1e358`
 - Review basis: design document, frozen PRD/technical specification, pasted
   TASK-002 requirements, implementation diff, and fresh verification output.
 
@@ -21,6 +21,9 @@
   `apps/api/tests/test_resume.py`
 - Frontend checks: `apps/web/app/page.tsx`, `apps/web/app/globals.css`,
   TypeScript/lint/build commands recorded in the task handoff.
+- Review follow-up: `8c1e358` preserves server-owned evidence, locks profile
+  rows for PostgreSQL mutations, and separates persistence failures from
+  extraction failures.
 
 ## Comparison
 
@@ -31,7 +34,7 @@
 | Proficiency is user-selected and never AI-inferred | `resume_schemas.py` keeps `proficiency=None`; `profile_service.py` forces `None` on draft creation; schema and API tests | MATCH | Low |
 | Proficiency accepts only AWARE/BASIC/PROJECT_READY/PROFICIENT | `profile_schemas.Proficiency`; migration check constraint; invalid API test | MATCH | Low |
 | User-entered facts may omit evidence | input validators, migration checks, UI provenance rendering, API test | MATCH | Low |
-| AI evidence remains grounded and TASK-001 behavior is preserved | existing deterministic anchor functions and all 27 TASK-001 tests in full suite | MATCH | Low |
+| AI evidence remains grounded and TASK-001 behavior is preserved | existing deterministic anchor functions, server-owned evidence on PUT, and all TASK-001 tests in full suite | MATCH | Low |
 | Save keeps DRAFT; only explicit confirm changes state | profile service transitions and confirm/readback tests | MATCH | Low |
 | Confirmed profiles are not editable in this MVP | 409 guard in `update_draft_profile`; API test | MATCH | Low |
 | Production persistence uses PostgreSQL + SQLAlchemy + Alembic | `database.py`, `models.py`, `alembic/versions/001_create_profile_tables.py`, README | MATCH | PostgreSQL runtime still needs smoke execution |
@@ -40,8 +43,11 @@
 
 ## Verification
 
-- Backend full suite: `39 passed, 1 skipped`; the skipped test is the explicit
+- Backend full suite: `42 passed, 1 skipped`; the skipped test is the explicit
   PostgreSQL integration test without `TEST_DATABASE_URL`.
+- Review follow-up tests: existing AI evidence cannot be deleted or replaced
+  through PUT; changed AI rows become `USER_EDITED`; persistence failures return
+  a distinct `503` response.
 - Alembic PostgreSQL offline DDL generation: passed; generated UUID,
   timestamps, foreign keys, provenance/proficiency/status constraints, and
   indexes.
@@ -55,6 +61,7 @@
 
 ## Decision
 
-`PASS WITH FOLLOW-UP`: implementation matches TASK-002 scope and behavior, but
-PostgreSQL migration/persistence/API smoke verification must still be run with
-an actual dedicated `TEST_DATABASE_URL` before release readiness is claimed.
+`PASS WITH FOLLOW-UP`: implementation matches TASK-002 scope and behavior, and
+the review findings are addressed. PostgreSQL migration/persistence/API smoke
+verification must still be run with an actual dedicated `TEST_DATABASE_URL`
+before release readiness is claimed.
