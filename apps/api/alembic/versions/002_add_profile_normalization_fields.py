@@ -1,6 +1,6 @@
 """add normalized profile fields
 
-Revision ID: 002_add_profile_normalization_fields
+Revision ID: 002_profile_normalization
 Revises: 001_create_profile_tables
 Create Date: 2026-09-04
 """
@@ -9,7 +9,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision = "002_add_profile_normalization_fields"
+revision = "002_profile_normalization"
 down_revision = "001_create_profile_tables"
 branch_labels = None
 depends_on = None

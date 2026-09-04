@@ -9,7 +9,7 @@
 
 ## Implemented behavior
 
-- `Education.relevant_courses` and `Experience.experience_type` are present in extraction, API read/write schemas, SQLAlchemy models, and Alembic revision `002_add_profile_normalization_fields`.
+- `Education.relevant_courses` and `Experience.experience_type` are present in extraction, API read/write schemas, SQLAlchemy models, and Alembic revision `002_profile_normalization`.
 - The extraction prompt maps resume sections to the normalized taxonomy and keeps language ability separate from explicit credentials.
 - Office aliases are deterministically canonicalized to `Word`, `Excel`, and `PowerPoint`; known bundles are split only when every segment is a supported Office alias.
 - Language credentials are canonicalized and kept in certifications; generic language ability is kept in skills. Canonical items retain the original evidence excerpt and are validated against source text, including supported aliases.
