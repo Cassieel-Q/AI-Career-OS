@@ -131,6 +131,31 @@ def _normalize_text_with_spans(text: str) -> tuple[str, list[tuple[int, int]]]:
     source_spans: list[tuple[int, int]] = []
     pending_space: tuple[int, int] | None = None
 
+    def hangul_jamo_type(character: str) -> str | None:
+        normalized_character = unicodedata.normalize("NFKC", character)
+        if len(normalized_character) != 1:
+            return None
+        codepoint = ord(normalized_character)
+        if 0x1100 <= codepoint <= 0x115F or 0xA960 <= codepoint <= 0xA97C:
+            return "L"
+        if 0x1160 <= codepoint <= 0x11A7 or 0xD7B0 <= codepoint <= 0xD7C6:
+            return "V"
+        if 0x11A8 <= codepoint <= 0x11FF or 0xD7CB <= codepoint <= 0xD7FB:
+            return "T"
+        return None
+
+    def continues_hangul_composition(start: int, index: int) -> bool:
+        first_type = hangul_jamo_type(text[start])
+        current_type = hangul_jamo_type(text[index])
+        if first_type != "L" or current_type is None:
+            return False
+        segment_length = index - start
+        if segment_length == 1:
+            return current_type == "V"
+        if segment_length == 2:
+            return hangul_jamo_type(text[start + 1]) == "V" and current_type == "T"
+        return False
+
     def emit(normalized_text: str, source_span: tuple[int, int]) -> None:
         nonlocal pending_space
         for normalized_character in normalized_text:
@@ -156,7 +181,9 @@ def _normalize_text_with_spans(text: str) -> tuple[str, list[tuple[int, int]]]:
             emit(" ", (index, index + 1))
         elif segment_start is None:
             segment_start = index
-        elif unicodedata.combining(character) == 0:
+        elif unicodedata.combining(character) == 0 and not (
+            segment_start is not None and continues_hangul_composition(segment_start, index)
+        ):
             segment = text[segment_start:index]
             emit(unicodedata.normalize("NFKC", segment).casefold(), (segment_start, index))
             segment_start = index

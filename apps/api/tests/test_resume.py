@@ -152,6 +152,10 @@ def test_anchor_fact_to_source_handles_decomposed_unicode() -> None:
     assert main.anchor_fact_to_source("Cafe\u0301", "Café", "Café") == "Cafe\u0301"
 
 
+def test_anchor_fact_to_source_handles_composed_hangul_jamo() -> None:
+    assert main.anchor_fact_to_source("가", "가", "가") == "가"
+
+
 def test_evidence_matching_accepts_exact_excerpt() -> None:
     result = ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}])
 
