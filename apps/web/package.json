@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "node --experimental-strip-types --test tests/profile-flow.test.mts",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"app/**/*.{ts,tsx,css}\" \"*.{js,mjs,ts,json}\""

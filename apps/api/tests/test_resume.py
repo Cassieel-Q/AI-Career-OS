@@ -6,6 +6,7 @@ import fitz
 import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
+from sqlalchemy.exc import SQLAlchemyError
 
 from app import main
 from app.main import ResumeExtractionResult, app, set_resume_provider
@@ -55,6 +56,22 @@ def test_valid_text_pdf_returns_draft_profile_with_evidence() -> None:
     body = response.json()
     assert body["skills"][0]["evidence_text"] == "Python"
     assert body["skills"][0]["proficiency"] is None
+
+
+def test_profile_persistence_failure_has_distinct_error(monkeypatch) -> None:
+    set_resume_provider(MockResumeProvider())
+
+    def fail_persistence(*args, **kwargs):
+        raise SQLAlchemyError("database unavailable")
+
+    monkeypatch.setattr(main, "create_draft_profile", fail_persistence)
+    response = TestClient(app).post(
+        "/api/v1/resumes",
+        files={"file": ("resume.pdf", BytesIO(pdf_bytes("Example University MSc Python Research Assistant Lab")), "application/pdf")},
+    )
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Profile persistence failed"
 
 
 def test_non_pdf_is_rejected() -> None:

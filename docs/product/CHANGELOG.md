@@ -1,5 +1,16 @@
 # AI Career OS — CHANGELOG
 
+## 2026-09-04 — TASK-002 Profile Confirmation & Supplement
+
+- Resume parsing creates a persisted `DRAFT` Profile after evidence validation.
+- Added editable education, skills, experiences, and certifications with
+  `AI_EXTRACTED`, `USER_ENTERED`, and `USER_EDITED` provenance.
+- Added user-selected skill proficiency and explicit `DRAFT` → `CONFIRMED`
+  transition through the profile API.
+- Added PostgreSQL-first SQLAlchemy models and Alembic migration.
+- PostgreSQL integration remains a separate release gate and is not replaced by
+  SQLite unit fixtures.
+
 ## 2026-09-03 — Pre-Codex Baseline v1.0
 
 - 合并所有 PRD Review 与 Final Review 结果。

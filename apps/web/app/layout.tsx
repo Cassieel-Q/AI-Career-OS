@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "AI Career OS",
-  description: "Bootstrap workspace for AI Career OS",
+  description: "Review and confirm an evidence-led career profile",
 };
 
 export default function RootLayout({

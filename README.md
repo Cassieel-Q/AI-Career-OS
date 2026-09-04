@@ -37,6 +37,29 @@ uvicorn app.main:app --reload
 
 The API health endpoint is available at `http://localhost:8000/health`.
 
+## TASK-002 Profile confirmation
+
+Resume parsing now persists an editable `DRAFT` Profile. The profile API is:
+
+```text
+GET  /api/v1/profiles/{profile_id}
+PUT  /api/v1/profiles/{profile_id}
+POST /api/v1/profiles/{profile_id}/confirm
+```
+
+Set `DATABASE_URL` to a PostgreSQL connection for real persistence, then apply
+the schema with Alembic:
+
+```bash
+cd apps/api
+.\.venv\Scripts\alembic.exe -c alembic.ini upgrade head
+```
+
+`PUT` keeps a profile in `DRAFT`; only the explicit confirm endpoint changes it
+to `CONFIRMED`. AI-extracted rows retain resume evidence, while user-entered
+rows may omit evidence. Skill proficiency remains unset until the user selects
+`AWARE`, `BASIC`, `PROJECT_READY`, or `PROFICIENT`.
+
 ## Verification
 
 ```bash
@@ -48,4 +71,13 @@ cd ../api
 pytest
 ```
 
-This repository currently contains only the TASK-000 bootstrap. Business capabilities are intentionally not implemented.
+SQLite in-memory fixtures are used only for fast service/API tests. The
+PostgreSQL integration gate requires a dedicated `TEST_DATABASE_URL`:
+
+```bash
+$env:TEST_DATABASE_URL="postgresql+psycopg://user:password@localhost:5432/ai_career_os_test"
+.\.venv\Scripts\python.exe -m pytest -m integration -q
+```
+
+If `TEST_DATABASE_URL` is absent, the integration test is skipped and the
+PostgreSQL persistence gate remains unverified.

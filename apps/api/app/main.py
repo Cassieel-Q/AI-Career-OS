@@ -3,52 +3,26 @@ from __future__ import annotations
 import os
 import unicodedata
 from typing import Protocol
+from uuid import UUID
 
 import fitz
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.profile_schemas import ProfileRead, ProfileUpdate
+from app.profile_service import (
+    confirm_profile,
+    create_draft_profile,
+    get_profile,
+    update_draft_profile,
+)
+from app.resume_schemas import Certification, Education, Experience, ResumeExtractionResult, Skill
 
 MAX_RESUME_BYTES = 10 * 1024 * 1024
 LOCAL_FRONTEND_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
-
-
-class Education(BaseModel):
-    institution: str
-    degree: str | None = None
-    field_of_study: str | None = None
-    dates: str | None = None
-    evidence_text: str = Field(min_length=1)
-
-
-class Skill(BaseModel):
-    name: str
-    evidence_text: str = Field(min_length=1)
-    proficiency: None = None
-
-
-class Experience(BaseModel):
-    title: str
-    organization: str | None = None
-    dates: str | None = None
-    description: str | None = None
-    evidence_text: str = Field(min_length=1)
-
-
-class Certification(BaseModel):
-    name: str
-    issuer: str | None = None
-    date: str | None = None
-    evidence_text: str = Field(min_length=1)
-
-
-class ResumeExtractionResult(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    education: list[Education] = Field(default_factory=list)
-    skills: list[Skill] = Field(default_factory=list)
-    experiences: list[Experience] = Field(default_factory=list)
-    certifications: list[Certification] = Field(default_factory=list)
 
 
 class ResumeProvider(Protocol):
@@ -263,7 +237,7 @@ app = FastAPI(title="AI Career OS API", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_allowed_frontend_origins(),
-    allow_methods=["POST", "GET"],
+    allow_methods=["POST", "GET", "PUT"],
     allow_headers=["*"],
 )
 
@@ -273,8 +247,11 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.post("/api/v1/resumes", response_model=ResumeExtractionResult)
-async def upload_resume(file: UploadFile = File(...)) -> ResumeExtractionResult:
+@app.post("/api/v1/resumes", response_model=ProfileRead)
+async def upload_resume(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+) -> ProfileRead:
     if file.content_type != "application/pdf" and not (file.filename or "").lower().endswith(".pdf"):
         raise HTTPException(status_code=415, detail="Only PDF resumes are supported")
     data = await file.read(MAX_RESUME_BYTES + 1)
@@ -284,8 +261,33 @@ async def upload_resume(file: UploadFile = File(...)) -> ResumeExtractionResult:
     provider = get_resume_provider()
     try:
         result = ResumeExtractionResult.model_validate(provider.extract(text))
-        return validate_evidence_trace(result, text)
+        validated_result = validate_evidence_trace(result, text)
     except HTTPException:
         raise
     except Exception as error:
         raise HTTPException(status_code=502, detail="Resume extraction provider failed") from error
+    try:
+        profile = create_draft_profile(db, validated_result)
+        return get_profile(db, profile.id)
+    except SQLAlchemyError as error:
+        db.rollback()
+        raise HTTPException(status_code=503, detail="Profile persistence failed") from error
+
+
+@app.get("/api/v1/profiles/{profile_id}", response_model=ProfileRead)
+def read_profile(profile_id: UUID, db: Session = Depends(get_db)) -> ProfileRead:
+    return get_profile(db, profile_id)
+
+
+@app.put("/api/v1/profiles/{profile_id}", response_model=ProfileRead)
+def save_profile(
+    profile_id: UUID,
+    payload: ProfileUpdate,
+    db: Session = Depends(get_db),
+) -> ProfileRead:
+    return update_draft_profile(db, profile_id, payload)
+
+
+@app.post("/api/v1/profiles/{profile_id}/confirm", response_model=ProfileRead)
+def confirm_saved_profile(profile_id: UUID, db: Session = Depends(get_db)) -> ProfileRead:
+    return confirm_profile(db, profile_id)
