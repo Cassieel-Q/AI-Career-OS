@@ -8,7 +8,7 @@ from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.engine import Engine
+from sqlalchemy.engine import Engine, make_url
 from sqlalchemy.orm import Session
 
 from app import main
@@ -21,9 +21,49 @@ def _postgres_url() -> str:
     url = os.getenv("TEST_DATABASE_URL", "").strip()
     if not url:
         pytest.skip("PostgreSQL integration requires TEST_DATABASE_URL")
-    if not url.startswith(("postgresql://", "postgresql+psycopg://")):
+    if not url.startswith(("postgresql://", "postgresql+psycopg://", "postgresql+psycopg2://")):
         pytest.fail("TEST_DATABASE_URL must use PostgreSQL; SQLite is not accepted here")
+    _assert_test_database_isolation(url)
     return url
+
+
+def _database_target(database_url: str) -> tuple[str, str, int, str]:
+    parsed = make_url(database_url)
+    backend = parsed.get_backend_name()
+    host = (parsed.host or "").lower()
+    if backend == "postgresql":
+        host = {"localhost": "local", "127.0.0.1": "local", "::1": "local"}.get(host, host)
+        port = parsed.port or 5432
+    else:
+        port = parsed.port or 0
+    return backend, host, port, parsed.database or ""
+
+
+def _assert_test_database_isolation(test_database_url: str) -> None:
+    application_database_url = os.getenv("DATABASE_URL", "").strip()
+    if application_database_url and _database_target(application_database_url) == _database_target(test_database_url):
+        raise RuntimeError("TEST_DATABASE_URL must not point to the application database.")
+
+
+def test_identical_postgres_database_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", "postgresql://app:secret@localhost:5432/ai_career_os")
+    test_url = "postgresql+psycopg://test:secret@localhost/ai_career_os"
+
+    with pytest.raises(RuntimeError, match="TEST_DATABASE_URL must not point to the application database."):
+        _assert_test_database_isolation(test_url)
+
+
+def test_different_postgres_database_is_accepted(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DATABASE_URL", "postgresql://app:secret@localhost:5432/ai_career_os")
+
+    _assert_test_database_isolation("postgresql+psycopg://test:secret@localhost:5432/ai_career_os_test")
+
+
+def test_missing_test_database_url_keeps_skip_behavior(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("TEST_DATABASE_URL", raising=False)
+
+    with pytest.raises(pytest.skip.Exception, match="PostgreSQL integration requires TEST_DATABASE_URL"):
+        _postgres_url()
 
 
 @pytest.fixture(scope="module")
