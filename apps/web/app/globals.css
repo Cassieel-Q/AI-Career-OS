@@ -144,3 +144,183 @@ button:disabled {
   border-radius: 999px;
   background: #4f9a61;
 }
+
+.profile-heading,
+.section-heading,
+.profile-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.profile-heading h2,
+.profile-section h3,
+.section-kicker,
+.profile-note {
+  margin: 0;
+}
+
+.section-kicker {
+  color: #6c7c6e;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.profile-status {
+  padding: 0.45rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.profile-status.draft {
+  background: #fff4d8;
+  color: #785600;
+}
+
+.profile-status.confirmed {
+  background: #e2f4e5;
+  color: #236333;
+}
+
+.profile-note {
+  color: #5d685f;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.profile-section {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.profile-item {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #edf1eb;
+  border-radius: 0.35rem;
+  background: #fbfcfa;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.skill-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(12rem, 0.65fr);
+}
+
+.field-label {
+  display: grid;
+  gap: 0.3rem;
+  color: #506054;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.field-label input,
+.field-label textarea,
+.field-label select {
+  width: 100%;
+  padding: 0.65rem 0.7rem;
+  border: 1px solid #d6dfd4;
+  border-radius: 0.3rem;
+  background: #ffffff;
+  color: #172019;
+  font: inherit;
+  font-weight: 400;
+}
+
+.field-label textarea {
+  resize: vertical;
+}
+
+.field-label input:disabled,
+.field-label textarea:disabled,
+.field-label select:disabled {
+  background: #f0f3ef;
+  color: #6c7c6e;
+}
+
+.text-button,
+.delete-button {
+  padding: 0;
+  background: transparent;
+  color: #36563d;
+}
+
+.delete-button {
+  justify-self: start;
+  color: #9d2f24;
+  font-size: 0.82rem;
+}
+
+.text-button:disabled,
+.delete-button:disabled {
+  background: transparent;
+  color: #a3ada4;
+}
+
+.button-secondary {
+  border: 1px solid #36563d;
+  background: #ffffff;
+  color: #36563d;
+}
+
+.profile-actions {
+  justify-content: flex-end;
+  padding-top: 0.4rem;
+}
+
+.evidence {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0;
+  color: #5d685f;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.evidence span {
+  color: #718074;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.user-provided {
+  color: #7a5d22;
+}
+
+@media (max-width: 38rem) {
+  .shell {
+    padding: 2rem 1rem;
+  }
+
+  .field-grid,
+  .skill-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-heading,
+  .profile-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .profile-actions {
+    align-items: stretch;
+  }
+
+  .profile-actions button {
+    width: 100%;
+  }
+}

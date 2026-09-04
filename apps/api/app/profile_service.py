@@ -1,0 +1,181 @@
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from typing import Any
+from uuid import UUID
+
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
+
+from app import models
+from app.profile_schemas import (
+    CertificationInput,
+    CertificationRead,
+    EducationInput,
+    EducationRead,
+    ExperienceInput,
+    ExperienceRead,
+    ProfileRead,
+    ProfileSkillInput,
+    ProfileSkillRead,
+    ProfileStatus,
+    ProfileUpdate,
+    SourceType,
+)
+from app.resume_schemas import ResumeExtractionResult
+
+
+def _not_found(profile_id: UUID) -> HTTPException:
+    return HTTPException(status_code=404, detail=f"Profile {profile_id} was not found")
+
+
+def _get_profile(db: Session, profile_id: UUID) -> models.UserProfile:
+    profile = db.get(models.UserProfile, profile_id)
+    if profile is None:
+        raise _not_found(profile_id)
+    return profile
+
+
+def _profile_read(profile: models.UserProfile) -> ProfileRead:
+    return ProfileRead(
+        profile_id=profile.id,
+        status=ProfileStatus(profile.status),
+        created_at=profile.created_at,
+        updated_at=profile.updated_at,
+        education=[EducationRead.model_validate(item) for item in profile.education],
+        skills=[ProfileSkillRead.model_validate(item) for item in profile.skills],
+        experiences=[ExperienceRead.model_validate(item) for item in profile.experiences],
+        certifications=[CertificationRead.model_validate(item) for item in profile.certifications],
+    )
+
+
+def create_draft_profile(db: Session, extraction: ResumeExtractionResult) -> models.UserProfile:
+    profile = models.UserProfile(status=ProfileStatus.DRAFT.value)
+    profile.education = [
+        models.Education(
+            institution=item.institution,
+            degree=item.degree,
+            field_of_study=item.field_of_study,
+            dates=item.dates,
+            evidence_text=item.evidence_text,
+            source_type=SourceType.AI_EXTRACTED.value,
+        )
+        for item in extraction.education
+    ]
+    profile.skills = [
+        models.ProfileSkill(
+            name=item.name,
+            proficiency=None,
+            evidence_text=item.evidence_text,
+            source_type=SourceType.AI_EXTRACTED.value,
+        )
+        for item in extraction.skills
+    ]
+    profile.experiences = [
+        models.Experience(
+            title=item.title,
+            organization=item.organization,
+            dates=item.dates,
+            description=item.description,
+            evidence_text=item.evidence_text,
+            source_type=SourceType.AI_EXTRACTED.value,
+        )
+        for item in extraction.experiences
+    ]
+    profile.certifications = [
+        models.Certification(
+            name=item.name,
+            issuer=item.issuer,
+            date=item.date,
+            evidence_text=item.evidence_text,
+            source_type=SourceType.AI_EXTRACTED.value,
+        )
+        for item in extraction.certifications
+    ]
+    db.add(profile)
+    db.commit()
+    db.refresh(profile)
+    return profile
+
+
+def get_profile(db: Session, profile_id: UUID) -> ProfileRead:
+    return _profile_read(_get_profile(db, profile_id))
+
+
+def _has_changed(existing: Any, item: Any, fields: tuple[str, ...]) -> bool:
+    return any(getattr(existing, field) != getattr(item, field) for field in fields)
+
+
+def _source_for_item(existing: Any | None, item: Any, fields: tuple[str, ...]) -> str:
+    if existing is None:
+        return SourceType.USER_ENTERED.value
+    changed = _has_changed(existing, item, fields + ("evidence_text",))
+    if not changed:
+        if item.source_type == SourceType.USER_EDITED:
+            return SourceType.USER_EDITED.value
+        return existing.source_type
+    if item.evidence_text is None:
+        return SourceType.USER_ENTERED.value
+    return SourceType.USER_EDITED.value
+
+
+def _replace_collection(
+    profile: models.UserProfile,
+    collection_name: str,
+    items: list[Any],
+    fields: tuple[str, ...],
+    model_type: type[Any],
+) -> None:
+    existing_items = list(getattr(profile, collection_name))
+    existing_by_id = {item.id: item for item in existing_items}
+    seen_ids: set[UUID] = set()
+    replacement: list[Any] = []
+    for item in items:
+        if item.id is not None:
+            if item.id in seen_ids:
+                raise HTTPException(status_code=422, detail="A profile item ID may appear only once")
+            seen_ids.add(item.id)
+            existing = existing_by_id.get(item.id)
+            if existing is None:
+                raise HTTPException(status_code=422, detail="Profile item does not belong to this profile")
+            source_type = _source_for_item(existing, item, fields)
+            for field in fields:
+                setattr(existing, field, getattr(item, field))
+            existing.evidence_text = item.evidence_text
+            existing.source_type = source_type
+            replacement.append(existing)
+        else:
+            values = {field: getattr(item, field) for field in fields}
+            values.update(
+                evidence_text=item.evidence_text,
+                source_type=SourceType.USER_ENTERED.value,
+            )
+            replacement.append(model_type(**values))
+    setattr(profile, collection_name, replacement)
+
+
+def update_draft_profile(db: Session, profile_id: UUID, payload: ProfileUpdate) -> ProfileRead:
+    profile = _get_profile(db, profile_id)
+    if profile.status == ProfileStatus.CONFIRMED.value:
+        raise HTTPException(status_code=409, detail="Confirmed profiles cannot be edited")
+    _replace_collection(profile, "education", payload.education, ("institution", "degree", "field_of_study", "dates"), models.Education)
+    _replace_collection(profile, "skills", payload.skills, ("name", "proficiency"), models.ProfileSkill)
+    _replace_collection(profile, "experiences", payload.experiences, ("title", "organization", "dates", "description"), models.Experience)
+    _replace_collection(profile, "certifications", payload.certifications, ("name", "issuer", "date"), models.Certification)
+    profile.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(profile)
+    return _profile_read(profile)
+
+
+def confirm_profile(db: Session, profile_id: UUID) -> ProfileRead:
+    profile = _get_profile(db, profile_id)
+    if profile.status == ProfileStatus.CONFIRMED.value:
+        return _profile_read(profile)
+    if not any((profile.education, profile.skills, profile.experiences, profile.certifications)):
+        raise HTTPException(status_code=422, detail="A profile must contain at least one item before confirmation")
+    profile.status = ProfileStatus.CONFIRMED.value
+    profile.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(profile)
+    return _profile_read(profile)
