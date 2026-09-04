@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 
-from app.resume_schemas import Certification, Education, ExperienceType, ResumeExtractionResult, Skill
+from app.resume_schemas import Certification, ExperienceType, ResumeExtractionResult, Skill
 
 
 _OFFICE_ALIASES = {
@@ -22,6 +22,10 @@ _CREDENTIAL_PATTERNS = (
     (re.compile(r"\b(?:ielts|雅思)\b", re.IGNORECASE), "IELTS"),
     (re.compile(r"\b(?:toefl|托福)\b", re.IGNORECASE), "TOEFL"),
     (re.compile(r"\bjlpt\b", re.IGNORECASE), "JLPT"),
+)
+_CREDENTIAL_SCORE = re.compile(
+    r"(?:cet[- ]?[46]|大学英语四级|大学英语六级)\s*(?:score|成绩|分数)?\s*[:：-]?\s*(\d{2,4})",
+    re.IGNORECASE,
 )
 _LANGUAGE_PATTERNS = (
     (re.compile(r"普通话|国语|mandarin", re.IGNORECASE), "普通话"),
@@ -47,25 +51,31 @@ def _clean_list(values: list[str]) -> list[str]:
     return cleaned
 
 
-def _canonical_office_items(name: str) -> list[str]:
+def _canonical_office_items(name: str) -> list[tuple[str, str]]:
     normalized = name.strip().casefold()
     direct = _OFFICE_ALIASES.get(normalized)
     if direct:
-        return [direct]
+        return [(direct, name.strip())]
     parts = _OFFICE_SEPARATOR.split(name.strip())
     if len(parts) < 2:
-        return [name.strip()]
+        return [(name.strip(), name.strip())]
     canonical = [_OFFICE_ALIASES.get(part.casefold()) for part in parts]
     if all(canonical):
-        return list(dict.fromkeys(canonical))
-    return [name.strip()]
+        return list(dict.fromkeys((item, part) for item, part in zip(canonical, parts)))
+    return [(name.strip(), name.strip())]
+
+
+def _credential_details(name: str) -> tuple[str, str | None] | None:
+    for pattern, canonical in _CREDENTIAL_PATTERNS:
+        if pattern.search(name):
+            score_match = _CREDENTIAL_SCORE.search(name)
+            return canonical, score_match.group(1) if score_match else None
+    return None
 
 
 def _credential_name(name: str) -> str | None:
-    for pattern, canonical in _CREDENTIAL_PATTERNS:
-        if pattern.search(name):
-            return canonical
-    return None
+    details = _credential_details(name)
+    return details[0] if details else None
 
 
 def _language_name(name: str) -> str | None:
@@ -104,27 +114,66 @@ def normalize_resume_extraction(result: ResumeExtractionResult) -> ResumeExtract
     skills: list[Skill] = []
     certifications = list(result.certifications)
     for skill in result.skills:
-        credential = _credential_name(skill.name)
-        if credential:
-            certifications.append(Certification(name=credential, evidence_text=skill.evidence_text))
+        raw_value = skill.raw_value or skill.name
+        credential_details = _credential_details(raw_value)
+        if credential_details:
+            credential, score = credential_details
+            certifications.append(
+                Certification(
+                    name=credential,
+                    score=score,
+                    evidence_text=skill.evidence_text,
+                    raw_value=raw_value,
+                    canonical_value=credential,
+                    evidence_start=skill.evidence_start,
+                    evidence_end=skill.evidence_end,
+                )
+            )
             continue
-        language = _language_name(skill.name)
-        names = [language] if language else _canonical_office_items(skill.name)
-        skills.extend(skill.model_copy(update={"name": name}) for name in names if name)
+        language = _language_name(raw_value)
+        names = [(language, raw_value)] if language else _canonical_office_items(raw_value)
+        skills.extend(
+            skill.model_copy(
+                update={"name": name, "raw_value": raw_name, "canonical_value": name}
+            )
+            for name, raw_name in names
+            if name
+        )
 
     normalized_certifications: list[Certification] = []
     for certification in certifications:
-        if _credential_name(certification.name):
+        credential_details = _credential_details(certification.raw_value or certification.name)
+        if credential_details:
+            credential, detected_score = credential_details
             normalized_certification = certification.model_copy(
-                update={"name": _credential_name(certification.name)}
+                update={
+                    "name": credential,
+                    "score": certification.score or detected_score,
+                    "raw_value": certification.raw_value or certification.name,
+                    "canonical_value": credential,
+                }
             )
             normalized_certifications.append(normalized_certification)
             continue
-        language = _language_name(certification.name)
+        raw_value = certification.raw_value or certification.name
+        language = _language_name(raw_value)
         if language:
-            skills.append(Skill(name=language, evidence_text=certification.evidence_text))
+            skills.append(
+                Skill(
+                    name=language,
+                    evidence_text=certification.evidence_text,
+                    raw_value=raw_value,
+                    canonical_value=language,
+                    evidence_start=certification.evidence_start,
+                    evidence_end=certification.evidence_end,
+                )
+            )
             continue
-        normalized_certifications.append(certification)
+        normalized_certifications.append(
+            certification.model_copy(
+                update={"raw_value": raw_value, "canonical_value": certification.name}
+            )
+        )
 
     deduped_skills: list[Skill] = []
     skill_keys: set[str] = set()

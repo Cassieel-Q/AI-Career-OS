@@ -64,6 +64,10 @@ def create_draft_profile(db: Session, extraction: ResumeExtractionResult) -> mod
             relevant_courses=item.relevant_courses,
             evidence_text=item.evidence_text,
             source_type=SourceType.AI_EXTRACTED.value,
+            raw_value=item.raw_value,
+            canonical_value=item.canonical_value,
+            evidence_start=item.evidence_start,
+            evidence_end=item.evidence_end,
         )
         for item in extraction.education
     ]
@@ -73,6 +77,10 @@ def create_draft_profile(db: Session, extraction: ResumeExtractionResult) -> mod
             proficiency=None,
             evidence_text=item.evidence_text,
             source_type=SourceType.AI_EXTRACTED.value,
+            raw_value=item.raw_value,
+            canonical_value=item.canonical_value,
+            evidence_start=item.evidence_start,
+            evidence_end=item.evidence_end,
         )
         for item in extraction.skills
     ]
@@ -85,6 +93,10 @@ def create_draft_profile(db: Session, extraction: ResumeExtractionResult) -> mod
             experience_type=item.experience_type.value,
             evidence_text=item.evidence_text,
             source_type=SourceType.AI_EXTRACTED.value,
+            raw_value=item.raw_value,
+            canonical_value=item.canonical_value,
+            evidence_start=item.evidence_start,
+            evidence_end=item.evidence_end,
         )
         for item in extraction.experiences
     ]
@@ -93,8 +105,14 @@ def create_draft_profile(db: Session, extraction: ResumeExtractionResult) -> mod
             name=item.name,
             issuer=item.issuer,
             date=item.date,
+            score=item.score,
+            status=item.status,
             evidence_text=item.evidence_text,
             source_type=SourceType.AI_EXTRACTED.value,
+            raw_value=item.raw_value,
+            canonical_value=item.canonical_value,
+            evidence_start=item.evidence_start,
+            evidence_end=item.evidence_end,
         )
         for item in extraction.certifications
     ]
@@ -178,7 +196,13 @@ def update_draft_profile(db: Session, profile_id: UUID, payload: ProfileUpdate) 
         ("title", "organization", "dates", "description", "experience_type"),
         models.Experience,
     )
-    _replace_collection(profile, "certifications", payload.certifications, ("name", "issuer", "date"), models.Certification)
+    _replace_collection(
+        profile,
+        "certifications",
+        payload.certifications,
+        ("name", "issuer", "date", "score", "status"),
+        models.Certification,
+    )
     profile.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(profile)

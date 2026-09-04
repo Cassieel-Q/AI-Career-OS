@@ -7,6 +7,10 @@ export type ProfileItem = {
   id?: string;
   evidence_text: string | null;
   source_type: SourceType;
+  raw_value?: string | null;
+  canonical_value?: string | null;
+  evidence_start?: number | null;
+  evidence_end?: number | null;
 };
 
 export type Education = ProfileItem & {
@@ -34,6 +38,8 @@ export type Certification = ProfileItem & {
   name: string;
   issuer: string | null;
   date: string | null;
+  score: string | null;
+  status: string | null;
 };
 
 export type Profile = {
@@ -65,7 +71,14 @@ export type ProfileUpdatePayload = {
     description: string | null;
     experience_type: ExperienceType;
   }>;
-  certifications: Array<{ id?: string; name: string; issuer: string | null; date: string | null }>;
+  certifications: Array<{
+    id?: string;
+    name: string;
+    issuer: string | null;
+    date: string | null;
+    score: string | null;
+    status: string | null;
+  }>;
 };
 
 export type ProfileRequester = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
@@ -95,11 +108,13 @@ export function toUpdatePayload(profile: Profile): ProfileUpdatePayload {
       description,
       experience_type,
     })),
-    certifications: profile.certifications.map(({ id, name, issuer, date }) => ({
+    certifications: profile.certifications.map(({ id, name, issuer, date, score, status }) => ({
       ...(id ? { id } : {}),
       name,
       issuer,
       date,
+      score,
+      status,
     })),
   };
 }

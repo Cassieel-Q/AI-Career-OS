@@ -323,6 +323,8 @@ export default function Home() {
                   <TextField label="Certification" value={item.name} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("certifications", index, "name", value)} />
                   <TextField label="Issuer" value={item.issuer} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("certifications", index, "issuer", value)} />
                   <TextField label="Date" value={item.date} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("certifications", index, "date", value)} />
+                  <TextField label="Score" value={item.score} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("certifications", index, "score", value)} />
+                  <TextField label="Status" value={item.status} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("certifications", index, "status", value)} />
                 </div>
                 <Evidence item={item} />
               </>
@@ -347,7 +349,7 @@ function newItem(section: EditableSection): Profile[EditableSection][number] {
   if (section === "education") return { ...base, institution: "", degree: null, field_of_study: null, dates: null, relevant_courses: [] };
   if (section === "skills") return { ...base, name: "", proficiency: null };
   if (section === "experiences") return { ...base, title: "", organization: null, dates: null, description: null, experience_type: "OTHER" as const };
-  return { ...base, name: "", issuer: null, date: null };
+  return { ...base, name: "", issuer: null, date: null, score: null, status: null };
 }
 
 function ProfileSection<T extends ProfileItem>({

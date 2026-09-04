@@ -115,6 +115,20 @@ def test_put_edits_adds_and_deletes_items(client: TestClient, persisted_profile)
     assert body["certifications"][0]["source_type"] == "USER_ENTERED"
 
 
+def test_credential_score_and_status_survive_profile_round_trip(client: TestClient, persisted_profile) -> None:
+    response = client.put(
+        f"/api/v1/profiles/{persisted_profile.id}",
+        json={"certifications": [{"name": "CET-6", "score": "300", "status": None}]},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["certifications"][0]["score"] == "300"
+    assert response.json()["certifications"][0]["status"] is None
+
+    reloaded = client.get(f"/api/v1/profiles/{persisted_profile.id}")
+    assert reloaded.json()["certifications"][0]["score"] == "300"
+
+
 def test_existing_ai_evidence_is_server_owned_and_edit_becomes_user_edited(
     client: TestClient, persisted_profile
 ) -> None:

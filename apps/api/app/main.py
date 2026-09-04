@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import logging
 import os
 import unicodedata
+from dataclasses import dataclass
 from typing import Protocol
 from uuid import UUID
 
@@ -20,14 +22,18 @@ from app.profile_service import (
     update_draft_profile,
 )
 from app.resume_normalization import normalize_resume_extraction
-from app.resume_schemas import Certification, Education, Experience, ResumeExtractionResult, Skill
+from app.resume_schemas import Certification, Education, Experience, ExperienceType, ResumeExtractionResult, Skill
+from app.resume_sections import completeness_warnings, section_for_warning
 
 MAX_RESUME_BYTES = 10 * 1024 * 1024
 LOCAL_FRONTEND_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
+logger = logging.getLogger(__name__)
 
 
 class ResumeProvider(Protocol):
     def extract(self, evidence_text: str) -> ResumeExtractionResult: ...
+
+    def extract_section(self, section_text: str, section_label: str) -> ResumeExtractionResult: ...
 
 
 class OpenAIResumeProvider:
@@ -59,7 +65,11 @@ class OpenAIResumeProvider:
                         "For every evidence_text, copy a VERBATIM contiguous excerpt from the resume. Do not "
                         "paraphrase, summarize, translate, or rewrite evidence_text. Preserve evidence_text "
                         "exactly as shown. Keep evidence excerpts concise but include the relevant course text "
-                        "when returning relevant_courses. Do not infer skill proficiency; proficiency must remain null."
+                        "when returning relevant_courses. For each item, set raw_value to the exact extracted "
+                        "value before any canonicalization; canonical_value is reserved for deterministic aliases "
+                        "such as PPT to PowerPoint. Keep explicit credential score text in score, never infer "
+                        "pass/fail status, and do not emit unsupported facts. Do not infer skill proficiency; "
+                        "proficiency must remain null."
                     ),
                 },
                 {"role": "user", "content": evidence_text},
@@ -69,6 +79,29 @@ class OpenAIResumeProvider:
         parsed = response.choices[0].message.parsed
         if parsed is None:
             raise ValueError("OpenAI returned no structured resume result")
+        return ResumeExtractionResult.model_validate(parsed)
+
+    def extract_section(self, section_text: str, section_label: str) -> ResumeExtractionResult:
+        response = self.client.beta.chat.completions.parse(
+            model=self.model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        f"Extract explicit facts from this single resume section only: {section_label}. "
+                        "Do not use or invent information outside the supplied section. For every raw fact, "
+                        "preserve the exact source value in raw_value and copy a VERBATIM contiguous excerpt "
+                        "into evidence_text. Keep generic language ability in skills and explicit credentials "
+                        "in certifications. Do not infer credential pass/fail status."
+                    ),
+                },
+                {"role": "user", "content": section_text},
+            ],
+            response_format=ResumeExtractionResult,
+        )
+        parsed = response.choices[0].message.parsed
+        if parsed is None:
+            raise ValueError("OpenAI returned no structured section result")
         return ResumeExtractionResult.model_validate(parsed)
 
 
@@ -187,7 +220,14 @@ def normalize_text(text: str) -> str:
     return _normalize_text_with_spans(text)[0]
 
 
-def anchor_fact_to_source(source_text: str, fact_value: str, candidate_evidence: str) -> str | None:
+@dataclass(frozen=True)
+class EvidenceAnchor:
+    text: str
+    start: int
+    end: int
+
+
+def anchor_fact_to_source_span(source_text: str, fact_value: str, candidate_evidence: str) -> EvidenceAnchor | None:
     normalized_source, source_spans = _normalize_text_with_spans(source_text)
     normalized_fact = normalize_text(fact_value)
     normalized_candidate = normalize_text(candidate_evidence)
@@ -208,7 +248,12 @@ def anchor_fact_to_source(source_text: str, fact_value: str, candidate_evidence:
     match_end = match_start + len(match_text) - 1
     source_start = source_spans[match_start][0]
     source_end = source_spans[match_end][1]
-    return source_text[source_start:source_end]
+    return EvidenceAnchor(text=source_text[source_start:source_end], start=source_start, end=source_end)
+
+
+def anchor_fact_to_source(source_text: str, fact_value: str, candidate_evidence: str) -> str | None:
+    anchor = anchor_fact_to_source_span(source_text, fact_value, candidate_evidence)
+    return anchor.text if anchor else None
 
 
 def get_primary_fact_value(fact: Education | Skill | Experience | Certification) -> str:
@@ -244,53 +289,285 @@ def _fact_aliases(fact: Education | Skill | Experience | Certification) -> list[
     return [get_primary_fact_value(fact)]
 
 
-def validate_evidence_trace(result: ResumeExtractionResult, source_text: str) -> ResumeExtractionResult:
-    normalized_source = normalize_text(source_text)
-    fact_groups = (
+@dataclass(frozen=True)
+class ValidationWarning:
+    code: str
+    category: str
+    index: int
+    reason: str
+    raw_value: str
+    evidence_text: str
+    source: str = "initial"
+
+
+@dataclass(frozen=True)
+class GroundingResult:
+    result: ResumeExtractionResult
+    warnings: list[ValidationWarning]
+    total_items: int
+    accepted_items: int
+
+
+@dataclass(frozen=True)
+class ProcessedResumeResult:
+    result: ResumeExtractionResult
+    warnings: list[ValidationWarning]
+    completeness_warnings: list[str]
+
+
+def _fact_groups(result: ResumeExtractionResult) -> tuple[tuple[str, list[object]], ...]:
+    return (
         ("education", result.education),
         ("skill", result.skills),
         ("experience", result.experiences),
         ("certification", result.certifications),
     )
+
+
+def _warning_reason(source_text: str, evidence_text: str) -> str:
+    return "evidence_not_in_source" if normalize_text(evidence_text) not in normalize_text(source_text) else "fact_not_in_evidence"
+
+
+def _raise_grounding_warning(warning: ValidationWarning) -> None:
+    raise HTTPException(
+        status_code=502,
+        detail=f"Resume evidence validation failed: {warning.category}[{warning.index}]: {warning.reason}",
+    )
+
+
+def ground_resume_extraction(
+    result: ResumeExtractionResult,
+    source_text: str,
+    *,
+    source: str = "initial",
+    strict: bool = False,
+) -> GroundingResult:
+    warnings: list[ValidationWarning] = []
+    fact_groups = _fact_groups(result)
+    collection_for_category = {
+        "education": "education",
+        "skill": "skills",
+        "experience": "experiences",
+        "certification": "certifications",
+    }
+    accepted: dict[str, list[object]] = {
+        collection: [] for collection in collection_for_category.values()
+    }
+    total_items = sum(len(facts) for _, facts in fact_groups)
     for category, facts in fact_groups:
         for index, fact in enumerate(facts):
-            normalized_evidence = normalize_text(fact.evidence_text)
-            anchored_evidence = next(
+            raw_value = fact.raw_value or get_primary_fact_value(fact)
+            values = [raw_value] if fact.raw_value else [raw_value, *_fact_aliases(fact)]
+            anchor = next(
                 (
-                    anchored
-                    for alias in _fact_aliases(fact)
-                    if (anchored := anchor_fact_to_source(source_text, alias, fact.evidence_text)) is not None
+                    candidate
+                    for value in dict.fromkeys(values)
+                    if (candidate := anchor_fact_to_source_span(source_text, value, fact.evidence_text)) is not None
                 ),
                 None,
             )
-            if anchored_evidence is None:
-                failure_reason = (
-                    "evidence_not_in_source"
-                    if normalized_evidence not in normalized_source
-                    else "fact_not_in_evidence"
+            if anchor is None:
+                warning = ValidationWarning(
+                    code="UNSUPPORTED_FACT",
+                    category=category,
+                    index=index,
+                    reason=_warning_reason(source_text, fact.evidence_text),
+                    raw_value=raw_value,
+                    evidence_text=fact.evidence_text,
+                    source=source,
                 )
-                raise HTTPException(
-                    status_code=502,
-                    detail=f"Resume evidence validation failed: {category}[{index}]: {failure_reason}",
-                )
-            if isinstance(fact, Education):
-                for course_index, course in enumerate(fact.relevant_courses):
-                    if anchor_fact_to_source(source_text, course, fact.evidence_text) is None:
-                        raise HTTPException(
-                            status_code=502,
-                            detail=(
-                                "Resume evidence validation failed: "
-                                f"education[{index}].relevant_courses[{course_index}]: course_not_in_evidence"
-                            ),
-                        )
+                if strict:
+                    _raise_grounding_warning(warning)
+                warnings.append(warning)
+                continue
             if isinstance(fact, Experience) and fact.source_section:
-                if normalize_text(fact.source_section) not in normalized_source:
-                    raise HTTPException(
-                        status_code=502,
-                        detail=f"Resume evidence validation failed: experience[{index}]: section_not_in_source",
+                if normalize_text(fact.source_section) not in normalize_text(source_text):
+                    warning = ValidationWarning(
+                        code="UNSUPPORTED_FACT",
+                        category=category,
+                        index=index,
+                        reason="section_not_in_source",
+                        raw_value=fact.source_section,
+                        evidence_text=fact.evidence_text,
+                        source=source,
                     )
-            fact.evidence_text = anchored_evidence
-    return result
+                    if strict:
+                        _raise_grounding_warning(warning)
+                    warnings.append(warning)
+                    continue
+            grounded_fact = fact.model_copy(
+                update={
+                    "raw_value": values[0] if fact.raw_value else next(
+                        value for value in dict.fromkeys(values)
+                        if anchor_fact_to_source_span(source_text, value, fact.evidence_text) is not None
+                    ),
+                    "evidence_text": anchor.text,
+                    "evidence_start": anchor.start,
+                    "evidence_end": anchor.end,
+                }
+            )
+            if isinstance(fact, Education):
+                grounded_courses: list[str] = []
+                for course_index, course in enumerate(fact.relevant_courses):
+                    if anchor_fact_to_source(source_text, course, anchor.text) is None:
+                        warnings.append(
+                            ValidationWarning(
+                                code="UNSUPPORTED_FACT",
+                                category="education.relevant_courses",
+                                index=course_index,
+                                reason="course_not_in_evidence",
+                                raw_value=course,
+                                evidence_text=anchor.text,
+                                source=source,
+                            )
+                        )
+                    else:
+                        grounded_courses.append(course)
+                grounded_fact = grounded_fact.model_copy(update={"relevant_courses": grounded_courses})
+            accepted[collection_for_category[category]].append(grounded_fact)
+    return GroundingResult(
+        result=ResumeExtractionResult.model_validate(accepted),
+        warnings=warnings,
+        total_items=total_items,
+        accepted_items=sum(len(items) for items in accepted.values()),
+    )
+
+
+def _raise_if_unreliable(grounded: GroundingResult) -> None:
+    rejected = grounded.total_items - grounded.accepted_items
+    if grounded.accepted_items == 0 and grounded.warnings:
+        _raise_grounding_warning(grounded.warnings[0])
+    if grounded.total_items and (
+        rejected / grounded.total_items > 0.25
+    ):
+        raise HTTPException(status_code=502, detail="Resume evidence validation failed: unsupported_item_threshold")
+
+
+def _merge_repair(
+    base: ResumeExtractionResult,
+    repair: ResumeExtractionResult,
+    section_label: str,
+    section_heading: str,
+) -> ResumeExtractionResult:
+    allowed = {
+        "EDUCATION": {"education"},
+        "CAMPUS": {"experiences"},
+        "EXPERIENCE": {"experiences"},
+        "SKILLS": {"skills"},
+        "COURSES": {"education"},
+        "CREDENTIALS": {"certifications"},
+        "LANGUAGE": {"skills", "certifications"},
+    }.get(section_label, set())
+    updates: dict[str, list[object]] = {}
+    for collection in ("education", "skills", "experiences", "certifications"):
+        if collection not in allowed:
+            updates[collection] = list(getattr(base, collection))
+            continue
+        repair_items = list(getattr(repair, collection))
+        if section_label == "CAMPUS" and collection == "experiences":
+            repair_items = [
+                item.model_copy(update={"source_section": section_heading, "experience_type": ExperienceType.CAMPUS})
+                for item in repair_items
+            ]
+        updates[collection] = [*getattr(base, collection), *repair_items]
+
+    merged = base.model_copy(update=updates)
+    merged.education = _dedupe_education(merged.education)
+    merged.experiences = _dedupe_experiences(merged.experiences)
+    return merged
+
+
+def _dedupe_education(items: list[Education]) -> list[Education]:
+    by_institution: dict[str, Education] = {}
+    for item in items:
+        key = item.institution.casefold()
+        existing = by_institution.get(key)
+        if existing is None:
+            by_institution[key] = item
+        else:
+            by_institution[key] = existing.model_copy(
+                update={"relevant_courses": list(dict.fromkeys([*existing.relevant_courses, *item.relevant_courses]))}
+            )
+    return list(by_institution.values())
+
+
+def _dedupe_experiences(items: list[Experience]) -> list[Experience]:
+    seen: set[tuple[str, ExperienceType]] = set()
+    deduped: list[Experience] = []
+    for item in items:
+        key = (item.title.casefold(), item.experience_type)
+        if key not in seen:
+            seen.add(key)
+            deduped.append(item)
+    return deduped
+
+
+def process_resume_extraction(
+    result: ResumeExtractionResult,
+    source_text: str,
+    *,
+    provider: ResumeProvider | None = None,
+    allow_repair: bool = True,
+) -> ProcessedResumeResult:
+    grounded = ground_resume_extraction(result, source_text)
+    _raise_if_unreliable(grounded)
+    normalized = normalize_resume_extraction(grounded.result)
+    warnings = list(grounded.warnings)
+    missing = completeness_warnings(normalized, source_text)
+
+    if allow_repair and missing and provider is not None and hasattr(provider, "extract_section"):
+        warning = missing[0]
+        section = section_for_warning(source_text, warning)
+        if section is not None:
+            try:
+                repair_raw = provider.extract_section(section.text, section.key)
+                repair_grounded = ground_resume_extraction(
+                    repair_raw,
+                    section.text,
+                    source="repair",
+                )
+                warnings.extend(repair_grounded.warnings)
+                normalized = normalize_resume_extraction(
+                    _merge_repair(normalized, repair_grounded.result, section.key, section.heading)
+                )
+                missing = completeness_warnings(normalized, source_text)
+            except Exception as error:
+                warnings.append(
+                    ValidationWarning(
+                        code="SECTION_REPAIR_FAILED",
+                        category=section.key,
+                        index=0,
+                        reason=type(error).__name__,
+                        raw_value=section.heading,
+                        evidence_text=section.text,
+                        source="repair",
+                    )
+                )
+    if sum(len(facts) for _, facts in _fact_groups(normalized)) == 0:
+        raise HTTPException(status_code=502, detail="Resume evidence validation failed: no_grounded_facts")
+    return ProcessedResumeResult(result=normalized, warnings=warnings, completeness_warnings=missing)
+
+
+def validate_evidence_trace(result: ResumeExtractionResult, source_text: str) -> ResumeExtractionResult:
+    grounded = ground_resume_extraction(result, source_text, strict=True).result
+    # Preserve the historical identity behavior for already-grounded callers while
+    # still returning deterministic source spans for newly processed extractions.
+    if grounded == result:
+        return result
+    if all(
+        fact.raw_value is None
+        and fact.canonical_value is None
+        and fact.evidence_start is None
+        and fact.evidence_end is None
+        for _, facts in _fact_groups(result)
+        for fact in facts
+    ) and all(
+        normalize_text(fact.evidence_text) == normalize_text(grounded_fact.evidence_text)
+        for (_, facts), (_, grounded_facts) in zip(_fact_groups(result), _fact_groups(grounded))
+        for fact, grounded_fact in zip(facts, grounded_facts)
+    ):
+        return result
+    return grounded
 
 
 app = FastAPI(title="AI Career OS API", version="0.1.0")
@@ -321,14 +598,15 @@ async def upload_resume(
     provider = get_resume_provider()
     try:
         result = ResumeExtractionResult.model_validate(provider.extract(text))
-        normalized_result = normalize_resume_extraction(result)
-        validated_result = validate_evidence_trace(normalized_result, text)
+        processed = process_resume_extraction(result, text, provider=provider)
+        for warning in processed.warnings:
+            logger.warning("Resume extraction warning: %s", warning)
     except HTTPException:
         raise
     except Exception as error:
         raise HTTPException(status_code=502, detail="Resume extraction provider failed") from error
     try:
-        profile = create_draft_profile(db, validated_result)
+        profile = create_draft_profile(db, processed.result)
         return get_profile(db, profile.id)
     except SQLAlchemyError as error:
         db.rollback()

@@ -104,6 +104,11 @@ def test_resume_upload_persists_normalized_profile_facts() -> None:
     body = response.json()
     assert body["education"][0]["relevant_courses"] == ["ML", "DB"]
     assert {skill["name"] for skill in body["skills"]} == {"Word", "Excel", "PowerPoint"}
+    powerpoint = next(skill for skill in body["skills"] if skill["name"] == "PowerPoint")
+    assert powerpoint["raw_value"] == "PPT"
+    assert powerpoint["canonical_value"] == "PowerPoint"
+    assert powerpoint["evidence_start"] is not None
+    assert powerpoint["evidence_end"] is not None
     assert body["experiences"][0]["experience_type"] == "CAMPUS"
 
 
