@@ -52,6 +52,38 @@ def test_profile_can_be_read(client: TestClient, persisted_profile) -> None:
     assert response.json()["education"][0]["institution"] == "Example University"
 
 
+def test_normalized_courses_and_experience_type_are_persisted(client: TestClient, persisted_profile) -> None:
+    education_id = str(persisted_profile.education[0].id)
+    experience_id = str(persisted_profile.experiences[0].id)
+    response = client.put(
+        f"/api/v1/profiles/{persisted_profile.id}",
+        json={
+            "education": [
+                {
+                    "id": education_id,
+                    "institution": "Example University",
+                    "relevant_courses": ["Machine Learning", "Database Systems"],
+                }
+            ],
+            "experiences": [
+                {
+                    "id": experience_id,
+                    "title": "Research Assistant",
+                    "experience_type": "PROJECT",
+                }
+            ],
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["education"][0]["relevant_courses"] == ["Machine Learning", "Database Systems"]
+    assert response.json()["experiences"][0]["experience_type"] == "PROJECT"
+
+    reloaded = client.get(f"/api/v1/profiles/{persisted_profile.id}")
+    assert reloaded.json()["education"][0]["relevant_courses"] == ["Machine Learning", "Database Systems"]
+    assert reloaded.json()["experiences"][0]["experience_type"] == "PROJECT"
+
+
 def test_put_edits_adds_and_deletes_items(client: TestClient, persisted_profile) -> None:
     original_skill_id = str(persisted_profile.skills[0].id)
     payload = {

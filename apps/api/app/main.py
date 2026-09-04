@@ -19,6 +19,7 @@ from app.profile_service import (
     get_profile,
     update_draft_profile,
 )
+from app.resume_normalization import normalize_resume_extraction
 from app.resume_schemas import Certification, Education, Experience, ResumeExtractionResult, Skill
 
 MAX_RESUME_BYTES = 10 * 1024 * 1024
@@ -46,7 +47,20 @@ class OpenAIResumeProvider:
             messages=[
                 {
                     "role": "system",
-                    "content": "Extract explicit resume facts only. For every evidence_text, copy a VERBATIM contiguous excerpt from the resume. Do not paraphrase, summarize, translate, or rewrite evidence_text. Preserve evidence_text exactly as shown. Keep evidence excerpts concise. Do not infer skill proficiency; proficiency must remain null.",
+                    "content": (
+                        "Extract explicit resume facts only. Use section headings as structural evidence and map "
+                        "教育背景 to education, 主修课程 to education.relevant_courses, 实习经历 to "
+                        "INTERNSHIP, 工作经历 to WORK, 校园经历 to CAMPUS, 项目经历 to PROJECT, 专业技能 "
+                        "to skills, and explicit 证书/资格证书/language credentials to certifications. "
+                        "For each experience, return source_section as the exact heading when present and "
+                        "experience_type as WORK, INTERNSHIP, CAMPUS, PROJECT, or OTHER. Keep generic language "
+                        "ability in skills, and keep explicit credentials such as CET-4/CET-6, IELTS, TOEFL, "
+                        "JLPT, or 普通话二级甲等 in certifications. Never invent a credential. "
+                        "For every evidence_text, copy a VERBATIM contiguous excerpt from the resume. Do not "
+                        "paraphrase, summarize, translate, or rewrite evidence_text. Preserve evidence_text "
+                        "exactly as shown. Keep evidence excerpts concise but include the relevant course text "
+                        "when returning relevant_courses. Do not infer skill proficiency; proficiency must remain null."
+                    ),
                 },
                 {"role": "user", "content": evidence_text},
             ],
@@ -207,6 +221,29 @@ def get_primary_fact_value(fact: Education | Skill | Experience | Certification)
     return fact.name
 
 
+def _fact_aliases(fact: Education | Skill | Experience | Certification) -> list[str]:
+    if isinstance(fact, Skill):
+        aliases = {
+            "powerpoint": ["PowerPoint", "PPT", "Microsoft PowerPoint"],
+            "word": ["Word", "Microsoft Word"],
+            "excel": ["Excel", "Microsoft Excel"],
+            "english": ["English", "英语"],
+            "普通话": ["普通话", "Mandarin"],
+        }
+        return aliases.get(normalize_text(fact.name), [fact.name])
+    if isinstance(fact, Certification):
+        aliases = {
+            "cet-4": ["CET-4", "CET 4", "大学英语四级"],
+            "cet-6": ["CET-6", "CET 6", "大学英语六级"],
+            "普通话二级甲等": ["普通话二级甲等"],
+            "ielts": ["IELTS", "雅思"],
+            "toefl": ["TOEFL", "托福"],
+            "jlpt": ["JLPT"],
+        }
+        return aliases.get(normalize_text(fact.name), [fact.name])
+    return [get_primary_fact_value(fact)]
+
+
 def validate_evidence_trace(result: ResumeExtractionResult, source_text: str) -> ResumeExtractionResult:
     normalized_source = normalize_text(source_text)
     fact_groups = (
@@ -218,7 +255,14 @@ def validate_evidence_trace(result: ResumeExtractionResult, source_text: str) ->
     for category, facts in fact_groups:
         for index, fact in enumerate(facts):
             normalized_evidence = normalize_text(fact.evidence_text)
-            anchored_evidence = anchor_fact_to_source(source_text, get_primary_fact_value(fact), fact.evidence_text)
+            anchored_evidence = next(
+                (
+                    anchored
+                    for alias in _fact_aliases(fact)
+                    if (anchored := anchor_fact_to_source(source_text, alias, fact.evidence_text)) is not None
+                ),
+                None,
+            )
             if anchored_evidence is None:
                 failure_reason = (
                     "evidence_not_in_source"
@@ -229,6 +273,22 @@ def validate_evidence_trace(result: ResumeExtractionResult, source_text: str) ->
                     status_code=502,
                     detail=f"Resume evidence validation failed: {category}[{index}]: {failure_reason}",
                 )
+            if isinstance(fact, Education):
+                for course_index, course in enumerate(fact.relevant_courses):
+                    if anchor_fact_to_source(source_text, course, fact.evidence_text) is None:
+                        raise HTTPException(
+                            status_code=502,
+                            detail=(
+                                "Resume evidence validation failed: "
+                                f"education[{index}].relevant_courses[{course_index}]: course_not_in_evidence"
+                            ),
+                        )
+            if isinstance(fact, Experience) and fact.source_section:
+                if normalize_text(fact.source_section) not in normalized_source:
+                    raise HTTPException(
+                        status_code=502,
+                        detail=f"Resume evidence validation failed: experience[{index}]: section_not_in_source",
+                    )
             fact.evidence_text = anchored_evidence
     return result
 
@@ -261,7 +321,8 @@ async def upload_resume(
     provider = get_resume_provider()
     try:
         result = ResumeExtractionResult.model_validate(provider.extract(text))
-        validated_result = validate_evidence_trace(result, text)
+        normalized_result = normalize_resume_extraction(result)
+        validated_result = validate_evidence_trace(normalized_result, text)
     except HTTPException:
         raise
     except Exception as error:

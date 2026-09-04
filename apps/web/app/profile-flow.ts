@@ -1,5 +1,6 @@
 export type ProfileStatus = "DRAFT" | "CONFIRMED";
 export type Proficiency = "AWARE" | "BASIC" | "PROJECT_READY" | "PROFICIENT";
+export type ExperienceType = "WORK" | "INTERNSHIP" | "CAMPUS" | "PROJECT" | "OTHER";
 export type SourceType = "AI_EXTRACTED" | "USER_ENTERED" | "USER_EDITED";
 
 export type ProfileItem = {
@@ -13,6 +14,7 @@ export type Education = ProfileItem & {
   degree: string | null;
   field_of_study: string | null;
   dates: string | null;
+  relevant_courses: string[];
 };
 
 export type Skill = ProfileItem & {
@@ -25,6 +27,7 @@ export type Experience = ProfileItem & {
   organization: string | null;
   dates: string | null;
   description: string | null;
+  experience_type: ExperienceType;
 };
 
 export type Certification = ProfileItem & {
@@ -51,6 +54,7 @@ export type ProfileUpdatePayload = {
     degree: string | null;
     field_of_study: string | null;
     dates: string | null;
+    relevant_courses: string[];
   }>;
   skills: Array<{ id?: string; name: string; proficiency: Proficiency | null }>;
   experiences: Array<{
@@ -59,6 +63,7 @@ export type ProfileUpdatePayload = {
     organization: string | null;
     dates: string | null;
     description: string | null;
+    experience_type: ExperienceType;
   }>;
   certifications: Array<{ id?: string; name: string; issuer: string | null; date: string | null }>;
 };
@@ -69,24 +74,26 @@ export function toUpdatePayload(profile: Profile): ProfileUpdatePayload {
   return {
     // evidence_text and source_type are intentionally omitted: existing
     // evidence is server-owned and new rows default to USER_ENTERED server-side.
-    education: profile.education.map(({ id, institution, degree, field_of_study, dates }) => ({
+    education: profile.education.map(({ id, institution, degree, field_of_study, dates, relevant_courses }) => ({
       ...(id ? { id } : {}),
       institution,
       degree,
       field_of_study,
       dates,
+      relevant_courses,
     })),
     skills: profile.skills.map(({ id, name, proficiency }) => ({
       ...(id ? { id } : {}),
       name,
       proficiency,
     })),
-    experiences: profile.experiences.map(({ id, title, organization, dates, description }) => ({
+    experiences: profile.experiences.map(({ id, title, organization, dates, description, experience_type }) => ({
       ...(id ? { id } : {}),
       title,
       organization,
       dates,
       description,
+      experience_type,
     })),
     certifications: profile.certifications.map(({ id, name, issuer, date }) => ({
       ...(id ? { id } : {}),

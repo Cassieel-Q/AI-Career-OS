@@ -1,6 +1,16 @@
 from __future__ import annotations
 
+from enum import StrEnum
+
 from pydantic import BaseModel, ConfigDict, Field
+
+
+class ExperienceType(StrEnum):
+    WORK = "WORK"
+    INTERNSHIP = "INTERNSHIP"
+    CAMPUS = "CAMPUS"
+    PROJECT = "PROJECT"
+    OTHER = "OTHER"
 
 
 class Education(BaseModel):
@@ -8,6 +18,7 @@ class Education(BaseModel):
     degree: str | None = None
     field_of_study: str | None = None
     dates: str | None = None
+    relevant_courses: list[str] = Field(default_factory=list)
     evidence_text: str = Field(min_length=1)
 
 
@@ -22,6 +33,8 @@ class Experience(BaseModel):
     organization: str | None = None
     dates: str | None = None
     description: str | None = None
+    experience_type: ExperienceType = ExperienceType.OTHER
+    source_section: str | None = None
     evidence_text: str = Field(min_length=1)
 
 

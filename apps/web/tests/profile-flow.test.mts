@@ -23,6 +23,7 @@ const profile: Profile = {
       degree: "MSc",
       field_of_study: null,
       dates: null,
+      relevant_courses: [],
       evidence_text: "Example University MSc",
       source_type: "AI_EXTRACTED",
     },
@@ -55,6 +56,7 @@ test("PUT payload contains only backend-editable fields", () => {
         degree: "MSc",
         field_of_study: null,
         dates: null,
+        relevant_courses: [],
       },
     ],
     skills: [

@@ -19,6 +19,14 @@ class Proficiency(StrEnum):
     PROFICIENT = "PROFICIENT"
 
 
+class ExperienceType(StrEnum):
+    WORK = "WORK"
+    INTERNSHIP = "INTERNSHIP"
+    CAMPUS = "CAMPUS"
+    PROJECT = "PROJECT"
+    OTHER = "OTHER"
+
+
 class SourceType(StrEnum):
     AI_EXTRACTED = "AI_EXTRACTED"
     USER_ENTERED = "USER_ENTERED"
@@ -54,6 +62,7 @@ class EducationInput(ProfileItemInput):
     degree: str | None = None
     field_of_study: str | None = None
     dates: str | None = None
+    relevant_courses: list[str] = Field(default_factory=list)
 
     @field_validator("institution", mode="before")
     @classmethod
@@ -67,6 +76,13 @@ class EducationInput(ProfileItemInput):
     @classmethod
     def normalize_optional_fields(cls, value: str | None) -> str | None:
         return _blank_to_none(value)
+
+    @field_validator("relevant_courses", mode="before")
+    @classmethod
+    def normalize_courses(cls, value: list[str] | None) -> list[str]:
+        if value is None:
+            return []
+        return list(dict.fromkeys(course.strip() for course in value if course and course.strip()))
 
 
 class ProfileSkillInput(ProfileItemInput):
@@ -87,6 +103,7 @@ class ExperienceInput(ProfileItemInput):
     organization: str | None = None
     dates: str | None = None
     description: str | None = None
+    experience_type: ExperienceType = ExperienceType.OTHER
 
     @field_validator("title", mode="before")
     @classmethod

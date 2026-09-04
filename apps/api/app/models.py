@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import DateTime, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.types import Uuid
+from sqlalchemy.types import JSON, Uuid
 
 from app.database import Base
 
@@ -38,6 +38,7 @@ class Education(ProfileChild, Base):
     degree: Mapped[str | None] = mapped_column(String(255), nullable=True)
     field_of_study: Mapped[str | None] = mapped_column(String(255), nullable=True)
     dates: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    relevant_courses: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
     profile: Mapped[UserProfile] = relationship(back_populates="education")
 
 
@@ -56,6 +57,7 @@ class Experience(ProfileChild, Base):
     organization: Mapped[str | None] = mapped_column(String(255), nullable=True)
     dates: Mapped[str | None] = mapped_column(String(255), nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    experience_type: Mapped[str] = mapped_column(String(16), nullable=False, default="OTHER", server_default="OTHER")
     profile: Mapped[UserProfile] = relationship(back_populates="experiences")
 
 

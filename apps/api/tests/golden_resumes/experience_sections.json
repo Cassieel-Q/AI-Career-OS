@@ -1,0 +1,15 @@
+{
+  "source_text": "实习经历\nData Intern\nAcme Analytics\n校园经历\nStudent Union Minister\nExample University",
+  "extraction": {
+    "experiences": [
+      {"title": "Data Intern", "organization": "Acme Analytics", "source_section": "实习经历", "experience_type": "OTHER", "evidence_text": "实习经历 Data Intern Acme Analytics"},
+      {"title": "Student Union Minister", "organization": "Example University", "source_section": "校园经历", "experience_type": "WORK", "evidence_text": "校园经历 Student Union Minister Example University"}
+    ]
+  },
+  "expected": {
+    "education": [],
+    "skills": [],
+    "experiences": [{"title": "Data Intern", "experience_type": "INTERNSHIP"}, {"title": "Student Union Minister", "experience_type": "CAMPUS"}],
+    "certifications": []
+  }
+}

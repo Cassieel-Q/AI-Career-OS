@@ -46,6 +46,30 @@ class UnsupportedFactProvider:
         return ResumeExtractionResult(skills=[{"name": "Kubernetes", "evidence_text": "Python"}])
 
 
+class NormalizingProvider:
+    def extract(self, evidence_text: str) -> ResumeExtractionResult:
+        return ResumeExtractionResult(
+            education=[
+                {
+                    "institution": "Example University",
+                    "field_of_study": "Computer Science",
+                    "relevant_courses": ["ML", "DB"],
+                    "evidence_text": "Example University Computer Science Courses: ML, DB",
+                }
+            ],
+            skills=[{"name": "Word, Excel, PPT", "evidence_text": "Skills: Word, Excel, PPT"}],
+            experiences=[
+                {
+                    "title": "Student Union Minister",
+                    "source_section": "Campus",
+                    "experience_type": "WORK",
+                    "evidence_text": "Campus: Student Union Minister",
+                }
+            ],
+            certifications=[],
+        )
+
+
 def test_valid_text_pdf_returns_draft_profile_with_evidence() -> None:
     set_resume_provider(MockResumeProvider())
     response = TestClient(app).post(
@@ -56,6 +80,31 @@ def test_valid_text_pdf_returns_draft_profile_with_evidence() -> None:
     body = response.json()
     assert body["skills"][0]["evidence_text"] == "Python"
     assert body["skills"][0]["proficiency"] is None
+
+
+def test_resume_upload_persists_normalized_profile_facts() -> None:
+    set_resume_provider(NormalizingProvider())
+    response = TestClient(app).post(
+        "/api/v1/resumes",
+        files={
+            "file": (
+                "resume.pdf",
+                BytesIO(
+                    pdf_bytes(
+                        "Example University Computer Science Courses: ML, DB\n"
+                        "Skills: Word, Excel, PPT\nCampus: Student Union Minister"
+                    )
+                ),
+                "application/pdf",
+            )
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["education"][0]["relevant_courses"] == ["ML", "DB"]
+    assert {skill["name"] for skill in body["skills"]} == {"Word", "Excel", "PowerPoint"}
+    assert body["experiences"][0]["experience_type"] == "CAMPUS"
 
 
 def test_profile_persistence_failure_has_distinct_error(monkeypatch) -> None:

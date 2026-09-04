@@ -10,7 +10,7 @@ import {
   saveProfileRequest,
   validateProfileForSave,
 } from "./profile-flow";
-import type { Education, Experience, Certification, Profile, ProfileItem, Proficiency, Skill } from "./profile-flow";
+import type { Education, Experience, Certification, ExperienceType, Profile, ProfileItem, Proficiency, Skill } from "./profile-flow";
 
 type EditableSection = "education" | "skills" | "experiences" | "certifications";
 
@@ -19,6 +19,13 @@ const proficiencyOptions: Array<{ value: Proficiency; label: string }> = [
   { value: "BASIC", label: "BASIC" },
   { value: "PROJECT_READY", label: "PROJECT_READY" },
   { value: "PROFICIENT", label: "PROFICIENT" },
+];
+const experienceTypeOptions: Array<{ value: ExperienceType; label: string }> = [
+  { value: "WORK", label: "Work" },
+  { value: "INTERNSHIP", label: "Internship" },
+  { value: "CAMPUS", label: "Campus" },
+  { value: "PROJECT", label: "Project" },
+  { value: "OTHER", label: "Other" },
 ];
 
 const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
@@ -115,6 +122,24 @@ export default function Home() {
       if (!current || current.status === "CONFIRMED") return current;
       const item = newItem(section);
       return { ...current, [section]: [...current[section], item] } as Profile;
+    });
+  }
+
+  function updateEducationCourses(index: number, value: string) {
+    if (!profile || profile.status === "CONFIRMED") return;
+    setDirty(true);
+    const relevant_courses = value
+      .split(/[,，、;；]/)
+      .map((course) => course.trim())
+      .filter(Boolean);
+    setProfile((current) => {
+      if (!current || current.status === "CONFIRMED") return current;
+      return {
+        ...current,
+        education: current.education.map((item, itemIndex) =>
+          itemIndex === index ? { ...item, relevant_courses } : item,
+        ),
+      };
     });
   }
 
@@ -223,6 +248,7 @@ export default function Home() {
                   <TextField label="Degree" value={item.degree} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("education", index, "degree", value)} />
                   <TextField label="Major" value={item.field_of_study} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("education", index, "field_of_study", value)} />
                   <TextField label="Dates" value={item.dates} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("education", index, "dates", value)} />
+                  <TextField label="Relevant courses" value={item.relevant_courses.join(", ")} disabled={profileLocked || mutationBusy} onChange={(value) => updateEducationCourses(index, value ?? "")} />
                 </div>
                 <Evidence item={item} />
               </>
@@ -269,6 +295,16 @@ export default function Home() {
                   <TextField label="Organization" value={item.organization} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("experiences", index, "organization", value)} />
                   <TextField label="Dates" value={item.dates} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("experiences", index, "dates", value)} />
                   <TextField label="Description" value={item.description} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("experiences", index, "description", value)} multiline />
+                  <label className="field-label">
+                    Experience type
+                    <select
+                      value={item.experience_type}
+                      disabled={profileLocked || mutationBusy}
+                      onChange={(event) => updateItem("experiences", index, "experience_type", event.target.value)}
+                    >
+                      {experienceTypeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                    </select>
+                  </label>
                 </div>
                 <Evidence item={item} />
               </>
@@ -308,9 +344,9 @@ export default function Home() {
 
 function newItem(section: EditableSection): Profile[EditableSection][number] {
   const base = { evidence_text: null, source_type: "USER_ENTERED" as const };
-  if (section === "education") return { ...base, institution: "", degree: null, field_of_study: null, dates: null };
+  if (section === "education") return { ...base, institution: "", degree: null, field_of_study: null, dates: null, relevant_courses: [] };
   if (section === "skills") return { ...base, name: "", proficiency: null };
-  if (section === "experiences") return { ...base, title: "", organization: null, dates: null, description: null };
+  if (section === "experiences") return { ...base, title: "", organization: null, dates: null, description: null, experience_type: "OTHER" as const };
   return { ...base, name: "", issuer: null, date: null };
 }
 
