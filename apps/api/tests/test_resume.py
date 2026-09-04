@@ -148,6 +148,10 @@ def test_anchor_fact_to_source_rejects_fact_absent_from_source() -> None:
     assert main.anchor_fact_to_source("Python", "Kubernetes", "Kubernetes") is None
 
 
+def test_anchor_fact_to_source_handles_decomposed_unicode() -> None:
+    assert main.anchor_fact_to_source("Cafe\u0301", "Café", "Café") == "Cafe\u0301"
+
+
 def test_evidence_matching_accepts_exact_excerpt() -> None:
     result = ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}])
 

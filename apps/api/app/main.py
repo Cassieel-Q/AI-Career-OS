@@ -131,18 +131,39 @@ def _normalize_text_with_spans(text: str) -> tuple[str, list[tuple[int, int]]]:
     source_spans: list[tuple[int, int]] = []
     pending_space: tuple[int, int] | None = None
 
-    for index, character in enumerate(text):
-        compatibility_text = unicodedata.normalize("NFKC", character).replace("\u00a0", " ")
-        for normalized_character in compatibility_text.casefold():
-            if normalized_character.isspace():
-                pending_space = (pending_space[0], index + 1) if pending_space else (index, index + 1)
+    def emit(normalized_text: str, source_span: tuple[int, int]) -> None:
+        nonlocal pending_space
+        for normalized_character in normalized_text:
+            if normalized_character.isspace() or normalized_character == "\u00a0":
+                pending_space = (
+                    (pending_space[0], source_span[1]) if pending_space else source_span
+                )
                 continue
             if pending_space is not None and normalized_chars:
                 normalized_chars.append(" ")
                 source_spans.append(pending_space)
             pending_space = None
             normalized_chars.append(normalized_character)
-            source_spans.append((index, index + 1))
+            source_spans.append(source_span)
+
+    segment_start: int | None = None
+    for index, character in enumerate(text):
+        if character.isspace() or character == "\u00a0":
+            if segment_start is not None:
+                segment = text[segment_start:index]
+                emit(unicodedata.normalize("NFKC", segment).casefold(), (segment_start, index))
+                segment_start = None
+            emit(" ", (index, index + 1))
+        elif segment_start is None:
+            segment_start = index
+        elif unicodedata.combining(character) == 0:
+            segment = text[segment_start:index]
+            emit(unicodedata.normalize("NFKC", segment).casefold(), (segment_start, index))
+            segment_start = index
+
+    if segment_start is not None:
+        segment = text[segment_start:]
+        emit(unicodedata.normalize("NFKC", segment).casefold(), (segment_start, len(text)))
 
     return "".join(normalized_chars), source_spans
 
