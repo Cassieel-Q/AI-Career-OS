@@ -1,53 +1,15 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import type { ReactNode } from "react";
-
-type ProfileStatus = "DRAFT" | "CONFIRMED";
-type Proficiency = "AWARE" | "BASIC" | "PROJECT_READY" | "PROFICIENT";
-type SourceType = "AI_EXTRACTED" | "USER_ENTERED" | "USER_EDITED";
-
-type ProfileItem = {
-  id?: string;
-  evidence_text: string | null;
-  source_type: SourceType;
-};
-
-type Education = ProfileItem & {
-  institution: string;
-  degree: string | null;
-  field_of_study: string | null;
-  dates: string | null;
-};
-
-type Skill = ProfileItem & {
-  name: string;
-  proficiency: Proficiency | null;
-};
-
-type Experience = ProfileItem & {
-  title: string;
-  organization: string | null;
-  dates: string | null;
-  description: string | null;
-};
-
-type Certification = ProfileItem & {
-  name: string;
-  issuer: string | null;
-  date: string | null;
-};
-
-type Profile = {
-  profile_id: string;
-  status: ProfileStatus;
-  created_at: string;
-  updated_at: string;
-  education: Education[];
-  skills: Skill[];
-  experiences: Experience[];
-  certifications: Certification[];
-};
+import {
+  getProfileIdFromSearch,
+  profileHref,
+  readApiPayload,
+  toUpdatePayload,
+  validateProfileForSave,
+} from "./profile-flow";
+import type { Education, Experience, Certification, Profile, ProfileItem, Proficiency, Skill } from "./profile-flow";
 
 type EditableSection = "education" | "skills" | "experiences" | "certifications";
 
@@ -65,12 +27,39 @@ export default function Home() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(false);
   const [saving, setSaving] = useState<"save" | "confirm" | null>(null);
+
+  useEffect(() => {
+    const profileId = getProfileIdFromSearch(window.location.search);
+    if (!profileId) return;
+    let active = true;
+    async function hydrateProfile() {
+      setLoadingProfile(true);
+      setError("");
+      try {
+        const response = await fetch(`${apiUrl}/api/v1/profiles/${profileId}`);
+        const payload = await readApiPayload<Profile>(response);
+        if (active) setProfile(payload);
+      } catch (loadError) {
+        if (active) setError(loadError instanceof Error ? loadError.message : "Profile could not be loaded.");
+      } finally {
+        if (active) setLoadingProfile(false);
+      }
+    }
+    void hydrateProfile();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   function chooseFile(event: ChangeEvent<HTMLInputElement>) {
     setFile(event.target.files?.[0] ?? null);
     setProfile(null);
     setError("");
+    const url = new URL(window.location.href);
+    url.searchParams.delete("profile_id");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
   }
 
   async function upload(event: FormEvent<HTMLFormElement>) {
@@ -89,8 +78,9 @@ export default function Home() {
         method: "POST",
         body,
       });
-      const payload = await readPayload(response);
-      setProfile(payload as Profile);
+      const payload = await readApiPayload<Profile>(response);
+      setProfile(payload);
+      window.history.replaceState(null, "", profileHref(window.location.href, payload.profile_id));
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : "Resume upload failed.");
     } finally {
@@ -128,6 +118,11 @@ export default function Home() {
 
   async function saveDraft() {
     if (!profile || profile.status === "CONFIRMED") return;
+    const validationError = validateProfileForSave(profile);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     setSaving("save");
     setError("");
     try {
@@ -136,8 +131,8 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(toUpdatePayload(profile)),
       });
-      const payload = await readPayload(response);
-      setProfile(payload as Profile);
+      const payload = await readApiPayload<Profile>(response);
+      setProfile(payload);
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Profile could not be saved.");
     } finally {
@@ -147,14 +142,19 @@ export default function Home() {
 
   async function confirmProfile() {
     if (!profile || profile.status === "CONFIRMED") return;
+    const validationError = validateProfileForSave(profile);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     setSaving("confirm");
     setError("");
     try {
       const response = await fetch(`${apiUrl}/api/v1/profiles/${profile.profile_id}/confirm`, {
         method: "POST",
       });
-      const payload = await readPayload(response);
-      setProfile(payload as Profile);
+      const payload = await readApiPayload<Profile>(response);
+      setProfile(payload);
     } catch (confirmError) {
       setError(confirmError instanceof Error ? confirmError.message : "Profile could not be confirmed.");
     } finally {
@@ -175,8 +175,8 @@ export default function Home() {
       <form className="upload-panel" onSubmit={upload}>
         <label htmlFor="resume">Resume PDF</label>
         <input id="resume" type="file" accept="application/pdf,.pdf" onChange={chooseFile} />
-        <button type="submit" disabled={loading || mutationBusy}>
-          {loading ? "Extracting..." : "Upload resume"}
+        <button type="submit" disabled={loading || loadingProfile || mutationBusy}>
+          {loadingProfile ? "Loading profile..." : loading ? "Extracting..." : "Upload resume"}
         </button>
         {file && <p className="file-name">Selected: {file.name}</p>}
       </form>
@@ -304,25 +304,6 @@ function newItem(section: EditableSection): Profile[EditableSection][number] {
   return { ...base, name: "", issuer: null, date: null };
 }
 
-function toUpdatePayload(profile: Profile) {
-  const stripId = <T extends ProfileItem>(item: T) => {
-    const { id, ...rest } = item;
-    return id ? { id, ...rest } : rest;
-  };
-  return {
-    education: profile.education.map(stripId),
-    skills: profile.skills.map(stripId),
-    experiences: profile.experiences.map(stripId),
-    certifications: profile.certifications.map(stripId),
-  };
-}
-
-async function readPayload(response: Response): Promise<unknown> {
-  const payload = await response.json();
-  if (!response.ok) throw new Error(payload.detail ?? "Request failed.");
-  return payload;
-}
-
 function ProfileSection<T extends ProfileItem>({
   title,
   section,
@@ -357,7 +338,7 @@ function ProfileSection<T extends ProfileItem>({
 }
 
 function TextField({ label, value, disabled, onChange, multiline = false }: { label: string; value: string | null; disabled: boolean; onChange: (value: string | null) => void; multiline?: boolean }) {
-  const props = { value: value ?? "", disabled, onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange(event.target.value || null) };
+  const props = { value: value ?? "", disabled, onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange(event.target.value) };
   return <label className="field-label">{label}{multiline ? <textarea {...props} rows={3} /> : <input {...props} />}</label>;
 }
 
