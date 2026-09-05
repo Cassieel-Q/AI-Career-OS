@@ -1,9 +1,12 @@
 from io import BytesIO
+from types import SimpleNamespace
+from uuid import uuid4
 
 import fitz
 from fastapi.testclient import TestClient
 
 from app.main import ResumeExtractionResult, set_resume_provider
+from app.profile_schemas import EducationRead
 
 
 def pdf_bytes(text: str) -> bytes:
@@ -50,6 +53,30 @@ def test_profile_can_be_read(client: TestClient, persisted_profile) -> None:
     assert response.status_code == 200
     assert response.json()["profile_id"] == str(persisted_profile.id)
     assert response.json()["education"][0]["institution"] == "Example University"
+    assert response.json()["education"][0]["relevant_courses"] == []
+
+
+def test_legacy_education_missing_or_null_courses_serializes_as_empty_list() -> None:
+    base = {
+        "id": uuid4(),
+        "institution": "Legacy University",
+        "evidence_text": None,
+        "source_type": "USER_ENTERED",
+    }
+
+    assert EducationRead.model_validate(base).relevant_courses == []
+    assert EducationRead.model_validate({**base, "relevant_courses": None}).relevant_courses == []
+    legacy_orm_row = SimpleNamespace(
+        id=base["id"],
+        institution=base["institution"],
+        degree=None,
+        field_of_study=None,
+        dates=None,
+        relevant_courses=None,
+        evidence_text=None,
+        source_type="USER_ENTERED",
+    )
+    assert EducationRead.model_validate(legacy_orm_row).relevant_courses == []
 
 
 def test_normalized_courses_and_experience_type_are_persisted(client: TestClient, persisted_profile) -> None:
@@ -180,7 +207,9 @@ def test_confirm_changes_state_and_reads_back(client: TestClient, persisted_prof
 
     assert response.status_code == 200
     assert response.json()["status"] == "CONFIRMED"
-    assert client.get(f"/api/v1/profiles/{persisted_profile.id}").json()["status"] == "CONFIRMED"
+    reloaded = client.get(f"/api/v1/profiles/{persisted_profile.id}").json()
+    assert reloaded["status"] == "CONFIRMED"
+    assert reloaded["education"][0]["relevant_courses"] == []
 
 
 def test_confirm_rejects_empty_profile(client: TestClient, db_session) -> None:

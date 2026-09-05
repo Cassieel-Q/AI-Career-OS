@@ -18,7 +18,7 @@ export type Education = ProfileItem & {
   degree: string | null;
   field_of_study: string | null;
   dates: string | null;
-  relevant_courses: string[];
+  relevant_courses?: string[] | null;
 };
 
 export type Skill = ProfileItem & {
@@ -52,6 +52,31 @@ export type Profile = {
   experiences: Experience[];
   certifications: Certification[];
 };
+
+export function createEmptyEducation(): Education {
+  return {
+    evidence_text: null,
+    source_type: "USER_ENTERED",
+    institution: "",
+    degree: null,
+    field_of_study: null,
+    dates: null,
+    relevant_courses: [],
+  };
+}
+
+export function normalizeProfile(profile: Profile): Profile {
+  return {
+    ...profile,
+    education: (profile.education ?? []).map((item) => ({
+      ...item,
+      relevant_courses: item.relevant_courses ?? [],
+    })),
+    skills: profile.skills ?? [],
+    experiences: profile.experiences ?? [],
+    certifications: profile.certifications ?? [],
+  };
+}
 
 export type ProfileUpdatePayload = {
   education: Array<{
@@ -87,13 +112,13 @@ export function toUpdatePayload(profile: Profile): ProfileUpdatePayload {
   return {
     // evidence_text and source_type are intentionally omitted: existing
     // evidence is server-owned and new rows default to USER_ENTERED server-side.
-    education: profile.education.map(({ id, institution, degree, field_of_study, dates, relevant_courses }) => ({
+    education: (profile.education ?? []).map(({ id, institution, degree, field_of_study, dates, relevant_courses }) => ({
       ...(id ? { id } : {}),
       institution,
       degree,
       field_of_study,
       dates,
-      relevant_courses,
+      relevant_courses: relevant_courses ?? [],
     })),
     skills: profile.skills.map(({ id, name, proficiency }) => ({
       ...(id ? { id } : {}),
@@ -144,7 +169,7 @@ export async function saveProfileRequest(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(toUpdatePayload(profile)),
   });
-  return readApiPayload<Profile>(response);
+  return normalizeProfile(await readApiPayload<Profile>(response));
 }
 
 export async function confirmProfileRequest(
@@ -153,11 +178,11 @@ export async function confirmProfileRequest(
   apiUrl: string,
   request: ProfileRequester = fetch,
 ): Promise<Profile> {
-  const persistedProfile = dirty ? await saveProfileRequest(profile, apiUrl, request) : profile;
+  const persistedProfile = dirty ? await saveProfileRequest(profile, apiUrl, request) : normalizeProfile(profile);
   const response = await request(`${apiUrl}/api/v1/profiles/${persistedProfile.profile_id}/confirm`, {
     method: "POST",
   });
-  return readApiPayload<Profile>(response);
+  return normalizeProfile(await readApiPayload<Profile>(response));
 }
 
 export function getProfileIdFromSearch(search: string): string | null {

@@ -4,8 +4,11 @@ import test from "node:test";
 import {
   getProfileIdFromSearch,
   confirmProfileRequest,
+  createEmptyEducation,
   profileHref,
+  normalizeProfile,
   readApiPayload,
+  saveProfileRequest,
   toUpdatePayload,
   validateProfileForSave,
 } from "../app/profile-flow.ts";
@@ -91,6 +94,68 @@ test("backend validation details become useful client errors", async () => {
 test("profile identity is read from and written to the URL", () => {
   assert.equal(getProfileIdFromSearch("?profile_id=profile-1"), "profile-1");
   assert.equal(profileHref("/career?tab=profile#top", "profile-1"), "/career?tab=profile&profile_id=profile-1#top");
+});
+
+test("legacy education without courses normalizes to an empty list", () => {
+  const legacyProfile = {
+    ...profile,
+    education: [{ ...profile.education[0], relevant_courses: undefined }],
+  } as unknown as Profile;
+
+  const normalized = normalizeProfile(legacyProfile);
+
+  assert.deepEqual(normalized.education[0].relevant_courses, []);
+  assert.deepEqual(toUpdatePayload(legacyProfile).education[0].relevant_courses, []);
+});
+
+test("null education courses normalize to an empty list", () => {
+  const legacyProfile = {
+    ...profile,
+    education: [{ ...profile.education[0], relevant_courses: null }],
+  } as unknown as Profile;
+
+  assert.deepEqual(normalizeProfile(legacyProfile).education[0].relevant_courses, []);
+});
+
+test("confirmed legacy profiles remain render-safe", () => {
+  const legacyProfile = {
+    ...profile,
+    status: "CONFIRMED" as const,
+    education: [{ ...profile.education[0], relevant_courses: null }],
+  } as unknown as Profile;
+
+  assert.deepEqual(normalizeProfile(legacyProfile).education[0].relevant_courses, []);
+  assert.equal(normalizeProfile(legacyProfile).status, "CONFIRMED");
+});
+
+test("new education items initialize relevant courses", () => {
+  assert.deepEqual(createEmptyEducation().relevant_courses, []);
+});
+
+test("save response normalizes legacy courses before returning to state", async () => {
+  const legacyProfile = {
+    ...profile,
+    education: [{ ...profile.education[0], relevant_courses: null }],
+  } as unknown as Profile;
+  const request: ProfileRequester = async () => jsonResponse(legacyProfile);
+
+  const saved = await saveProfileRequest(profile, "http://api.test", request);
+
+  assert.deepEqual(saved.education[0].relevant_courses, []);
+});
+
+test("confirm response normalizes legacy courses before rendering", async () => {
+  const legacyProfile = {
+    ...profile,
+    status: "CONFIRMED" as const,
+    education: [{ ...profile.education[0], relevant_courses: null }],
+  } as unknown as Profile;
+  const request: ProfileRequester = async () => jsonResponse(legacyProfile);
+
+  const confirmed = await confirmProfileRequest(profile, false, "http://api.test", request);
+
+  assert.deepEqual(confirmed.education[0].relevant_courses, []);
+  assert.equal(confirmed.status, "CONFIRMED");
 });
 
 test("dirty confirmation saves the latest draft before confirming it", async () => {
