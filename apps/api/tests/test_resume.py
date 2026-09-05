@@ -1,11 +1,14 @@
 from io import BytesIO
+import logging
 import sys
 from types import SimpleNamespace
 
 import fitz
+import httpx
 import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
+from openai import APIStatusError
 from sqlalchemy.exc import SQLAlchemyError
 
 from app import main
@@ -126,6 +129,185 @@ def test_profile_persistence_failure_has_distinct_error(monkeypatch) -> None:
 
     assert response.status_code == 503
     assert response.json()["detail"] == "Profile persistence failed"
+
+
+def test_provider_timeout_returns_safe_diagnostic_and_timeout_status(client: TestClient, caplog) -> None:
+    class TimeoutProvider:
+        def extract(self, evidence_text: str) -> ResumeExtractionResult:
+            raise TimeoutError("resume-content-secret")
+
+    set_resume_provider(TimeoutProvider())
+    try:
+        with caplog.at_level(logging.ERROR, logger=main.logger.name):
+            response = client.post(
+                "/api/v1/resumes",
+                files={"file": ("resume.pdf", BytesIO(pdf_bytes("resume-source-secret")), "application/pdf")},
+            )
+    finally:
+        set_resume_provider(None)
+
+    assert response.status_code == 504
+    assert response.json()["detail"] == "Resume extraction provider timed out"
+    provider_logs = [record.getMessage() for record in caplog.records if "provider_failure" in record.getMessage()]
+    assert provider_logs
+    diagnostic = provider_logs[-1]
+    assert "failure_type=timeout" in diagnostic
+    assert "stage=initial_extraction" in diagnostic
+    assert "exception_class=TimeoutError" in diagnostic
+    assert "upstream_status=none" in diagnostic
+    assert "elapsed_ms=" in diagnostic
+    assert "total_llm_calls=1" in diagnostic
+    assert "resume-source-secret" not in caplog.text
+    assert "resume-content-secret" not in caplog.text
+
+
+def test_provider_connection_error_returns_safe_unavailable_diagnostic(client: TestClient, caplog) -> None:
+    class ConnectionProvider:
+        def extract(self, evidence_text: str) -> ResumeExtractionResult:
+            raise ConnectionError("authorization-secret")
+
+    set_resume_provider(ConnectionProvider())
+    try:
+        with caplog.at_level(logging.ERROR, logger=main.logger.name):
+            response = client.post(
+                "/api/v1/resumes",
+                files={"file": ("resume.pdf", BytesIO(pdf_bytes("connection-resume-secret")), "application/pdf")},
+            )
+    finally:
+        set_resume_provider(None)
+
+    assert response.status_code == 502
+    assert response.json()["detail"] == "Resume extraction provider unavailable"
+    diagnostic = next(record.getMessage() for record in caplog.records if "provider_failure" in record.getMessage())
+    assert "failure_type=connection_error" in diagnostic
+    assert "stage=initial_extraction" in diagnostic
+    assert "exception_class=ConnectionError" in diagnostic
+    assert "authorization-secret" not in caplog.text
+    assert "connection-resume-secret" not in caplog.text
+
+
+def test_provider_status_error_returns_safe_status_diagnostic(client: TestClient, caplog) -> None:
+    request = httpx.Request("POST", "https://gateway.example/v1/chat/completions")
+    response = httpx.Response(503, request=request, content=b'{"error":"provider-body-secret"}')
+
+    class StatusProvider:
+        def extract(self, evidence_text: str) -> ResumeExtractionResult:
+            raise APIStatusError(
+                "provider-body-secret",
+                response=response,
+                body={"error": "provider-body-secret"},
+            )
+
+    set_resume_provider(StatusProvider())
+    try:
+        with caplog.at_level(logging.ERROR, logger=main.logger.name):
+            result = client.post(
+                "/api/v1/resumes",
+                files={"file": ("resume.pdf", BytesIO(pdf_bytes("status-resume-secret")), "application/pdf")},
+            )
+    finally:
+        set_resume_provider(None)
+
+    assert result.status_code == 502
+    assert result.json()["detail"] == "Resume extraction provider unavailable"
+    diagnostic = next(record.getMessage() for record in caplog.records if "provider_failure" in record.getMessage())
+    assert "failure_type=upstream_status_error" in diagnostic
+    assert "stage=initial_extraction" in diagnostic
+    assert "exception_class=APIStatusError" in diagnostic
+    assert "upstream_status=503" in diagnostic
+    assert "status-resume-secret" not in caplog.text
+    assert "provider-body-secret" not in caplog.text
+
+
+def test_invalid_structured_output_returns_safe_diagnostic(client: TestClient, caplog) -> None:
+    class InvalidStructuredOutputProvider:
+        def extract(self, evidence_text: str) -> object:
+            return {"skills": [{"name": "Python"}]}
+
+    set_resume_provider(InvalidStructuredOutputProvider())
+    try:
+        with caplog.at_level(logging.ERROR, logger=main.logger.name):
+            response = client.post(
+                "/api/v1/resumes",
+                files={"file": ("resume.pdf", BytesIO(pdf_bytes("structured-resume-secret")), "application/pdf")},
+            )
+    finally:
+        set_resume_provider(None)
+
+    assert response.status_code == 502
+    assert response.json()["detail"] == "Resume extraction returned invalid structured output"
+    diagnostic = next(record.getMessage() for record in caplog.records if "provider_failure" in record.getMessage())
+    assert "failure_type=structured_output_validation" in diagnostic
+    assert "stage=initial_extraction" in diagnostic
+    assert "exception_class=ValidationError" in diagnostic
+    assert "structured-resume-secret" not in caplog.text
+
+
+def test_provider_failure_during_experience_repair_reports_repair_stage(client: TestClient, caplog) -> None:
+    class RepairFailureProvider:
+        def extract(self, evidence_text: str) -> ResumeExtractionResult:
+            return ResumeExtractionResult(
+                experiences=[
+                    {
+                        "title": "Student Union",
+                        "experience_type": "CAMPUS",
+                        "source_section": "Campus Experience",
+                        "evidence_text": "Student Union",
+                    }
+                ]
+            )
+
+        def extract_section(self, section_text: str, section_label: str) -> ResumeExtractionResult:
+            assert section_label == "EXPERIENCE"
+            raise TimeoutError("repair-provider-body-secret")
+
+    source = "Campus Experience\nStudent Union\n\nWork Experience\nBackend Engineer"
+    set_resume_provider(RepairFailureProvider())
+    try:
+        with caplog.at_level(logging.ERROR, logger=main.logger.name):
+            response = client.post(
+                "/api/v1/resumes",
+                files={"file": ("resume.pdf", BytesIO(pdf_bytes(source)), "application/pdf")},
+            )
+    finally:
+        set_resume_provider(None)
+
+    assert response.status_code == 504
+    assert response.json()["detail"] == "Resume extraction provider timed out"
+    diagnostic = next(record.getMessage() for record in caplog.records if "provider_failure" in record.getMessage())
+    assert "failure_type=timeout" in diagnostic
+    assert "stage=experience_repair" in diagnostic
+    assert "total_llm_calls=2" in diagnostic
+    assert "repair-provider-body-secret" not in caplog.text
+
+
+def test_unexpected_processing_failure_returns_safe_diagnostic(client: TestClient, caplog, monkeypatch) -> None:
+    class Provider:
+        def extract(self, evidence_text: str) -> ResumeExtractionResult:
+            return ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}])
+
+    def fail_normalization(result: ResumeExtractionResult) -> ResumeExtractionResult:
+        raise RuntimeError("internal-provider-body-secret")
+
+    monkeypatch.setattr(main, "normalize_resume_extraction", fail_normalization)
+    set_resume_provider(Provider())
+    try:
+        with caplog.at_level(logging.ERROR, logger=main.logger.name):
+            response = client.post(
+                "/api/v1/resumes",
+                files={"file": ("resume.pdf", BytesIO(pdf_bytes("internal-resume-secret Python")), "application/pdf")},
+            )
+    finally:
+        set_resume_provider(None)
+
+    assert response.status_code == 500
+    assert response.json()["detail"] == "Resume extraction processing failed"
+    diagnostic = next(record.getMessage() for record in caplog.records if "provider_failure" in record.getMessage())
+    assert "failure_type=unexpected_internal_processing" in diagnostic
+    assert "stage=grounding_normalization" in diagnostic
+    assert "exception_class=RuntimeError" in diagnostic
+    assert "internal-provider-body-secret" not in caplog.text
+    assert "internal-resume-secret" not in caplog.text
 
 
 def test_non_pdf_is_rejected() -> None:
@@ -387,3 +569,31 @@ def test_openai_prompt_requires_verbatim_contiguous_evidence(monkeypatch) -> Non
     assert "VERBATIM contiguous excerpt" in prompt
     assert "Do not paraphrase, summarize, translate, or rewrite evidence_text" in prompt
     assert "Keep evidence excerpts concise" in prompt
+
+
+def test_openai_section_prompt_requires_experience_type_and_source_section(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    class FakeCompletions:
+        def parse(self, **kwargs: object) -> object:
+            captured.update(kwargs)
+            return SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(parsed=ResumeExtractionResult()))]
+            )
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs: str) -> None:
+            self.beta = SimpleNamespace(chat=SimpleNamespace(completions=FakeCompletions()))
+
+    monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=FakeOpenAI))
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+
+    main.OpenAIResumeProvider().extract_section("工作经历\nBackend Engineer", "EXPERIENCE")
+    prompt = captured["messages"][0]["content"]
+
+    assert "experience_type" in prompt
+    assert "source_section" in prompt
+    assert "WORK" in prompt
+    assert "INTERNSHIP" in prompt
+    assert "PROJECT" in prompt
+    assert "exact heading" in prompt

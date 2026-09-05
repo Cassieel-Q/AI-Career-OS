@@ -89,6 +89,145 @@ def test_non_empty_campus_section_is_reported_when_initial_output_omits_it() -> 
     assert "MISSING_SECTION_CONTENT:CAMPUS" in processed.completeness_warnings
 
 
+def test_campus_experience_does_not_satisfy_a_non_empty_work_section() -> None:
+    source = "校园经历\n学生会干事\n\n工作经历\nBackend Engineer"
+    result = ResumeExtractionResult(
+        experiences=[
+            {
+                "title": "学生会干事",
+                "experience_type": "CAMPUS",
+                "source_section": "校园经历",
+                "evidence_text": "学生会干事",
+            }
+        ]
+    )
+
+    processed = process_resume_extraction(result, source, allow_repair=False)
+
+    assert "MISSING_SECTION_CONTENT:EXPERIENCE" in processed.completeness_warnings
+
+
+def test_grounded_work_experience_satisfies_work_without_a_false_missing_warning() -> None:
+    source = "校园经历\n学生会干事\n\n工作经历\nBackend Engineer"
+    result = ResumeExtractionResult(
+        experiences=[
+            {
+                "title": "学生会干事",
+                "experience_type": "CAMPUS",
+                "source_section": "校园经历",
+                "evidence_text": "学生会干事",
+            },
+            {
+                "title": "Backend Engineer",
+                "experience_type": "WORK",
+                "source_section": "工作经历",
+                "evidence_text": "Backend Engineer",
+            },
+        ]
+    )
+
+    processed = process_resume_extraction(result, source, allow_repair=False)
+
+    assert "MISSING_SECTION_CONTENT:CAMPUS" not in processed.completeness_warnings
+    assert "MISSING_SECTION_CONTENT:EXPERIENCE" not in processed.completeness_warnings
+
+
+def test_internship_section_with_only_campus_result_triggers_targeted_repair() -> None:
+    source = "校园经历\n学生会干事\n\n实习经历\nData Intern"
+
+    class Provider:
+        def __init__(self) -> None:
+            self.calls: list[str] = []
+
+        def extract_section(self, section_text: str, section_label: str) -> ResumeExtractionResult:
+            self.calls.append(section_label)
+            assert section_label == "EXPERIENCE"
+            assert section_text == "实习经历\nData Intern"
+            return ResumeExtractionResult(
+                experiences=[
+                    {
+                        "title": "Data Intern",
+                        "experience_type": "INTERNSHIP",
+                        "evidence_text": "Data Intern",
+                    }
+                ]
+            )
+
+    provider = Provider()
+    processed = process_resume_extraction(
+        ResumeExtractionResult(
+            experiences=[
+                {
+                    "title": "学生会干事",
+                    "experience_type": "CAMPUS",
+                    "source_section": "校园经历",
+                    "evidence_text": "学生会干事",
+                }
+            ]
+        ),
+        source,
+        provider=provider,
+    )
+
+    assert provider.calls == ["EXPERIENCE"]
+    assert [item.title for item in processed.result.experiences] == ["学生会干事", "Data Intern"]
+    assert "MISSING_SECTION_CONTENT:EXPERIENCE" not in processed.completeness_warnings
+
+
+def test_project_section_is_not_satisfied_by_unrelated_work_experience() -> None:
+    source = "项目经历\nProject Alpha\n\n工作经历\nBackend Engineer"
+    result = ResumeExtractionResult(
+        experiences=[
+            {
+                "title": "Backend Engineer",
+                "experience_type": "WORK",
+                "source_section": "工作经历",
+                "evidence_text": "Backend Engineer",
+            }
+        ]
+    )
+
+    processed = process_resume_extraction(result, source, allow_repair=False)
+
+    assert "MISSING_SECTION_CONTENT:EXPERIENCE" in processed.completeness_warnings
+
+
+def test_combined_internship_work_heading_accepts_either_compatible_type() -> None:
+    source = "实习/工作经历\nData Intern"
+    result = ResumeExtractionResult(
+        experiences=[
+            {
+                "title": "Data Intern",
+                "experience_type": "INTERNSHIP",
+                "source_section": "实习/工作经历",
+                "evidence_text": "Data Intern",
+            }
+        ]
+    )
+
+    processed = process_resume_extraction(result, source, allow_repair=False)
+
+    assert "MISSING_SECTION_CONTENT:EXPERIENCE" not in processed.completeness_warnings
+
+
+@pytest.mark.parametrize(
+    ("section_key", "attempt", "expected_stage"),
+    [
+        ("EDUCATION", 1, "education_repair_1"),
+        ("EDUCATION", 2, "education_repair_2"),
+        ("EXPERIENCE", 1, "experience_repair"),
+        ("CAMPUS", 1, "campus_repair"),
+        ("SKILLS", 1, "other_section_repair"),
+    ],
+)
+def test_repair_stage_names_are_explicit_and_bounded(
+    section_key: str,
+    attempt: int,
+    expected_stage: str,
+) -> None:
+    assert main._experience_repair_stage(section_key, attempt) == expected_stage
+
+
 def test_targeted_campus_repair_uses_only_the_campus_section() -> None:
     class Provider:
         def extract_section(self, section_text: str, section_label: str) -> ResumeExtractionResult:
@@ -153,10 +292,10 @@ def test_each_missing_top_level_section_gets_one_grounded_targeted_repair() -> N
                 return ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}])
             if section_label == "EXPERIENCE":
                 return ResumeExtractionResult(
-                    experiences=[
+                experiences=[
                         {
                             "title": "Backend Intern",
-                            "experience_type": "INTERNSHIP",
+                            "experience_type": "WORK",
                             "evidence_text": "Backend Intern",
                         }
                     ]

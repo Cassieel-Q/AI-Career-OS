@@ -7,12 +7,14 @@ import re
 import time
 import unicodedata
 from dataclasses import dataclass
-from typing import Protocol
+from typing import NoReturn, Protocol
 from uuid import UUID
 
 import fitz
+import httpx
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -48,6 +50,119 @@ _TIMING_FIELDS = (
     "total_llm_calls",
 )
 logger = logging.getLogger(__name__)
+
+_PROVIDER_FAILURE_TIMEOUT = "timeout"
+_PROVIDER_FAILURE_CONNECTION = "connection_error"
+_PROVIDER_FAILURE_UPSTREAM = "upstream_status_error"
+_PROVIDER_FAILURE_STRUCTURED_OUTPUT = "structured_output_validation"
+_PROVIDER_FAILURE_INTERNAL = "unexpected_internal_processing"
+_PROVIDER_FAILURE_RESPONSES = {
+    _PROVIDER_FAILURE_TIMEOUT: (504, "Resume extraction provider timed out"),
+    _PROVIDER_FAILURE_CONNECTION: (502, "Resume extraction provider unavailable"),
+    _PROVIDER_FAILURE_UPSTREAM: (502, "Resume extraction provider unavailable"),
+    _PROVIDER_FAILURE_STRUCTURED_OUTPUT: (502, "Resume extraction returned invalid structured output"),
+    _PROVIDER_FAILURE_INTERNAL: (500, "Resume extraction processing failed"),
+}
+
+
+def _has_exception_name(error: BaseException, names: tuple[str, ...]) -> bool:
+    return any(base.__name__ in names for base in type(error).__mro__)
+
+
+def _safe_upstream_status(error: BaseException) -> int | None:
+    possible_statuses = (
+        getattr(error, "status_code", None),
+        getattr(getattr(error, "response", None), "status_code", None),
+    )
+    for status in possible_statuses:
+        if isinstance(status, int) and not isinstance(status, bool) and 100 <= status <= 599:
+            return status
+    return None
+
+
+def _classify_provider_failure(error: BaseException, *, provider_call: bool) -> str:
+    if isinstance(error, (TimeoutError, httpx.TimeoutException)) or _has_exception_name(
+        error, ("APITimeoutError",)
+    ):
+        return _PROVIDER_FAILURE_TIMEOUT
+    if isinstance(error, (ConnectionError, httpx.RequestError)) or _has_exception_name(
+        error, ("APIConnectionError",)
+    ):
+        return _PROVIDER_FAILURE_CONNECTION
+    if isinstance(error, httpx.HTTPStatusError) or _has_exception_name(
+        error, ("APIStatusError",)
+    ):
+        return _PROVIDER_FAILURE_UPSTREAM
+    if isinstance(error, ValidationError) or _has_exception_name(
+        error,
+        (
+            "APIResponseValidationError",
+            "LengthFinishReasonError",
+            "ContentFilterFinishReasonError",
+        ),
+    ):
+        return _PROVIDER_FAILURE_STRUCTURED_OUTPUT
+    if provider_call and isinstance(error, (ValueError, TypeError)):
+        return _PROVIDER_FAILURE_STRUCTURED_OUTPUT
+    if _has_exception_name(error, ("APIError", "OpenAIError")):
+        return _PROVIDER_FAILURE_UPSTREAM
+    return _PROVIDER_FAILURE_INTERNAL
+
+
+class ResumeExtractionFailure(Exception):
+    """Internal failure carrying only safe metadata for the upload boundary."""
+
+    def __init__(
+        self,
+        error: BaseException,
+        *,
+        stage: str,
+        elapsed_ms: float,
+        total_llm_calls: int,
+        provider_call: bool,
+    ) -> None:
+        self.failure_type = _classify_provider_failure(error, provider_call=provider_call)
+        self.stage = stage
+        self.exception_class = type(error).__name__
+        self.upstream_status = _safe_upstream_status(error)
+        self.elapsed_ms = elapsed_ms
+        self.total_llm_calls = total_llm_calls
+        super().__init__("resume extraction failure")
+
+
+def _raise_resume_extraction_failure(
+    error: BaseException,
+    *,
+    stage: str,
+    elapsed_ms: float,
+    total_llm_calls: int,
+    provider_call: bool,
+) -> NoReturn:
+    raise ResumeExtractionFailure(
+        error,
+        stage=stage,
+        elapsed_ms=elapsed_ms,
+        total_llm_calls=total_llm_calls,
+        provider_call=provider_call,
+    ) from None
+
+
+def _log_provider_failure(failure: ResumeExtractionFailure) -> None:
+    logger.error(
+        "provider_failure failure_type=%s stage=%s exception_class=%s upstream_status=%s "
+        "elapsed_ms=%.2f total_llm_calls=%d",
+        failure.failure_type,
+        failure.stage,
+        failure.exception_class,
+        failure.upstream_status if failure.upstream_status is not None else "none",
+        failure.elapsed_ms,
+        failure.total_llm_calls,
+    )
+
+
+def _provider_failure_http_exception(failure: ResumeExtractionFailure) -> HTTPException:
+    status_code, detail = _PROVIDER_FAILURE_RESPONSES[failure.failure_type]
+    return HTTPException(status_code=status_code, detail=detail)
 
 
 def get_openai_timeout_seconds() -> float:
@@ -149,7 +264,10 @@ class OpenAIResumeProvider:
                 "Do not use or invent information outside the supplied section. For every raw fact, "
                 "preserve the exact source value in raw_value and copy a VERBATIM contiguous excerpt "
                 "into evidence_text. Keep generic language ability in skills and explicit credentials "
-                "in certifications. Do not infer credential pass/fail status."
+                "in certifications. Do not infer credential pass/fail status. For experience sections, "
+                "set source_section to the exact heading present in the supplied text and classify "
+                "experience_type as WORK, INTERNSHIP, PROJECT, or CAMPUS according to that heading; "
+                "never use OTHER when the heading provides one of these classifications."
             )
         response = self.client.beta.chat.completions.parse(
             model=self.model,
@@ -1092,6 +1210,16 @@ def _dedupe_experiences(items: list[Experience]) -> list[Experience]:
     return deduped
 
 
+def _experience_repair_stage(section_key: str, attempt: int) -> str:
+    if section_key == "EDUCATION":
+        return f"education_repair_{attempt}"
+    if section_key == "EXPERIENCE":
+        return "experience_repair"
+    if section_key == "CAMPUS":
+        return "campus_repair"
+    return "other_section_repair"
+
+
 def process_resume_extraction(
     result: ResumeExtractionResult,
     source_text: str,
@@ -1110,36 +1238,50 @@ def process_resume_extraction(
         timing_ms["total_llm_calls"] = initial_llm_calls
 
     grounding_started = time.perf_counter()
-    grounded = ground_resume_extraction(result, source_text)
-    normalized_after_normalization = normalize_resume_extraction(grounded.result)
-    warnings = list(grounded.warnings)
-    if grounded.result.education and not normalized_after_normalization.education:
-        warnings.append(
-            _education_diagnostic_warning(
-                "EDUCATION_DROPPED_DURING_NORMALIZATION",
-                "education_missing_after_normalization",
-                source="initial",
+    try:
+        grounded = ground_resume_extraction(result, source_text)
+        normalized_after_normalization = normalize_resume_extraction(grounded.result)
+        warnings = list(grounded.warnings)
+        if grounded.result.education and not normalized_after_normalization.education:
+            warnings.append(
+                _education_diagnostic_warning(
+                    "EDUCATION_DROPPED_DURING_NORMALIZATION",
+                    "education_missing_after_normalization",
+                    source="initial",
+                )
             )
-        )
-    normalized = recover_explicit_facts(normalized_after_normalization, source_text)
-    missing = completeness_warnings(normalized, source_text)
-    education_section = next((section for section in detect_sections(source_text) if section.key == "EDUCATION"), None)
-    if education_section is not None and not normalized.education:
-        warnings.append(
-            _education_diagnostic_warning(
-                "EDUCATION_FIRST_PASS_EMPTY",
-                "first_pass_no_grounded_education",
-                source="initial",
-            )
-        )
-        normalized, institution_diagnostics = _recover_explicit_education_institution(
-            result,
-            normalized,
-            source_text,
-            education_section,
-        )
-        warnings.extend(institution_diagnostics)
+        normalized = recover_explicit_facts(normalized_after_normalization, source_text)
         missing = completeness_warnings(normalized, source_text)
+        education_section = next((section for section in detect_sections(source_text) if section.key == "EDUCATION"), None)
+        if education_section is not None and not normalized.education:
+            warnings.append(
+                _education_diagnostic_warning(
+                    "EDUCATION_FIRST_PASS_EMPTY",
+                    "first_pass_no_grounded_education",
+                    source="initial",
+                )
+            )
+            normalized, institution_diagnostics = _recover_explicit_education_institution(
+                result,
+                normalized,
+                source_text,
+                education_section,
+            )
+            warnings.extend(institution_diagnostics)
+            missing = completeness_warnings(normalized, source_text)
+    except ResumeExtractionFailure:
+        raise
+    except Exception as error:
+        grounding_elapsed = (time.perf_counter() - grounding_started) * 1000
+        if timing_ms is not None:
+            timing_ms["grounding_normalization_ms"] = grounding_elapsed
+        _raise_resume_extraction_failure(
+            error,
+            stage="grounding_normalization",
+            elapsed_ms=grounding_elapsed,
+            total_llm_calls=initial_llm_calls,
+            provider_call=False,
+        )
     if timing_ms is not None:
         timing_ms["grounding_normalization_ms"] = (
             time.perf_counter() - grounding_started
@@ -1183,31 +1325,58 @@ def process_resume_extraction(
                             )
                         )
                     break
+                repair_calls += 1
+                repair_stage = _experience_repair_stage(
+                    section_key,
+                    repair_attempts[section_key],
+                )
+                repair_started = time.perf_counter()
                 try:
-                    repair_calls += 1
-                    repair_started = time.perf_counter()
-                    try:
-                        repair_raw = provider.extract_section(section.text, section.key)
-                    finally:
-                        repair_elapsed = (time.perf_counter() - repair_started) * 1000
-                        if timing_ms is not None:
-                            if section_key == "EDUCATION":
-                                timing_key = f"education_repair_{repair_attempts[section_key]}_ms"
-                                timing_ms[timing_key] = repair_elapsed
-                            else:
-                                timing_ms["other_section_repair_ms"] = (
-                                    float(timing_ms.get("other_section_repair_ms", 0.0))
-                                    + repair_elapsed
-                                )
-                            timing_ms["total_llm_calls"] = initial_llm_calls + repair_calls
-                    if section_key == "EDUCATION" and not repair_raw.education:
-                        warnings.append(
-                            _education_diagnostic_warning(
-                                "EDUCATION_REPAIR_EMPTY",
-                                "targeted_repair_returned_no_education",
-                                source="repair",
+                    repair_raw = provider.extract_section(section.text, section.key)
+                except ResumeExtractionFailure:
+                    raise
+                except Exception as error:
+                    _raise_resume_extraction_failure(
+                        error,
+                        stage=repair_stage,
+                        elapsed_ms=(time.perf_counter() - repair_started) * 1000,
+                        total_llm_calls=initial_llm_calls + repair_calls,
+                        provider_call=True,
+                    )
+                finally:
+                    repair_elapsed = (time.perf_counter() - repair_started) * 1000
+                    if timing_ms is not None:
+                        if section_key == "EDUCATION":
+                            timing_key = f"education_repair_{repair_attempts[section_key]}_ms"
+                            timing_ms[timing_key] = repair_elapsed
+                        else:
+                            timing_ms["other_section_repair_ms"] = (
+                                float(timing_ms.get("other_section_repair_ms", 0.0))
+                                + repair_elapsed
                             )
+                        timing_ms["total_llm_calls"] = initial_llm_calls + repair_calls
+
+                try:
+                    repair_raw = ResumeExtractionResult.model_validate(repair_raw)
+                except Exception as error:
+                    _raise_resume_extraction_failure(
+                        error,
+                        stage=repair_stage,
+                        elapsed_ms=(time.perf_counter() - repair_started) * 1000,
+                        total_llm_calls=initial_llm_calls + repair_calls,
+                        provider_call=True,
+                    )
+
+                if section_key == "EDUCATION" and not repair_raw.education:
+                    warnings.append(
+                        _education_diagnostic_warning(
+                            "EDUCATION_REPAIR_EMPTY",
+                            "targeted_repair_returned_no_education",
+                            source="repair",
                         )
+                    )
+                normalization_started = time.perf_counter()
+                try:
                     repair_grounded = ground_resume_extraction(
                         repair_raw,
                         section.text,
@@ -1226,69 +1395,56 @@ def process_resume_extraction(
                                 source="repair",
                             )
                         )
-                    normalization_started = time.perf_counter()
-                    try:
-                        repair_result = _rebase_section_evidence(repair_grounded.result, source_text, section)
-                        merged = _merge_repair(
-                            normalized,
-                            repair_result,
-                            section.key,
-                            section.heading,
-                            source_text=source_text,
-                        )
-                        if (
-                            section_key == "EDUCATION"
-                            and repair_result.education
-                            and not merged.education
-                        ):
-                            warnings.append(
-                                _education_diagnostic_warning(
-                                    "EDUCATION_DROPPED_DURING_MERGE",
-                                    "education_missing_after_repair_merge",
-                                    source="repair",
-                                )
-                            )
-                        normalized_after_merge = normalize_resume_extraction(merged)
-                        if (
-                            section_key == "EDUCATION"
-                            and merged.education
-                            and not normalized_after_merge.education
-                        ):
-                            warnings.append(
-                                _education_diagnostic_warning(
-                                    "EDUCATION_DROPPED_DURING_NORMALIZATION",
-                                    "education_missing_after_normalization",
-                                    source="repair",
-                                )
-                            )
-                        normalized = recover_explicit_facts(normalized_after_merge, source_text)
-                        missing = completeness_warnings(normalized, source_text)
-                    finally:
-                        if timing_ms is not None:
-                            timing_ms["grounding_normalization_ms"] = (
-                                float(timing_ms.get("grounding_normalization_ms", 0.0))
-                                + (time.perf_counter() - normalization_started) * 1000
-                            )
-                except Exception as error:
-                    if section_key == "EDUCATION":
+                    repair_result = _rebase_section_evidence(repair_grounded.result, source_text, section)
+                    merged = _merge_repair(
+                        normalized,
+                        repair_result,
+                        section.key,
+                        section.heading,
+                        source_text=source_text,
+                    )
+                    if (
+                        section_key == "EDUCATION"
+                        and repair_result.education
+                        and not merged.education
+                    ):
                         warnings.append(
                             _education_diagnostic_warning(
-                                "EDUCATION_REPAIR_FAILED",
-                                type(error).__name__,
+                                "EDUCATION_DROPPED_DURING_MERGE",
+                                "education_missing_after_repair_merge",
                                 source="repair",
                             )
                         )
-                    else:
+                    normalized_after_merge = normalize_resume_extraction(merged)
+                    if (
+                        section_key == "EDUCATION"
+                        and merged.education
+                        and not normalized_after_merge.education
+                    ):
                         warnings.append(
-                            ValidationWarning(
-                                code="SECTION_REPAIR_FAILED",
-                                category=section.key,
-                                index=0,
-                                reason=type(error).__name__,
-                                raw_value=section.heading,
-                                evidence_text=section.text,
+                            _education_diagnostic_warning(
+                                "EDUCATION_DROPPED_DURING_NORMALIZATION",
+                                "education_missing_after_normalization",
                                 source="repair",
                             )
+                        )
+                    normalized = recover_explicit_facts(normalized_after_merge, source_text)
+                    missing = completeness_warnings(normalized, source_text)
+                except ResumeExtractionFailure:
+                    raise
+                except Exception as error:
+                    _raise_resume_extraction_failure(
+                        error,
+                        stage="grounding_normalization",
+                        elapsed_ms=(time.perf_counter() - normalization_started) * 1000,
+                        total_llm_calls=initial_llm_calls + repair_calls,
+                        provider_call=False,
+                    )
+                finally:
+                    if timing_ms is not None:
+                        timing_ms["grounding_normalization_ms"] = (
+                            float(timing_ms.get("grounding_normalization_ms", 0.0))
+                            + (time.perf_counter() - normalization_started) * 1000
                         )
 
         if repair_calls >= max_repair_calls and missing:
@@ -1388,14 +1544,48 @@ async def upload_resume(
         text = extract_pdf_text(data)
         timing_ms["pdf_extract_ms"] = (time.perf_counter() - pdf_started) * 1000
         try:
-            provider = get_resume_provider()
+            provider_started = time.perf_counter()
+            try:
+                provider = get_resume_provider()
+            except HTTPException:
+                raise
+            except Exception as error:
+                _raise_resume_extraction_failure(
+                    error,
+                    stage="initial_extraction",
+                    elapsed_ms=(time.perf_counter() - provider_started) * 1000,
+                    total_llm_calls=initial_llm_calls,
+                    provider_call=False,
+                )
             initial_started = time.perf_counter()
             initial_llm_calls = 1
             try:
                 extracted = provider.extract(text)
+            except ResumeExtractionFailure:
+                raise
+            except Exception as error:
+                _raise_resume_extraction_failure(
+                    error,
+                    stage="initial_extraction",
+                    elapsed_ms=(time.perf_counter() - initial_started) * 1000,
+                    total_llm_calls=initial_llm_calls,
+                    provider_call=True,
+                )
             finally:
                 timing_ms["initial_llm_ms"] = (time.perf_counter() - initial_started) * 1000
-            result = ResumeExtractionResult.model_validate(extracted)
+            validation_started = time.perf_counter()
+            try:
+                result = ResumeExtractionResult.model_validate(extracted)
+            except ResumeExtractionFailure:
+                raise
+            except Exception as error:
+                _raise_resume_extraction_failure(
+                    error,
+                    stage="initial_extraction",
+                    elapsed_ms=(time.perf_counter() - validation_started) * 1000,
+                    total_llm_calls=initial_llm_calls,
+                    provider_call=True,
+                )
             processed = process_resume_extraction(
                 result,
                 text,
@@ -1414,8 +1604,19 @@ async def upload_resume(
                 )
         except HTTPException:
             raise
+        except ResumeExtractionFailure as failure:
+            _log_provider_failure(failure)
+            raise _provider_failure_http_exception(failure) from None
         except Exception as error:
-            raise HTTPException(status_code=502, detail="Resume extraction provider failed") from error
+            failure = ResumeExtractionFailure(
+                error,
+                stage="grounding_normalization",
+                elapsed_ms=(time.perf_counter() - resume_started) * 1000,
+                total_llm_calls=initial_llm_calls,
+                provider_call=False,
+            )
+            _log_provider_failure(failure)
+            raise _provider_failure_http_exception(failure) from None
         db_started = time.perf_counter()
         try:
             profile = create_draft_profile(db, processed.result)

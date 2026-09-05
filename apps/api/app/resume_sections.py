@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import re
+import unicodedata
 
 from app.resume_schemas import ExperienceType, ResumeExtractionResult
 
@@ -103,14 +105,94 @@ def _has_language_fact(result: ResumeExtractionResult) -> bool:
     )
 
 
+def _normalize_section_value(value: str) -> str:
+    normalized = unicodedata.normalize("NFKC", value).casefold()
+    return re.sub(r"\s+", "", normalized)
+
+
+def _expected_experience_types(heading: str) -> frozenset[ExperienceType]:
+    normalized = _normalize_section_value(heading)
+    if (
+        normalized in {"实习/工作经历", "工作/实习经历"}
+        or ("实习" in normalized and "工作" in normalized)
+        or ("intern" in normalized and "work" in normalized)
+    ):
+        return frozenset({ExperienceType.WORK, ExperienceType.INTERNSHIP})
+    if "项目" in normalized or "project" in normalized:
+        return frozenset({ExperienceType.PROJECT})
+    if "实习" in normalized or "intern" in normalized:
+        return frozenset({ExperienceType.INTERNSHIP})
+    if "工作" in normalized or "work" in normalized or "professional" in normalized:
+        return frozenset({ExperienceType.WORK})
+    return frozenset({ExperienceType.WORK, ExperienceType.INTERNSHIP, ExperienceType.PROJECT})
+
+
+def _experience_evidence_is_in_section(
+    item: object,
+    section: ResumeSection,
+    source_text: str,
+) -> bool:
+    evidence_start = getattr(item, "evidence_start", None)
+    evidence_end = getattr(item, "evidence_end", None)
+    if (
+        isinstance(evidence_start, int)
+        and isinstance(evidence_end, int)
+        and section.start <= evidence_start < evidence_end <= section.end
+    ):
+        return True
+    evidence_text = getattr(item, "evidence_text", "")
+    return bool(evidence_text) and _normalize_section_value(evidence_text) in _normalize_section_value(
+        source_text[section.start : section.end]
+    )
+
+
+def _experience_matches_section(
+    item: object,
+    section: ResumeSection,
+    source_text: str,
+    expected_types: frozenset[ExperienceType],
+) -> bool:
+    if getattr(item, "experience_type", None) not in expected_types:
+        return False
+    source_section = getattr(item, "source_section", None)
+    if source_section:
+        return _normalize_section_value(source_section) == _normalize_section_value(section.heading)
+    return _experience_evidence_is_in_section(item, section, source_text)
+
+
 def completeness_warnings(result: ResumeExtractionResult, source_text: str) -> list[str]:
-    non_empty = {section.key for section in detect_sections(source_text)}
+    sections = detect_sections(source_text)
+    non_empty = {section.key for section in sections}
     warnings: list[str] = []
     if "EDUCATION" in non_empty and not result.education:
         warnings.append("MISSING_SECTION_CONTENT:EDUCATION")
-    if "CAMPUS" in non_empty and not any(item.experience_type == ExperienceType.CAMPUS for item in result.experiences):
+    campus_sections = [section for section in sections if section.key == "CAMPUS"]
+    if campus_sections and not any(
+        any(
+            _experience_matches_section(
+                item,
+                section,
+                source_text,
+                frozenset({ExperienceType.CAMPUS}),
+            )
+            for item in result.experiences
+        )
+        for section in campus_sections
+    ):
         warnings.append("MISSING_SECTION_CONTENT:CAMPUS")
-    if "EXPERIENCE" in non_empty and not result.experiences:
+    experience_sections = [section for section in sections if section.key == "EXPERIENCE"]
+    if experience_sections and any(
+        not any(
+            _experience_matches_section(
+                item,
+                section,
+                source_text,
+                _expected_experience_types(section.heading),
+            )
+            for item in result.experiences
+        )
+        for section in experience_sections
+    ):
         warnings.append("MISSING_SECTION_CONTENT:EXPERIENCE")
     if "SKILLS" in non_empty and not result.skills:
         warnings.append("MISSING_SECTION_CONTENT:SKILLS")
