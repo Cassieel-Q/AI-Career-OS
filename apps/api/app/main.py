@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import unicodedata
 from dataclasses import dataclass
 from typing import Protocol
@@ -23,7 +24,7 @@ from app.profile_service import (
 )
 from app.resume_normalization import normalize_resume_extraction
 from app.resume_schemas import Certification, Education, Experience, ExperienceType, ResumeExtractionResult, Skill
-from app.resume_sections import completeness_warnings, section_for_warning
+from app.resume_sections import completeness_warnings, detect_sections, section_for_warning
 
 MAX_RESUME_BYTES = 10 * 1024 * 1024
 LOCAL_FRONTEND_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
@@ -315,6 +316,150 @@ class ProcessedResumeResult:
     completeness_warnings: list[str]
 
 
+_EXPLICIT_OFFICE_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"(?<![A-Za-z0-9_])Microsoft[ \t]+PowerPoint(?![A-Za-z0-9_])", re.IGNORECASE), "PowerPoint"),
+    (re.compile(r"(?<![A-Za-z0-9_])Microsoft[ \t]+Word(?![A-Za-z0-9_])", re.IGNORECASE), "Word"),
+    (re.compile(r"(?<![A-Za-z0-9_])Microsoft[ \t]+Excel(?![A-Za-z0-9_])", re.IGNORECASE), "Excel"),
+    (re.compile(r"(?<![A-Za-z0-9_])PowerPoint(?![A-Za-z0-9_])", re.IGNORECASE), "PowerPoint"),
+    (re.compile(r"(?<![A-Za-z0-9_])Word(?![A-Za-z0-9_])", re.IGNORECASE), "Word"),
+    (re.compile(r"(?<![A-Za-z0-9_])Excel(?![A-Za-z0-9_])", re.IGNORECASE), "Excel"),
+    (re.compile(r"(?<![A-Za-z0-9_])PPT(?![A-Za-z0-9_])", re.IGNORECASE), "PowerPoint"),
+)
+_EXPLICIT_CREDENTIAL_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"(?<![A-Za-z0-9_])CET[- ]?4(?![A-Za-z0-9_])", re.IGNORECASE), "CET-4"),
+    (re.compile(r"(?<![A-Za-z0-9_])CET[- ]?6(?![A-Za-z0-9_])", re.IGNORECASE), "CET-6"),
+    (re.compile(r"大学英语四级"), "CET-4"),
+    (re.compile(r"大学英语六级"), "CET-6"),
+    (re.compile(r"普通话二级甲等"), "普通话二级甲等"),
+    (re.compile(r"(?<![A-Za-z0-9_])IELTS(?![A-Za-z0-9_])", re.IGNORECASE), "IELTS"),
+    (re.compile(r"雅思"), "IELTS"),
+    (re.compile(r"(?<![A-Za-z0-9_])TOEFL(?![A-Za-z0-9_])", re.IGNORECASE), "TOEFL"),
+    (re.compile(r"托福"), "TOEFL"),
+    (re.compile(r"(?<![A-Za-z0-9_])JLPT(?![A-Za-z0-9_])", re.IGNORECASE), "JLPT"),
+)
+_EXPLICIT_SCORE_SUFFIX = re.compile(
+    r"[\s:：()（）-]*(?:(?:score|成绩|分数)[\s:：-]*)?(\d{1,4}(?:\.\d+)?)",
+    re.IGNORECASE,
+)
+_OFFICE_UMBRELLA_NAMES = {"办公软件", "办公技能"}
+
+
+def _section_match_candidates(
+    source_text: str,
+    sections: tuple[str, ...],
+    patterns: tuple[tuple[re.Pattern[str], str], ...],
+) -> list[tuple[int, int, str, str]]:
+    candidates: list[tuple[int, int, str, str]] = []
+    for section in detect_sections(source_text):
+        if section.key not in sections:
+            continue
+        section_text = source_text[section.start : section.end]
+        for pattern, canonical in patterns:
+            for match in pattern.finditer(section_text):
+                start = section.start + match.start()
+                end = section.start + match.end()
+                candidates.append((start, end, canonical, source_text[start:end]))
+    return candidates
+
+
+def _select_non_overlapping_candidates(
+    candidates: list[tuple[int, int, str, str]],
+) -> list[tuple[int, int, str, str]]:
+    selected: list[tuple[int, int, str, str]] = []
+    seen_canonical: set[str] = set()
+    for candidate in sorted(candidates, key=lambda item: (item[0], -(item[1] - item[0]))):
+        start, end, canonical, _ = candidate
+        if canonical in seen_canonical:
+            continue
+        if any(start < selected_end and end > selected_start for selected_start, selected_end, _, _ in selected):
+            continue
+        selected.append(candidate)
+        seen_canonical.add(canonical)
+    return sorted(selected, key=lambda item: item[0])
+
+
+def _recover_explicit_office_skills(source_text: str) -> list[Skill]:
+    candidates = _select_non_overlapping_candidates(
+        _section_match_candidates(source_text, ("SKILLS",), _EXPLICIT_OFFICE_PATTERNS)
+    )
+    return [
+        Skill(
+            name=canonical,
+            raw_value=raw_value,
+            canonical_value=canonical,
+            evidence_text=raw_value,
+            evidence_start=start,
+            evidence_end=end,
+        )
+        for start, end, canonical, raw_value in candidates
+    ]
+
+
+def _recover_explicit_credentials(source_text: str) -> list[Certification]:
+    candidates = _select_non_overlapping_candidates(
+        _section_match_candidates(source_text, ("CREDENTIALS", "LANGUAGE"), _EXPLICIT_CREDENTIAL_PATTERNS)
+    )
+    recovered: list[Certification] = []
+    for start, end, canonical, raw_value in candidates:
+        score = None
+        score_suffix = _EXPLICIT_SCORE_SUFFIX.match(source_text, end)
+        if score_suffix is not None:
+            end = score_suffix.end()
+            raw_value = source_text[start:end]
+            score = score_suffix.group(1)
+        recovered.append(
+            Certification(
+                name=canonical,
+                score=score,
+                raw_value=raw_value,
+                canonical_value=canonical,
+                evidence_text=raw_value,
+                evidence_start=start,
+                evidence_end=end,
+            )
+        )
+    return recovered
+
+
+def recover_explicit_facts(result: ResumeExtractionResult, source_text: str) -> ResumeExtractionResult:
+    recovered_office = _recover_explicit_office_skills(source_text)
+    recovered_credentials = _recover_explicit_credentials(source_text)
+
+    skills = list(result.skills)
+    if recovered_office:
+        recovered_by_name = {skill.name.casefold(): skill for skill in recovered_office}
+        skills = [
+            skill
+            for skill in skills
+            if skill.name.casefold() not in recovered_by_name
+            and skill.name.casefold() not in {name.casefold() for name in _OFFICE_UMBRELLA_NAMES}
+        ]
+        skills.extend(recovered_office)
+
+    certifications = list(result.certifications)
+    for recovered in recovered_credentials:
+        existing_index = next(
+            (index for index, certification in enumerate(certifications) if certification.name.casefold() == recovered.name.casefold()),
+            None,
+        )
+        if existing_index is None:
+            certifications.append(recovered)
+            continue
+        existing = certifications[existing_index]
+        certifications[existing_index] = existing.model_copy(
+            update={
+                "raw_value": recovered.raw_value,
+                "canonical_value": recovered.canonical_value,
+                "evidence_text": recovered.evidence_text,
+                "evidence_start": recovered.evidence_start,
+                "evidence_end": recovered.evidence_end,
+                "score": recovered.score if recovered.score is not None else existing.score,
+            }
+        )
+
+    return result.model_copy(update={"skills": skills, "certifications": certifications})
+
+
 def _fact_groups(result: ResumeExtractionResult) -> tuple[tuple[str, list[object]], ...]:
     return (
         ("education", result.education),
@@ -434,13 +579,10 @@ def ground_resume_extraction(
 
 
 def _raise_if_unreliable(grounded: GroundingResult) -> None:
-    rejected = grounded.total_items - grounded.accepted_items
-    if grounded.accepted_items == 0 and grounded.warnings:
-        _raise_grounding_warning(grounded.warnings[0])
-    if grounded.total_items and (
-        rejected / grounded.total_items > 0.25
-    ):
-        raise HTTPException(status_code=502, detail="Resume evidence validation failed: unsupported_item_threshold")
+    if grounded.total_items and grounded.accepted_items == 0:
+        if grounded.warnings:
+            _raise_grounding_warning(grounded.warnings[0])
+        raise HTTPException(status_code=502, detail="Resume evidence validation failed: no_grounded_facts")
 
 
 def _merge_repair(
@@ -510,8 +652,8 @@ def process_resume_extraction(
     allow_repair: bool = True,
 ) -> ProcessedResumeResult:
     grounded = ground_resume_extraction(result, source_text)
-    _raise_if_unreliable(grounded)
     normalized = normalize_resume_extraction(grounded.result)
+    normalized = recover_explicit_facts(normalized, source_text)
     warnings = list(grounded.warnings)
     missing = completeness_warnings(normalized, source_text)
 
@@ -530,6 +672,7 @@ def process_resume_extraction(
                 normalized = normalize_resume_extraction(
                     _merge_repair(normalized, repair_grounded.result, section.key, section.heading)
                 )
+                normalized = recover_explicit_facts(normalized, source_text)
                 missing = completeness_warnings(normalized, source_text)
             except Exception as error:
                 warnings.append(
@@ -544,6 +687,7 @@ def process_resume_extraction(
                     )
                 )
     if sum(len(facts) for _, facts in _fact_groups(normalized)) == 0:
+        _raise_if_unreliable(grounded)
         raise HTTPException(status_code=502, detail="Resume evidence validation failed: no_grounded_facts")
     return ProcessedResumeResult(result=normalized, warnings=warnings, completeness_warnings=missing)
 

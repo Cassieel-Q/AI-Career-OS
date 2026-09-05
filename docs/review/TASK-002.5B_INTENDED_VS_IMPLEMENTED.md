@@ -4,7 +4,7 @@
 
 - Raw extracted values, canonical aliases, and the anchored source span are retained on extraction facts.
 - Grounding runs before normalization. Canonical values such as `PPT` → `PowerPoint` are accepted only when the raw value or a deterministic alias is present in the source evidence.
-- Unsupported items are quarantined with structured warnings. The current conservative threshold rejects an extraction when every top-level fact is unsupported or when more than 25% of top-level facts are rejected; one unsupported item among four valid items is retained as a warning.
+- Unsupported items are quarantined with structured warnings. An extraction fails only when no grounded fact remains after deterministic recovery; a single unsupported item therefore remains a warning when other grounded facts are usable.
 - The persisted Profile is created only from grounded facts, so quarantined facts cannot enter the database.
 
 ## Section completeness and repair

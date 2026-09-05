@@ -11,6 +11,8 @@ class ResumeSection:
     heading: str
     text: str
     content: str
+    start: int
+    end: int
 
 
 _SECTION_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
@@ -42,7 +44,13 @@ def _match_heading(line: str) -> tuple[str, str, str | None] | None:
 
 
 def detect_sections(source_text: str) -> list[ResumeSection]:
-    lines = source_text.splitlines()
+    raw_lines = source_text.splitlines(keepends=True)
+    lines = [line.rstrip("\r\n") for line in raw_lines]
+    line_offsets: list[int] = []
+    offset = 0
+    for raw_line in raw_lines:
+        line_offsets.append(offset)
+        offset += len(raw_line)
     starts: list[tuple[int, str, str, str | None]] = []
     for index, line in enumerate(lines):
         match = _match_heading(line)
@@ -57,7 +65,17 @@ def detect_sections(source_text: str) -> list[ResumeSection]:
         content = "\n".join(part for part in content_parts if part).strip()
         if content:
             text = "\n".join([lines[start].strip(), *content_parts]).strip()
-            sections.append(ResumeSection(key=key, heading=heading, text=text, content=content))
+            section_end_line = starts[position + 1][0] if position + 1 < len(starts) else len(lines)
+            sections.append(
+                ResumeSection(
+                    key=key,
+                    heading=heading,
+                    text=text,
+                    content=content,
+                    start=line_offsets[start],
+                    end=line_offsets[section_end_line] if section_end_line < len(line_offsets) else len(source_text),
+                )
+            )
     return sections
 
 

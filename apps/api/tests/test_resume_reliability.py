@@ -39,6 +39,39 @@ def test_one_unsupported_item_is_quarantined_without_discarding_grounded_items()
     assert processed.warnings[0].category == "skill"
 
 
+def test_single_unsupported_skill_does_not_abort_a_usable_extraction() -> None:
+    result = ResumeExtractionResult(
+        skills=[
+            {"name": "Python", "evidence_text": "Python"},
+            {"name": "Unicorn Stack", "evidence_text": "Unicorn Stack"},
+        ]
+    )
+
+    processed = process_resume_extraction(result, "Python")
+
+    assert [skill.name for skill in processed.result.skills] == ["Python"]
+    assert len(processed.warnings) == 1
+    assert processed.warnings[0].reason == "evidence_not_in_source"
+
+
+def test_unsupported_certification_and_experience_are_quarantined_individually() -> None:
+    result = ResumeExtractionResult(
+        skills=[{"name": "Python", "evidence_text": "Python"}],
+        experiences=[{"title": "Fabricated role", "evidence_text": "Fabricated role"}],
+        certifications=[{"name": "CET-6", "evidence_text": "CET-6"}],
+    )
+
+    processed = process_resume_extraction(result, "Python")
+
+    assert [skill.name for skill in processed.result.skills] == ["Python"]
+    assert processed.result.experiences == []
+    assert processed.result.certifications == []
+    assert {(warning.category, warning.reason) for warning in processed.warnings} == {
+        ("experience", "evidence_not_in_source"),
+        ("certification", "evidence_not_in_source"),
+    }
+
+
 def test_non_empty_campus_section_is_reported_when_initial_output_omits_it() -> None:
     result = ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}])
 
@@ -120,6 +153,102 @@ def test_office_tools_are_atomic_and_generic_office_software_is_not_invented() -
 
     assert [skill.name for skill in explicit.skills] == ["Word", "Excel", "PowerPoint"]
     assert [skill.name for skill in generic.skills] == ["办公软件"]
+
+
+def test_explicit_office_tools_and_credentials_are_recovered_when_llm_is_incomplete() -> None:
+    source = "专业技能：Word、Excel、PPT 等办公软件\n证书：CET-4 500；CET-6 300；普通话二级甲等"
+    result = ResumeExtractionResult(skills=[{"name": "办公软件", "evidence_text": "办公软件"}])
+
+    processed = process_resume_extraction(result, source, allow_repair=False)
+
+    assert [skill.name for skill in processed.result.skills] == ["Word", "Excel", "PowerPoint"]
+    assert [certification.name for certification in processed.result.certifications] == [
+        "CET-4",
+        "CET-6",
+        "普通话二级甲等",
+    ]
+    assert [certification.score for certification in processed.result.certifications] == ["500", "300", None]
+    assert all(certification.status is None for certification in processed.result.certifications)
+
+
+def test_explicit_recovery_uses_real_source_spans() -> None:
+    source = "专业技能：Word、Excel、PPT 等办公软件\n证书：CET-4 500"
+
+    processed = process_resume_extraction(ResumeExtractionResult(), source, allow_repair=False)
+
+    office = {skill.name: skill for skill in processed.result.skills}
+    assert office["PowerPoint"].evidence_text == "PPT"
+    assert source[office["PowerPoint"].evidence_start : office["PowerPoint"].evidence_end] == "PPT"
+    credential = processed.result.certifications[0]
+    assert credential.evidence_text == "CET-4 500"
+    assert source[credential.evidence_start : credential.evidence_end] == "CET-4 500"
+
+
+def test_office_aliases_are_recovered_from_the_skills_section() -> None:
+    source = "专业技能\nMicrosoft Word、Microsoft Excel、Microsoft PowerPoint"
+
+    processed = process_resume_extraction(ResumeExtractionResult(), source, allow_repair=False)
+
+    assert [skill.name for skill in processed.result.skills] == ["Word", "Excel", "PowerPoint"]
+    assert [skill.evidence_text for skill in processed.result.skills] == [
+        "Microsoft Word",
+        "Microsoft Excel",
+        "Microsoft PowerPoint",
+    ]
+
+
+def test_supported_credential_aliases_are_recovered_from_explicit_sections() -> None:
+    source = "证书\n大学英语四级；大学英语六级；IELTS；TOEFL；JLPT\n语言能力\n普通话二级甲等"
+
+    processed = process_resume_extraction(ResumeExtractionResult(), source, allow_repair=False)
+
+    assert [certification.name for certification in processed.result.certifications] == [
+        "CET-4",
+        "CET-6",
+        "IELTS",
+        "TOEFL",
+        "JLPT",
+        "普通话二级甲等",
+    ]
+    assert all(certification.score is None for certification in processed.result.certifications)
+    assert all(certification.status is None for certification in processed.result.certifications)
+
+
+def test_generic_office_software_remains_generic_without_atomic_source_tokens() -> None:
+    source = "专业技能：办公软件"
+    result = ResumeExtractionResult(skills=[{"name": "办公软件", "evidence_text": "办公软件"}])
+
+    processed = process_resume_extraction(result, source, allow_repair=False)
+
+    assert [skill.name for skill in processed.result.skills] == ["办公软件"]
+
+
+def test_single_unsupported_skill_is_rejected_at_api_without_returning_502() -> None:
+    class Provider:
+        def extract(self, evidence_text: str) -> ResumeExtractionResult:
+            return ResumeExtractionResult(
+                skills=[
+                    {"name": "Python", "evidence_text": "Python"},
+                    {"name": "Unicorn Stack", "evidence_text": "Unicorn Stack"},
+                ]
+            )
+
+    document = fitz.open()
+    page = document.new_page()
+    page.insert_text((72, 72), "Python")
+    pdf = document.tobytes()
+    document.close()
+    main.set_resume_provider(Provider())
+    try:
+        response = TestClient(main.app).post(
+            "/api/v1/resumes",
+            files={"file": ("resume.pdf", BytesIO(pdf), "application/pdf")},
+        )
+    finally:
+        main.set_resume_provider(None)
+
+    assert response.status_code == 200, response.text
+    assert [skill["name"] for skill in response.json()["skills"]] == ["Python"]
 
 
 def test_language_ability_is_not_promoted_to_a_credential() -> None:
