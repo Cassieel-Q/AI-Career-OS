@@ -24,7 +24,7 @@ from app.profile_service import (
 )
 from app.resume_normalization import normalize_resume_extraction
 from app.resume_schemas import Certification, Education, Experience, ExperienceType, ResumeExtractionResult, Skill
-from app.resume_sections import completeness_warnings, detect_sections, section_for_warning
+from app.resume_sections import ResumeSection, completeness_warnings, detect_sections, section_for_warning
 
 MAX_RESUME_BYTES = 10 * 1024 * 1024
 LOCAL_FRONTEND_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
@@ -83,18 +83,29 @@ class OpenAIResumeProvider:
         return ResumeExtractionResult.model_validate(parsed)
 
     def extract_section(self, section_text: str, section_label: str) -> ResumeExtractionResult:
+        if section_label == "EDUCATION":
+            system_prompt = (
+                "Extract only explicit education facts from this single resume section. Return only education "
+                "items: school as institution, degree, major as field_of_study, an explicit start/end date range "
+                "as dates, and relevant_courses. The existing contract stores start and end together in dates; "
+                "do not invent a missing boundary. Do not return skills, experiences, certifications, or career "
+                "implications. Do not infer school, major, degree, dates, or courses. For every returned item, "
+                "preserve raw_value and copy a VERBATIM contiguous excerpt into evidence_text."
+            )
+        else:
+            system_prompt = (
+                f"Extract explicit facts from this single resume section only: {section_label}. "
+                "Do not use or invent information outside the supplied section. For every raw fact, "
+                "preserve the exact source value in raw_value and copy a VERBATIM contiguous excerpt "
+                "into evidence_text. Keep generic language ability in skills and explicit credentials "
+                "in certifications. Do not infer credential pass/fail status."
+            )
         response = self.client.beta.chat.completions.parse(
             model=self.model,
             messages=[
                 {
                     "role": "system",
-                    "content": (
-                        f"Extract explicit facts from this single resume section only: {section_label}. "
-                        "Do not use or invent information outside the supplied section. For every raw fact, "
-                        "preserve the exact source value in raw_value and copy a VERBATIM contiguous excerpt "
-                        "into evidence_text. Keep generic language ability in skills and explicit credentials "
-                        "in certifications. Do not infer credential pass/fail status."
-                    ),
+                    "content": system_prompt,
                 },
                 {"role": "user", "content": section_text},
             ],
@@ -552,6 +563,27 @@ def ground_resume_extraction(
                 }
             )
             if isinstance(fact, Education):
+                education_updates: dict[str, str | None] = {}
+                for field_name in ("degree", "field_of_study", "dates"):
+                    field_value = getattr(fact, field_name)
+                    if field_value is None:
+                        continue
+                    normalized_field = normalize_text(field_value)
+                    if not normalized_field or normalized_field not in normalize_text(anchor.text):
+                        warnings.append(
+                            ValidationWarning(
+                                code="UNSUPPORTED_FACT",
+                                category=f"education.{field_name}",
+                                index=index,
+                                reason="field_not_in_evidence",
+                                raw_value=field_value,
+                                evidence_text=fact.evidence_text,
+                                source=source,
+                            )
+                        )
+                        education_updates[field_name] = None
+                if education_updates:
+                    grounded_fact = grounded_fact.model_copy(update=education_updates)
                 grounded_courses: list[str] = []
                 for course_index, course in enumerate(fact.relevant_courses):
                     if anchor_fact_to_source(source_text, course, anchor.text) is None:
@@ -606,11 +638,64 @@ def _section_diagnostic_warning(
     )
 
 
+def _education_diagnostic_warning(code: str, reason: str, *, source: str) -> ValidationWarning:
+    return ValidationWarning(
+        code=code,
+        category="education",
+        index=0,
+        reason=reason,
+        raw_value="EDUCATION",
+        evidence_text="",
+        source=source,
+    )
+
+
+def _rebase_section_evidence(
+    result: ResumeExtractionResult,
+    source_text: str,
+    section: ResumeSection,
+) -> ResumeExtractionResult:
+    """Map evidence grounded in reconstructed section text back to resume offsets."""
+
+    section_source = source_text[section.start : section.end]
+    updates: dict[str, list[object]] = {}
+    for collection, facts in _fact_groups(result):
+        rebased_facts: list[object] = []
+        for fact in facts:
+            raw_value = fact.raw_value or get_primary_fact_value(fact)
+            anchor = anchor_fact_to_source_span(section_source, raw_value, fact.evidence_text)
+            if anchor is None:
+                rebased_facts.append(
+                    fact.model_copy(update={"evidence_start": None, "evidence_end": None})
+                )
+                continue
+            rebased_facts.append(
+                fact.model_copy(
+                    update={
+                        "evidence_text": anchor.text,
+                        "evidence_start": section.start + anchor.start,
+                        "evidence_end": section.start + anchor.end,
+                    }
+                )
+            )
+        updates[collection] = rebased_facts
+    return result.model_copy(
+        update={
+            "education": updates["education"],
+            "skills": updates["skill"],
+            "experiences": updates["experience"],
+            "certifications": updates["certification"],
+        }
+    )
+
+
 def _merge_repair(
     base: ResumeExtractionResult,
     repair: ResumeExtractionResult,
     section_label: str,
     section_heading: str,
+    *,
+    source_text: str | None = None,
 ) -> ResumeExtractionResult:
     allowed = {
         "EDUCATION": {"education"},
@@ -635,12 +720,43 @@ def _merge_repair(
         updates[collection] = [*getattr(base, collection), *repair_items]
 
     merged = base.model_copy(update=updates)
-    merged.education = _dedupe_education(merged.education)
+    merged.education = _dedupe_education(merged.education, source_text=source_text)
     merged.experiences = _dedupe_experiences(merged.experiences)
     return merged
 
 
-def _dedupe_education(items: list[Education]) -> list[Education]:
+def _education_evidence_metadata(
+    existing: Education,
+    incoming: Education,
+    source_text: str | None,
+) -> dict[str, str | int | None]:
+    if (
+        source_text is not None
+        and existing.evidence_start is not None
+        and existing.evidence_end is not None
+        and incoming.evidence_start is not None
+        and incoming.evidence_end is not None
+    ):
+        evidence_start = min(existing.evidence_start, incoming.evidence_start)
+        evidence_end = max(existing.evidence_end, incoming.evidence_end)
+        if 0 <= evidence_start < evidence_end <= len(source_text):
+            return {
+                "evidence_text": source_text[evidence_start:evidence_end],
+                "evidence_start": evidence_start,
+                "evidence_end": evidence_end,
+            }
+    return {
+        "evidence_text": incoming.evidence_text,
+        "evidence_start": incoming.evidence_start,
+        "evidence_end": incoming.evidence_end,
+    }
+
+
+def _dedupe_education(
+    items: list[Education],
+    *,
+    source_text: str | None = None,
+) -> list[Education]:
     by_institution: dict[str, Education] = {}
     for item in items:
         key = item.institution.casefold()
@@ -648,8 +764,19 @@ def _dedupe_education(items: list[Education]) -> list[Education]:
         if existing is None:
             by_institution[key] = item
         else:
+            updates: dict[str, object] = {}
+            for field_name in ("degree", "field_of_study", "dates"):
+                existing_value = getattr(existing, field_name)
+                incoming_value = getattr(item, field_name)
+                if existing_value is None and incoming_value is not None:
+                    updates[field_name] = incoming_value
+            merged_courses = list(dict.fromkeys([*existing.relevant_courses, *item.relevant_courses]))
+            if merged_courses != existing.relevant_courses:
+                updates["relevant_courses"] = merged_courses
+            if updates:
+                updates.update(_education_evidence_metadata(existing, item, source_text))
             by_institution[key] = existing.model_copy(
-                update={"relevant_courses": list(dict.fromkeys([*existing.relevant_courses, *item.relevant_courses]))}
+                update=updates
             )
     return list(by_institution.values())
 
@@ -673,58 +800,153 @@ def process_resume_extraction(
     allow_repair: bool = True,
 ) -> ProcessedResumeResult:
     grounded = ground_resume_extraction(result, source_text)
-    normalized = normalize_resume_extraction(grounded.result)
-    normalized = recover_explicit_facts(normalized, source_text)
+    normalized_after_normalization = normalize_resume_extraction(grounded.result)
     warnings = list(grounded.warnings)
+    if grounded.result.education and not normalized_after_normalization.education:
+        warnings.append(
+            _education_diagnostic_warning(
+                "EDUCATION_DROPPED_DURING_NORMALIZATION",
+                "education_missing_after_normalization",
+                source="initial",
+            )
+        )
+    normalized = recover_explicit_facts(normalized_after_normalization, source_text)
     missing = completeness_warnings(normalized, source_text)
+    education_section = next((section for section in detect_sections(source_text) if section.key == "EDUCATION"), None)
+    if education_section is not None and not normalized.education:
+        warnings.append(
+            _education_diagnostic_warning(
+                "EDUCATION_FIRST_PASS_EMPTY",
+                "first_pass_no_grounded_education",
+                source="initial",
+            )
+        )
 
     if allow_repair and missing and provider is not None and hasattr(provider, "extract_section"):
-        attempted_sections: set[str] = set()
+        repair_attempts: dict[str, int] = {}
         for warning in list(missing):
             section_key = warning.split(":", 1)[-1]
-            if section_key in attempted_sections or warning not in missing:
-                continue
-            attempted_sections.add(section_key)
-            section = section_for_warning(source_text, warning)
-            if section is None:
-                warnings.append(
-                    _section_diagnostic_warning(
-                        source_text,
-                        warning,
-                        code="SECTION_DETECTION_FAILED",
-                        reason="section_not_detected",
-                        source="completeness",
-                    )
-                )
-                continue
-            try:
-                repair_raw = provider.extract_section(section.text, section.key)
-                repair_grounded = ground_resume_extraction(
-                    repair_raw,
-                    section.text,
-                    source="repair",
-                )
-                warnings.extend(repair_grounded.warnings)
-                normalized = normalize_resume_extraction(
-                    _merge_repair(normalized, repair_grounded.result, section.key, section.heading)
-                )
-                normalized = recover_explicit_facts(normalized, source_text)
-                missing = completeness_warnings(normalized, source_text)
-            except Exception as error:
-                warnings.append(
-                    ValidationWarning(
-                        code="SECTION_REPAIR_FAILED",
-                        category=section.key,
-                        index=0,
-                        reason=type(error).__name__,
-                        raw_value=section.heading,
-                        evidence_text=section.text,
+            max_attempts = 2 if section_key == "EDUCATION" else 1
+            while warning in missing and repair_attempts.get(section_key, 0) < max_attempts:
+                repair_attempts[section_key] = repair_attempts.get(section_key, 0) + 1
+                section = section_for_warning(source_text, warning)
+                if section is None:
+                    if section_key == "EDUCATION":
+                        warnings.append(
+                            _education_diagnostic_warning(
+                                "EDUCATION_SECTION_NOT_DETECTED",
+                                "section_not_detected_during_repair",
+                                source="completeness",
+                            )
+                        )
+                    else:
+                        warnings.append(
+                            _section_diagnostic_warning(
+                                source_text,
+                                warning,
+                                code="SECTION_DETECTION_FAILED",
+                                reason="section_not_detected",
+                                source="completeness",
+                            )
+                        )
+                    break
+                try:
+                    repair_raw = provider.extract_section(section.text, section.key)
+                    if section_key == "EDUCATION" and not repair_raw.education:
+                        warnings.append(
+                            _education_diagnostic_warning(
+                                "EDUCATION_REPAIR_EMPTY",
+                                "targeted_repair_returned_no_education",
+                                source="repair",
+                            )
+                        )
+                    repair_grounded = ground_resume_extraction(
+                        repair_raw,
+                        section.text,
                         source="repair",
                     )
-                )
+                    warnings.extend(repair_grounded.warnings)
+                    if (
+                        section_key == "EDUCATION"
+                        and repair_raw.education
+                        and not repair_grounded.result.education
+                    ):
+                        warnings.append(
+                            _education_diagnostic_warning(
+                                "EDUCATION_REPAIR_UNGROUNDED",
+                                "targeted_repair_had_no_grounded_education",
+                                source="repair",
+                            )
+                        )
+                    repair_result = _rebase_section_evidence(repair_grounded.result, source_text, section)
+                    merged = _merge_repair(
+                        normalized,
+                        repair_result,
+                        section.key,
+                        section.heading,
+                        source_text=source_text,
+                    )
+                    if (
+                        section_key == "EDUCATION"
+                        and repair_result.education
+                        and not merged.education
+                    ):
+                        warnings.append(
+                            _education_diagnostic_warning(
+                                "EDUCATION_DROPPED_DURING_MERGE",
+                                "education_missing_after_repair_merge",
+                                source="repair",
+                            )
+                        )
+                    normalized_after_merge = normalize_resume_extraction(merged)
+                    if (
+                        section_key == "EDUCATION"
+                        and merged.education
+                        and not normalized_after_merge.education
+                    ):
+                        warnings.append(
+                            _education_diagnostic_warning(
+                                "EDUCATION_DROPPED_DURING_NORMALIZATION",
+                                "education_missing_after_normalization",
+                                source="repair",
+                            )
+                        )
+                    normalized = recover_explicit_facts(normalized_after_merge, source_text)
+                    missing = completeness_warnings(normalized, source_text)
+                except Exception as error:
+                    if section_key == "EDUCATION":
+                        warnings.append(
+                            _education_diagnostic_warning(
+                                "EDUCATION_REPAIR_FAILED",
+                                type(error).__name__,
+                                source="repair",
+                            )
+                        )
+                    else:
+                        warnings.append(
+                            ValidationWarning(
+                                code="SECTION_REPAIR_FAILED",
+                                category=section.key,
+                                index=0,
+                                reason=type(error).__name__,
+                                raw_value=section.heading,
+                                evidence_text=section.text,
+                                source="repair",
+                            )
+                        )
 
     for warning in missing:
         category = warning.split(":", 1)[-1]
+        if category == "EDUCATION":
+            if not any(item.code == "EDUCATION_EXTRACTION_INCOMPLETE" for item in warnings):
+                warnings.append(
+                    _education_diagnostic_warning(
+                        "EDUCATION_EXTRACTION_INCOMPLETE",
+                        "recognized_section_remains_unresolved",
+                        source="completeness",
+                    )
+                )
+            continue
         if any(
             item.category == category
             and item.code in {"SECTION_CONTENT_MISSING", "SECTION_REPAIR_FAILED", "SECTION_DETECTION_FAILED"}

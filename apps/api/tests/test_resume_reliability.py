@@ -219,11 +219,275 @@ def test_empty_targeted_repair_surfaces_structured_partial_result_warning() -> N
     assert [skill.name for skill in processed.result.skills] == ["Python"]
     assert "MISSING_SECTION_CONTENT:EDUCATION" in processed.completeness_warnings
     assert any(
-        warning.code == "SECTION_CONTENT_MISSING"
-        and warning.category == "EDUCATION"
-        and warning.reason == "targeted_repair_incomplete"
+        warning.code == "EDUCATION_EXTRACTION_INCOMPLETE"
+        and warning.category == "education"
         for warning in processed.warnings
     )
+
+
+def test_first_pass_education_is_retained_without_repair() -> None:
+    source = "教育背景\nXX大学 工商管理\n\n专业技能\nPython"
+    result = ResumeExtractionResult(
+        education=[
+            {
+                "institution": "XX大学",
+                "field_of_study": "工商管理",
+                "evidence_text": "XX大学 工商管理",
+            }
+        ],
+        skills=[{"name": "Python", "evidence_text": "Python"}],
+    )
+
+    processed = process_resume_extraction(result, source, allow_repair=False)
+
+    assert processed.result.education[0].institution == "XX大学"
+    assert processed.result.education[0].field_of_study == "工商管理"
+    assert processed.completeness_warnings == []
+
+
+def test_empty_first_education_repair_gets_one_final_education_only_retry() -> None:
+    source = "教育背景\nXX大学 工商管理\n\n专业技能\nPython"
+
+    class Provider:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def extract_section(self, section_text: str, section_label: str) -> ResumeExtractionResult:
+            assert section_label == "EDUCATION"
+            self.calls += 1
+            if self.calls == 1:
+                return ResumeExtractionResult()
+            return ResumeExtractionResult(
+                education=[
+                    {
+                        "institution": "XX大学",
+                        "field_of_study": "工商管理",
+                        "evidence_text": "XX大学 工商管理",
+                    }
+                ]
+            )
+
+    provider = Provider()
+    processed = process_resume_extraction(
+        ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}]),
+        source,
+        provider=provider,
+    )
+
+    assert provider.calls == 2
+    assert [item.institution for item in processed.result.education] == ["XX大学"]
+    assert processed.completeness_warnings == []
+    assert any(warning.code == "EDUCATION_FIRST_PASS_EMPTY" for warning in processed.warnings)
+    assert any(warning.code == "EDUCATION_REPAIR_EMPTY" for warning in processed.warnings)
+
+
+def test_partial_education_record_preserves_grounded_fields_and_rejects_unsupported_degree() -> None:
+    source = "教育背景\nXX大学 工商管理\n\n专业技能\nPython"
+    result = ResumeExtractionResult(
+        education=[
+            {
+                "institution": "XX大学",
+                "degree": "博士",
+                "field_of_study": "工商管理",
+                "evidence_text": "XX大学 工商管理",
+            }
+        ],
+        skills=[{"name": "Python", "evidence_text": "Python"}],
+    )
+
+    processed = process_resume_extraction(result, source, allow_repair=False)
+
+    education = processed.result.education[0]
+    assert education.institution == "XX大学"
+    assert education.field_of_study == "工商管理"
+    assert education.degree is None
+
+
+def test_education_optional_field_must_be_in_the_education_evidence() -> None:
+    source = "教育背景\nXX大学 工商管理\n\n工作经历\n博士"
+    result = ResumeExtractionResult(
+        education=[
+            {
+                "institution": "XX大学",
+                "degree": "博士",
+                "evidence_text": "XX大学 工商管理",
+            }
+        ]
+    )
+
+    processed = process_resume_extraction(result, source, allow_repair=False)
+
+    assert processed.result.education[0].institution == "XX大学"
+    assert processed.result.education[0].degree is None
+    assert any(
+        warning.category == "education.degree" and warning.reason == "field_not_in_evidence"
+        for warning in processed.warnings
+    )
+
+
+def test_targeted_education_evidence_offsets_are_absolute_to_the_resume() -> None:
+    class Provider:
+        def extract_section(self, section_text: str, section_label: str) -> ResumeExtractionResult:
+            assert section_label == "EDUCATION"
+            return ResumeExtractionResult(
+                education=[
+                    {
+                        "institution": "XX University",
+                        "field_of_study": "Business Administration",
+                        "evidence_text": "XX University Business Administration",
+                    }
+                ]
+            )
+
+    source = "姓名\nAlice\n\nEducation\nXX University Business Administration\n\nSkills\nPython"
+    processed = process_resume_extraction(
+        ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}]),
+        source,
+        provider=Provider(),
+    )
+
+    education = processed.result.education[0]
+    assert education.evidence_start is not None
+    assert education.evidence_end is not None
+    assert source[education.evidence_start : education.evidence_end] == education.evidence_text
+    assert education.evidence_start == source.index("XX University Business Administration")
+
+
+def test_unresolvable_repair_evidence_offsets_fail_closed() -> None:
+    source = "Education\nExample University"
+    section = detect_sections(source)[0]
+    result = ResumeExtractionResult(
+        education=[
+            {
+                "institution": "Missing University",
+                "evidence_text": "Missing University",
+                "evidence_start": 4,
+                "evidence_end": 21,
+            }
+        ]
+    )
+
+    rebased = main._rebase_section_evidence(result, source, section)
+
+    assert rebased.education[0].evidence_start is None
+    assert rebased.education[0].evidence_end is None
+
+
+def test_repeated_education_merge_preserves_optional_fields_and_courses() -> None:
+    base = ResumeExtractionResult(
+        education=[
+            {
+                "institution": "XX大学",
+                "evidence_text": "XX大学",
+                "relevant_courses": ["数学"],
+            }
+        ]
+    )
+    repair = ResumeExtractionResult(
+        education=[
+            {
+                "institution": "XX大学",
+                "degree": "本科",
+                "field_of_study": "工商管理",
+                "evidence_text": "XX大学 工商管理",
+                "relevant_courses": ["统计学"],
+            }
+        ]
+    )
+
+    merged = main._merge_repair(base, repair, "EDUCATION", "教育背景")
+
+    assert len(merged.education) == 1
+    assert merged.education[0].degree == "本科"
+    assert merged.education[0].field_of_study == "工商管理"
+    assert merged.education[0].relevant_courses == ["数学", "统计学"]
+    assert merged.education[0].evidence_text == "XX大学 工商管理"
+
+
+def test_ungrounded_education_repair_has_redacted_stage_diagnostic() -> None:
+    class Provider:
+        def extract_section(self, section_text: str, section_label: str) -> ResumeExtractionResult:
+            assert section_label == "EDUCATION"
+            return ResumeExtractionResult(
+                education=[{"institution": "Fabricated University", "evidence_text": "not in source"}]
+            )
+
+    processed = process_resume_extraction(
+        ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}]),
+        "教育背景\nXX大学\n\n专业技能\nPython",
+        provider=Provider(),
+    )
+
+    assert processed.result.education == []
+    assert any(warning.code == "EDUCATION_REPAIR_UNGROUNDED" for warning in processed.warnings)
+    education_diagnostics = [
+        warning
+        for warning in processed.warnings
+        if warning.code.startswith("EDUCATION_")
+    ]
+    assert education_diagnostics
+    assert all("XX大学" not in warning.evidence_text for warning in education_diagnostics)
+    assert all("XX大学" not in warning.raw_value for warning in education_diagnostics)
+
+
+def test_exhausted_education_repairs_surface_incomplete_diagnostic() -> None:
+    class Provider:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def extract_section(self, section_text: str, section_label: str) -> ResumeExtractionResult:
+            assert section_label == "EDUCATION"
+            self.calls += 1
+            return ResumeExtractionResult()
+
+    provider = Provider()
+    processed = process_resume_extraction(
+        ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}]),
+        "教育背景\nXX大学\n\n专业技能\nPython",
+        provider=provider,
+    )
+
+    assert provider.calls == 2
+    assert processed.result.education == []
+    assert any(warning.code == "EDUCATION_EXTRACTION_INCOMPLETE" for warning in processed.warnings)
+
+
+def test_repaired_education_survives_api_serialization() -> None:
+    class Provider:
+        def extract(self, evidence_text: str) -> ResumeExtractionResult:
+            return ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}])
+
+        def extract_section(self, section_text: str, section_label: str) -> ResumeExtractionResult:
+            assert section_label == "EDUCATION"
+            return ResumeExtractionResult(
+                education=[
+                    {
+                        "institution": "XX University",
+                        "degree": "PhD",
+                        "field_of_study": "Business Administration",
+                        "evidence_text": "XX University Business Administration",
+                    }
+                ]
+            )
+
+    document = fitz.open()
+    page = document.new_page()
+    page.insert_text((72, 72), "Education\nXX University Business Administration\nSkills\nPython")
+    pdf = document.tobytes()
+    document.close()
+    main.set_resume_provider(Provider())
+    try:
+        response = TestClient(main.app).post(
+            "/api/v1/resumes",
+            files={"file": ("resume.pdf", BytesIO(pdf), "application/pdf")},
+        )
+    finally:
+        main.set_resume_provider(None)
+
+    assert response.status_code == 200, response.text
+    assert response.json()["education"][0]["institution"] == "XX University"
+    assert response.json()["education"][0]["field_of_study"] == "Business Administration"
+    assert response.json()["education"][0]["degree"] is None
 
 
 def test_credential_score_is_preserved_without_inferred_pass_fail_status() -> None:
