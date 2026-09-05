@@ -3,12 +3,14 @@ from __future__ import annotations
 from io import BytesIO
 
 import fitz
+import pytest
 from fastapi.testclient import TestClient
 
 from app import main
 from app.main import process_resume_extraction
 from app.resume_normalization import normalize_resume_extraction
 from app.resume_schemas import ResumeExtractionResult
+from app.resume_sections import detect_sections
 
 
 def test_grounding_uses_raw_value_before_canonicalization() -> None:
@@ -129,6 +131,99 @@ def test_targeted_repair_cannot_import_a_fact_outside_the_source_section() -> No
     assert [skill.name for skill in processed.result.skills] == ["SQL"]
     assert any(warning.code == "UNSUPPORTED_FACT" for warning in processed.warnings)
     assert "MISSING_SECTION_CONTENT:CAMPUS" in processed.completeness_warnings
+
+
+def test_each_missing_top_level_section_gets_one_grounded_targeted_repair() -> None:
+    source = "教育背景\nExample University\n\n专业技能\nPython\n\n工作经历\nBackend Intern"
+
+    class Provider:
+        def __init__(self) -> None:
+            self.calls: list[str] = []
+
+        def extract_section(self, section_text: str, section_label: str) -> ResumeExtractionResult:
+            self.calls.append(section_label)
+            if section_label == "EDUCATION":
+                return ResumeExtractionResult(
+                    education=[{"institution": "Example University", "evidence_text": "Example University"}]
+                )
+            if section_label == "SKILLS":
+                return ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}])
+            if section_label == "EXPERIENCE":
+                return ResumeExtractionResult(
+                    experiences=[
+                        {
+                            "title": "Backend Intern",
+                            "experience_type": "INTERNSHIP",
+                            "evidence_text": "Backend Intern",
+                        }
+                    ]
+                )
+            raise AssertionError(f"unexpected section: {section_label}")
+
+    provider = Provider()
+    processed = process_resume_extraction(ResumeExtractionResult(), source, provider=provider)
+
+    assert [item.institution for item in processed.result.education] == ["Example University"]
+    assert [item.name for item in processed.result.skills] == ["Python"]
+    assert [item.title for item in processed.result.experiences] == ["Backend Intern"]
+    assert set(provider.calls) == {"EDUCATION", "SKILLS", "EXPERIENCE"}
+    assert len(provider.calls) == 3
+    assert processed.completeness_warnings == []
+
+
+@pytest.mark.parametrize(
+    ("heading", "expected_key"),
+    [
+        ("教育背景", "EDUCATION"),
+        ("教育经历", "EDUCATION"),
+        ("学历信息", "EDUCATION"),
+        ("工作经历", "EXPERIENCE"),
+        ("实习经历", "EXPERIENCE"),
+        ("实习/工作经历", "EXPERIENCE"),
+        ("工作/实习经历", "EXPERIENCE"),
+        ("校园经历", "CAMPUS"),
+        ("项目经历", "EXPERIENCE"),
+        ("专业技能", "SKILLS"),
+        ("技能", "SKILLS"),
+        ("技能特长", "SKILLS"),
+        ("个人技能", "SKILLS"),
+        ("职业技能", "SKILLS"),
+        ("证书", "CREDENTIALS"),
+        ("资格证书", "CREDENTIALS"),
+        ("技能证书", "CREDENTIALS"),
+        ("语言证书", "CREDENTIALS"),
+        ("主修课程", "COURSES"),
+        ("核心课程", "COURSES"),
+        ("相关课程", "COURSES"),
+    ],
+)
+def test_explicit_top_level_heading_aliases_are_detected(heading: str, expected_key: str) -> None:
+    sections = detect_sections(f"{heading}\nGrounded content")
+
+    assert [(section.key, section.heading) for section in sections] == [(expected_key, heading)]
+
+
+def test_empty_targeted_repair_surfaces_structured_partial_result_warning() -> None:
+    class Provider:
+        def extract_section(self, section_text: str, section_label: str) -> ResumeExtractionResult:
+            assert section_label == "EDUCATION"
+            return ResumeExtractionResult()
+
+    processed = process_resume_extraction(
+        ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}]),
+        "教育背景\nExample University\n\n专业技能\nPython",
+        provider=Provider(),
+    )
+
+    assert processed.result.education == []
+    assert [skill.name for skill in processed.result.skills] == ["Python"]
+    assert "MISSING_SECTION_CONTENT:EDUCATION" in processed.completeness_warnings
+    assert any(
+        warning.code == "SECTION_CONTENT_MISSING"
+        and warning.category == "EDUCATION"
+        and warning.reason == "targeted_repair_incomplete"
+        for warning in processed.warnings
+    )
 
 
 def test_credential_score_is_preserved_without_inferred_pass_fail_status() -> None:

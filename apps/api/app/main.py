@@ -585,6 +585,27 @@ def _raise_if_unreliable(grounded: GroundingResult) -> None:
         raise HTTPException(status_code=502, detail="Resume evidence validation failed: no_grounded_facts")
 
 
+def _section_diagnostic_warning(
+    source_text: str,
+    warning: str,
+    *,
+    code: str,
+    reason: str,
+    source: str,
+) -> ValidationWarning:
+    category = warning.split(":", 1)[-1]
+    section = section_for_warning(source_text, warning)
+    return ValidationWarning(
+        code=code,
+        category=category,
+        index=0,
+        reason=reason,
+        raw_value=section.heading if section is not None else category,
+        evidence_text=section.text if section is not None else "",
+        source=source,
+    )
+
+
 def _merge_repair(
     base: ResumeExtractionResult,
     repair: ResumeExtractionResult,
@@ -658,9 +679,24 @@ def process_resume_extraction(
     missing = completeness_warnings(normalized, source_text)
 
     if allow_repair and missing and provider is not None and hasattr(provider, "extract_section"):
-        warning = missing[0]
-        section = section_for_warning(source_text, warning)
-        if section is not None:
+        attempted_sections: set[str] = set()
+        for warning in list(missing):
+            section_key = warning.split(":", 1)[-1]
+            if section_key in attempted_sections or warning not in missing:
+                continue
+            attempted_sections.add(section_key)
+            section = section_for_warning(source_text, warning)
+            if section is None:
+                warnings.append(
+                    _section_diagnostic_warning(
+                        source_text,
+                        warning,
+                        code="SECTION_DETECTION_FAILED",
+                        reason="section_not_detected",
+                        source="completeness",
+                    )
+                )
+                continue
             try:
                 repair_raw = provider.extract_section(section.text, section.key)
                 repair_grounded = ground_resume_extraction(
@@ -686,6 +722,24 @@ def process_resume_extraction(
                         source="repair",
                     )
                 )
+
+    for warning in missing:
+        category = warning.split(":", 1)[-1]
+        if any(
+            item.category == category
+            and item.code in {"SECTION_CONTENT_MISSING", "SECTION_REPAIR_FAILED", "SECTION_DETECTION_FAILED"}
+            for item in warnings
+        ):
+            continue
+        warnings.append(
+            _section_diagnostic_warning(
+                source_text,
+                warning,
+                code="SECTION_CONTENT_MISSING",
+                reason="targeted_repair_incomplete",
+                source="completeness",
+            )
+        )
     if sum(len(facts) for _, facts in _fact_groups(normalized)) == 0:
         _raise_if_unreliable(grounded)
         raise HTTPException(status_code=502, detail="Resume evidence validation failed: no_grounded_facts")

@@ -16,15 +16,29 @@ class ResumeSection:
 
 
 _SECTION_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
-    ("EDUCATION", ("教育背景", "教育经历", "education", "academic background")),
+    ("EDUCATION", ("教育背景", "教育经历", "学历信息", "education", "academic background")),
     ("CAMPUS", ("校园经历", "学生工作", "campus experience", "campus activities")),
     (
         "EXPERIENCE",
-        ("实习经历", "工作经历", "实习经验", "工作经验", "professional experience", "work experience", "internship"),
+        (
+            "实习经历",
+            "工作经历",
+            "实习/工作经历",
+            "工作/实习经历",
+            "项目经历",
+            "实习经验",
+            "工作经验",
+            "professional experience",
+            "work experience",
+            "internship",
+        ),
     ),
-    ("SKILLS", ("专业技能", "技能", "technical skills", "skills")),
-    ("COURSES", ("主修课程", "相关课程", "relevant courses", "courses")),
-    ("CREDENTIALS", ("证书", "资格证书", "语言证书", "certifications", "certificates", "credentials")),
+    ("SKILLS", ("专业技能", "技能", "技能特长", "个人技能", "职业技能", "technical skills", "skills")),
+    ("COURSES", ("主修课程", "核心课程", "相关课程", "relevant courses", "courses")),
+    (
+        "CREDENTIALS",
+        ("证书", "资格证书", "技能证书", "语言证书", "certifications", "certificates", "credentials"),
+    ),
     ("LANGUAGE", ("语言能力", "语言技能", "languages", "language skills")),
 )
 
