@@ -306,6 +306,8 @@ def test_openai_provider_uses_configured_gateway_and_primary_model(monkeypatch) 
     assert captured == {
         "api_key": "test-key",
         "base_url": "https://gateway.example/v1",
+        "timeout": 30.0,
+        "max_retries": 0,
     }
     assert provider.model == "gateway-model"
 
@@ -325,7 +327,11 @@ def test_openai_provider_uses_sdk_default_endpoint_without_base_url(monkeypatch)
 
     provider = main.OpenAIResumeProvider()
 
-    assert captured == {"api_key": "test-key"}
+    assert captured == {
+        "api_key": "test-key",
+        "timeout": 30.0,
+        "max_retries": 0,
+    }
     assert provider.model == "legacy-model"
 
 

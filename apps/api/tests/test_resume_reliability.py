@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from io import BytesIO
+import logging
+import sys
+from types import SimpleNamespace
 
 import fitz
 import pytest
@@ -134,7 +137,7 @@ def test_targeted_repair_cannot_import_a_fact_outside_the_source_section() -> No
 
 
 def test_each_missing_top_level_section_gets_one_grounded_targeted_repair() -> None:
-    source = "教育背景\nExample University\n\n专业技能\nPython\n\n工作经历\nBackend Intern"
+    source = "教育背景\nAcademic record\n\n专业技能\nPython\n\n工作经历\nBackend Intern"
 
     class Provider:
         def __init__(self) -> None:
@@ -144,7 +147,7 @@ def test_each_missing_top_level_section_gets_one_grounded_targeted_repair() -> N
             self.calls.append(section_label)
             if section_label == "EDUCATION":
                 return ResumeExtractionResult(
-                    education=[{"institution": "Example University", "evidence_text": "Example University"}]
+                    education=[{"institution": "Academic record", "evidence_text": "Academic record"}]
                 )
             if section_label == "SKILLS":
                 return ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}])
@@ -163,7 +166,7 @@ def test_each_missing_top_level_section_gets_one_grounded_targeted_repair() -> N
     provider = Provider()
     processed = process_resume_extraction(ResumeExtractionResult(), source, provider=provider)
 
-    assert [item.institution for item in processed.result.education] == ["Example University"]
+    assert [item.institution for item in processed.result.education] == ["Academic record"]
     assert [item.name for item in processed.result.skills] == ["Python"]
     assert [item.title for item in processed.result.experiences] == ["Backend Intern"]
     assert set(provider.calls) == {"EDUCATION", "SKILLS", "EXPERIENCE"}
@@ -211,7 +214,7 @@ def test_empty_targeted_repair_surfaces_structured_partial_result_warning() -> N
 
     processed = process_resume_extraction(
         ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}]),
-        "教育背景\nExample University\n\n专业技能\nPython",
+        "教育背景\nAcademic record\n\n专业技能\nPython",
         provider=Provider(),
     )
 
@@ -246,7 +249,7 @@ def test_first_pass_education_is_retained_without_repair() -> None:
 
 
 def test_empty_first_education_repair_gets_one_final_education_only_retry() -> None:
-    source = "教育背景\nXX大学 工商管理\n\n专业技能\nPython"
+    source = "教育背景\nXXU 工商管理\n\n专业技能\nPython"
 
     class Provider:
         def __init__(self) -> None:
@@ -260,9 +263,9 @@ def test_empty_first_education_repair_gets_one_final_education_only_retry() -> N
             return ResumeExtractionResult(
                 education=[
                     {
-                        "institution": "XX大学",
+                        "institution": "XXU",
                         "field_of_study": "工商管理",
-                        "evidence_text": "XX大学 工商管理",
+                        "evidence_text": "XXU 工商管理",
                     }
                 ]
             )
@@ -275,7 +278,7 @@ def test_empty_first_education_repair_gets_one_final_education_only_retry() -> N
     )
 
     assert provider.calls == 2
-    assert [item.institution for item in processed.result.education] == ["XX大学"]
+    assert [item.institution for item in processed.result.education] == ["XXU"]
     assert processed.completeness_warnings == []
     assert any(warning.code == "EDUCATION_FIRST_PASS_EMPTY" for warning in processed.warnings)
     assert any(warning.code == "EDUCATION_REPAIR_EMPTY" for warning in processed.warnings)
@@ -332,14 +335,14 @@ def test_targeted_education_evidence_offsets_are_absolute_to_the_resume() -> Non
             return ResumeExtractionResult(
                 education=[
                     {
-                        "institution": "XX University",
+                        "institution": "Academic record",
                         "field_of_study": "Business Administration",
-                        "evidence_text": "XX University Business Administration",
+                        "evidence_text": "Academic record Business Administration",
                     }
                 ]
             )
 
-    source = "姓名\nAlice\n\nEducation\nXX University Business Administration\n\nSkills\nPython"
+    source = "姓名\nAlice\n\nEducation\nAcademic record Business Administration\n\nSkills\nPython"
     processed = process_resume_extraction(
         ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}]),
         source,
@@ -350,7 +353,7 @@ def test_targeted_education_evidence_offsets_are_absolute_to_the_resume() -> Non
     assert education.evidence_start is not None
     assert education.evidence_end is not None
     assert source[education.evidence_start : education.evidence_end] == education.evidence_text
-    assert education.evidence_start == source.index("XX University Business Administration")
+    assert education.evidence_start == source.index("Academic record Business Administration")
 
 
 def test_unresolvable_repair_evidence_offsets_fail_closed() -> None:
@@ -414,7 +417,7 @@ def test_ungrounded_education_repair_has_redacted_stage_diagnostic() -> None:
 
     processed = process_resume_extraction(
         ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}]),
-        "教育背景\nXX大学\n\n专业技能\nPython",
+        "教育背景\nXXU\n\n专业技能\nPython",
         provider=Provider(),
     )
 
@@ -426,8 +429,8 @@ def test_ungrounded_education_repair_has_redacted_stage_diagnostic() -> None:
         if warning.code.startswith("EDUCATION_")
     ]
     assert education_diagnostics
-    assert all("XX大学" not in warning.evidence_text for warning in education_diagnostics)
-    assert all("XX大学" not in warning.raw_value for warning in education_diagnostics)
+    assert all("XXU" not in warning.evidence_text for warning in education_diagnostics)
+    assert all("XXU" not in warning.raw_value for warning in education_diagnostics)
 
 
 def test_exhausted_education_repairs_surface_incomplete_diagnostic() -> None:
@@ -443,7 +446,7 @@ def test_exhausted_education_repairs_surface_incomplete_diagnostic() -> None:
     provider = Provider()
     processed = process_resume_extraction(
         ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}]),
-        "教育背景\nXX大学\n\n专业技能\nPython",
+        "教育背景\nXXU\n\n专业技能\nPython",
         provider=provider,
     )
 
@@ -462,17 +465,17 @@ def test_repaired_education_survives_api_serialization() -> None:
             return ResumeExtractionResult(
                 education=[
                     {
-                        "institution": "XX University",
+                        "institution": "Academic record",
                         "degree": "PhD",
                         "field_of_study": "Business Administration",
-                        "evidence_text": "XX University Business Administration",
+                        "evidence_text": "Academic record Business Administration",
                     }
                 ]
             )
 
     document = fitz.open()
     page = document.new_page()
-    page.insert_text((72, 72), "Education\nXX University Business Administration\nSkills\nPython")
+    page.insert_text((72, 72), "Education\nAcademic record Business Administration\nSkills\nPython")
     pdf = document.tobytes()
     document.close()
     main.set_resume_provider(Provider())
@@ -485,9 +488,300 @@ def test_repaired_education_survives_api_serialization() -> None:
         main.set_resume_provider(None)
 
     assert response.status_code == 200, response.text
-    assert response.json()["education"][0]["institution"] == "XX University"
+    assert response.json()["education"][0]["institution"] == "Academic record"
     assert response.json()["education"][0]["field_of_study"] == "Business Administration"
     assert response.json()["education"][0]["degree"] is None
+
+
+def test_explicit_institution_is_recovered_without_an_extra_llm_call() -> None:
+    class Provider:
+        def extract_section(self, section_text: str, section_label: str) -> ResumeExtractionResult:
+            raise AssertionError("deterministic institution recovery should run first")
+
+    source = "教育背景\n北京大学\n\n专业技能\nPython"
+    processed = process_resume_extraction(
+        ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}]),
+        source,
+        provider=Provider(),
+    )
+
+    assert [item.institution for item in processed.result.education] == ["北京大学"]
+    assert any(warning.code == "INSTITUTION_RECOVERED" for warning in processed.warnings)
+
+
+def test_recovered_institution_uses_an_exact_absolute_source_span() -> None:
+    source = "姓名\nAlice\n\n教育背景\n北京大学\n\n专业技能\nPython"
+
+    processed = process_resume_extraction(
+        ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}]),
+        source,
+        allow_repair=False,
+    )
+
+    education = processed.result.education[0]
+    assert education.institution == "北京大学"
+    assert education.evidence_start is not None
+    assert education.evidence_end is not None
+    assert source[education.evidence_start : education.evidence_end] == "北京大学"
+
+
+@pytest.mark.parametrize(
+    "institution",
+    [
+        "北京职业技术学院",
+        "中国科学院",
+        "Example College",
+        "Example Institute",
+        "Example School",
+        "University of Oxford",
+    ],
+)
+def test_explicit_institution_suffix_variants_are_supported(institution: str) -> None:
+    source = f"Education\n{institution}\n\nSkills\nPython"
+    processed = process_resume_extraction(
+        ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}]),
+        source,
+        allow_repair=False,
+    )
+
+    assert [item.institution for item in processed.result.education] == [institution]
+
+
+@pytest.mark.parametrize(
+    ("education_line", "institution"),
+    [
+        ("毕业院校北京大学", "北京大学"),
+        ("就读北京大学", "北京大学"),
+        ("(北京大学)", "北京大学"),
+    ],
+)
+def test_institution_recovery_strips_only_known_context_and_punctuation(
+    education_line: str,
+    institution: str,
+) -> None:
+    source = f"教育背景\n{education_line}\n\n专业技能\nPython"
+    processed = process_resume_extraction(
+        ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}]),
+        source,
+        allow_repair=False,
+    )
+
+    assert [item.institution for item in processed.result.education] == [institution]
+    education = processed.result.education[0]
+    assert source[education.evidence_start : education.evidence_end] == institution
+
+
+def test_recovered_institution_merges_grounded_partial_education_fields() -> None:
+    source = "教育背景\n北京大学 本科 工商管理 2020-2024 主修课程：数据结构\n\n专业技能\nPython"
+    result = ResumeExtractionResult(
+        education=[
+            {
+                "institution": "Fabricated University",
+                "degree": "本科",
+                "field_of_study": "工商管理",
+                "dates": "2020-2024",
+                "relevant_courses": ["数据结构"],
+                "evidence_text": "本科 工商管理 2020-2024 主修课程：数据结构",
+            }
+        ],
+        skills=[{"name": "Python", "evidence_text": "Python"}],
+    )
+
+    processed = process_resume_extraction(result, source, allow_repair=False)
+
+    education = processed.result.education[0]
+    assert education.institution == "北京大学"
+    assert education.degree == "本科"
+    assert education.field_of_study == "工商管理"
+    assert education.dates == "2020-2024"
+    assert education.relevant_courses == ["数据结构"]
+    assert source[education.evidence_start : education.evidence_end] == education.evidence_text
+
+
+def test_no_school_like_token_does_not_invent_an_institution() -> None:
+    processed = process_resume_extraction(
+        ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}]),
+        "教育背景\n2020-2024 工商管理\n\n专业技能\nPython",
+        allow_repair=False,
+    )
+
+    assert processed.result.education == []
+    assert any(warning.code == "INSTITUTION_NOT_EXTRACTED" for warning in processed.warnings)
+
+
+def test_multiple_school_candidates_are_reported_as_ambiguous_without_a_guess() -> None:
+    processed = process_resume_extraction(
+        ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}]),
+        "教育背景\n北京大学 / 清华大学\n\n专业技能\nPython",
+        allow_repair=False,
+    )
+
+    assert processed.result.education == []
+    assert any(warning.code == "INSTITUTION_RECOVERY_AMBIGUOUS" for warning in processed.warnings)
+
+
+def test_institution_outside_education_section_is_not_recovered() -> None:
+    processed = process_resume_extraction(
+        ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}]),
+        "教育背景\n工商管理\n\n工作经历\n北京大学\n\n专业技能\nPython",
+        allow_repair=False,
+    )
+
+    assert processed.result.education == []
+    assert any(warning.code == "INSTITUTION_NOT_EXTRACTED" for warning in processed.warnings)
+
+
+def test_ungrounded_institution_gets_a_distinct_recovery_diagnostic() -> None:
+    processed = process_resume_extraction(
+        ResumeExtractionResult(
+            education=[{"institution": "清华大学", "evidence_text": "清华大学"}],
+            skills=[{"name": "Python", "evidence_text": "Python"}],
+        ),
+        "教育背景\n北京大学\n\n专业技能\nPython",
+        allow_repair=False,
+    )
+
+    assert [item.institution for item in processed.result.education] == ["北京大学"]
+    assert any(warning.code == "INSTITUTION_NOT_GROUNDED" for warning in processed.warnings)
+    assert any(warning.code == "INSTITUTION_RECOVERED" for warning in processed.warnings)
+
+
+def test_openai_provider_uses_bounded_timeout_and_retry_defaults(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs: object) -> None:
+            captured.update(kwargs)
+
+    monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=FakeOpenAI))
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.delenv("OPENAI_TIMEOUT_SECONDS", raising=False)
+    monkeypatch.delenv("OPENAI_MAX_RETRIES", raising=False)
+
+    main.OpenAIResumeProvider()
+
+    assert captured["timeout"] == 30.0
+    assert captured["max_retries"] == 0
+
+
+def test_openai_provider_reads_timeout_and_retry_overrides(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs: object) -> None:
+            captured.update(kwargs)
+
+    monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=FakeOpenAI))
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setenv("OPENAI_TIMEOUT_SECONDS", "12.5")
+    monkeypatch.setenv("OPENAI_MAX_RETRIES", "2")
+
+    main.OpenAIResumeProvider()
+
+    assert captured["timeout"] == 12.5
+    assert captured["max_retries"] == 2
+
+
+@pytest.mark.parametrize(
+    ("variable", "value"),
+    [
+        ("OPENAI_TIMEOUT_SECONDS", "0"),
+        ("OPENAI_TIMEOUT_SECONDS", "121"),
+        ("OPENAI_TIMEOUT_SECONDS", "nan"),
+        ("OPENAI_TIMEOUT_SECONDS", "not-a-number"),
+        ("OPENAI_MAX_RETRIES", "-1"),
+        ("OPENAI_MAX_RETRIES", "3"),
+        ("OPENAI_MAX_RETRIES", "not-a-number"),
+    ],
+)
+def test_openai_provider_rejects_invalid_timeout_or_retry_config(monkeypatch, variable: str, value: str) -> None:
+    class FakeOpenAI:
+        def __init__(self, **kwargs: object) -> None:
+            pass
+
+    monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=FakeOpenAI))
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setenv(variable, value)
+
+    with pytest.raises(ValueError, match=variable):
+        main.OpenAIResumeProvider()
+
+
+def test_resume_repair_calls_obey_the_total_llm_budget() -> None:
+    class Provider:
+        def __init__(self) -> None:
+            self.calls: list[str] = []
+
+        def extract_section(self, section_text: str, section_label: str) -> ResumeExtractionResult:
+            self.calls.append(section_label)
+            return ResumeExtractionResult()
+
+    provider = Provider()
+    processed = process_resume_extraction(
+        ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}]),
+        "教育背景\n工商管理\n\n校园经历\n学生会干事\n\n工作经历\n工程师\n\n专业技能\nPython\n\n证书\nCET-6",
+        provider=provider,
+        initial_llm_calls=1,
+    )
+
+    assert len(provider.calls) == 4
+    assert processed.total_llm_calls == 5
+    assert any(warning.code == "SECTION_REPAIR_BUDGET_EXHAUSTED" for warning in processed.warnings)
+
+
+def test_initial_llm_call_count_cannot_start_above_the_resume_budget() -> None:
+    with pytest.raises(ValueError, match="initial_llm_calls"):
+        process_resume_extraction(
+            ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}]),
+            "Python",
+            initial_llm_calls=main.MAX_LLM_CALLS_PER_RESUME + 1,
+        )
+
+
+def test_resume_timing_diagnostics_are_redacted(caplog) -> None:
+    source = "Example University resume text"
+    class Provider:
+        def extract(self, evidence_text: str) -> ResumeExtractionResult:
+            return ResumeExtractionResult(
+                education=[{"institution": "Example University", "evidence_text": "Example University"}],
+                skills=[{"name": "resume-secret", "evidence_text": "resume-secret"}],
+            )
+
+    document = fitz.open()
+    page = document.new_page()
+    page.insert_text((72, 72), source)
+    pdf = document.tobytes()
+    document.close()
+    main.set_resume_provider(Provider())
+    try:
+        with caplog.at_level(logging.INFO, logger=main.logger.name):
+            response = TestClient(main.app).post(
+                "/api/v1/resumes",
+                files={"file": ("resume.pdf", BytesIO(pdf), "application/pdf")},
+            )
+    finally:
+        main.set_resume_provider(None)
+
+    assert response.status_code == 200, response.text
+    timing_logs = [record.getMessage() for record in caplog.records if "resume_timing" in record.getMessage()]
+    assert timing_logs
+    timing_log = timing_logs[-1]
+    for field_name in (
+        "pdf_extract_ms",
+        "initial_llm_ms",
+        "education_repair_1_ms",
+        "education_repair_2_ms",
+        "other_section_repair_ms",
+        "grounding_normalization_ms",
+        "db_persist_ms",
+        "total_resume_ms",
+        "total_llm_calls",
+    ):
+        assert field_name in timing_log
+    assert source not in timing_log
+    assert "resume-secret" not in timing_log
+    assert all(source not in record.getMessage() for record in caplog.records)
+    assert all("resume-secret" not in record.getMessage() for record in caplog.records)
 
 
 def test_credential_score_is_preserved_without_inferred_pass_fail_status() -> None:
