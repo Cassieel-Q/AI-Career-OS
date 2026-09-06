@@ -18,7 +18,10 @@ class ResumeSection:
 
 
 _SECTION_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
-    ("EDUCATION", ("教育背景", "教育经历", "学历信息", "education", "academic background")),
+    (
+        "EDUCATION",
+        ("教育背景", "教育经历", "学历信息", "education", "education background", "academic background"),
+    ),
     ("CAMPUS", ("校园经历", "学生工作", "campus experience", "campus activities")),
     (
         "EXPERIENCE",
@@ -32,16 +35,30 @@ _SECTION_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
             "工作经验",
             "professional experience",
             "work experience",
+            "work history",
+            "experience",
             "internship",
+            "internship experience",
+            "project experience",
         ),
     ),
     ("SKILLS", ("专业技能", "技能", "技能特长", "个人技能", "职业技能", "technical skills", "skills")),
     ("COURSES", ("主修课程", "核心课程", "相关课程", "relevant courses", "courses")),
     (
         "CREDENTIALS",
-        ("证书", "资格证书", "技能证书", "语言证书", "certifications", "certificates", "credentials"),
+        (
+            "证书",
+            "资格证书",
+            "技能证书",
+            "语言证书",
+            "certification",
+            "certifications",
+            "certificates",
+            "credential",
+            "credentials",
+        ),
     ),
-    ("LANGUAGE", ("语言能力", "语言技能", "languages", "language skills")),
+    ("LANGUAGE", ("语言能力", "语言技能", "language", "languages", "language skills")),
 )
 
 
@@ -55,7 +72,7 @@ def _match_heading(line: str) -> tuple[str, str, str | None] | None:
             prefix_cn = f"{alias}：".casefold()
             if stripped.casefold().startswith(prefix) or stripped.casefold().startswith(prefix_cn):
                 content = stripped[len(alias) :].lstrip(" :：")
-                return key, alias, content
+                return key, stripped[: len(alias)].strip(), content
     return None
 
 
@@ -77,10 +94,11 @@ def detect_sections(source_text: str) -> list[ResumeSection]:
     for position, (start, key, heading, inline_content) in enumerate(starts):
         end = starts[position + 1][0] if position + 1 < len(starts) else len(lines)
         content_lines = lines[start + 1 : end]
-        content_parts = ([inline_content] if inline_content else []) + [line.strip() for line in content_lines if line.strip()]
+        content_line_parts = [line.strip() for line in content_lines if line.strip()]
+        content_parts = ([inline_content] if inline_content else []) + content_line_parts
         content = "\n".join(part for part in content_parts if part).strip()
         if content:
-            text = "\n".join([lines[start].strip(), *content_parts]).strip()
+            text = "\n".join([lines[start].strip(), *content_line_parts]).strip()
             section_end_line = starts[position + 1][0] if position + 1 < len(starts) else len(lines)
             sections.append(
                 ResumeSection(

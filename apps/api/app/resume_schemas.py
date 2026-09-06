@@ -51,6 +51,50 @@ class Certification(ExtractedFact):
     status: str | None = None
 
 
+class LeanEducation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    institution: str
+    degree: str | None = None
+    field_of_study: str | None = None
+    dates: str | None = None
+    relevant_courses: list[str] = Field(default_factory=list)
+
+
+class LeanSkill(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+
+
+class LeanExperience(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str
+    organization: str | None = None
+    dates: str | None = None
+    description: str | None = None
+    experience_type: ExperienceType | None = None
+
+
+class LeanCertification(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    issuer: str | None = None
+    date: str | None = None
+    score: str | None = None
+
+
+class LeanResumeExtractionResult(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    education: list[LeanEducation] = Field(default_factory=list)
+    skills: list[LeanSkill] = Field(default_factory=list)
+    experiences: list[LeanExperience] = Field(default_factory=list)
+    certifications: list[LeanCertification] = Field(default_factory=list)
+
+
 class ResumeExtractionResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

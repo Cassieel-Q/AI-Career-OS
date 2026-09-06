@@ -27,7 +27,19 @@ from app.profile_service import (
     update_draft_profile,
 )
 from app.resume_normalization import normalize_resume_extraction
-from app.resume_schemas import Certification, Education, Experience, ExperienceType, ResumeExtractionResult, Skill
+from app.resume_schemas import (
+    Certification,
+    Education,
+    Experience,
+    ExperienceType,
+    LeanCertification,
+    LeanEducation,
+    LeanExperience,
+    LeanResumeExtractionResult,
+    LeanSkill,
+    ResumeExtractionResult,
+    Skill,
+)
 from app.resume_sections import ResumeSection, completeness_warnings, detect_sections, section_for_warning
 
 MAX_RESUME_BYTES = 10 * 1024 * 1024
@@ -41,6 +53,10 @@ MAX_SECTION_REPAIR_CALLS_PER_RESUME = MAX_LLM_CALLS_PER_RESUME - 1
 _TIMING_FIELDS = (
     "pdf_extract_ms",
     "initial_llm_ms",
+    "education_llm_ms",
+    "experience_llm_ms",
+    "campus_llm_ms",
+    "other_llm_ms",
     "education_repair_1_ms",
     "education_repair_2_ms",
     "other_section_repair_ms",
@@ -196,7 +212,11 @@ def get_openai_max_retries() -> int:
 class ResumeProvider(Protocol):
     def extract(self, evidence_text: str) -> ResumeExtractionResult: ...
 
-    def extract_section(self, section_text: str, section_label: str) -> ResumeExtractionResult: ...
+    def extract_section(
+        self,
+        section_text: str,
+        section_label: str,
+    ) -> LeanResumeExtractionResult | ResumeExtractionResult: ...
 
 
 class OpenAIResumeProvider:
@@ -248,26 +268,47 @@ class OpenAIResumeProvider:
             raise ValueError("OpenAI returned no structured resume result")
         return ResumeExtractionResult.model_validate(parsed)
 
-    def extract_section(self, section_text: str, section_label: str) -> ResumeExtractionResult:
-        if section_label == "EDUCATION":
+    def extract_section(
+        self,
+        section_text: str,
+        section_label: str,
+    ) -> LeanResumeExtractionResult:
+        if section_label in {"EDUCATION", "COURSES"}:
             system_prompt = (
-                "Extract only explicit education facts from this single resume section. Return only education "
-                "items: school as institution, degree, major as field_of_study, an explicit start/end date range "
-                "as dates, and relevant_courses. The existing contract stores start and end together in dates; "
-                "do not invent a missing boundary. Do not return skills, experiences, certifications, or career "
-                "implications. Do not infer school, major, degree, dates, or courses. For every returned item, "
-                "preserve raw_value and copy a VERBATIM contiguous excerpt into evidence_text."
+                "Extract only explicit semantic education facts from this single resume section. Return only "
+                "education items: school as institution, degree, major as field_of_study, an explicit start/end "
+                "date range as dates, and relevant_courses. The application owns evidence anchoring, raw_value, "
+                "canonical aliases, offsets, and provenance, so do not return evidence_text, evidence offsets, "
+                "raw_value, canonical_value, or source_section. The existing contract stores start and end "
+                "together in dates; do not invent a missing boundary. Do not return skills, experiences, "
+                "certifications, or career implications. Do not infer school, major, degree, dates, or courses."
+            )
+        elif section_label == "EXPERIENCE":
+            system_prompt = (
+                "Extract only explicit semantic experience facts from this single resume section. Return only "
+                "experience items with title, organization, dates, description, and an experience_type when the "
+                "section supports WORK, INTERNSHIP, PROJECT, or CAMPUS. The application owns evidence anchoring, "
+                "raw_value, canonical aliases, offsets, and provenance; do not return evidence_text, evidence "
+                "offsets, raw_value, canonical_value, or source_section. Do not use or invent information outside "
+                "the supplied section. Read the exact heading and never use OTHER when it provides a supported "
+                "classification."
+            )
+        elif section_label == "CAMPUS":
+            system_prompt = (
+                "Extract only explicit semantic campus-experience facts from this single resume section. Return "
+                "only experience items with title, organization, dates, and description. The application owns "
+                "evidence anchoring, raw_value, canonical aliases, offsets, provenance, and CAMPUS classification; "
+                "do not return evidence_text, evidence offsets, raw_value, canonical_value, or source_section. "
+                "Do not use or invent information outside the supplied section."
             )
         else:
             system_prompt = (
-                f"Extract explicit facts from this single resume section only: {section_label}. "
-                "Do not use or invent information outside the supplied section. For every raw fact, "
-                "preserve the exact source value in raw_value and copy a VERBATIM contiguous excerpt "
-                "into evidence_text. Keep generic language ability in skills and explicit credentials "
-                "in certifications. Do not infer credential pass/fail status. For experience sections, "
-                "set source_section to the exact heading present in the supplied text and classify "
-                "experience_type as WORK, INTERNSHIP, PROJECT, or CAMPUS according to that heading; "
-                "never use OTHER when the heading provides one of these classifications."
+                f"Extract only explicit semantic facts from this single resume section: {section_label}. "
+                "Do not use or invent information outside the supplied section. Return semantic skill or "
+                "credential values only. The application owns evidence anchoring, raw_value, canonical aliases, "
+                "offsets, and provenance; do not return evidence_text, evidence offsets, raw_value, "
+                "canonical_value, or source_section. Keep generic language ability in skills and explicit "
+                "credentials in certifications. Do not infer credential pass/fail status."
             )
         response = self.client.beta.chat.completions.parse(
             model=self.model,
@@ -278,12 +319,12 @@ class OpenAIResumeProvider:
                 },
                 {"role": "user", "content": section_text},
             ],
-            response_format=ResumeExtractionResult,
+            response_format=LeanResumeExtractionResult,
         )
         parsed = response.choices[0].message.parsed
         if parsed is None:
             raise ValueError("OpenAI returned no structured section result")
-        return ResumeExtractionResult.model_validate(parsed)
+        return LeanResumeExtractionResult.model_validate(parsed)
 
 
 _resume_provider: ResumeProvider | None = None
@@ -518,6 +559,12 @@ _EXPLICIT_CREDENTIAL_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"托福"), "TOEFL"),
     (re.compile(r"(?<![A-Za-z0-9_])JLPT(?![A-Za-z0-9_])", re.IGNORECASE), "JLPT"),
 )
+_EXPLICIT_LANGUAGE_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"(?<![A-Za-z0-9_])English(?![A-Za-z0-9_])", re.IGNORECASE), "English"),
+    (re.compile(r"英语"), "English"),
+    (re.compile(r"(?<![A-Za-z0-9_])Mandarin(?![A-Za-z0-9_])", re.IGNORECASE), "普通话"),
+    (re.compile(r"普通话"), "普通话"),
+)
 _EXPLICIT_SCORE_SUFFIX = re.compile(
     r"[\s:：()（）-]*(?:(?:score|成绩|分数)[\s:：-]*)?(\d{1,4}(?:\.\d+)?)",
     re.IGNORECASE,
@@ -566,6 +613,197 @@ def _section_match_candidates(
                 end = section.start + match.end()
                 candidates.append((start, end, canonical, source_text[start:end]))
     return candidates
+
+
+# Courses are an Education subfield, not a standalone public Profile item;
+# keeping COURSE sections out of the targeted plan avoids inventing an institution.
+_SECTION_TARGET_KEYS = {"EDUCATION", "EXPERIENCE", "CAMPUS", "SKILLS", "CREDENTIALS", "LANGUAGE"}
+_SECTION_NOISE_PATTERN = re.compile(r"[\s,，、/／|;；+&:：()（）\[\]【】{}<>《》.。·-]+")
+_SECTION_SCORE_PATTERN = re.compile(r"\d{1,4}(?:\.\d+)?")
+
+
+def _section_has_semantic_content(section: ResumeSection) -> bool:
+    content = section.content
+    if section.key == "SKILLS":
+        for pattern, _ in _EXPLICIT_OFFICE_PATTERNS:
+            content = pattern.sub(" ", content)
+        content = content.replace("办公软件", " ").replace("办公技能", " ").replace("等", " ")
+    elif section.key in {"CREDENTIALS", "LANGUAGE"}:
+        for pattern, _ in _EXPLICIT_CREDENTIAL_PATTERNS:
+            content = pattern.sub(" ", content)
+        if section.key == "LANGUAGE":
+            for pattern, _ in _EXPLICIT_LANGUAGE_PATTERNS:
+                content = pattern.sub(" ", content)
+        content = _SECTION_SCORE_PATTERN.sub(" ", content)
+        content = re.sub(r"(?i)\bscore\b|成绩|分数", " ", content)
+    return bool(_SECTION_NOISE_PATTERN.sub("", content))
+
+
+def _section_requires_targeted_extraction(section: ResumeSection) -> bool:
+    return section.key in _SECTION_TARGET_KEYS and not (
+        section.key in {"SKILLS", "CREDENTIALS", "LANGUAGE"}
+        and not _section_has_semantic_content(section)
+    )
+
+
+def build_section_extraction_plan(
+    source_text: str,
+    deterministic: ResumeExtractionResult,
+) -> list[ResumeSection]:
+    """Return non-empty sections that need one bounded semantic extraction."""
+
+    del deterministic
+    plan: list[ResumeSection] = []
+    for section in detect_sections(source_text):
+        if not _section_requires_targeted_extraction(section):
+            continue
+        plan.append(section)
+        if len(plan) >= MAX_LLM_CALLS_PER_RESUME:
+            break
+    return plan
+
+
+def _section_candidate_fact(fact: object, section: ResumeSection) -> object:
+    updates: dict[str, object] = {
+        "evidence_text": section.content,
+        "evidence_start": None,
+        "evidence_end": None,
+        "raw_value": None,
+        "canonical_value": None,
+    }
+    if isinstance(fact, Experience):
+        updates["source_section"] = section.heading
+        if section.key == "CAMPUS":
+            updates["experience_type"] = ExperienceType.CAMPUS
+    return fact.model_copy(update=updates)
+
+
+def _lean_result_to_section_result(
+    raw_result: LeanResumeExtractionResult | ResumeExtractionResult | object,
+    section: ResumeSection,
+) -> ResumeExtractionResult:
+    if isinstance(raw_result, ResumeExtractionResult):
+        return ResumeExtractionResult.model_validate(
+            {
+                "education": [_section_candidate_fact(item, section) for item in raw_result.education],
+                "skills": [_section_candidate_fact(item, section) for item in raw_result.skills],
+                "experiences": [_section_candidate_fact(item, section) for item in raw_result.experiences],
+                "certifications": [_section_candidate_fact(item, section) for item in raw_result.certifications],
+            }
+        )
+
+    lean_result = LeanResumeExtractionResult.model_validate(raw_result)
+    return ResumeExtractionResult(
+        education=[
+            Education(
+                institution=item.institution,
+                degree=item.degree,
+                field_of_study=item.field_of_study,
+                dates=item.dates,
+                relevant_courses=item.relevant_courses,
+                evidence_text=section.content,
+            )
+            for item in lean_result.education
+            if item.institution
+        ],
+        skills=[Skill(name=item.name, evidence_text=section.content) for item in lean_result.skills],
+        experiences=[
+            Experience(
+                title=item.title,
+                organization=item.organization,
+                dates=item.dates,
+                description=item.description,
+                experience_type=item.experience_type or ExperienceType.OTHER,
+                source_section=section.heading,
+                evidence_text=section.content,
+            )
+            for item in lean_result.experiences
+        ],
+        certifications=[
+            Certification(
+                name=item.name,
+                issuer=item.issuer,
+                date=item.date,
+                score=item.score,
+                evidence_text=section.content,
+            )
+            for item in lean_result.certifications
+        ],
+    )
+
+
+def _fact_optional_values(fact: object) -> tuple[str, ...]:
+    if isinstance(fact, Education):
+        return tuple(
+            value
+            for value in (fact.degree, fact.field_of_study, fact.dates, *fact.relevant_courses)
+            if value
+        )
+    if isinstance(fact, Experience):
+        return tuple(value for value in (fact.organization, fact.dates, fact.description) if value)
+    if isinstance(fact, Certification):
+        return tuple(value for value in (fact.issuer, fact.date, fact.score, fact.status) if value)
+    return ()
+
+
+def _section_line_candidate(raw_line: str, line_index: int, section: ResumeSection) -> str:
+    candidate = raw_line.strip()
+    if line_index == 0 and candidate.casefold().startswith(section.heading.casefold()):
+        candidate = candidate[len(section.heading) :].lstrip(" :：")
+    return candidate
+
+
+def _fact_local_section_evidence(
+    fact: object,
+    source_text: str,
+    section: ResumeSection,
+) -> str:
+    section_source = source_text[section.start : section.end]
+    primary_values = [get_primary_fact_value(fact), *_fact_aliases(fact)]
+    normalized_primary_values = [normalize_text(value) for value in primary_values if normalize_text(value)]
+    normalized_optional_values = [normalize_text(value) for value in _fact_optional_values(fact)]
+    best: tuple[int, int, str] | None = None
+    for line_index, raw_line in enumerate(section_source.splitlines()):
+        candidate = _section_line_candidate(raw_line, line_index, section)
+        normalized_candidate = normalize_text(candidate)
+        if not normalized_candidate or not any(
+            value in normalized_candidate for value in normalized_primary_values
+        ):
+            continue
+        primary_score = int(any(value in normalized_candidate for value in normalized_primary_values))
+        optional_score = sum(value in normalized_candidate for value in normalized_optional_values)
+        score = primary_score + optional_score
+        candidate_rank = (score, -line_index, candidate)
+        if best is None or candidate_rank[:2] > best[:2]:
+            best = (score, -line_index, candidate)
+    return best[2] if best is not None else get_primary_fact_value(fact)
+
+
+def _localize_section_evidence(
+    result: ResumeExtractionResult,
+    source_text: str,
+    section: ResumeSection,
+) -> ResumeExtractionResult:
+    updates: dict[str, list[object]] = {}
+    for collection, facts in _fact_groups(result):
+        updates[collection] = [
+            fact.model_copy(
+                update={
+                    "evidence_text": _fact_local_section_evidence(fact, source_text, section),
+                    "evidence_start": None,
+                    "evidence_end": None,
+                }
+            )
+            for fact in facts
+        ]
+    return result.model_copy(
+        update={
+            "education": updates["education"],
+            "skills": updates["skill"],
+            "experiences": updates["experience"],
+            "certifications": updates["certification"],
+        }
+    )
 
 
 def _select_non_overlapping_candidates(
@@ -690,9 +928,27 @@ def _recover_explicit_credentials(source_text: str) -> list[Certification]:
     return recovered
 
 
+def _recover_explicit_language_skills(source_text: str) -> list[Skill]:
+    candidates = _select_non_overlapping_candidates(
+        _section_match_candidates(source_text, ("LANGUAGE",), _EXPLICIT_LANGUAGE_PATTERNS)
+    )
+    return [
+        Skill(
+            name=canonical,
+            raw_value=raw_value,
+            canonical_value=canonical,
+            evidence_text=raw_value,
+            evidence_start=start,
+            evidence_end=end,
+        )
+        for start, end, canonical, raw_value in candidates
+    ]
+
+
 def recover_explicit_facts(result: ResumeExtractionResult, source_text: str) -> ResumeExtractionResult:
     recovered_office = _recover_explicit_office_skills(source_text)
     recovered_credentials = _recover_explicit_credentials(source_text)
+    recovered_language = _recover_explicit_language_skills(source_text)
 
     skills = list(result.skills)
     if recovered_office:
@@ -704,6 +960,10 @@ def recover_explicit_facts(result: ResumeExtractionResult, source_text: str) -> 
             and skill.name.casefold() not in {name.casefold() for name in _OFFICE_UMBRELLA_NAMES}
         ]
         skills.extend(recovered_office)
+    if recovered_language:
+        recovered_by_name = {skill.name.casefold(): skill for skill in recovered_language}
+        skills = [skill for skill in skills if skill.name.casefold() not in recovered_by_name]
+        skills.extend(recovered_language)
 
     certifications = list(result.certifications)
     for recovered in recovered_credentials:
@@ -747,6 +1007,41 @@ def _raise_grounding_warning(warning: ValidationWarning) -> None:
         status_code=502,
         detail=f"Resume evidence validation failed: {warning.category}[{warning.index}]: {warning.reason}",
     )
+
+
+def _ground_optional_fact_fields(
+    fact: Education | Experience | Certification,
+    category: str,
+    index: int,
+    anchor: EvidenceAnchor,
+    source: str,
+) -> tuple[object, list[ValidationWarning]]:
+    field_names = {
+        "education": ("degree", "field_of_study", "dates"),
+        "experience": ("organization", "dates", "description"),
+        "certification": ("issuer", "date", "score", "status"),
+    }.get(category, ())
+    updates: dict[str, str | None] = {}
+    warnings: list[ValidationWarning] = []
+    normalized_evidence = normalize_text(anchor.text)
+    for field_name in field_names:
+        field_value = getattr(fact, field_name)
+        if field_value is None:
+            continue
+        if not normalize_text(field_value) or normalize_text(field_value) not in normalized_evidence:
+            warnings.append(
+                ValidationWarning(
+                    code="UNSUPPORTED_FACT",
+                    category=f"{category}.{field_name}",
+                    index=index,
+                    reason="field_not_in_evidence",
+                    raw_value=field_value,
+                    evidence_text=anchor.text,
+                    source=source,
+                )
+            )
+            updates[field_name] = None
+    return fact.model_copy(update=updates) if updates else fact, warnings
 
 
 def ground_resume_extraction(
@@ -820,28 +1115,16 @@ def ground_resume_extraction(
                     "evidence_end": anchor.end,
                 }
             )
+            if isinstance(fact, (Education, Experience, Certification)):
+                grounded_fact, optional_warnings = _ground_optional_fact_fields(
+                    grounded_fact,
+                    category,
+                    index,
+                    anchor,
+                    source,
+                )
+                warnings.extend(optional_warnings)
             if isinstance(fact, Education):
-                education_updates: dict[str, str | None] = {}
-                for field_name in ("degree", "field_of_study", "dates"):
-                    field_value = getattr(fact, field_name)
-                    if field_value is None:
-                        continue
-                    normalized_field = normalize_text(field_value)
-                    if not normalized_field or normalized_field not in normalize_text(anchor.text):
-                        warnings.append(
-                            ValidationWarning(
-                                code="UNSUPPORTED_FACT",
-                                category=f"education.{field_name}",
-                                index=index,
-                                reason="field_not_in_evidence",
-                                raw_value=field_value,
-                                evidence_text=fact.evidence_text,
-                                source=source,
-                            )
-                        )
-                        education_updates[field_name] = None
-                if education_updates:
-                    grounded_fact = grounded_fact.model_copy(update=education_updates)
                 grounded_courses: list[str] = []
                 for course_index, course in enumerate(fact.relevant_courses):
                     if anchor_fact_to_source(source_text, course, anchor.text) is None:
@@ -935,11 +1218,16 @@ def _repair_budget_diagnostic_warning() -> ValidationWarning:
 def _log_resume_timing(timing_ms: dict[str, float | int], total_llm_calls: int) -> None:
     values = {field_name: timing_ms.get(field_name, 0.0) for field_name in _TIMING_FIELDS}
     logger.info(
-        "resume_timing pdf_extract_ms=%.2f initial_llm_ms=%.2f education_repair_1_ms=%.2f "
+        "resume_timing pdf_extract_ms=%.2f initial_llm_ms=%.2f education_llm_ms=%.2f "
+        "experience_llm_ms=%.2f campus_llm_ms=%.2f other_llm_ms=%.2f education_repair_1_ms=%.2f "
         "education_repair_2_ms=%.2f other_section_repair_ms=%.2f grounding_normalization_ms=%.2f "
         "db_persist_ms=%.2f total_resume_ms=%.2f total_llm_calls=%d",
         values["pdf_extract_ms"],
         values["initial_llm_ms"],
+        values["education_llm_ms"],
+        values["experience_llm_ms"],
+        values["campus_llm_ms"],
+        values["other_llm_ms"],
         values["education_repair_1_ms"],
         values["education_repair_2_ms"],
         values["other_section_repair_ms"],
@@ -1199,14 +1487,62 @@ def _dedupe_education(
     return list(by_institution.values())
 
 
+def _experience_records_match(existing: Experience, incoming: Experience) -> bool:
+    if (
+        normalize_text(existing.title) != normalize_text(incoming.title)
+        or existing.experience_type != incoming.experience_type
+    ):
+        return False
+    for field_name in ("organization", "dates", "description"):
+        existing_value = getattr(existing, field_name)
+        incoming_value = getattr(incoming, field_name)
+        if existing_value and incoming_value and normalize_text(existing_value) != normalize_text(incoming_value):
+            return False
+    if (
+        existing.evidence_start is not None
+        and existing.evidence_end is not None
+        and incoming.evidence_start is not None
+        and incoming.evidence_end is not None
+        and (
+            existing.evidence_end <= incoming.evidence_start
+            or incoming.evidence_end <= existing.evidence_start
+        )
+    ):
+        return False
+    return True
+
+
+def _merge_experience_record(existing: Experience, incoming: Experience) -> Experience:
+    updates: dict[str, object] = {}
+    for field_name in ("organization", "dates", "description", "source_section"):
+        if getattr(existing, field_name) is None and getattr(incoming, field_name) is not None:
+            updates[field_name] = getattr(incoming, field_name)
+    if existing.evidence_start is None and incoming.evidence_start is not None:
+        updates.update(
+            {
+                "evidence_text": incoming.evidence_text,
+                "evidence_start": incoming.evidence_start,
+                "evidence_end": incoming.evidence_end,
+            }
+        )
+    return existing.model_copy(update=updates) if updates else existing
+
+
 def _dedupe_experiences(items: list[Experience]) -> list[Experience]:
-    seen: set[tuple[str, ExperienceType]] = set()
     deduped: list[Experience] = []
     for item in items:
-        key = (item.title.casefold(), item.experience_type)
-        if key not in seen:
-            seen.add(key)
+        matching_index = next(
+            (
+                index
+                for index, existing in enumerate(deduped)
+                if _experience_records_match(existing, item)
+            ),
+            None,
+        )
+        if matching_index is None:
             deduped.append(item)
+            continue
+        deduped[matching_index] = _merge_experience_record(deduped[matching_index], item)
     return deduped
 
 
@@ -1228,6 +1564,7 @@ def process_resume_extraction(
     allow_repair: bool = True,
     initial_llm_calls: int = 1,
     timing_ms: dict[str, float | int] | None = None,
+    grounded_result: GroundingResult | None = None,
 ) -> ProcessedResumeResult:
     if initial_llm_calls < 0:
         raise ValueError("initial_llm_calls must not be negative")
@@ -1239,7 +1576,11 @@ def process_resume_extraction(
 
     grounding_started = time.perf_counter()
     try:
-        grounded = ground_resume_extraction(result, source_text)
+        grounded = (
+            grounded_result
+            if grounded_result is not None
+            else ground_resume_extraction(result, source_text)
+        )
         normalized_after_normalization = normalize_resume_extraction(grounded.result)
         warnings = list(grounded.warnings)
         if grounded.result.education and not normalized_after_normalization.education:
@@ -1357,7 +1698,11 @@ def process_resume_extraction(
                         timing_ms["total_llm_calls"] = initial_llm_calls + repair_calls
 
                 try:
-                    repair_raw = ResumeExtractionResult.model_validate(repair_raw)
+                    repair_raw = _localize_section_evidence(
+                        _lean_result_to_section_result(repair_raw, section),
+                        source_text,
+                        section,
+                    )
                 except Exception as error:
                     _raise_resume_extraction_failure(
                         error,
@@ -1490,6 +1835,206 @@ def process_resume_extraction(
     )
 
 
+def _section_extraction_stage(section_key: str) -> str:
+    return {
+        "EDUCATION": "education_extraction",
+        "EXPERIENCE": "experience_extraction",
+        "CAMPUS": "campus_extraction",
+    }.get(section_key, "other_extraction")
+
+
+def _section_timing_key(section_key: str) -> str:
+    return {
+        "EDUCATION": "education_llm_ms",
+        "EXPERIENCE": "experience_llm_ms",
+        "CAMPUS": "campus_llm_ms",
+    }.get(section_key, "other_llm_ms")
+
+
+def _section_provider_failure_warning(
+    section: ResumeSection,
+    failure: ResumeExtractionFailure,
+) -> ValidationWarning:
+    return ValidationWarning(
+        code="SECTION_PROVIDER_FAILURE",
+        category=section.key,
+        index=0,
+        reason=failure.failure_type,
+        raw_value=section.heading,
+        evidence_text="",
+        source="targeted",
+    )
+
+
+def _section_budget_warning(section: ResumeSection) -> ValidationWarning:
+    return ValidationWarning(
+        code="SECTION_EXTRACTION_BUDGET_EXHAUSTED",
+        category=section.key,
+        index=0,
+        reason="maximum_llm_call_budget_reached",
+        raw_value=section.heading,
+        evidence_text="",
+        source="budget",
+    )
+
+
+def _ground_targeted_section(
+    raw_result: LeanResumeExtractionResult | ResumeExtractionResult | object,
+    source_text: str,
+    section: ResumeSection,
+) -> GroundingResult:
+    section_result = _localize_section_evidence(
+        _lean_result_to_section_result(raw_result, section),
+        source_text,
+        section,
+    )
+    grounded = ground_resume_extraction(section_result, section.text, source="targeted")
+    return GroundingResult(
+        result=_rebase_section_evidence(grounded.result, source_text, section),
+        warnings=grounded.warnings,
+        total_items=grounded.total_items,
+        accepted_items=grounded.accepted_items,
+    )
+
+
+def _run_full_resume_fallback(
+    provider: ResumeProvider,
+    source_text: str,
+    *,
+    timing_ms: dict[str, float | int] | None,
+) -> ProcessedResumeResult:
+    started = time.perf_counter()
+    try:
+        raw_result = provider.extract(source_text)
+    except ResumeExtractionFailure:
+        raise
+    except Exception as error:
+        _raise_resume_extraction_failure(
+            error,
+            stage="initial_extraction",
+            elapsed_ms=(time.perf_counter() - started) * 1000,
+            total_llm_calls=1,
+            provider_call=True,
+        )
+    finally:
+        if timing_ms is not None:
+            timing_ms["initial_llm_ms"] = (time.perf_counter() - started) * 1000
+
+    try:
+        result = ResumeExtractionResult.model_validate(raw_result)
+    except Exception as error:
+        _raise_resume_extraction_failure(
+            error,
+            stage="initial_extraction",
+            elapsed_ms=(time.perf_counter() - started) * 1000,
+            total_llm_calls=1,
+            provider_call=True,
+        )
+    return process_resume_extraction(
+        result,
+        source_text,
+        allow_repair=False,
+        initial_llm_calls=1,
+        timing_ms=timing_ms,
+    )
+
+
+def extract_section_first_resume(
+    provider: ResumeProvider,
+    source_text: str,
+    *,
+    timing_ms: dict[str, float | int] | None = None,
+) -> ProcessedResumeResult:
+    """Extract a resume from isolated sections before using the legacy fallback."""
+
+    if timing_ms is not None:
+        for field_name in _TIMING_FIELDS:
+            if field_name != "total_llm_calls":
+                timing_ms.setdefault(field_name, 0.0)
+    deterministic = recover_explicit_facts(ResumeExtractionResult(), source_text)
+    sections = detect_sections(source_text)
+    if not sections:
+        return _run_full_resume_fallback(provider, source_text, timing_ms=timing_ms)
+
+    plan = build_section_extraction_plan(source_text, deterministic)
+    merged = deterministic
+    warnings: list[ValidationWarning] = []
+    planned_sections = {(section.key, section.start, section.end) for section in plan}
+    for section in sections:
+        if _section_requires_targeted_extraction(section) and (
+            section.key,
+            section.start,
+            section.end,
+        ) not in planned_sections:
+            warnings.append(_section_budget_warning(section))
+    total_llm_calls = 0
+
+    for section in plan:
+        total_llm_calls += 1
+        started = time.perf_counter()
+        provider_elapsed = 0.0
+        try:
+            provider_started = time.perf_counter()
+            try:
+                extract_section = getattr(provider, "extract_section", None)
+                if callable(extract_section):
+                    raw_result = extract_section(section.text, section.key)
+                else:
+                    raw_result = provider.extract(section.text)
+            finally:
+                provider_elapsed = (time.perf_counter() - provider_started) * 1000
+            targeted = _ground_targeted_section(raw_result, source_text, section)
+            warnings.extend(targeted.warnings)
+            merged = _merge_repair(
+                merged,
+                targeted.result,
+                section.key,
+                section.heading,
+                source_text=source_text,
+            )
+        except ResumeExtractionFailure as failure:
+            _log_provider_failure(failure)
+            warnings.append(_section_provider_failure_warning(section, failure))
+        except Exception as error:
+            failure = ResumeExtractionFailure(
+                error,
+                stage=_section_extraction_stage(section.key),
+                elapsed_ms=(time.perf_counter() - started) * 1000,
+                total_llm_calls=total_llm_calls,
+                provider_call=True,
+            )
+            _log_provider_failure(failure)
+            warnings.append(_section_provider_failure_warning(section, failure))
+        finally:
+            if timing_ms is not None:
+                timing_key = _section_timing_key(section.key)
+                timing_ms[timing_key] = (
+                    float(timing_ms.get(timing_key, 0.0))
+                    + provider_elapsed
+                )
+                timing_ms["total_llm_calls"] = total_llm_calls
+
+    processed = process_resume_extraction(
+        merged,
+        source_text,
+        allow_repair=False,
+        initial_llm_calls=total_llm_calls,
+        timing_ms=timing_ms,
+        grounded_result=GroundingResult(
+            result=merged,
+            warnings=[],
+            total_items=sum(len(facts) for _, facts in _fact_groups(merged)),
+            accepted_items=sum(len(facts) for _, facts in _fact_groups(merged)),
+        ),
+    )
+    return ProcessedResumeResult(
+        result=processed.result,
+        warnings=[*warnings, *processed.warnings],
+        completeness_warnings=processed.completeness_warnings,
+        total_llm_calls=processed.total_llm_calls,
+    )
+
+
 def validate_evidence_trace(result: ResumeExtractionResult, source_text: str) -> ResumeExtractionResult:
     grounded = ground_resume_extraction(result, source_text, strict=True).result
     # Preserve the historical identity behavior for already-grounded callers while
@@ -1557,42 +2102,7 @@ async def upload_resume(
                     total_llm_calls=initial_llm_calls,
                     provider_call=False,
                 )
-            initial_started = time.perf_counter()
-            initial_llm_calls = 1
-            try:
-                extracted = provider.extract(text)
-            except ResumeExtractionFailure:
-                raise
-            except Exception as error:
-                _raise_resume_extraction_failure(
-                    error,
-                    stage="initial_extraction",
-                    elapsed_ms=(time.perf_counter() - initial_started) * 1000,
-                    total_llm_calls=initial_llm_calls,
-                    provider_call=True,
-                )
-            finally:
-                timing_ms["initial_llm_ms"] = (time.perf_counter() - initial_started) * 1000
-            validation_started = time.perf_counter()
-            try:
-                result = ResumeExtractionResult.model_validate(extracted)
-            except ResumeExtractionFailure:
-                raise
-            except Exception as error:
-                _raise_resume_extraction_failure(
-                    error,
-                    stage="initial_extraction",
-                    elapsed_ms=(time.perf_counter() - validation_started) * 1000,
-                    total_llm_calls=initial_llm_calls,
-                    provider_call=True,
-                )
-            processed = process_resume_extraction(
-                result,
-                text,
-                provider=provider,
-                initial_llm_calls=initial_llm_calls,
-                timing_ms=timing_ms,
-            )
+            processed = extract_section_first_resume(provider, text, timing_ms=timing_ms)
             for warning in processed.warnings:
                 logger.warning(
                     "Resume extraction warning code=%s category=%s index=%d reason=%s source=%s",

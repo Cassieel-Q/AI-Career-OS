@@ -37,6 +37,10 @@ _SECTION_TYPES = (
     (re.compile(r"项目经历|项目经验|project", re.IGNORECASE), ExperienceType.PROJECT),
     (re.compile(r"工作经历|工作经验|任职经历|professional experience|work experience", re.IGNORECASE), ExperienceType.WORK),
 )
+_COMBINED_WORK_INTERNSHIP = re.compile(
+    r"(?:实习.*工作|工作.*实习|intern.*work|work.*intern)",
+    re.IGNORECASE,
+)
 
 
 def _clean_list(values: list[str]) -> list[str]:
@@ -88,6 +92,11 @@ def _language_name(name: str) -> str | None:
 
 
 def _classify_experience(source_section: str | None, current: ExperienceType) -> ExperienceType:
+    if source_section:
+        compact_section = re.sub(r"\s+", "", source_section.casefold())
+        if _COMBINED_WORK_INTERNSHIP.search(compact_section):
+            if current in {ExperienceType.WORK, ExperienceType.INTERNSHIP}:
+                return current
     for pattern, experience_type in _SECTION_TYPES:
         if source_section and pattern.search(source_section):
             return experience_type

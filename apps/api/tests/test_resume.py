@@ -51,26 +51,29 @@ class UnsupportedFactProvider:
 
 class NormalizingProvider:
     def extract(self, evidence_text: str) -> ResumeExtractionResult:
-        return ResumeExtractionResult(
-            education=[
-                {
-                    "institution": "Example University",
-                    "field_of_study": "Computer Science",
-                    "relevant_courses": ["ML", "DB"],
-                    "evidence_text": "Example University Computer Science Courses: ML, DB",
-                }
-            ],
-            skills=[{"name": "Word, Excel, PPT", "evidence_text": "Skills: Word, Excel, PPT"}],
-            experiences=[
-                {
-                    "title": "Student Union Minister",
-                    "source_section": "Campus",
-                    "experience_type": "WORK",
-                    "evidence_text": "Campus: Student Union Minister",
-                }
-            ],
-            certifications=[],
-        )
+        raise AssertionError("sectioned resumes must use targeted extraction")
+
+    def extract_section(self, section_text: str, section_label: str) -> object:
+        if section_label == "EDUCATION":
+            return main.LeanResumeExtractionResult(
+                education=[
+                    main.LeanEducation(
+                        institution="Example University",
+                        field_of_study="Computer Science",
+                        relevant_courses=["ML", "DB"],
+                    )
+                ]
+            )
+        if section_label == "CAMPUS":
+            return main.LeanResumeExtractionResult(
+                experiences=[
+                    main.LeanExperience(
+                        title="Student Union Minister",
+                        experience_type="CAMPUS",
+                    )
+                ]
+            )
+        raise AssertionError(f"unexpected targeted section: {section_label}")
 
 
 def test_valid_text_pdf_returns_draft_profile_with_evidence() -> None:
@@ -94,8 +97,8 @@ def test_resume_upload_persists_normalized_profile_facts() -> None:
                 "resume.pdf",
                 BytesIO(
                     pdf_bytes(
-                        "Example University Computer Science Courses: ML, DB\n"
-                        "Skills: Word, Excel, PPT\nCampus: Student Union Minister"
+                        "Education\nExample University Computer Science Courses: ML, DB\n"
+                        "Skills\nWord, Excel, PPT\nCampus Experience\nStudent Union Minister"
                     )
                 ),
                 "application/pdf",
@@ -243,26 +246,21 @@ def test_invalid_structured_output_returns_safe_diagnostic(client: TestClient, c
     assert "structured-resume-secret" not in caplog.text
 
 
-def test_provider_failure_during_experience_repair_reports_repair_stage(client: TestClient, caplog) -> None:
-    class RepairFailureProvider:
+def test_provider_failure_during_section_extraction_is_isolated(client: TestClient, caplog) -> None:
+    class SectionFailureProvider:
         def extract(self, evidence_text: str) -> ResumeExtractionResult:
-            return ResumeExtractionResult(
-                experiences=[
-                    {
-                        "title": "Student Union",
-                        "experience_type": "CAMPUS",
-                        "source_section": "Campus Experience",
-                        "evidence_text": "Student Union",
-                    }
-                ]
-            )
+            raise AssertionError("sectioned resumes must not use full extraction")
 
-        def extract_section(self, section_text: str, section_label: str) -> ResumeExtractionResult:
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            if section_label == "CAMPUS":
+                return main.LeanResumeExtractionResult(
+                    experiences=[main.LeanExperience(title="Student Union")]
+                )
             assert section_label == "EXPERIENCE"
-            raise TimeoutError("repair-provider-body-secret")
+            raise TimeoutError("section-provider-body-secret")
 
     source = "Campus Experience\nStudent Union\n\nWork Experience\nBackend Engineer"
-    set_resume_provider(RepairFailureProvider())
+    set_resume_provider(SectionFailureProvider())
     try:
         with caplog.at_level(logging.ERROR, logger=main.logger.name):
             response = client.post(
@@ -272,13 +270,13 @@ def test_provider_failure_during_experience_repair_reports_repair_stage(client: 
     finally:
         set_resume_provider(None)
 
-    assert response.status_code == 504
-    assert response.json()["detail"] == "Resume extraction provider timed out"
+    assert response.status_code == 200, response.text
+    assert response.json()["experiences"][0]["title"] == "Student Union"
     diagnostic = next(record.getMessage() for record in caplog.records if "provider_failure" in record.getMessage())
     assert "failure_type=timeout" in diagnostic
-    assert "stage=experience_repair" in diagnostic
+    assert "stage=experience_extraction" in diagnostic
     assert "total_llm_calls=2" in diagnostic
-    assert "repair-provider-body-secret" not in caplog.text
+    assert "section-provider-body-secret" not in caplog.text
 
 
 def test_unexpected_processing_failure_returns_safe_diagnostic(client: TestClient, caplog, monkeypatch) -> None:
@@ -571,14 +569,14 @@ def test_openai_prompt_requires_verbatim_contiguous_evidence(monkeypatch) -> Non
     assert "Keep evidence excerpts concise" in prompt
 
 
-def test_openai_section_prompt_requires_experience_type_and_source_section(monkeypatch) -> None:
+def test_openai_section_prompt_uses_lean_semantic_output(monkeypatch) -> None:
     captured: dict[str, object] = {}
 
     class FakeCompletions:
         def parse(self, **kwargs: object) -> object:
             captured.update(kwargs)
             return SimpleNamespace(
-                choices=[SimpleNamespace(message=SimpleNamespace(parsed=ResumeExtractionResult()))]
+                choices=[SimpleNamespace(message=SimpleNamespace(parsed=main.LeanResumeExtractionResult()))]
             )
 
     class FakeOpenAI:
@@ -597,3 +595,6 @@ def test_openai_section_prompt_requires_experience_type_and_source_section(monke
     assert "INTERNSHIP" in prompt
     assert "PROJECT" in prompt
     assert "exact heading" in prompt
+    assert "application owns evidence anchoring" in prompt
+    assert "do not return evidence_text" in prompt
+    assert captured["response_format"] is main.LeanResumeExtractionResult

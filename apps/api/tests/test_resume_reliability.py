@@ -7,13 +7,550 @@ from types import SimpleNamespace
 
 import fitz
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 
 from app import main
 from app.main import process_resume_extraction
 from app.resume_normalization import normalize_resume_extraction
-from app.resume_schemas import ResumeExtractionResult
+from app.resume_schemas import ExperienceType, ResumeExtractionResult
 from app.resume_sections import detect_sections
+
+
+def test_section_plan_contains_only_non_empty_supported_sections() -> None:
+    source = (
+        "教育背景\n北京大学\n\n"
+        "工作经历\nBackend Engineer\n\n"
+        "专业技能\nPython\n\n"
+        "证书\nCET-6 300"
+    )
+
+    plan = main.build_section_extraction_plan(source, ResumeExtractionResult())
+
+    assert [(section.key, section.heading) for section in plan] == [
+        ("EDUCATION", "教育背景"),
+        ("EXPERIENCE", "工作经历"),
+        ("SKILLS", "专业技能"),
+    ]
+    assert all(section.text in source for section in plan)
+
+
+def test_inline_section_heading_is_not_duplicated_in_target_text() -> None:
+    sections = detect_sections("Skills: Word, Excel\nEducation: Example University")
+
+    assert [(section.key, section.text) for section in sections] == [
+        ("SKILLS", "Skills: Word, Excel"),
+        ("EDUCATION", "Education: Example University"),
+    ]
+
+
+def test_section_plan_skips_supported_credential_score_only_content() -> None:
+    plan = main.build_section_extraction_plan(
+        "Credentials\nCET-6 score: 300",
+        ResumeExtractionResult(),
+    )
+
+    assert plan == []
+
+
+def test_course_only_section_is_not_sent_as_an_independent_target() -> None:
+    plan = main.build_section_extraction_plan(
+        "Relevant Courses\nMachine Learning, Database Systems",
+        ResumeExtractionResult(),
+    )
+
+    assert plan == []
+
+
+def test_inline_section_heading_preserves_exact_source_heading_for_provenance() -> None:
+    sections = detect_sections("WORK EXPERIENCE: Backend Engineer\n\nSKILLS: Python")
+
+    assert [(section.key, section.heading) for section in sections] == [
+        ("EXPERIENCE", "WORK EXPERIENCE"),
+        ("SKILLS", "SKILLS"),
+    ]
+
+
+def test_sectioned_resume_does_not_call_full_provider_extract() -> None:
+    class SectionOnlyProvider:
+        def extract(self, evidence_text: str) -> ResumeExtractionResult:
+            raise AssertionError("full resume extraction must not run")
+
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            assert section_label == "EDUCATION"
+            assert section_text == "教育背景\n北京大学"
+            return main.LeanResumeExtractionResult(
+                education=[main.LeanEducation(institution="北京大学")]
+            )
+
+    processed = main.extract_section_first_resume(
+        SectionOnlyProvider(),
+        "教育背景\n北京大学",
+    )
+
+    assert [item.institution for item in processed.result.education] == ["北京大学"]
+    assert processed.total_llm_calls == 1
+
+
+def test_lean_section_values_get_exact_source_backed_spans() -> None:
+    source = "教育背景\n北京大学 本科\n\n专业技能\nPython"
+    section = main.detect_sections(source)[0]
+    result = main._lean_result_to_section_result(
+        main.LeanResumeExtractionResult(
+            education=[main.LeanEducation(institution="北京大学", degree="本科")]
+        ),
+        section,
+    )
+
+    education = main.ground_resume_extraction(result, source).result.education[0]
+    assert source[education.evidence_start:education.evidence_end] == education.evidence_text
+    assert "Python" not in education.evidence_text
+
+
+def test_targeted_adapter_does_not_trust_provider_provenance_metadata() -> None:
+    section = detect_sections("Skills\nPPT")[0]
+    adapted = main._lean_result_to_section_result(
+        ResumeExtractionResult(
+            skills=[
+                {
+                    "name": "PowerPoint",
+                    "raw_value": "fabricated raw",
+                    "canonical_value": "fabricated canonical",
+                    "evidence_text": "PPT",
+                }
+            ]
+        ),
+        section,
+    )
+
+    skill = adapted.skills[0]
+    assert skill.raw_value is None
+    assert skill.canonical_value is None
+    assert skill.evidence_text == section.content
+    assert skill.evidence_start is None
+    assert skill.evidence_end is None
+
+
+def test_lean_targeted_schema_rejects_provider_provenance_fields() -> None:
+    with pytest.raises(ValidationError):
+        main.LeanResumeExtractionResult.model_validate(
+            {"skills": [{"name": "Python", "evidence_text": "Python"}]}
+        )
+
+
+def test_section_provider_failure_isolated_from_successful_sections() -> None:
+    class Provider:
+        def extract(self, evidence_text: str) -> object:
+            raise AssertionError("sectioned resume must not call full extract")
+
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            if section_label == "EDUCATION":
+                raise TimeoutError("secret provider body")
+            if section_label == "SKILLS":
+                return main.LeanResumeExtractionResult(skills=[main.LeanSkill(name="Python")])
+            return main.LeanResumeExtractionResult()
+
+    processed = main.extract_section_first_resume(
+        Provider(),
+        "教育背景\n北京大学\n\n专业技能\nPython",
+    )
+
+    assert processed.result.skills[0].name == "Python"
+    assert any(
+        warning.code == "SECTION_PROVIDER_FAILURE"
+        and warning.reason == "timeout"
+        for warning in processed.warnings
+    )
+    assert processed.total_llm_calls == 2
+
+
+def test_section_first_total_calls_are_bounded() -> None:
+    class Provider:
+        def extract(self, evidence_text: str) -> object:
+            raise AssertionError("full resume call is forbidden")
+
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            if section_label == "SKILLS":
+                return main.LeanResumeExtractionResult(skills=[main.LeanSkill(name="Python")])
+            return main.LeanResumeExtractionResult()
+
+    source = "\n\n".join(
+        [
+            "教育背景\n北京大学",
+            "工作经历\nEngineer",
+            "校园经历\nStudent Union",
+            "专业技能\nPython",
+            "语言能力\nEnglish",
+            "证书\nAWS",
+        ]
+    )
+    processed = main.extract_section_first_resume(Provider(), source)
+
+    assert processed.total_llm_calls <= main.MAX_LLM_CALLS_PER_RESUME
+
+
+def test_section_first_surfaces_budget_diagnostic_for_unplanned_sections() -> None:
+    source = "\n\n".join(
+        [
+            "Skills\nPython",
+            "Education\nExample University",
+            "Work Experience\nBackend Engineer",
+            "Campus Experience\nStudent Union",
+            "Language\nEnglish communication ability",
+            "Credentials\nAWS",
+        ]
+    )
+
+    class Provider:
+        def extract(self, evidence_text: str) -> object:
+            raise AssertionError("full resume call is forbidden")
+
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            if section_label == "SKILLS":
+                return main.LeanResumeExtractionResult(skills=[main.LeanSkill(name="Python")])
+            return main.LeanResumeExtractionResult()
+
+    processed = main.extract_section_first_resume(Provider(), source)
+
+    assert processed.total_llm_calls == main.MAX_LLM_CALLS_PER_RESUME
+    assert any(
+        warning.code == "SECTION_EXTRACTION_BUDGET_EXHAUSTED"
+        and warning.category == "CREDENTIALS"
+        for warning in processed.warnings
+    )
+
+
+def test_section_first_keeps_targeted_calls_and_experience_types_section_local() -> None:
+    source = "\n\n".join(
+        [
+            "Education\nExample University",
+            "Work Experience\nBackend Engineer",
+            "Campus Experience\nStudent Union",
+            "Project Experience\nResume Parser",
+            "Skills\nPython",
+        ]
+    )
+
+    class Provider:
+        def extract(self, evidence_text: str) -> object:
+            raise AssertionError("full resume call is forbidden")
+
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            assert section_text in source
+            assert "\n\n" not in section_text
+            if section_label == "EDUCATION":
+                return main.LeanResumeExtractionResult(
+                    education=[main.LeanEducation(institution="Example University")]
+                )
+            if section_label == "CAMPUS":
+                return main.LeanResumeExtractionResult(
+                    experiences=[main.LeanExperience(title="Student Union")]
+                )
+            if section_label == "SKILLS":
+                return main.LeanResumeExtractionResult(skills=[main.LeanSkill(name="Python")])
+            if "Work Experience" in section_text:
+                return main.LeanResumeExtractionResult(
+                    experiences=[main.LeanExperience(title="Backend Engineer")]
+                )
+            if "Project Experience" in section_text:
+                return main.LeanResumeExtractionResult(
+                    experiences=[main.LeanExperience(title="Resume Parser")]
+                )
+            raise AssertionError(f"unexpected section: {section_label} {section_text}")
+
+    processed = main.extract_section_first_resume(Provider(), source)
+
+    assert [item.institution for item in processed.result.education] == ["Example University"]
+    assert [item.title for item in processed.result.experiences] == [
+        "Backend Engineer",
+        "Student Union",
+        "Resume Parser",
+    ]
+    assert [item.experience_type for item in processed.result.experiences] == [
+        "WORK",
+        "CAMPUS",
+        "PROJECT",
+    ]
+    assert [item.name for item in processed.result.skills] == ["Python"]
+    assert processed.completeness_warnings == []
+
+
+def test_section_first_preserves_duplicate_fact_spans_across_sections() -> None:
+    source = "Work Experience\nPython\n\nCampus Experience\nPython"
+
+    class Provider:
+        def extract(self, evidence_text: str) -> object:
+            raise AssertionError("full resume call is forbidden")
+
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            if section_label == "EXPERIENCE":
+                return main.LeanResumeExtractionResult(
+                    experiences=[main.LeanExperience(title="Python")]
+                )
+            if section_label == "CAMPUS":
+                return main.LeanResumeExtractionResult(
+                    experiences=[main.LeanExperience(title="Python")]
+                )
+            raise AssertionError(f"unexpected section: {section_label}")
+
+    processed = main.extract_section_first_resume(Provider(), source)
+
+    assert [item.experience_type for item in processed.result.experiences] == ["WORK", "CAMPUS"]
+    assert [item.evidence_start for item in processed.result.experiences] == [
+        source.index("Python"),
+        source.rindex("Python"),
+    ]
+
+
+def test_targeted_optional_values_are_limited_to_the_fact_local_line() -> None:
+    source = "Work Experience\nBackend Engineer | Acme Corp\nData Analyst | Other Corp"
+
+    class Provider:
+        def extract(self, evidence_text: str) -> object:
+            raise AssertionError("full resume call is forbidden")
+
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            assert section_label == "EXPERIENCE"
+            return main.LeanResumeExtractionResult(
+                experiences=[
+                    main.LeanExperience(
+                        title="Backend Engineer",
+                        organization="Other Corp",
+                    )
+                ]
+            )
+
+    processed = main.extract_section_first_resume(Provider(), source)
+
+    experience = processed.result.experiences[0]
+    assert experience.organization is None
+    assert any(warning.category == "experience.organization" for warning in processed.warnings)
+
+
+def test_section_first_keeps_same_title_experiences_at_different_organizations() -> None:
+    source = "Work Experience\nEngineer | Company A\nEngineer | Company B"
+
+    class Provider:
+        def extract(self, evidence_text: str) -> object:
+            raise AssertionError("full resume call is forbidden")
+
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            assert section_label == "EXPERIENCE"
+            return main.LeanResumeExtractionResult(
+                experiences=[
+                    main.LeanExperience(title="Engineer", organization="Company A"),
+                    main.LeanExperience(title="Engineer", organization="Company B"),
+                ]
+            )
+
+    processed = main.extract_section_first_resume(Provider(), source)
+
+    assert [item.organization for item in processed.result.experiences] == ["Company A", "Company B"]
+
+
+def test_section_first_unsupported_fact_is_quarantined_without_dropping_grounded_fact() -> None:
+    class Provider:
+        def extract(self, evidence_text: str) -> object:
+            raise AssertionError("full resume call is forbidden")
+
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            assert section_label == "SKILLS"
+            return main.LeanResumeExtractionResult(
+                skills=[main.LeanSkill(name="Python"), main.LeanSkill(name="Kubernetes")]
+            )
+
+    processed = main.extract_section_first_resume(Provider(), "Skills\nPython")
+
+    assert [skill.name for skill in processed.result.skills] == ["Python"]
+    assert any(warning.code == "UNSUPPORTED_FACT" for warning in processed.warnings)
+
+
+def test_section_first_timing_uses_section_fields() -> None:
+    timing: dict[str, float | int] = {}
+
+    class Provider:
+        def extract(self, evidence_text: str) -> object:
+            raise AssertionError("full resume call is forbidden")
+
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            return main.LeanResumeExtractionResult(skills=[main.LeanSkill(name="Python")])
+
+    processed = main.extract_section_first_resume(Provider(), "Skills\nPython", timing_ms=timing)
+
+    assert processed.total_llm_calls == 1
+    assert timing["total_llm_calls"] == 1
+    assert timing["other_llm_ms"] >= 0
+    assert timing["initial_llm_ms"] == 0
+
+
+def test_section_provider_failure_keeps_safe_taxonomy_and_redacted_logs(caplog) -> None:
+    class APIStatusError(RuntimeError):
+        status_code = 503
+
+    class Provider:
+        def extract(self, evidence_text: str) -> object:
+            raise AssertionError("full resume call is forbidden")
+
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            if section_label == "EDUCATION":
+                return main.LeanResumeExtractionResult(
+                    education=[main.LeanEducation(institution="Example University")]
+                )
+            raise APIStatusError("provider-body-secret")
+
+    with caplog.at_level(logging.ERROR, logger=main.logger.name):
+        processed = main.extract_section_first_resume(
+            Provider(),
+            "Education\nExample University\n\nSkills\nPython",
+        )
+
+    assert [item.institution for item in processed.result.education] == ["Example University"]
+    assert any(
+        warning.code == "SECTION_PROVIDER_FAILURE"
+        and warning.reason == "upstream_status_error"
+        for warning in processed.warnings
+    )
+    assert "provider-body-secret" not in caplog.text
+    diagnostic = next(record.getMessage() for record in caplog.records if "provider_failure" in record.getMessage())
+    assert "stage=other_extraction" in diagnostic
+    assert "upstream_status=503" in diagnostic
+
+
+def test_section_first_preserves_deterministic_hard_fact_recovery() -> None:
+    source = "Education\nExample University\n\nSkills\nWord, Excel, PowerPoint\n\nCredentials\nCET-6 300"
+
+    class Provider:
+        def extract(self, evidence_text: str) -> object:
+            raise AssertionError("full resume call is forbidden")
+
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            assert section_label == "EDUCATION"
+            return main.LeanResumeExtractionResult()
+
+    processed = main.extract_section_first_resume(Provider(), source)
+
+    assert [item.institution for item in processed.result.education] == ["Example University"]
+    assert [skill.name for skill in processed.result.skills] == ["Word", "Excel", "PowerPoint"]
+    assert [(item.name, item.score) for item in processed.result.certifications] == [("CET-6", "300")]
+    education = processed.result.education[0]
+    assert source[education.evidence_start:education.evidence_end] == education.evidence_text
+    assert processed.total_llm_calls == 1
+
+
+def test_explicit_language_section_uses_deterministic_recovery() -> None:
+    source = "Language\nEnglish, Mandarin"
+
+    class Provider:
+        def extract(self, evidence_text: str) -> object:
+            raise AssertionError("full resume call is forbidden")
+
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            raise AssertionError("explicit language facts should not call the provider")
+
+    processed = main.extract_section_first_resume(Provider(), source)
+
+    assert [skill.name for skill in processed.result.skills] == ["English", "普通话"]
+    assert processed.total_llm_calls == 0
+
+
+def test_all_targeted_provider_failures_are_fatal_with_safe_failure_status() -> None:
+    class Provider:
+        def extract(self, evidence_text: str) -> object:
+            raise AssertionError("full resume call is forbidden")
+
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            raise TimeoutError("provider-body-secret")
+
+    with pytest.raises(HTTPException) as error:
+        main.extract_section_first_resume(Provider(), "Education\n2020-2024 Business Administration")
+
+    assert error.value.status_code == 502
+    assert error.value.detail == "Resume evidence validation failed: no_grounded_facts"
+
+
+def test_unsectioned_resume_uses_full_provider_only_as_compatibility_fallback() -> None:
+    source = "Example University Python"
+    calls: list[str] = []
+
+    class Provider:
+        def extract(self, evidence_text: str) -> ResumeExtractionResult:
+            calls.append(evidence_text)
+            return ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}])
+
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            raise AssertionError("no section should be targeted")
+
+    processed = main.extract_section_first_resume(Provider(), source)
+
+    assert calls == [source]
+    assert [skill.name for skill in processed.result.skills] == ["Python"]
+    assert processed.total_llm_calls == 1
+
+
+def test_grounding_drops_unanchored_optional_experience_and_credential_fields() -> None:
+    result = ResumeExtractionResult(
+        experiences=[
+            {
+                "title": "Backend Engineer",
+                "organization": "Secret Corp",
+                "dates": "2099",
+                "description": "Secret project",
+                "evidence_text": "Backend Engineer",
+            }
+        ],
+        certifications=[
+            {
+                "name": "CET-6",
+                "issuer": "Secret Institute",
+                "date": "2099",
+                "score": "999",
+                "status": "passed",
+                "evidence_text": "CET-6",
+            }
+        ],
+    )
+
+    grounded = main.ground_resume_extraction(
+        result,
+        "Work Experience\nBackend Engineer\n\nCredentials\nCET-6",
+    )
+
+    experience = grounded.result.experiences[0]
+    certification = grounded.result.certifications[0]
+    assert experience.organization is None
+    assert experience.dates is None
+    assert experience.description is None
+    assert certification.issuer is None
+    assert certification.date is None
+    assert certification.score is None
+    assert certification.status is None
+    assert {warning.category for warning in grounded.warnings} == {
+        "experience.organization",
+        "experience.dates",
+        "experience.description",
+        "certification.issuer",
+        "certification.date",
+        "certification.score",
+        "certification.status",
+    }
+
+
+def test_combined_work_internship_heading_preserves_compatible_provider_type() -> None:
+    result = ResumeExtractionResult(
+        experiences=[
+            {
+                "title": "Backend Engineer",
+                "experience_type": ExperienceType.WORK,
+                "source_section": "实习/工作经历",
+                "evidence_text": "Backend Engineer",
+            }
+        ]
+    )
+
+    normalized = normalize_resume_extraction(result)
+
+    assert normalized.experiences[0].experience_type == ExperienceType.WORK
 
 
 def test_grounding_uses_raw_value_before_canonicalization() -> None:
@@ -174,6 +711,25 @@ def test_internship_section_with_only_campus_result_triggers_targeted_repair() -
     assert "MISSING_SECTION_CONTENT:EXPERIENCE" not in processed.completeness_warnings
 
 
+def test_legacy_repair_path_accepts_lean_targeted_result() -> None:
+    class Provider:
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            assert section_label == "SKILLS"
+            assert section_text == "Skills\nPython"
+            return main.LeanResumeExtractionResult(
+                skills=[main.LeanSkill(name="Python")]
+            )
+
+    processed = process_resume_extraction(
+        ResumeExtractionResult(),
+        "Skills\nPython",
+        provider=Provider(),
+        initial_llm_calls=0,
+    )
+
+    assert [item.name for item in processed.result.skills] == ["Python"]
+
+
 def test_project_section_is_not_satisfied_by_unrelated_work_experience() -> None:
     source = "项目经历\nProject Alpha\n\n工作经历\nBackend Engineer"
     result = ResumeExtractionResult(
@@ -319,12 +875,15 @@ def test_each_missing_top_level_section_gets_one_grounded_targeted_repair() -> N
         ("教育背景", "EDUCATION"),
         ("教育经历", "EDUCATION"),
         ("学历信息", "EDUCATION"),
+        ("Education Background", "EDUCATION"),
         ("工作经历", "EXPERIENCE"),
         ("实习经历", "EXPERIENCE"),
         ("实习/工作经历", "EXPERIENCE"),
         ("工作/实习经历", "EXPERIENCE"),
         ("校园经历", "CAMPUS"),
         ("项目经历", "EXPERIENCE"),
+        ("Internship Experience", "EXPERIENCE"),
+        ("Experience", "EXPERIENCE"),
         ("专业技能", "SKILLS"),
         ("技能", "SKILLS"),
         ("技能特长", "SKILLS"),
@@ -334,6 +893,7 @@ def test_each_missing_top_level_section_gets_one_grounded_targeted_repair() -> N
         ("资格证书", "CREDENTIALS"),
         ("技能证书", "CREDENTIALS"),
         ("语言证书", "CREDENTIALS"),
+        ("Language", "LANGUAGE"),
         ("主修课程", "COURSES"),
         ("核心课程", "COURSES"),
         ("相关课程", "COURSES"),
@@ -908,6 +1468,10 @@ def test_resume_timing_diagnostics_are_redacted(caplog) -> None:
     for field_name in (
         "pdf_extract_ms",
         "initial_llm_ms",
+        "education_llm_ms",
+        "experience_llm_ms",
+        "campus_llm_ms",
+        "other_llm_ms",
         "education_repair_1_ms",
         "education_repair_2_ms",
         "other_section_repair_ms",
