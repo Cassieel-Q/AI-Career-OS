@@ -54,6 +54,15 @@ def test_section_plan_skips_supported_credential_score_only_content() -> None:
     assert plan == []
 
 
+def test_section_plan_uses_deterministic_facts_to_skip_covered_semantic_content() -> None:
+    plan = main.build_section_extraction_plan(
+        "Skills\nPython",
+        ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}]),
+    )
+
+    assert plan == []
+
+
 def test_course_only_section_is_not_sent_as_an_independent_target() -> None:
     plan = main.build_section_extraction_plan(
         "Relevant Courses\nMachine Learning, Database Systems",
@@ -303,7 +312,7 @@ def test_section_first_preserves_duplicate_fact_spans_across_sections() -> None:
     ]
 
 
-def test_targeted_optional_values_are_limited_to_the_fact_local_line() -> None:
+def test_targeted_optional_values_absent_from_the_section_are_dropped() -> None:
     source = "Work Experience\nBackend Engineer | Acme Corp\nData Analyst | Other Corp"
 
     class Provider:
@@ -316,7 +325,7 @@ def test_targeted_optional_values_are_limited_to_the_fact_local_line() -> None:
                 experiences=[
                     main.LeanExperience(
                         title="Backend Engineer",
-                        organization="Other Corp",
+                        organization="Missing Corp",
                     )
                 ]
             )
@@ -326,6 +335,235 @@ def test_targeted_optional_values_are_limited_to_the_fact_local_line() -> None:
     experience = processed.result.experiences[0]
     assert experience.organization is None
     assert any(warning.category == "experience.organization" for warning in processed.warnings)
+
+
+def test_targeted_experience_keeps_independently_grounded_multiline_fields() -> None:
+    source = (
+        "工作经历\n"
+        "运营助理\n"
+        "某公司\n"
+        "2022-2023\n"
+        "负责文字撰写与数据整理\n\n"
+        "专业技能\nPython"
+    )
+
+    class Provider:
+        def extract(self, evidence_text: str) -> object:
+            raise AssertionError("sectioned resume must not call full extract")
+
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            assert section_label == "EXPERIENCE"
+            return main.LeanResumeExtractionResult(
+                experiences=[
+                    main.LeanExperience(
+                        title="运营助理",
+                        organization="某公司",
+                        dates="2022-2023",
+                        description="负责文字撰写与数据整理",
+                        experience_type=ExperienceType.WORK,
+                    )
+                ]
+            )
+
+    processed = main.extract_section_first_resume(Provider(), source)
+
+    experience = processed.result.experiences[0]
+    assert experience.organization == "某公司"
+    assert experience.dates == "2022-2023"
+    assert experience.description == "负责文字撰写与数据整理"
+    assert source[experience.evidence_start : experience.evidence_end] == experience.evidence_text
+    assert "负责文字撰写与数据整理" in experience.evidence_text
+
+
+def test_targeted_unsupported_description_is_dropped_without_dropping_grounded_fields() -> None:
+    source = "工作经历\n运营助理\n某公司\n2022-2023\n负责文字撰写\n\n专业技能\nPython"
+
+    class Provider:
+        def extract(self, evidence_text: str) -> object:
+            raise AssertionError("sectioned resume must not call full extract")
+
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            assert section_label == "EXPERIENCE"
+            return main.LeanResumeExtractionResult(
+                experiences=[
+                    main.LeanExperience(
+                        title="运营助理",
+                        organization="某公司",
+                        dates="2022-2023",
+                        description="负责文字撰写与数据分析",
+                        experience_type=ExperienceType.WORK,
+                    )
+                ]
+            )
+
+    processed = main.extract_section_first_resume(Provider(), source)
+
+    experience = processed.result.experiences[0]
+    assert experience.organization == "某公司"
+    assert experience.dates == "2022-2023"
+    assert experience.description is None
+    assert any(warning.category == "experience.description" for warning in processed.warnings)
+
+
+def test_targeted_education_keeps_fields_on_different_lines() -> None:
+    source = "教育背景\n北京大学\n工商管理\n本科\n2020-2024\n课程包括：数据结构\n\n专业技能\nPython"
+
+    class Provider:
+        def extract(self, evidence_text: str) -> object:
+            raise AssertionError("sectioned resume must not call full extract")
+
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            assert section_label == "EDUCATION"
+            return main.LeanResumeExtractionResult(
+                education=[
+                    main.LeanEducation(
+                        institution="北京大学",
+                        degree="本科",
+                        field_of_study="工商管理",
+                        dates="2020-2024",
+                        relevant_courses=["数据结构"],
+                    )
+                ]
+            )
+
+    processed = main.extract_section_first_resume(Provider(), source)
+
+    education = processed.result.education[0]
+    assert education.degree == "本科"
+    assert education.field_of_study == "工商管理"
+    assert education.dates == "2020-2024"
+    assert education.relevant_courses == ["数据结构"]
+    assert source[education.evidence_start : education.evidence_end] == education.evidence_text
+
+
+def test_targeted_certification_keeps_score_on_a_different_line() -> None:
+    source = "证书\nAWS Certified Cloud Practitioner\nAmazon\n成绩：850\n\n专业技能\nPython"
+
+    class Provider:
+        def extract(self, evidence_text: str) -> object:
+            raise AssertionError("sectioned resume must not call full extract")
+
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            assert section_label == "CREDENTIALS"
+            return main.LeanResumeExtractionResult(
+                certifications=[
+                    main.LeanCertification(
+                        name="AWS Certified Cloud Practitioner",
+                        issuer="Amazon",
+                        score="850",
+                    )
+                ]
+            )
+
+    processed = main.extract_section_first_resume(Provider(), source)
+
+    certification = processed.result.certifications[0]
+    assert certification.issuer == "Amazon"
+    assert certification.score == "850"
+    assert source[certification.evidence_start : certification.evidence_end] == certification.evidence_text
+
+
+def test_targeted_campus_fact_is_section_grounded_and_satisfies_completeness() -> None:
+    source = "校园经历\n班级干事\n组织校园活动\n\n专业技能\nPython"
+
+    class Provider:
+        def extract(self, evidence_text: str) -> object:
+            raise AssertionError("sectioned resume must not call full extract")
+
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            if section_label == "CAMPUS":
+                return main.LeanResumeExtractionResult(
+                    experiences=[
+                        main.LeanExperience(
+                            title="班级干事",
+                            description="组织校园活动",
+                        )
+                    ]
+                )
+            return main.LeanResumeExtractionResult(skills=[main.LeanSkill(name="Python")])
+
+    processed = main.extract_section_first_resume(Provider(), source)
+
+    campus = processed.result.experiences[0]
+    campus_section = next(section for section in detect_sections(source) if section.key == "CAMPUS")
+    assert campus.experience_type == ExperienceType.CAMPUS
+    assert campus.source_section == campus_section.heading
+    assert campus_section.start <= campus.evidence_start < campus.evidence_end <= campus_section.end
+    assert source[campus.evidence_start : campus.evidence_end] == campus.evidence_text
+    assert "MISSING_SECTION_CONTENT:CAMPUS" not in processed.completeness_warnings
+
+
+def test_targeted_semantic_paraphrase_is_rejected_even_when_source_has_related_text() -> None:
+    source = "工作经历\n运营助理\n\n专业技能\n文字撰写"
+
+    class Provider:
+        def extract(self, evidence_text: str) -> object:
+            raise AssertionError("sectioned resume must not call full extract")
+
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            if section_label == "EXPERIENCE":
+                return main.LeanResumeExtractionResult(
+                    experiences=[main.LeanExperience(title="运营助理", experience_type=ExperienceType.WORK)]
+                )
+            return main.LeanResumeExtractionResult(skills=[main.LeanSkill(name="文案撰写")])
+
+    processed = main.extract_section_first_resume(Provider(), source)
+
+    assert [item.title for item in processed.result.experiences] == ["运营助理"]
+    assert processed.result.skills == []
+    assert any(
+        warning.category == "skill" and warning.reason == "evidence_not_in_source"
+        for warning in processed.warnings
+    )
+
+
+def test_section_plan_prioritizes_core_sections_before_remaining_semantic_sections() -> None:
+    source = (
+        "专业技能\nPython\n\n"
+        "证书\nAWS\n\n"
+        "语言能力\nEnglish\n\n"
+        "教育背景\n北京大学\n\n"
+        "工作经历\nBackend Engineer\n\n"
+        "校园经历\n班级干事"
+    )
+
+    plan = main.build_section_extraction_plan(source, ResumeExtractionResult())
+
+    assert [section.key for section in plan] == [
+        "EDUCATION",
+        "EXPERIENCE",
+        "CAMPUS",
+        "SKILLS",
+        "CREDENTIALS",
+    ]
+
+
+def test_targeted_diagnostic_logs_counts_without_resume_values(caplog) -> None:
+    source = "工作经历\n运营助理\n某公司\n\n专业技能\nPython"
+
+    class Provider:
+        def extract(self, evidence_text: str) -> object:
+            raise AssertionError("sectioned resume must not call full extract")
+
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            if section_label == "EXPERIENCE":
+                return main.LeanResumeExtractionResult(
+                    experiences=[main.LeanExperience(title="运营助理", experience_type=ExperienceType.WORK)]
+                )
+            if section_label == "SKILLS":
+                return main.LeanResumeExtractionResult(skills=[main.LeanSkill(name="Python")])
+            return main.LeanResumeExtractionResult()
+
+    with caplog.at_level(logging.INFO, logger=main.logger.name):
+        main.extract_section_first_resume(Provider(), source)
+
+    diagnostic = next(record.getMessage() for record in caplog.records if "targeted_section" in record.getMessage())
+    assert "section_key=EXPERIENCE" in diagnostic
+    assert "extracted_experiences=1" in diagnostic
+    assert "grounded_experiences=1" in diagnostic
+    assert "warnings=0" in diagnostic
+    assert "运营助理" not in diagnostic
+    assert "某公司" not in diagnostic
 
 
 def test_section_first_keeps_same_title_experiences_at_different_organizations() -> None:

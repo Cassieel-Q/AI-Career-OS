@@ -275,7 +275,7 @@ def test_provider_failure_during_section_extraction_is_isolated(client: TestClie
     diagnostic = next(record.getMessage() for record in caplog.records if "provider_failure" in record.getMessage())
     assert "failure_type=timeout" in diagnostic
     assert "stage=experience_extraction" in diagnostic
-    assert "total_llm_calls=2" in diagnostic
+    assert "total_llm_calls=1" in diagnostic
     assert "section-provider-body-secret" not in caplog.text
 
 
@@ -597,4 +597,6 @@ def test_openai_section_prompt_uses_lean_semantic_output(monkeypatch) -> None:
     assert "exact heading" in prompt
     assert "application owns evidence anchoring" in prompt
     assert "do not return evidence_text" in prompt
+    assert "copied VERBATIM" in prompt
+    assert "Do not paraphrase, summarize, translate, or rewrite" in prompt
     assert captured["response_format"] is main.LeanResumeExtractionResult

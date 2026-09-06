@@ -273,9 +273,16 @@ class OpenAIResumeProvider:
         section_text: str,
         section_label: str,
     ) -> LeanResumeExtractionResult:
+        source_surface_instruction = (
+            "Every returned string that represents a source fact must be copied VERBATIM from the supplied "
+            "section (source surface). Do not paraphrase, summarize, translate, or rewrite source values; never "
+            "canonicalize, improve wording, or infer synonyms. Application code owns canonicalization, evidence anchoring, offsets, and "
+            "provenance."
+        )
         if section_label in {"EDUCATION", "COURSES"}:
             system_prompt = (
-                "Extract only explicit semantic education facts from this single resume section. Return only "
+                f"{source_surface_instruction} Extract only explicit semantic education facts from this single "
+                "resume section. Return only "
                 "education items: school as institution, degree, major as field_of_study, an explicit start/end "
                 "date range as dates, and relevant_courses. The application owns evidence anchoring, raw_value, "
                 "canonical aliases, offsets, and provenance, so do not return evidence_text, evidence offsets, "
@@ -285,7 +292,8 @@ class OpenAIResumeProvider:
             )
         elif section_label == "EXPERIENCE":
             system_prompt = (
-                "Extract only explicit semantic experience facts from this single resume section. Return only "
+                f"{source_surface_instruction} Extract only explicit semantic experience facts from this single "
+                "resume section. Return only "
                 "experience items with title, organization, dates, description, and an experience_type when the "
                 "section supports WORK, INTERNSHIP, PROJECT, or CAMPUS. The application owns evidence anchoring, "
                 "raw_value, canonical aliases, offsets, and provenance; do not return evidence_text, evidence "
@@ -295,7 +303,8 @@ class OpenAIResumeProvider:
             )
         elif section_label == "CAMPUS":
             system_prompt = (
-                "Extract only explicit semantic campus-experience facts from this single resume section. Return "
+                f"{source_surface_instruction} Extract only explicit semantic campus-experience facts from this "
+                "single resume section. Return "
                 "only experience items with title, organization, dates, and description. The application owns "
                 "evidence anchoring, raw_value, canonical aliases, offsets, provenance, and CAMPUS classification; "
                 "do not return evidence_text, evidence offsets, raw_value, canonical_value, or source_section. "
@@ -303,7 +312,8 @@ class OpenAIResumeProvider:
             )
         else:
             system_prompt = (
-                f"Extract only explicit semantic facts from this single resume section: {section_label}. "
+                f"{source_surface_instruction} Extract only explicit semantic facts from this single resume "
+                f"section: {section_label}. "
                 "Do not use or invent information outside the supplied section. Return semantic skill or "
                 "credential values only. The application owns evidence anchoring, raw_value, canonical aliases, "
                 "offsets, and provenance; do not return evidence_text, evidence offsets, raw_value, "
@@ -478,6 +488,39 @@ def anchor_fact_to_source(source_text: str, fact_value: str, candidate_evidence:
     return anchor.text if anchor else None
 
 
+def _anchor_source_value_span(
+    source_text: str,
+    fact_value: str,
+    candidate_evidence: str,
+) -> EvidenceAnchor | None:
+    """Anchor one source value, rather than the whole candidate evidence span."""
+
+    normalized_source, source_spans = _normalize_text_with_spans(source_text)
+    normalized_value = normalize_text(fact_value)
+    normalized_candidate = normalize_text(candidate_evidence)
+    if (
+        not normalized_value
+        or not normalized_candidate
+        or normalized_value not in normalized_candidate
+        or not source_spans
+    ):
+        return None
+
+    candidate_start = normalized_source.find(normalized_candidate)
+    if candidate_start >= 0:
+        candidate_end = candidate_start + len(normalized_candidate)
+        match_start = normalized_source.find(normalized_value, candidate_start, candidate_end)
+    else:
+        match_start = normalized_source.find(normalized_value)
+    if match_start < 0:
+        return None
+
+    match_end = match_start + len(normalized_value) - 1
+    source_start = source_spans[match_start][0]
+    source_end = source_spans[match_end][1]
+    return EvidenceAnchor(text=source_text[source_start:source_end], start=source_start, end=source_end)
+
+
 def get_primary_fact_value(fact: Education | Skill | Experience | Certification) -> str:
     if isinstance(fact, Education):
         return fact.institution
@@ -622,8 +665,8 @@ _SECTION_NOISE_PATTERN = re.compile(r"[\s,，、/／|;；+&:：()（）\[\]【�
 _SECTION_SCORE_PATTERN = re.compile(r"\d{1,4}(?:\.\d+)?")
 
 
-def _section_has_semantic_content(section: ResumeSection) -> bool:
-    content = section.content
+def _section_has_semantic_content(section: ResumeSection, *, content: str | None = None) -> bool:
+    content = section.content if content is None else content
     if section.key == "SKILLS":
         for pattern, _ in _EXPLICIT_OFFICE_PATTERNS:
             content = pattern.sub(" ", content)
@@ -639,10 +682,44 @@ def _section_has_semantic_content(section: ResumeSection) -> bool:
     return bool(_SECTION_NOISE_PATTERN.sub("", content))
 
 
-def _section_requires_targeted_extraction(section: ResumeSection) -> bool:
-    return section.key in _SECTION_TARGET_KEYS and not (
-        section.key in {"SKILLS", "CREDENTIALS", "LANGUAGE"}
-        and not _section_has_semantic_content(section)
+def _deterministic_section_facts(
+    section: ResumeSection,
+    deterministic: ResumeExtractionResult,
+) -> tuple[object, ...]:
+    if section.key == "SKILLS":
+        return tuple(deterministic.skills)
+    if section.key == "CREDENTIALS":
+        return tuple(deterministic.certifications)
+    if section.key == "LANGUAGE":
+        return (*deterministic.skills, *deterministic.certifications)
+    return ()
+
+
+def _uncovered_section_content(
+    section: ResumeSection,
+    deterministic: ResumeExtractionResult,
+) -> str:
+    remaining = normalize_text(section.content)
+    for fact in _deterministic_section_facts(section, deterministic):
+        evidence = normalize_text(getattr(fact, "evidence_text", ""))
+        if evidence:
+            remaining = remaining.replace(evidence, " ", 1)
+    return remaining
+
+
+def _section_requires_targeted_extraction(
+    section: ResumeSection,
+    deterministic: ResumeExtractionResult | None = None,
+) -> bool:
+    if section.key not in _SECTION_TARGET_KEYS:
+        return False
+    if section.key not in {"SKILLS", "CREDENTIALS", "LANGUAGE"}:
+        return True
+    if deterministic is None:
+        return _section_has_semantic_content(section)
+    return _section_has_semantic_content(
+        section,
+        content=_uncovered_section_content(section, deterministic),
     )
 
 
@@ -652,15 +729,14 @@ def build_section_extraction_plan(
 ) -> list[ResumeSection]:
     """Return non-empty sections that need one bounded semantic extraction."""
 
-    del deterministic
-    plan: list[ResumeSection] = []
-    for section in detect_sections(source_text):
-        if not _section_requires_targeted_extraction(section):
-            continue
-        plan.append(section)
-        if len(plan) >= MAX_LLM_CALLS_PER_RESUME:
-            break
-    return plan
+    priority = {"EDUCATION": 0, "EXPERIENCE": 1, "CAMPUS": 2}
+    eligible = [
+        (index, section)
+        for index, section in enumerate(detect_sections(source_text))
+        if _section_requires_targeted_extraction(section, deterministic)
+    ]
+    eligible.sort(key=lambda item: (priority.get(item[1].key, 3), item[0]))
+    return [section for _, section in eligible[:MAX_LLM_CALLS_PER_RESUME]]
 
 
 def _section_candidate_fact(fact: object, section: ResumeSection) -> object:
@@ -732,64 +808,18 @@ def _lean_result_to_section_result(
     )
 
 
-def _fact_optional_values(fact: object) -> tuple[str, ...]:
-    if isinstance(fact, Education):
-        return tuple(
-            value
-            for value in (fact.degree, fact.field_of_study, fact.dates, *fact.relevant_courses)
-            if value
-        )
-    if isinstance(fact, Experience):
-        return tuple(value for value in (fact.organization, fact.dates, fact.description) if value)
-    if isinstance(fact, Certification):
-        return tuple(value for value in (fact.issuer, fact.date, fact.score, fact.status) if value)
-    return ()
-
-
-def _section_line_candidate(raw_line: str, line_index: int, section: ResumeSection) -> str:
-    candidate = raw_line.strip()
-    if line_index == 0 and candidate.casefold().startswith(section.heading.casefold()):
-        candidate = candidate[len(section.heading) :].lstrip(" :：")
-    return candidate
-
-
-def _fact_local_section_evidence(
-    fact: object,
-    source_text: str,
-    section: ResumeSection,
-) -> str:
-    section_source = source_text[section.start : section.end]
-    primary_values = [get_primary_fact_value(fact), *_fact_aliases(fact)]
-    normalized_primary_values = [normalize_text(value) for value in primary_values if normalize_text(value)]
-    normalized_optional_values = [normalize_text(value) for value in _fact_optional_values(fact)]
-    best: tuple[int, int, str] | None = None
-    for line_index, raw_line in enumerate(section_source.splitlines()):
-        candidate = _section_line_candidate(raw_line, line_index, section)
-        normalized_candidate = normalize_text(candidate)
-        if not normalized_candidate or not any(
-            value in normalized_candidate for value in normalized_primary_values
-        ):
-            continue
-        primary_score = int(any(value in normalized_candidate for value in normalized_primary_values))
-        optional_score = sum(value in normalized_candidate for value in normalized_optional_values)
-        score = primary_score + optional_score
-        candidate_rank = (score, -line_index, candidate)
-        if best is None or candidate_rank[:2] > best[:2]:
-            best = (score, -line_index, candidate)
-    return best[2] if best is not None else get_primary_fact_value(fact)
-
-
 def _localize_section_evidence(
     result: ResumeExtractionResult,
     source_text: str,
     section: ResumeSection,
 ) -> ResumeExtractionResult:
+    del source_text
     updates: dict[str, list[object]] = {}
     for collection, facts in _fact_groups(result):
         updates[collection] = [
             fact.model_copy(
                 update={
-                    "evidence_text": _fact_local_section_evidence(fact, source_text, section),
+                    "evidence_text": section.content,
                     "evidence_start": None,
                     "evidence_end": None,
                 }
@@ -1015,20 +1045,26 @@ def _ground_optional_fact_fields(
     index: int,
     anchor: EvidenceAnchor,
     source: str,
-) -> tuple[object, list[ValidationWarning]]:
+    *,
+    field_source_text: str | None = None,
+    field_candidate_evidence: str | None = None,
+) -> tuple[object, list[ValidationWarning], list[EvidenceAnchor]]:
     field_names = {
         "education": ("degree", "field_of_study", "dates"),
         "experience": ("organization", "dates", "description"),
         "certification": ("issuer", "date", "score", "status"),
     }.get(category, ())
-    updates: dict[str, str | None] = {}
+    updates: dict[str, object] = {}
     warnings: list[ValidationWarning] = []
-    normalized_evidence = normalize_text(anchor.text)
+    field_source = field_source_text or anchor.text
+    field_evidence = field_candidate_evidence or anchor.text
+    field_anchors: list[EvidenceAnchor] = []
     for field_name in field_names:
         field_value = getattr(fact, field_name)
         if field_value is None:
             continue
-        if not normalize_text(field_value) or normalize_text(field_value) not in normalized_evidence:
+        field_anchor = _anchor_source_value_span(field_source, field_value, field_evidence)
+        if field_anchor is None:
             warnings.append(
                 ValidationWarning(
                     code="UNSUPPORTED_FACT",
@@ -1041,7 +1077,33 @@ def _ground_optional_fact_fields(
                 )
             )
             updates[field_name] = None
-    return fact.model_copy(update=updates) if updates else fact, warnings
+            continue
+        updates[field_name] = field_anchor.text
+        field_anchors.append(field_anchor)
+
+    if isinstance(fact, Education):
+        grounded_courses: list[str] = []
+        for course_index, course in enumerate(fact.relevant_courses):
+            course_anchor = _anchor_source_value_span(field_source, course, field_evidence)
+            if course_anchor is None:
+                warnings.append(
+                    ValidationWarning(
+                        code="UNSUPPORTED_FACT",
+                        category="education.relevant_courses",
+                        index=course_index,
+                        reason="course_not_in_evidence",
+                        raw_value=course,
+                        evidence_text=anchor.text,
+                        source=source,
+                    )
+                )
+                continue
+            grounded_courses.append(course_anchor.text)
+            field_anchors.append(course_anchor)
+        updates["relevant_courses"] = grounded_courses
+
+    grounded_fact = fact.model_copy(update=updates) if updates else fact
+    return grounded_fact, warnings, field_anchors
 
 
 def ground_resume_extraction(
@@ -1050,6 +1112,7 @@ def ground_resume_extraction(
     *,
     source: str = "initial",
     strict: bool = False,
+    field_source_text: str | None = None,
 ) -> GroundingResult:
     warnings: list[ValidationWarning] = []
     fact_groups = _fact_groups(result)
@@ -1067,20 +1130,31 @@ def ground_resume_extraction(
         for index, fact in enumerate(facts):
             raw_value = fact.raw_value or get_primary_fact_value(fact)
             values = [raw_value] if fact.raw_value else [raw_value, *_fact_aliases(fact)]
-            anchor = next(
-                (
-                    candidate
-                    for value in dict.fromkeys(values)
-                    if (candidate := anchor_fact_to_source_span(source_text, value, fact.evidence_text)) is not None
-                ),
-                None,
-            )
+            anchored_value: str | None = None
+            anchor: EvidenceAnchor | None = None
+            for value in dict.fromkeys(values):
+                candidate = (
+                    _anchor_source_value_span(source_text, value, fact.evidence_text)
+                    if field_source_text is not None
+                    else anchor_fact_to_source_span(source_text, value, fact.evidence_text)
+                )
+                if candidate is not None:
+                    anchored_value = value
+                    anchor = candidate
+                    break
             if anchor is None:
+                warning_reason = _warning_reason(source_text, fact.evidence_text)
+                if field_source_text is not None and not any(
+                    normalize_text(value) in normalize_text(source_text)
+                    for value in dict.fromkeys(values)
+                    if normalize_text(value)
+                ):
+                    warning_reason = "evidence_not_in_source"
                 warning = ValidationWarning(
                     code="UNSUPPORTED_FACT",
                     category=category,
                     index=index,
-                    reason=_warning_reason(source_text, fact.evidence_text),
+                    reason=warning_reason,
                     raw_value=raw_value,
                     evidence_text=fact.evidence_text,
                     source=source,
@@ -1106,42 +1180,36 @@ def ground_resume_extraction(
                     continue
             grounded_fact = fact.model_copy(
                 update={
-                    "raw_value": values[0] if fact.raw_value else next(
-                        value for value in dict.fromkeys(values)
-                        if anchor_fact_to_source_span(source_text, value, fact.evidence_text) is not None
-                    ),
+                    "raw_value": values[0] if fact.raw_value else anchored_value,
                     "evidence_text": anchor.text,
                     "evidence_start": anchor.start,
                     "evidence_end": anchor.end,
                 }
             )
+            evidence_anchors = [anchor]
             if isinstance(fact, (Education, Experience, Certification)):
-                grounded_fact, optional_warnings = _ground_optional_fact_fields(
+                grounded_fact, optional_warnings, optional_anchors = _ground_optional_fact_fields(
                     grounded_fact,
                     category,
                     index,
                     anchor,
                     source,
+                    field_source_text=field_source_text,
+                    field_candidate_evidence=(
+                        fact.evidence_text if field_source_text is not None else None
+                    ),
                 )
                 warnings.extend(optional_warnings)
-            if isinstance(fact, Education):
-                grounded_courses: list[str] = []
-                for course_index, course in enumerate(fact.relevant_courses):
-                    if anchor_fact_to_source(source_text, course, anchor.text) is None:
-                        warnings.append(
-                            ValidationWarning(
-                                code="UNSUPPORTED_FACT",
-                                category="education.relevant_courses",
-                                index=course_index,
-                                reason="course_not_in_evidence",
-                                raw_value=course,
-                                evidence_text=anchor.text,
-                                source=source,
-                            )
-                        )
-                    else:
-                        grounded_courses.append(course)
-                grounded_fact = grounded_fact.model_copy(update={"relevant_courses": grounded_courses})
+                evidence_anchors.extend(optional_anchors)
+            evidence_start = min(item.start for item in evidence_anchors)
+            evidence_end = max(item.end for item in evidence_anchors)
+            grounded_fact = grounded_fact.model_copy(
+                update={
+                    "evidence_text": source_text[evidence_start:evidence_end],
+                    "evidence_start": evidence_start,
+                    "evidence_end": evidence_end,
+                }
+            )
             accepted[collection_for_category[category]].append(grounded_fact)
     return GroundingResult(
         result=ResumeExtractionResult.model_validate(accepted),
@@ -1361,15 +1429,35 @@ def _rebase_section_evidence(
     source_text: str,
     section: ResumeSection,
 ) -> ResumeExtractionResult:
-    """Map evidence grounded in reconstructed section text back to resume offsets."""
+    """Map evidence grounded in the original section slice to resume offsets."""
 
     section_source = source_text[section.start : section.end]
     updates: dict[str, list[object]] = {}
     for collection, facts in _fact_groups(result):
         rebased_facts: list[object] = []
         for fact in facts:
+            relative_start = fact.evidence_start
+            relative_end = fact.evidence_end
+            if (
+                isinstance(relative_start, int)
+                and isinstance(relative_end, int)
+                and 0 <= relative_start < relative_end <= len(section_source)
+                and section_source[relative_start:relative_end] == fact.evidence_text
+            ):
+                rebased_facts.append(
+                    fact.model_copy(
+                        update={
+                            "evidence_text": source_text[
+                                section.start + relative_start : section.start + relative_end
+                            ],
+                            "evidence_start": section.start + relative_start,
+                            "evidence_end": section.start + relative_end,
+                        }
+                    )
+                )
+                continue
             raw_value = fact.raw_value or get_primary_fact_value(fact)
-            anchor = anchor_fact_to_source_span(section_source, raw_value, fact.evidence_text)
+            anchor = _anchor_source_value_span(section_source, raw_value, fact.evidence_text)
             if anchor is None:
                 rebased_facts.append(
                     fact.model_copy(update={"evidence_start": None, "evidence_end": None})
@@ -1724,8 +1812,9 @@ def process_resume_extraction(
                 try:
                     repair_grounded = ground_resume_extraction(
                         repair_raw,
-                        section.text,
+                        source_text[section.start : section.end],
                         source="repair",
+                        field_source_text=source_text[section.start : section.end],
                     )
                     warnings.extend(repair_grounded.warnings)
                     if (
@@ -1878,6 +1967,39 @@ def _section_budget_warning(section: ResumeSection) -> ValidationWarning:
     )
 
 
+def _section_fact_counts(result: ResumeExtractionResult) -> dict[str, int]:
+    return {
+        "education": len(result.education),
+        "skills": len(result.skills),
+        "experiences": len(result.experiences),
+        "certifications": len(result.certifications),
+    }
+
+
+def _log_targeted_section_diagnostic(
+    section: ResumeSection,
+    extracted: ResumeExtractionResult,
+    grounded: GroundingResult,
+) -> None:
+    extracted_counts = _section_fact_counts(extracted)
+    grounded_counts = _section_fact_counts(grounded.result)
+    logger.info(
+        "targeted_section section_key=%s extracted_education=%d extracted_skills=%d "
+        "extracted_experiences=%d extracted_certifications=%d grounded_education=%d "
+        "grounded_skills=%d grounded_experiences=%d grounded_certifications=%d warnings=%d",
+        section.key,
+        extracted_counts["education"],
+        extracted_counts["skills"],
+        extracted_counts["experiences"],
+        extracted_counts["certifications"],
+        grounded_counts["education"],
+        grounded_counts["skills"],
+        grounded_counts["experiences"],
+        grounded_counts["certifications"],
+        len(grounded.warnings),
+    )
+
+
 def _ground_targeted_section(
     raw_result: LeanResumeExtractionResult | ResumeExtractionResult | object,
     source_text: str,
@@ -1888,7 +2010,13 @@ def _ground_targeted_section(
         source_text,
         section,
     )
-    grounded = ground_resume_extraction(section_result, section.text, source="targeted")
+    section_source = source_text[section.start : section.end]
+    grounded = ground_resume_extraction(
+        section_result,
+        section_source,
+        source="targeted",
+        field_source_text=section_source,
+    )
     return GroundingResult(
         result=_rebase_section_evidence(grounded.result, source_text, section),
         warnings=grounded.warnings,
@@ -1960,8 +2088,9 @@ def extract_section_first_resume(
     merged = deterministic
     warnings: list[ValidationWarning] = []
     planned_sections = {(section.key, section.start, section.end) for section in plan}
+    targeted_results: dict[tuple[str, int, int], ResumeExtractionResult] = {}
     for section in sections:
-        if _section_requires_targeted_extraction(section) and (
+        if _section_requires_targeted_extraction(section, deterministic) and (
             section.key,
             section.start,
             section.end,
@@ -1983,15 +2112,11 @@ def extract_section_first_resume(
                     raw_result = provider.extract(section.text)
             finally:
                 provider_elapsed = (time.perf_counter() - provider_started) * 1000
-            targeted = _ground_targeted_section(raw_result, source_text, section)
+            section_result = _lean_result_to_section_result(raw_result, section)
+            targeted = _ground_targeted_section(section_result, source_text, section)
+            _log_targeted_section_diagnostic(section, section_result, targeted)
             warnings.extend(targeted.warnings)
-            merged = _merge_repair(
-                merged,
-                targeted.result,
-                section.key,
-                section.heading,
-                source_text=source_text,
-            )
+            targeted_results[(section.key, section.start, section.end)] = targeted.result
         except ResumeExtractionFailure as failure:
             _log_provider_failure(failure)
             warnings.append(_section_provider_failure_warning(section, failure))
@@ -2013,6 +2138,20 @@ def extract_section_first_resume(
                     + provider_elapsed
                 )
                 timing_ms["total_llm_calls"] = total_llm_calls
+
+    # Calls are prioritized for recall, but merge in source order so the public
+    # profile remains stable relative to the resume layout.
+    for section in sections:
+        targeted = targeted_results.get((section.key, section.start, section.end))
+        if targeted is None:
+            continue
+        merged = _merge_repair(
+            merged,
+            targeted,
+            section.key,
+            section.heading,
+            source_text=source_text,
+        )
 
     processed = process_resume_extraction(
         merged,
