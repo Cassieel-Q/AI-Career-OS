@@ -82,7 +82,7 @@ git diff --check
 
 Expected: backend and frontend tests/checks pass; if the known Windows/Next dependency-tree build issue recurs, report it as unverified rather than claiming build success.
 
-- [ ] **Step 2: Review the diff and commit**
+- [x] **Step 2: Review the diff and commit**
 
 ```powershell
 git diff -- apps/api/app/main.py apps/api/tests/test_resume.py docs/superpowers/plans/2026-09-10-deepseek-json-output.md
@@ -91,7 +91,7 @@ git add apps/api/app/main.py apps/api/tests/test_resume.py docs/superpowers/plan
 git commit -m "fix: support DeepSeek JSON output"
 ```
 
-- [ ] **Step 3: Push and verify the remote branch**
+- [x] **Step 3: Push and verify the remote branch**
 
 ```powershell
 git push origin feature/resume-profile-normalization
