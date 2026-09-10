@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import math
 import os
@@ -7,14 +8,15 @@ import re
 import time
 import unicodedata
 from dataclasses import dataclass
-from typing import NoReturn, Protocol
+from typing import NoReturn, Protocol, TypeVar
+from urllib.parse import urlparse
 from uuid import UUID
 
 import fitz
 import httpx
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -79,6 +81,20 @@ _PROVIDER_FAILURE_RESPONSES = {
     _PROVIDER_FAILURE_STRUCTURED_OUTPUT: (502, "Resume extraction returned invalid structured output"),
     _PROVIDER_FAILURE_INTERNAL: (500, "Resume extraction processing failed"),
 }
+_MODEL_T = TypeVar("_MODEL_T", bound=BaseModel)
+_FULL_JSON_OBJECT_CONTRACT = (
+    " Return only a JSON object (no Markdown or commentary) with these top-level arrays: education, skills, "
+    "experiences, and certifications; use [] when a section has no supported facts. Education items require "
+    "institution and may include degree, field_of_study, dates, and relevant_courses (an array of strings); "
+    "skill items require name; experience items require title and may include organization, dates, description, "
+    "experience_type, and source_section; certification items require name and may include issuer, date, score, "
+    "and status. Use null only for optional scalar fields and do not add unsupported fields."
+)
+_SECTION_JSON_OBJECT_CONTRACT = (
+    " Return only a JSON object (no Markdown or commentary) with top-level arrays education, skills, experiences, "
+    "and certifications; use [] for sections not being extracted. Each item must use only the fields described "
+    "above and must not include evidence or provenance fields."
+)
 
 
 def _has_exception_name(error: BaseException, names: tuple[str, ...]) -> bool:
@@ -109,7 +125,7 @@ def _classify_provider_failure(error: BaseException, *, provider_call: bool) -> 
         error, ("APIStatusError",)
     ):
         return _PROVIDER_FAILURE_UPSTREAM
-    if isinstance(error, ValidationError) or _has_exception_name(
+    if isinstance(error, (json.JSONDecodeError, ValidationError)) or _has_exception_name(
         error,
         (
             "APIResponseValidationError",
@@ -209,6 +225,14 @@ def get_openai_max_retries() -> int:
     return value
 
 
+def _is_deepseek_endpoint(base_url: str | None) -> bool:
+    if not base_url:
+        return False
+    hostname = urlparse(base_url).hostname
+    normalized_hostname = hostname.casefold() if hostname else ""
+    return normalized_hostname == "deepseek.com" or normalized_hostname.endswith(".deepseek.com")
+
+
 class ResumeProvider(Protocol):
     def extract(self, evidence_text: str) -> ResumeExtractionResult: ...
 
@@ -233,40 +257,58 @@ class OpenAIResumeProvider:
             client_options["base_url"] = base_url
         self.client = OpenAI(**client_options)
         self.model = os.getenv("OPENAI_MODEL") or os.getenv("OPENAI_RESUME_MODEL") or "gpt-4o-mini"
+        self._is_deepseek = _is_deepseek_endpoint(base_url)
+
+    def _create_json_completion(
+        self,
+        *,
+        system_prompt: str,
+        user_content: str,
+    ) -> object:
+        request: dict[str, object] = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_content},
+            ],
+            "response_format": {"type": "json_object"},
+        }
+        if self._is_deepseek:
+            request["extra_body"] = {"thinking": {"type": "disabled"}}
+        return self.client.chat.completions.create(**request)
+
+    @staticmethod
+    def _parse_json_completion(response: object, model_type: type[_MODEL_T]) -> _MODEL_T:
+        content = response.choices[0].message.content
+        if not isinstance(content, str) or not content.strip():
+            raise ValueError("OpenAI returned no JSON resume result")
+        data = json.loads(content)
+        return model_type.model_validate(data)
 
     def extract(self, evidence_text: str) -> ResumeExtractionResult:
-        response = self.client.beta.chat.completions.parse(
-            model=self.model,
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "Extract explicit resume facts only. Use section headings as structural evidence and map "
-                        "教育背景 to education, 主修课程 to education.relevant_courses, 实习经历 to "
-                        "INTERNSHIP, 工作经历 to WORK, 校园经历 to CAMPUS, 项目经历 to PROJECT, 专业技能 "
-                        "to skills, and explicit 证书/资格证书/language credentials to certifications. "
-                        "For each experience, return source_section as the exact heading when present and "
-                        "experience_type as WORK, INTERNSHIP, CAMPUS, PROJECT, or OTHER. Keep generic language "
-                        "ability in skills, and keep explicit credentials such as CET-4/CET-6, IELTS, TOEFL, "
-                        "JLPT, or 普通话二级甲等 in certifications. Never invent a credential. "
-                        "For every evidence_text, copy a VERBATIM contiguous excerpt from the resume. Do not "
-                        "paraphrase, summarize, translate, or rewrite evidence_text. Preserve evidence_text "
-                        "exactly as shown. Keep evidence excerpts concise but include the relevant course text "
-                        "when returning relevant_courses. For each item, set raw_value to the exact extracted "
-                        "value before any canonicalization; canonical_value is reserved for deterministic aliases "
-                        "such as PPT to PowerPoint. Keep explicit credential score text in score, never infer "
-                        "pass/fail status, and do not emit unsupported facts. Do not infer skill proficiency; "
-                        "proficiency must remain null."
-                    ),
-                },
-                {"role": "user", "content": evidence_text},
-            ],
-            response_format=ResumeExtractionResult,
+        response = self._create_json_completion(
+            system_prompt=(
+                "Extract explicit resume facts only. Use section headings as structural evidence and map "
+                "教育背景 to education, 主修课程 to education.relevant_courses, 实习经历 to "
+                "INTERNSHIP, 工作经历 to WORK, 校园经历 to CAMPUS, 项目经历 to PROJECT, 专业技能 "
+                "to skills, and explicit 证书/资格证书/language credentials to certifications. "
+                "For each experience, return source_section as the exact heading when present and "
+                "experience_type as WORK, INTERNSHIP, CAMPUS, PROJECT, or OTHER. Keep generic language "
+                "ability in skills, and keep explicit credentials such as CET-4/CET-6, IELTS, TOEFL, "
+                "JLPT, or 普通话二级甲等 in certifications. Never invent a credential. "
+                "For every evidence_text, copy a VERBATIM contiguous excerpt from the resume. Do not "
+                "paraphrase, summarize, translate, or rewrite evidence_text. Preserve evidence_text "
+                "exactly as shown. Keep evidence excerpts concise but include the relevant course text "
+                "when returning relevant_courses. For each item, set raw_value to the exact extracted "
+                "value before any canonicalization; canonical_value is reserved for deterministic aliases "
+                "such as PPT to PowerPoint. Keep explicit credential score text in score, never infer "
+                "pass/fail status, and do not emit unsupported facts. Do not infer skill proficiency; "
+                "proficiency must remain null."
+                + _FULL_JSON_OBJECT_CONTRACT
+            ),
+            user_content=evidence_text,
         )
-        parsed = response.choices[0].message.parsed
-        if parsed is None:
-            raise ValueError("OpenAI returned no structured resume result")
-        return ResumeExtractionResult.model_validate(parsed)
+        return self._parse_json_completion(response, ResumeExtractionResult)
 
     def extract_section(
         self,
@@ -289,6 +331,7 @@ class OpenAIResumeProvider:
                 "raw_value, canonical_value, or source_section. The existing contract stores start and end "
                 "together in dates; do not invent a missing boundary. Do not return skills, experiences, "
                 "certifications, or career implications. Do not infer school, major, degree, dates, or courses."
+                + _SECTION_JSON_OBJECT_CONTRACT
             )
         elif section_label == "EXPERIENCE":
             system_prompt = (
@@ -300,6 +343,7 @@ class OpenAIResumeProvider:
                 "offsets, raw_value, canonical_value, or source_section. Do not use or invent information outside "
                 "the supplied section. Read the exact heading and never use OTHER when it provides a supported "
                 "classification."
+                + _SECTION_JSON_OBJECT_CONTRACT
             )
         elif section_label == "CAMPUS":
             system_prompt = (
@@ -309,6 +353,7 @@ class OpenAIResumeProvider:
                 "evidence anchoring, raw_value, canonical aliases, offsets, provenance, and CAMPUS classification; "
                 "do not return evidence_text, evidence offsets, raw_value, canonical_value, or source_section. "
                 "Do not use or invent information outside the supplied section."
+                + _SECTION_JSON_OBJECT_CONTRACT
             )
         else:
             system_prompt = (
@@ -319,22 +364,13 @@ class OpenAIResumeProvider:
                 "offsets, and provenance; do not return evidence_text, evidence offsets, raw_value, "
                 "canonical_value, or source_section. Keep generic language ability in skills and explicit "
                 "credentials in certifications. Do not infer credential pass/fail status."
+                + _SECTION_JSON_OBJECT_CONTRACT
             )
-        response = self.client.beta.chat.completions.parse(
-            model=self.model,
-            messages=[
-                {
-                    "role": "system",
-                    "content": system_prompt,
-                },
-                {"role": "user", "content": section_text},
-            ],
-            response_format=LeanResumeExtractionResult,
+        response = self._create_json_completion(
+            system_prompt=system_prompt,
+            user_content=section_text,
         )
-        parsed = response.choices[0].message.parsed
-        if parsed is None:
-            raise ValueError("OpenAI returned no structured section result")
-        return LeanResumeExtractionResult.model_validate(parsed)
+        return self._parse_json_completion(response, LeanResumeExtractionResult)
 
 
 _resume_provider: ResumeProvider | None = None

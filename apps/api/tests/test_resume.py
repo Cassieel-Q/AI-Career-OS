@@ -1,3 +1,4 @@
+import json
 from io import BytesIO
 import logging
 import sys
@@ -544,19 +545,123 @@ def test_openai_api_key_is_not_logged(monkeypatch, caplog) -> None:
     assert "test-key" not in caplog.text
 
 
+def _install_fake_json_openai(monkeypatch, content: str, captured: dict[str, object]) -> None:
+    class FakeCompletions:
+        def create(self, **kwargs: object) -> object:
+            captured.update(kwargs)
+            return SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(content=content))]
+            )
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs: object) -> None:
+            self.chat = SimpleNamespace(completions=FakeCompletions())
+
+    monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=FakeOpenAI))
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
+
+
+def test_openai_provider_extract_parses_json_object_into_full_result(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+    _install_fake_json_openai(
+        monkeypatch,
+        '{"education": [], "skills": [{"name": "Python", "evidence_text": "Python"}], '
+        '"experiences": [], "certifications": []}',
+        captured,
+    )
+
+    result = main.OpenAIResumeProvider().extract("Python")
+
+    assert isinstance(result, ResumeExtractionResult)
+    assert result.skills[0].name == "Python"
+    assert captured["response_format"] == {"type": "json_object"}
+    assert "extra_body" not in captured
+
+
+def test_openai_provider_extract_section_parses_json_object_into_lean_result(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+    _install_fake_json_openai(
+        monkeypatch,
+        '{"education": [{"institution": "北京大学"}], "skills": [], '
+        '"experiences": [], "certifications": []}',
+        captured,
+    )
+
+    result = main.OpenAIResumeProvider().extract_section("教育背景\n北京大学", "EDUCATION")
+
+    assert isinstance(result, main.LeanResumeExtractionResult)
+    assert result.education[0].institution == "北京大学"
+    assert captured["response_format"] == {"type": "json_object"}
+
+
+def test_openai_provider_disables_thinking_for_deepseek_json_extraction(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+    _install_fake_json_openai(
+        monkeypatch,
+        '{"education": [], "skills": [{"name": "Python"}], '
+        '"experiences": [], "certifications": []}',
+        captured,
+    )
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://api.deepseek.com")
+
+    result = main.OpenAIResumeProvider().extract_section("专业技能\nPython", "SKILLS")
+
+    assert result.skills[0].name == "Python"
+    assert captured["response_format"] == {"type": "json_object"}
+    assert captured["extra_body"] == {"thinking": {"type": "disabled"}}
+
+
+def test_openai_provider_invalid_json_uses_structured_output_failure_taxonomy(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+    _install_fake_json_openai(monkeypatch, "not-json", captured)
+
+    with pytest.raises(main.ResumeExtractionFailure) as error:
+        main._run_full_resume_fallback(main.OpenAIResumeProvider(), "plain resume", timing_ms=None)
+
+    assert error.value.failure_type == "structured_output_validation"
+
+
+def test_json_decode_error_is_always_structured_output_failure() -> None:
+    error = json.JSONDecodeError("invalid JSON", "not-json", 0)
+
+    assert main._classify_provider_failure(error, provider_call=False) == "structured_output_validation"
+
+
+def test_openai_provider_schema_invalid_json_uses_structured_output_failure_taxonomy(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+    _install_fake_json_openai(
+        monkeypatch,
+        '{"education": [], "skills": [{"name": "Python"}], '
+        '"experiences": [], "certifications": []}',
+        captured,
+    )
+
+    with pytest.raises(main.ResumeExtractionFailure) as error:
+        main._run_full_resume_fallback(main.OpenAIResumeProvider(), "plain resume", timing_ms=None)
+
+    assert error.value.failure_type == "structured_output_validation"
+
+
 def test_openai_prompt_requires_verbatim_contiguous_evidence(monkeypatch) -> None:
     captured: dict[str, object] = {}
 
     class FakeCompletions:
-        def parse(self, **kwargs: object) -> object:
+        def create(self, **kwargs: object) -> object:
             captured.update(kwargs)
             return SimpleNamespace(
-                choices=[SimpleNamespace(message=SimpleNamespace(parsed=ResumeExtractionResult()))]
+                choices=[
+                    SimpleNamespace(
+                        message=SimpleNamespace(
+                            content='{"education": [], "skills": [], "experiences": [], "certifications": []}'
+                        )
+                    )
+                ]
             )
 
     class FakeOpenAI:
         def __init__(self, **kwargs: str) -> None:
-            self.beta = SimpleNamespace(chat=SimpleNamespace(completions=FakeCompletions()))
+            self.chat = SimpleNamespace(completions=FakeCompletions())
 
     monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=FakeOpenAI))
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
@@ -567,21 +672,31 @@ def test_openai_prompt_requires_verbatim_contiguous_evidence(monkeypatch) -> Non
     assert "VERBATIM contiguous excerpt" in prompt
     assert "Do not paraphrase, summarize, translate, or rewrite evidence_text" in prompt
     assert "Keep evidence excerpts concise" in prompt
+    assert "Return only a JSON object" in prompt
+    assert "education" in prompt
+    assert "certifications" in prompt
+    assert captured["response_format"] == {"type": "json_object"}
 
 
 def test_openai_section_prompt_uses_lean_semantic_output(monkeypatch) -> None:
     captured: dict[str, object] = {}
 
     class FakeCompletions:
-        def parse(self, **kwargs: object) -> object:
+        def create(self, **kwargs: object) -> object:
             captured.update(kwargs)
             return SimpleNamespace(
-                choices=[SimpleNamespace(message=SimpleNamespace(parsed=main.LeanResumeExtractionResult()))]
+                choices=[
+                    SimpleNamespace(
+                        message=SimpleNamespace(
+                            content='{"education": [], "skills": [], "experiences": [], "certifications": []}'
+                        )
+                    )
+                ]
             )
 
     class FakeOpenAI:
         def __init__(self, **kwargs: str) -> None:
-            self.beta = SimpleNamespace(chat=SimpleNamespace(completions=FakeCompletions()))
+            self.chat = SimpleNamespace(completions=FakeCompletions())
 
     monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=FakeOpenAI))
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
@@ -599,4 +714,7 @@ def test_openai_section_prompt_uses_lean_semantic_output(monkeypatch) -> None:
     assert "do not return evidence_text" in prompt
     assert "copied VERBATIM" in prompt
     assert "Do not paraphrase, summarize, translate, or rewrite" in prompt
-    assert captured["response_format"] is main.LeanResumeExtractionResult
+    assert "Return only a JSON object" in prompt
+    assert "education" in prompt
+    assert "certifications" in prompt
+    assert captured["response_format"] == {"type": "json_object"}
