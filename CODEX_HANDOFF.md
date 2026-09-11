@@ -11,7 +11,7 @@
 - 远端：`origin/feature/resume-profile-normalization`
 - 最新实现代码 commit：`4d7301e05f9440c79c03a47c7ed385c5353cfd27`（`fix: tighten DeepSeek section JSON contracts`）
 - 当前 HEAD：本文件所在的 docs-only handoff commit；用 `git rev-parse HEAD` 获取精确 SHA
-- 工作树：干净；本地 HEAD 与远端 HEAD 一致
+- 工作树：干净；本地包含本交接文档的 docs-only commit，远端仍停在最新实现代码 commit `4d7301e`
 - 当前范围：TASK-002 及 TASK-002.5 系列可靠性加固已实现；当前最近工作是 TASK-002.5G DeepSeek section JSON contract acceptance fix
 - 下一阶段：先完成真实 PostgreSQL / DeepSeek 浏览器 smoke verification，再决定是否继续同一分支上的小范围修复
 
@@ -144,7 +144,7 @@
 | Frontend type-check | `npm run type-check` → passed；自动生成的 `next-env.d.ts` 已恢复为基线 |
 | Frontend lint | `npm run lint` → passed；只有现有 `next lint` deprecation notice |
 | Git whitespace | `git diff --check` → passed |
-| Remote consistency | local HEAD = remote HEAD = `4d7301e`；工作树 clean |
+| Git consistency | 最新实现代码与远端均为 `4d7301e`；本地交接文档 commit 尚未推送；工作树 clean |
 
 `1 skipped` 是没有配置独立 `TEST_DATABASE_URL` 时的 PostgreSQL integration skip，不代表 PostgreSQL persistence gate 已通过。
 
@@ -231,7 +231,7 @@
 
 项目：G:\myself\ai-career-OS-resume-profile-normalization
 当前分支：feature/resume-profile-normalization
-当前 HEAD：4d7301e（已 push，工作树应保持 clean）
+最新实现代码 commit：4d7301e（已 push）；当前 HEAD 是本地 docs-only handoff commit，工作树应保持 clean。
 
 TASK-002 及 TASK-002.5 系列实现已完成。不要 merge main，不要 force-push，不要开始 TASK-003。
 下一步按交接文档顺序完成：
