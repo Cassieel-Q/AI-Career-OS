@@ -595,6 +595,119 @@ def test_openai_provider_extract_section_parses_json_object_into_lean_result(mon
     assert captured["response_format"] == {"type": "json_object"}
 
 
+def test_openai_provider_extract_section_accepts_exact_credential_json_contract(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+    _install_fake_json_openai(
+        monkeypatch,
+        '{"education": [], "skills": [], "experiences": [], '
+        '"certifications": [{"name": "CET-6", "issuer": null, "date": null, "score": "600"}]}',
+        captured,
+    )
+
+    result = main.OpenAIResumeProvider().extract_section("证书\nCET-6\n600", "CREDENTIALS")
+
+    assert result.certifications[0].model_dump() == {
+        "name": "CET-6",
+        "issuer": None,
+        "date": None,
+        "score": "600",
+    }
+    prompt = captured["messages"][0]["content"]
+    assert "LeanCertification keys are exactly: name, issuer, date, score" in prompt
+    assert "must not include status" in prompt
+    assert "credential_type" in prompt
+
+
+@pytest.mark.parametrize(
+    ("section_label", "contract_marker"),
+    [
+        ("EDUCATION", '"relevant_courses":[]'),
+        ("EXPERIENCE", '"experience_type":"WORK"'),
+        ("CAMPUS", '"experience_type":"CAMPUS"'),
+        ("SKILLS", '"skills":[{"name":"..."}]'),
+        ("CREDENTIALS", "LeanCertification keys are exactly"),
+        ("LANGUAGE", "LeanSkill items"),
+    ],
+)
+def test_openai_provider_uses_section_specific_json_contract(monkeypatch, section_label: str, contract_marker: str) -> None:
+    captured: dict[str, object] = {}
+    _install_fake_json_openai(
+        monkeypatch,
+        '{"education": [], "skills": [], "experiences": [], "certifications": []}',
+        captured,
+    )
+
+    main.OpenAIResumeProvider().extract_section("section content", section_label)
+
+    prompt = captured["messages"][0]["content"]
+    assert "Return only a JSON object" in prompt
+    assert contract_marker in prompt
+
+
+@pytest.mark.parametrize("extra_field", ["status", "credential_type"])
+def test_openai_provider_extract_section_rejects_unknown_credential_fields(monkeypatch, extra_field: str) -> None:
+    captured: dict[str, object] = {}
+    _install_fake_json_openai(
+        monkeypatch,
+        json.dumps(
+            {
+                "education": [],
+                "skills": [],
+                "experiences": [],
+                "certifications": [
+                    {"name": "AWS", "issuer": None, "date": None, "score": None, extra_field: "secret"}
+                ],
+            }
+        ),
+        captured,
+    )
+
+    with pytest.raises(main.ValidationError) as error:
+        main.OpenAIResumeProvider().extract_section("证书\nAWS", "CREDENTIALS")
+
+    assert any(
+        detail["loc"] == ("certifications", 0, extra_field)
+        and detail["type"] == "extra_forbidden"
+        for detail in error.value.errors()
+    )
+
+
+def test_section_validation_diagnostic_is_safe_and_identifies_credential_extra_field(monkeypatch, caplog) -> None:
+    captured: dict[str, object] = {}
+    _install_fake_json_openai(
+        monkeypatch,
+        '{"education": [], "skills": [], "experiences": [], '
+        '"certifications": [{"name": "AWS", "status": "provider-secret"}]}',
+        captured,
+    )
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://api.deepseek.com")
+
+    with caplog.at_level(logging.ERROR, logger=main.logger.name):
+        processed = main.extract_section_first_resume(
+            main.OpenAIResumeProvider(),
+            "证书\nAWS Certified Cloud Practitioner\n\n专业技能\nWord",
+        )
+
+    diagnostic = next(
+        record.getMessage()
+        for record in caplog.records
+        if "section=CREDENTIALS" in record.getMessage()
+    )
+    assert "stage=other_extraction" in diagnostic
+    assert "section=CREDENTIALS" in diagnostic
+    assert "loc=certifications.0.status" in diagnostic
+    assert "type=extra_forbidden" in diagnostic
+    assert "error_count=1" in diagnostic
+    assert "provider-secret" not in caplog.text
+    assert "AWS Certified Cloud Practitioner" not in caplog.text
+    assert any(
+        warning.code == "SECTION_PROVIDER_FAILURE"
+        and warning.category == "CREDENTIALS"
+        and warning.reason == "structured_output_validation"
+        for warning in processed.warnings
+    )
+
+
 def test_openai_provider_disables_thinking_for_deepseek_json_extraction(monkeypatch) -> None:
     captured: dict[str, object] = {}
     _install_fake_json_openai(
@@ -714,6 +827,11 @@ def test_openai_section_prompt_uses_lean_semantic_output(monkeypatch) -> None:
     assert "do not return evidence_text" in prompt
     assert "copied VERBATIM" in prompt
     assert "Do not paraphrase, summarize, translate, or rewrite" in prompt
+    assert "each optional field" in prompt
+    assert "Do not combine" in prompt
+    assert "date punctuation" in prompt
+    assert "synthesize date ranges" in prompt
+    assert "return null" in prompt
     assert "Return only a JSON object" in prompt
     assert "education" in prompt
     assert "certifications" in prompt

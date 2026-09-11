@@ -90,11 +90,99 @@ _FULL_JSON_OBJECT_CONTRACT = (
     "experience_type, and source_section; certification items require name and may include issuer, date, score, "
     "and status. Use null only for optional scalar fields and do not add unsupported fields."
 )
-_SECTION_JSON_OBJECT_CONTRACT = (
-    " Return only a JSON object (no Markdown or commentary) with top-level arrays education, skills, experiences, "
-    "and certifications; use [] for sections not being extracted. Each item must use only the fields described "
-    "above and must not include evidence or provenance fields."
+_EDUCATION_JSON_OBJECT_CONTRACT = (
+    " Return only a JSON object (JSON only; no Markdown or commentary) with exactly this object shape: "
+    '{"education":[{"institution":"...","degree":null,"field_of_study":null,"dates":null,'
+    '"relevant_courses":[]}],"skills":[],"experiences":[],"certifications":[]}. '
+    "Education items must use exactly institution, degree, field_of_study, dates, and relevant_courses; "
+    "use null for missing optional scalar values and [] for no courses. All unused top-level arrays must be []. "
+    "Do not include evidence, provenance, raw, canonical, or any other fields."
 )
+_EXPERIENCE_JSON_OBJECT_CONTRACT = (
+    " Return only a JSON object (JSON only; no Markdown or commentary) with exactly this object shape: "
+    '{"education":[],"skills":[],"experiences":[{"title":"...","organization":null,"dates":null,'
+    '"description":null,"experience_type":"WORK"}],"certifications":[]}. '
+    "Experience items must use exactly title, organization, dates, description, and experience_type; use the "
+    "supported WORK, INTERNSHIP, PROJECT, or CAMPUS value when the heading supports it, and use null for "
+    "missing optional scalar values. All unused top-level arrays must be []. "
+    "For each experience item, each optional field returned must be copied VERBATIM as one contiguous source value "
+    "from the supplied section. "
+    "Do not combine bullets or lines, normalize date punctuation, rewrite an organization, synthesize date ranges, "
+    "or join separate content; return null when an optional field is not individually copyable verbatim. "
+    "Do not include evidence, provenance, raw, canonical, source_section, or any other fields."
+)
+_CAMPUS_JSON_OBJECT_CONTRACT = (
+    " Return only a JSON object (JSON only; no Markdown or commentary) with exactly this object shape: "
+    '{"education":[],"skills":[],"experiences":[{"title":"...","organization":null,"dates":null,'
+    '"description":null,"experience_type":"CAMPUS"}],"certifications":[]}. '
+    "Experience items must use exactly title, organization, dates, description, and experience_type=CAMPUS; use "
+    "null for missing optional scalar values. All unused top-level arrays must be []. "
+    "For each experience item, each optional field returned must be copied VERBATIM as one contiguous source value "
+    "from the supplied section. "
+    "Do not combine bullets or lines, normalize date punctuation, rewrite an organization, synthesize date ranges, "
+    "or join separate content; return null when an optional field is not individually copyable verbatim. "
+    "Do not include evidence, provenance, raw, canonical, source_section, or any other fields."
+)
+_SKILLS_JSON_OBJECT_CONTRACT = (
+    " Return only a JSON object (JSON only; no Markdown or commentary) with exactly this object shape: "
+    '{"education":[],"skills":[{"name":"..."}],"experiences":[],"certifications":[]}. '
+    "Skill items must use exactly name; do not include proficiency or any other field. All unused top-level arrays "
+    "must be []. Do not include evidence, provenance, raw, canonical, or any other fields."
+)
+_CREDENTIALS_JSON_OBJECT_CONTRACT = (
+    " Return only a JSON object (JSON only; no Markdown or commentary) with exactly this object shape: "
+    '{"education":[],"skills":[],"experiences":[],"certifications":[{"name":"...","issuer":null,'
+    '"date":null,"score":null}]}. '
+    "LeanCertification keys are exactly: name, issuer, date, score; it must not include status, credential_type, "
+    "level, "
+    "type, category, or any other key. Use null for missing optional scalar values and [] for unused top-level "
+    "arrays. Do not include evidence, provenance, raw, canonical, or any other fields."
+)
+_LANGUAGE_JSON_OBJECT_CONTRACT = (
+    " Return only a JSON object (JSON only; no Markdown or commentary) with exactly this object shape when both kinds "
+    "are present: "
+    '{"education":[],"skills":[{"name":"..."}],"experiences":[],"certifications":[{"name":"...",'
+    '"issuer":null,"date":null,"score":null}]}. '
+    "Return only LeanSkill items with exactly name and LeanCertification items with exactly name, issuer, date, "
+    "and score; either array may be [] when unsupported. Never add status, credential_type, level, type, category, "
+    "or any other key. Use null for missing optional scalar values and [] for unused top-level arrays. Do not include "
+    "evidence, provenance, raw, canonical, or any other fields."
+)
+
+
+_SAFE_DIAGNOSTIC_TOKEN = re.compile(r"^[A-Za-z0-9_]+$")
+
+
+def _safe_validation_loc(loc: object) -> str:
+    if not isinstance(loc, (tuple, list)) or not loc:
+        return "<root>"
+    parts: list[str] = []
+    for part in loc:
+        if isinstance(part, int) and not isinstance(part, bool) and 0 <= part <= 999999:
+            parts.append(str(part))
+        elif isinstance(part, str) and len(part) <= 64 and _SAFE_DIAGNOSTIC_TOKEN.fullmatch(part):
+            parts.append(part)
+        else:
+            parts.append("<field>")
+    return ".".join(parts)[:256]
+
+
+def _safe_validation_metadata(error: BaseException) -> tuple[str, str, int] | None:
+    if not isinstance(error, ValidationError):
+        return None
+    details = error.errors()
+    if not details:
+        return "<root>", "validation_error", 0
+    first = details[0]
+    error_type = first.get("type")
+    safe_type = (
+        error_type
+        if isinstance(error_type, str)
+        and len(error_type) <= 64
+        and _SAFE_DIAGNOSTIC_TOKEN.fullmatch(error_type)
+        else "<type>"
+    )
+    return _safe_validation_loc(first.get("loc")), safe_type, len(details)
 
 
 def _has_exception_name(error: BaseException, names: tuple[str, ...]) -> bool:
@@ -157,6 +245,10 @@ class ResumeExtractionFailure(Exception):
         self.stage = stage
         self.exception_class = type(error).__name__
         self.upstream_status = _safe_upstream_status(error)
+        validation_metadata = _safe_validation_metadata(error)
+        self.validation_loc = validation_metadata[0] if validation_metadata else None
+        self.validation_type = validation_metadata[1] if validation_metadata else None
+        self.validation_error_count = validation_metadata[2] if validation_metadata else None
         self.elapsed_ms = elapsed_ms
         self.total_llm_calls = total_llm_calls
         super().__init__("resume extraction failure")
@@ -179,7 +271,11 @@ def _raise_resume_extraction_failure(
     ) from None
 
 
-def _log_provider_failure(failure: ResumeExtractionFailure) -> None:
+def _log_provider_failure(
+    failure: ResumeExtractionFailure,
+    *,
+    section: str | None = None,
+) -> None:
     logger.error(
         "provider_failure failure_type=%s stage=%s exception_class=%s upstream_status=%s "
         "elapsed_ms=%.2f total_llm_calls=%d",
@@ -190,6 +286,15 @@ def _log_provider_failure(failure: ResumeExtractionFailure) -> None:
         failure.elapsed_ms,
         failure.total_llm_calls,
     )
+    if failure.validation_loc is not None:
+        logger.error(
+            "structured_output_validation stage=%s section=%s loc=%s type=%s error_count=%d",
+            failure.stage,
+            section or "none",
+            failure.validation_loc,
+            failure.validation_type or "<type>",
+            failure.validation_error_count or 0,
+        )
 
 
 def _provider_failure_http_exception(failure: ResumeExtractionFailure) -> HTTPException:
@@ -331,7 +436,7 @@ class OpenAIResumeProvider:
                 "raw_value, canonical_value, or source_section. The existing contract stores start and end "
                 "together in dates; do not invent a missing boundary. Do not return skills, experiences, "
                 "certifications, or career implications. Do not infer school, major, degree, dates, or courses."
-                + _SECTION_JSON_OBJECT_CONTRACT
+                + _EDUCATION_JSON_OBJECT_CONTRACT
             )
         elif section_label == "EXPERIENCE":
             system_prompt = (
@@ -343,7 +448,7 @@ class OpenAIResumeProvider:
                 "offsets, raw_value, canonical_value, or source_section. Do not use or invent information outside "
                 "the supplied section. Read the exact heading and never use OTHER when it provides a supported "
                 "classification."
-                + _SECTION_JSON_OBJECT_CONTRACT
+                + _EXPERIENCE_JSON_OBJECT_CONTRACT
             )
         elif section_label == "CAMPUS":
             system_prompt = (
@@ -353,9 +458,14 @@ class OpenAIResumeProvider:
                 "evidence anchoring, raw_value, canonical aliases, offsets, provenance, and CAMPUS classification; "
                 "do not return evidence_text, evidence offsets, raw_value, canonical_value, or source_section. "
                 "Do not use or invent information outside the supplied section."
-                + _SECTION_JSON_OBJECT_CONTRACT
+                + _CAMPUS_JSON_OBJECT_CONTRACT
             )
         else:
+            section_contract = {
+                "SKILLS": _SKILLS_JSON_OBJECT_CONTRACT,
+                "CREDENTIALS": _CREDENTIALS_JSON_OBJECT_CONTRACT,
+                "LANGUAGE": _LANGUAGE_JSON_OBJECT_CONTRACT,
+            }.get(section_label, _LANGUAGE_JSON_OBJECT_CONTRACT)
             system_prompt = (
                 f"{source_surface_instruction} Extract only explicit semantic facts from this single resume "
                 f"section: {section_label}. "
@@ -364,7 +474,7 @@ class OpenAIResumeProvider:
                 "offsets, and provenance; do not return evidence_text, evidence offsets, raw_value, "
                 "canonical_value, or source_section. Keep generic language ability in skills and explicit "
                 "credentials in certifications. Do not infer credential pass/fail status."
-                + _SECTION_JSON_OBJECT_CONTRACT
+                + section_contract
             )
         response = self._create_json_completion(
             system_prompt=system_prompt,
@@ -2154,7 +2264,7 @@ def extract_section_first_resume(
             warnings.extend(targeted.warnings)
             targeted_results[(section.key, section.start, section.end)] = targeted.result
         except ResumeExtractionFailure as failure:
-            _log_provider_failure(failure)
+            _log_provider_failure(failure, section=section.key)
             warnings.append(_section_provider_failure_warning(section, failure))
         except Exception as error:
             failure = ResumeExtractionFailure(
@@ -2164,7 +2274,7 @@ def extract_section_first_resume(
                 total_llm_calls=total_llm_calls,
                 provider_call=True,
             )
-            _log_provider_failure(failure)
+            _log_provider_failure(failure, section=section.key)
             warnings.append(_section_provider_failure_warning(section, failure))
         finally:
             if timing_ms is not None:
