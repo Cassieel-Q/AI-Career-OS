@@ -76,9 +76,9 @@
 | `f4a5102` | preserve source-grounded section facts |
 | `7d9a02d` | support DeepSeek JSON output |
 | `94ba721` | complete DeepSeek JSON output plan |
-| `4d7301e` | tighten DeepSeek section JSON contracts（当前 HEAD） |
+| `4d7301e` | tighten DeepSeek section JSON contracts（最新实现代码） |
 
-当前 HEAD 已推送到 `origin/feature/resume-profile-normalization`。任何新修改都应创建新的普通 commit 后正常 push；不要重写远端历史。
+最新实现代码已推送到 `origin/feature/resume-profile-normalization`；本地交接文档的 docs-only commits 尚未推送。任何新修改都应创建新的普通 commit 后正常 push；不要重写远端历史。
 
 ## 5. 最新提交修改的文件
 
