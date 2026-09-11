@@ -9,8 +9,8 @@
 - 当前日期：2026-09-11（Asia/Shanghai）
 - 当前分支：`feature/resume-profile-normalization`
 - 远端：`origin/feature/resume-profile-normalization`
-- 当前 HEAD：`4d7301e05f9440c79c03a47c7ed385c5353cfd27`
-- 当前提交：`fix: tighten DeepSeek section JSON contracts`
+- 最新实现代码 commit：`4d7301e05f9440c79c03a47c7ed385c5353cfd27`（`fix: tighten DeepSeek section JSON contracts`）
+- 当前 HEAD：本文件所在的 docs-only handoff commit；用 `git rev-parse HEAD` 获取精确 SHA
 - 工作树：干净；本地 HEAD 与远端 HEAD 一致
 - 当前范围：TASK-002 及 TASK-002.5 系列可靠性加固已实现；当前最近工作是 TASK-002.5G DeepSeek section JSON contract acceptance fix
 - 下一阶段：先完成真实 PostgreSQL / DeepSeek 浏览器 smoke verification，再决定是否继续同一分支上的小范围修复
