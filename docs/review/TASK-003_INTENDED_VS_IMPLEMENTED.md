@@ -1,7 +1,7 @@
 # TASK-003 intended vs implemented review
 
-Date: 2026-09-12  
-Branch: `feature/career-preferences`  
+Date: 2026-09-12
+Branch: `feature/career-preferences`
 Scope: final cross-layer verification of the Career Preferences vertical slice. No implementation change was needed.
 
 ## Verification evidence
