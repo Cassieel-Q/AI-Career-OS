@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import StrEnum
+from typing import Self
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator, model_validator
 
 
 class ProfileStatus(StrEnum):
@@ -31,6 +32,38 @@ class SourceType(StrEnum):
     AI_EXTRACTED = "AI_EXTRACTED"
     USER_ENTERED = "USER_ENTERED"
     USER_EDITED = "USER_EDITED"
+
+
+class CareerPreferencePriority(StrEnum):
+    COMPENSATION = "COMPENSATION"
+    LESS_CODING = "LESS_CODING"
+    FAST_EMPLOYMENT = "FAST_EMPLOYMENT"
+    CURRENT_FIT = "CURRENT_FIT"
+    LONG_TERM_GROWTH = "LONG_TERM_GROWTH"
+
+
+class CareerPreferencesInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    priority_order: list[CareerPreferencePriority] = Field(min_length=2, max_length=2)
+    weekly_hours: StrictInt = Field(ge=1, le=60)
+
+    @model_validator(mode="after")
+    def reject_duplicate_priorities(self) -> Self:
+        if len(set(self.priority_order)) != 2:
+            raise ValueError("priority_order must contain two different priorities")
+        return self
+
+
+class CareerPreferencesRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    id: UUID
+    profile_id: UUID
+    priority_order: list[CareerPreferencePriority]
+    weekly_hours: int
+    created_at: datetime
+    updated_at: datetime
 
 
 def _blank_to_none(value: str | None) -> str | None:
