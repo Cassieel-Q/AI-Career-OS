@@ -14,8 +14,8 @@ Scope: final cross-layer verification of the Career Preferences vertical slice. 
 | Alembic history | **PASS** — `003_credential_details -> 004_career_preferences (head)` |
 | Alembic offline SQL | **PASS** — `career_preferences`, priority checks, distinctness, and `weekly_hours BETWEEN 1 AND 60` rendered using an offline placeholder URL |
 | Frontend tests (`apps/web`: `npm.cmd test`) | **PASS** — 23 passed, 0 failed |
-| Frontend type-check | **UNVERIFIED** — `tsc` is not present in the checkout's partial `node_modules` (`npm.cmd run type-check` exits 1) |
-| Frontend lint/build | **UNVERIFIED** — `next` is not present in the checkout's partial `node_modules` (`npm.cmd run lint` exits 1); no G-drive filesystem error was reproduced, so no alternate build tree was created |
+| Frontend type-check | **PASS** — `npm.cmd run type-check` exits 0 in the clean NTFS clone `C:\temp\ai-career-os-devcheck-task003` after `npm.cmd ci` |
+| Frontend lint/build | **PASS** — `npm.cmd run lint` reports no warnings/errors and `npm.cmd run build` completes successfully in the clean NTFS clone `C:\temp\ai-career-os-devcheck-task003` |
 | `git diff --check` | **PASS** — exit 0 |
 | Scope/security inspection | **PASS** — no tracked `.env`, key, PEM, or PDF files; no Resume extraction or Role Exploration/TASK-004 changes; `TEST_DATABASE_URL` was not set or substituted from `DATABASE_URL` |
 
@@ -42,7 +42,7 @@ Scope: final cross-layer verification of the Career Preferences vertical slice. 
 ## Remaining gaps and limitations
 
 - PostgreSQL persistence/migration integration is not executable in this environment because `TEST_DATABASE_URL` is absent. The tests correctly skip and do not fall back to the configured application `DATABASE_URL`; running against a dedicated isolated PostgreSQL URL remains required before production deployment.
-- TypeScript type-check, Next lint, and production build remain unverified because `tsc` and `next` binaries are missing from the partial frontend dependency tree. Existing frontend unit tests and source/tsconfig inspection passed.
+- The primary G: checkout has a partial frontend dependency tree, but type-check, Next lint, and production build were verified successfully from the clean NTFS clone `C:\temp\ai-career-os-devcheck-task003` at the same branch HEAD after `npm.cmd ci`.
 - Prior Task 4 review noted a non-blocking DOM-test gap: no React DOM harness currently asserts section suppression, card `disabled`/`aria-pressed` transitions, or Save-button transitions. This is test coverage debt, not a demonstrated runtime defect.
 
 ## Review decision
