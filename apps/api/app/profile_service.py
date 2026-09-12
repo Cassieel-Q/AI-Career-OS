@@ -5,6 +5,7 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import HTTPException
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
@@ -12,6 +13,8 @@ from app import models
 from app.profile_schemas import (
     CertificationInput,
     CertificationRead,
+    CareerPreferencesInput,
+    CareerPreferencesRead,
     EducationInput,
     EducationRead,
     ExperienceInput,
@@ -50,6 +53,22 @@ def _profile_read(profile: models.UserProfile) -> ProfileRead:
         skills=[ProfileSkillRead.model_validate(item) for item in profile.skills],
         experiences=[ExperienceRead.model_validate(item) for item in profile.experiences],
         certifications=[CertificationRead.model_validate(item) for item in profile.certifications],
+        preferences=_preferences_read(profile.career_preference),
+    )
+
+
+def _preferences_read(
+    preference: models.CareerPreference | None,
+) -> CareerPreferencesRead | None:
+    if preference is None:
+        return None
+    return CareerPreferencesRead(
+        id=preference.id,
+        profile_id=preference.profile_id,
+        priority_order=[preference.priority_1, preference.priority_2],
+        weekly_hours=preference.weekly_hours,
+        created_at=preference.created_at,
+        updated_at=preference.updated_at,
     )
 
 
@@ -220,3 +239,43 @@ def confirm_profile(db: Session, profile_id: UUID) -> ProfileRead:
     db.commit()
     db.refresh(profile)
     return _profile_read(profile)
+
+
+def upsert_career_preferences(
+    db: Session,
+    profile_id: UUID,
+    payload: CareerPreferencesInput,
+) -> CareerPreferencesRead:
+    profile = _get_profile(db, profile_id, for_update=True)
+    if profile.status != ProfileStatus.CONFIRMED.value:
+        raise HTTPException(
+            status_code=409,
+            detail="Career preferences require a confirmed profile",
+        )
+    preference = db.execute(
+        select(models.CareerPreference)
+        .where(models.CareerPreference.profile_id == profile_id)
+        .with_for_update()
+    ).scalar_one_or_none()
+    values = {
+        "priority_1": payload.priority_order[0].value,
+        "priority_2": payload.priority_order[1].value,
+        "weekly_hours": payload.weekly_hours,
+        "updated_at": datetime.now(timezone.utc),
+    }
+    if preference is None:
+        preference = models.CareerPreference(profile_id=profile_id, **values)
+        db.add(preference)
+    else:
+        for field, value in values.items():
+            setattr(preference, field, value)
+    try:
+        db.commit()
+        db.refresh(preference)
+    except SQLAlchemyError as error:
+        db.rollback()
+        raise HTTPException(
+            status_code=503,
+            detail="Career preferences persistence failed",
+        ) from error
+    return _preferences_read(preference)  # type: ignore[return-value]

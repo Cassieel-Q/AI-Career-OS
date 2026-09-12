@@ -216,3 +216,4 @@ class ProfileRead(BaseModel):
     skills: list[ProfileSkillRead]
     experiences: list[ExperienceRead]
     certifications: list[CertificationRead]
+    preferences: CareerPreferencesRead | None = None
