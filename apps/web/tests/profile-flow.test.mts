@@ -318,6 +318,29 @@ test("career preferences PUT reports safe API errors", async () => {
   );
 });
 
+test("career preference save eligibility requires a confirmed profile, two priorities, and valid hours", () => {
+  const draft = { priority_order: ["FAST_EMPLOYMENT", "CURRENT_FIT"] as const, weekly_hours: "20" };
+  assert.equal(
+    profileCanEditCareerPreferences(profile) && isCareerPreferencesDraftValid([...draft.priority_order], draft.weekly_hours),
+    false,
+  );
+  assert.equal(
+    profileCanEditCareerPreferences({ ...profile, status: "CONFIRMED" }) &&
+      isCareerPreferencesDraftValid([...draft.priority_order], draft.weekly_hours),
+    true,
+  );
+  assert.equal(
+    profileCanEditCareerPreferences({ ...profile, status: "CONFIRMED" }) &&
+      isCareerPreferencesDraftValid(["FAST_EMPLOYMENT"], draft.weekly_hours),
+    false,
+  );
+});
+
+test("removing the first selected preference promotes the remaining item to priority one", () => {
+  const selected = toggleCareerPreference(toggleCareerPreference([], "COMPENSATION"), "LONG_TERM_GROWTH");
+  assert.deepEqual(toggleCareerPreference(selected, "COMPENSATION"), ["LONG_TERM_GROWTH"]);
+});
+
 function jsonResponse(payload: unknown, status = 200): Response {
   return new Response(JSON.stringify(payload), {
     status,

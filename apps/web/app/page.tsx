@@ -13,6 +13,15 @@ import {
   validateProfileForSave,
 } from "./profile-flow";
 import type { Education, Experience, Certification, ExperienceType, Profile, ProfileItem, Proficiency, Skill } from "./profile-flow";
+import {
+  CAREER_PREFERENCE_OPTIONS,
+  careerPreferencesDraftFromProfile,
+  isCareerPreferencesDraftValid,
+  profileCanEditCareerPreferences,
+  saveCareerPreferencesRequest,
+  toggleCareerPreference,
+} from "./career-preferences";
+import type { CareerPreferencePriority, CareerPreferencesDraft } from "./career-preferences";
 
 type EditableSection = "education" | "skills" | "experiences" | "certifications";
 
@@ -40,6 +49,11 @@ export default function Home() {
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [saving, setSaving] = useState<"save" | "confirm" | null>(null);
   const [dirty, setDirty] = useState(false);
+  const [preferenceDraft, setPreferenceDraft] = useState<CareerPreferencesDraft>({
+    priority_order: [],
+    weekly_hours: "",
+  });
+  const [savingPreferences, setSavingPreferences] = useState(false);
 
   useEffect(() => {
     const profileId = getProfileIdFromSearch(window.location.search);
@@ -52,7 +66,9 @@ export default function Home() {
         const response = await fetch(`${apiUrl}/api/v1/profiles/${profileId}`);
         const payload = await readApiPayload<Profile>(response);
         if (active) {
-          setProfile(normalizeProfile(payload));
+          const normalized = normalizeProfile(payload);
+          setProfile(normalized);
+          setPreferenceDraft(careerPreferencesDraftFromProfile(normalized));
           setDirty(false);
         }
       } catch (loadError) {
@@ -70,6 +86,7 @@ export default function Home() {
   function chooseFile(event: ChangeEvent<HTMLInputElement>) {
     setFile(event.target.files?.[0] ?? null);
     setProfile(null);
+    setPreferenceDraft({ priority_order: [], weekly_hours: "" });
     setDirty(false);
     setError("");
     const url = new URL(window.location.href);
@@ -86,6 +103,7 @@ export default function Home() {
     setLoading(true);
     setError("");
     setProfile(null);
+    setPreferenceDraft({ priority_order: [], weekly_hours: "" });
     setDirty(false);
     const body = new FormData();
     body.append("file", file);
@@ -95,7 +113,9 @@ export default function Home() {
         body,
       });
       const payload = await readApiPayload<Profile>(response);
-      setProfile(normalizeProfile(payload));
+      const normalized = normalizeProfile(payload);
+      setProfile(normalized);
+      setPreferenceDraft(careerPreferencesDraftFromProfile(normalized));
       setDirty(false);
       window.history.replaceState(null, "", profileHref(window.location.href, payload.profile_id));
     } catch (uploadError) {
@@ -169,7 +189,9 @@ export default function Home() {
     setError("");
     try {
       const payload = await saveProfileRequest(currentProfile, apiUrl);
-      setProfile(normalizeProfile(payload));
+      const normalized = normalizeProfile(payload);
+      setProfile(normalized);
+      setPreferenceDraft(careerPreferencesDraftFromProfile(normalized));
       setDirty(false);
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Profile could not be saved.");
@@ -190,7 +212,9 @@ export default function Home() {
     setError("");
     try {
       const payload = await confirmProfileRequest(currentProfile, dirty, apiUrl);
-      setProfile(normalizeProfile(payload));
+      const normalized = normalizeProfile(payload);
+      setProfile(normalized);
+      setPreferenceDraft(careerPreferencesDraftFromProfile(normalized));
       setDirty(false);
     } catch (confirmError) {
       setError(confirmError instanceof Error ? confirmError.message : "Profile could not be confirmed.");
@@ -199,8 +223,33 @@ export default function Home() {
     }
   }
 
+  function selectPreference(value: CareerPreferencePriority) {
+    if (!profileCanEditCareerPreferences(profile) || savingPreferences) return;
+    setPreferenceDraft((current) => ({
+      ...current,
+      priority_order: toggleCareerPreference(current.priority_order, value),
+    }));
+  }
+
+  async function savePreferences() {
+    const currentProfile = profile;
+    if (!currentProfile || !profileCanEditCareerPreferences(currentProfile)) return;
+    if (!isCareerPreferencesDraftValid(preferenceDraft.priority_order, preferenceDraft.weekly_hours)) return;
+    setSavingPreferences(true);
+    setError("");
+    try {
+      const saved = await saveCareerPreferencesRequest(currentProfile.profile_id, preferenceDraft, apiUrl);
+      setPreferenceDraft(careerPreferencesDraftFromProfile({ ...currentProfile, preferences: saved }));
+      setProfile((current) => current ? { ...current, preferences: saved } : current);
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Career preferences could not be saved.");
+    } finally {
+      setSavingPreferences(false);
+    }
+  }
+
   const profileLocked = profile?.status === "CONFIRMED";
-  const mutationBusy = saving !== null;
+  const mutationBusy = saving !== null || savingPreferences;
 
   return (
     <main className="shell">
@@ -340,6 +389,54 @@ export default function Home() {
               {saving === "confirm" ? "Confirming..." : "Confirm Profile"}
             </button>
           </div>
+          {profileCanEditCareerPreferences(profile) && (
+            <section className="career-preferences" aria-label="Career Preferences">
+              <h3>Career Preferences</h3>
+              <p className="profile-note">Choose the two priorities that matter most for your next career decision.</p>
+              <div className="preference-grid">
+                {CAREER_PREFERENCE_OPTIONS.map((option) => {
+                  const order = preferenceDraft.priority_order.indexOf(option.value);
+                  const selected = order !== -1;
+                  const full = preferenceDraft.priority_order.length >= 2;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      className={selected ? "preference-card selected" : "preference-card"}
+                      aria-pressed={selected}
+                      disabled={savingPreferences || (full && !selected)}
+                      onClick={() => selectPreference(option.value)}
+                    >
+                      <span className="preference-order">{selected ? "#" + (order + 1) : ""}</span>
+                      <span>{option.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <label className="field-label">
+                每周可用于职业准备/学习的时间（小时）
+                <input
+                  type="number"
+                  min={1}
+                  max={60}
+                  step={1}
+                  value={preferenceDraft.weekly_hours}
+                  disabled={savingPreferences}
+                  onChange={(event) => setPreferenceDraft((current) => ({ ...current, weekly_hours: event.target.value }))}
+                />
+              </label>
+              <button
+                type="button"
+                onClick={savePreferences}
+                disabled={savingPreferences || !isCareerPreferencesDraftValid(preferenceDraft.priority_order, preferenceDraft.weekly_hours)}
+              >
+                {savingPreferences ? "Saving..." : "Save preferences"}
+              </button>
+              <button type="button" className="button-secondary" disabled>
+                下一步：探索适合我的岗位
+              </button>
+            </section>
+          )}
         </section>
       )}
     </main>
