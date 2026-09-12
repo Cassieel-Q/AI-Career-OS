@@ -73,4 +73,3 @@
 - [ ] Use `G:\myself\潘佳琪-简历.pdf` exactly once for redacted category-level live smoke.
 - [ ] Run synthetic persistence smoke through DRAFT, GET, harmless edit/save, GET, confirm, GET, and locked-state checks.
 - [ ] Commit implementation and tests as `fix: stabilize resume section routing`, push `feature/resume-profile-normalization`, and verify local/remote SHAs.
-

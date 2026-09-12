@@ -193,7 +193,9 @@ _SECTION_PAYLOAD_MODELS: dict[str, type[BaseModel]] = {
     "CREDENTIALS": CredentialSectionPayload,
     "LANGUAGE": LanguageSectionPayload,
 }
-_GENERIC_SECTION_KEYS = frozenset({"education", "skills", "experiences", "certifications"})
+_SECTION_IGNORED_PROVIDER_KEYS: dict[str, frozenset[str]] = {
+    "CREDENTIALS": frozenset({"skills"}),
+}
 
 
 def _section_payload_to_lean_result(
@@ -579,7 +581,7 @@ class OpenAIResumeProvider:
             system_prompt=system_prompt,
             user_content=section_text,
         )
-        ignored_keys = _GENERIC_SECTION_KEYS - set(payload_model.model_fields)
+        ignored_keys = _SECTION_IGNORED_PROVIDER_KEYS.get(section_label, frozenset())
         payload = self._parse_json_completion(
             response,
             payload_model,

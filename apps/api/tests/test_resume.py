@@ -664,6 +664,27 @@ def test_credential_section_ignores_malformed_irrelevant_skills_payload(monkeypa
     assert result.certifications[0].score == "600"
 
 
+@pytest.mark.parametrize("irrelevant_key", ["education", "experiences", "certifications"])
+def test_credential_section_rejects_other_irrelevant_generic_payload_keys(
+    monkeypatch,
+    irrelevant_key: str,
+) -> None:
+    captured: dict[str, object] = {}
+    _install_fake_json_openai(
+        monkeypatch,
+        json.dumps(
+            {
+                "items": [{"name": "CET-6"}],
+                irrelevant_key: [],
+            }
+        ),
+        captured,
+    )
+
+    with pytest.raises(ValidationError):
+        main.OpenAIResumeProvider().extract_section("证书\nCET-6", "CREDENTIALS")
+
+
 def test_malformed_credential_item_still_fails_strict_section_validation(monkeypatch) -> None:
     captured: dict[str, object] = {}
     _install_fake_json_openai(
@@ -760,9 +781,10 @@ def test_openai_provider_extract_section_accepts_exact_credential_json_contract(
 )
 def test_openai_provider_uses_section_specific_json_contract(monkeypatch, section_label: str, contract_marker: str) -> None:
     captured: dict[str, object] = {}
+    content = '{"skills": [], "certifications": []}' if section_label == "LANGUAGE" else '{"items": []}'
     _install_fake_json_openai(
         monkeypatch,
-        '{"education": [], "skills": [], "experiences": [], "certifications": []}',
+        content,
         captured,
     )
 
@@ -925,7 +947,7 @@ def test_openai_section_prompt_uses_lean_semantic_output(monkeypatch) -> None:
                 choices=[
                     SimpleNamespace(
                         message=SimpleNamespace(
-                            content='{"education": [], "skills": [], "experiences": [], "certifications": []}'
+                            content='{"items": []}'
                         )
                     )
                 ]
