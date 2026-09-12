@@ -10,6 +10,7 @@ import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from openai import APIStatusError
+from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
 from app import main
@@ -583,8 +584,7 @@ def test_openai_provider_extract_section_parses_json_object_into_lean_result(mon
     captured: dict[str, object] = {}
     _install_fake_json_openai(
         monkeypatch,
-        '{"education": [{"institution": "北京大学"}], "skills": [], '
-        '"experiences": [], "certifications": []}',
+        '{"items": [{"institution": "北京大学"}]}',
         captured,
     )
 
@@ -595,12 +595,141 @@ def test_openai_provider_extract_section_parses_json_object_into_lean_result(mon
     assert captured["response_format"] == {"type": "json_object"}
 
 
+@pytest.mark.parametrize(
+    ("model_name", "payload"),
+    [
+        (
+            "EducationSectionPayload",
+            {"items": [{"institution": "Example Institute", "relevant_courses": []}]},
+        ),
+        (
+            "ExperienceSectionPayload",
+            {"items": [{"title": "Operations Assistant", "experience_type": "WORK"}]},
+        ),
+        (
+            "CampusSectionPayload",
+            {"items": [{"title": "Class Representative", "experience_type": "CAMPUS"}]},
+        ),
+        ("SkillsSectionPayload", {"items": [{"name": "Python"}]}),
+        ("CredentialSectionPayload", {"items": [{"name": "CET-6", "score": "600"}]}),
+        (
+            "LanguageSectionPayload",
+            {"skills": [{"name": "English"}], "certifications": [{"name": "IELTS"}]},
+        ),
+    ],
+)
+def test_section_payload_models_accept_exact_section_envelopes(model_name: str, payload: dict[str, object]) -> None:
+    assert hasattr(main, model_name), f"missing provider payload model: {model_name}"
+    model = getattr(main, model_name)
+
+    parsed = model.model_validate(payload)
+
+    assert parsed is not None
+
+
+@pytest.mark.parametrize(
+    ("model_name", "payload"),
+    [
+        ("EducationSectionPayload", {"items": [{"institution": "Example Institute"}]}),
+        ("ExperienceSectionPayload", {"items": [{"title": "Operations Assistant"}]}),
+        ("CampusSectionPayload", {"items": [{"title": "Class Representative"}]}),
+        ("SkillsSectionPayload", {"items": [{"name": "Python"}]}),
+        ("CredentialSectionPayload", {"items": [{"name": "CET-6"}]}),
+        ("LanguageSectionPayload", {"skills": [], "certifications": []}),
+    ],
+)
+def test_section_payload_models_forbid_unknown_top_level_fields(
+    model_name: str,
+    payload: dict[str, object],
+) -> None:
+    assert hasattr(main, model_name), f"missing provider payload model: {model_name}"
+    model = getattr(main, model_name)
+
+    with pytest.raises(ValidationError):
+        model.model_validate({**payload, "unexpected": "provider-value"})
+
+
+def test_credential_section_ignores_malformed_irrelevant_skills_payload(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+    _install_fake_json_openai(
+        monkeypatch,
+        '{"items": [{"name": "CET-6", "issuer": null, "date": null, "score": "600"}], '
+        '"skills": [{"name": 123}]}',
+        captured,
+    )
+
+    result = main.OpenAIResumeProvider().extract_section("证书\nCET-6\n600", "CREDENTIALS")
+
+    assert [item.name for item in result.certifications] == ["CET-6"]
+    assert result.certifications[0].score == "600"
+
+
+def test_malformed_credential_item_still_fails_strict_section_validation(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+    _install_fake_json_openai(
+        monkeypatch,
+        '{"items": [{"name": "AWS", "status": "provider-secret"}]}',
+        captured,
+    )
+
+    with pytest.raises(ValidationError) as error:
+        main.OpenAIResumeProvider().extract_section("证书\nAWS", "CREDENTIALS")
+
+    assert any(
+        detail["loc"] == ("items", 0, "status")
+        and detail["type"] == "extra_forbidden"
+        for detail in error.value.errors()
+    )
+
+
+def test_campus_section_payload_converts_to_campus_experience(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+    _install_fake_json_openai(
+        monkeypatch,
+        '{"items": [{"title": "Class Representative", "organization": null, "dates": null, '
+        '"description": null, "experience_type": "CAMPUS"}]}',
+        captured,
+    )
+
+    result = main.OpenAIResumeProvider().extract_section("校园经历\n班级干事", "CAMPUS")
+
+    assert len(result.experiences) == 1
+    assert result.experiences[0].title == "Class Representative"
+    assert result.experiences[0].experience_type == main.ExperienceType.CAMPUS
+
+
+@pytest.mark.parametrize(
+    ("section_label", "content", "required_markers"),
+    [
+        ("EDUCATION", '{"items": [{"institution": "Example Institute"}]}', ('"items"', '"relevant_courses":[]')),
+        ("EXPERIENCE", '{"items": [{"title": "Operations Assistant", "experience_type": "WORK"}]}', ('"items"', '"experience_type":"WORK"')),
+        ("CAMPUS", '{"items": [{"title": "Class Representative", "experience_type": "CAMPUS"}]}', ('"items"', '"experience_type":"CAMPUS"')),
+        ("SKILLS", '{"items": [{"name": "Python"}]}', ('"items"', '"name":"..."')),
+        ("CREDENTIALS", '{"items": [{"name": "CET-6"}]}', ('"items"', "LeanCertification keys are exactly")),
+        ("LANGUAGE", '{"skills": [], "certifications": []}', ('"skills"', '"certifications"')),
+    ],
+)
+def test_openai_provider_uses_actual_section_payload_contract(
+    monkeypatch,
+    section_label: str,
+    content: str,
+    required_markers: tuple[str, ...],
+) -> None:
+    captured: dict[str, object] = {}
+    _install_fake_json_openai(monkeypatch, content, captured)
+
+    main.OpenAIResumeProvider().extract_section("section content", section_label)
+
+    prompt = captured["messages"][0]["content"]
+    for marker in required_markers:
+        assert marker in prompt
+
+
 def test_openai_provider_extract_section_accepts_exact_credential_json_contract(monkeypatch) -> None:
     captured: dict[str, object] = {}
     _install_fake_json_openai(
         monkeypatch,
-        '{"education": [], "skills": [], "experiences": [], '
-        '"certifications": [{"name": "CET-6", "issuer": null, "date": null, "score": "600"}]}',
+        '{"items": [{"name": "CET-6", "issuer": null, "date": null, "score": "600"}]}',
         captured,
     )
 
@@ -621,12 +750,12 @@ def test_openai_provider_extract_section_accepts_exact_credential_json_contract(
 @pytest.mark.parametrize(
     ("section_label", "contract_marker"),
     [
-        ("EDUCATION", '"relevant_courses":[]'),
-        ("EXPERIENCE", '"experience_type":"WORK"'),
-        ("CAMPUS", '"experience_type":"CAMPUS"'),
-        ("SKILLS", '"skills":[{"name":"..."}]'),
+        ("EDUCATION", '"items":[{"institution":"..."'),
+        ("EXPERIENCE", '"items":[{"title":"..."'),
+        ("CAMPUS", '"items":[{"title":"..."'),
+        ("SKILLS", '"items":[{"name":"..."}]'),
         ("CREDENTIALS", "LeanCertification keys are exactly"),
-        ("LANGUAGE", "LeanSkill items"),
+        ("LANGUAGE", '"skills"'),
     ],
 )
 def test_openai_provider_uses_section_specific_json_contract(monkeypatch, section_label: str, contract_marker: str) -> None:
@@ -651,10 +780,7 @@ def test_openai_provider_extract_section_rejects_unknown_credential_fields(monke
         monkeypatch,
         json.dumps(
             {
-                "education": [],
-                "skills": [],
-                "experiences": [],
-                "certifications": [
+                "items": [
                     {"name": "AWS", "issuer": None, "date": None, "score": None, extra_field: "secret"}
                 ],
             }
@@ -666,7 +792,7 @@ def test_openai_provider_extract_section_rejects_unknown_credential_fields(monke
         main.OpenAIResumeProvider().extract_section("证书\nAWS", "CREDENTIALS")
 
     assert any(
-        detail["loc"] == ("certifications", 0, extra_field)
+        detail["loc"] == ("items", 0, extra_field)
         and detail["type"] == "extra_forbidden"
         for detail in error.value.errors()
     )
@@ -676,8 +802,7 @@ def test_section_validation_diagnostic_is_safe_and_identifies_credential_extra_f
     captured: dict[str, object] = {}
     _install_fake_json_openai(
         monkeypatch,
-        '{"education": [], "skills": [], "experiences": [], '
-        '"certifications": [{"name": "AWS", "status": "provider-secret"}]}',
+        '{"items": [{"name": "AWS", "status": "provider-secret"}]}',
         captured,
     )
     monkeypatch.setenv("OPENAI_BASE_URL", "https://api.deepseek.com")
@@ -695,7 +820,7 @@ def test_section_validation_diagnostic_is_safe_and_identifies_credential_extra_f
     )
     assert "stage=other_extraction" in diagnostic
     assert "section=CREDENTIALS" in diagnostic
-    assert "loc=certifications.0.status" in diagnostic
+    assert "loc=items.0.status" in diagnostic
     assert "type=extra_forbidden" in diagnostic
     assert "error_count=1" in diagnostic
     assert "provider-secret" not in caplog.text
@@ -712,8 +837,7 @@ def test_openai_provider_disables_thinking_for_deepseek_json_extraction(monkeypa
     captured: dict[str, object] = {}
     _install_fake_json_openai(
         monkeypatch,
-        '{"education": [], "skills": [{"name": "Python"}], '
-        '"experiences": [], "certifications": []}',
+        '{"items": [{"name": "Python"}]}',
         captured,
     )
     monkeypatch.setenv("OPENAI_BASE_URL", "https://api.deepseek.com")
@@ -833,6 +957,6 @@ def test_openai_section_prompt_uses_lean_semantic_output(monkeypatch) -> None:
     assert "synthesize date ranges" in prompt
     assert "return null" in prompt
     assert "Return only a JSON object" in prompt
-    assert "education" in prompt
-    assert "certifications" in prompt
+    assert '"items"' in prompt
+    assert "unused top-level arrays" not in prompt
     assert captured["response_format"] == {"type": "json_object"}

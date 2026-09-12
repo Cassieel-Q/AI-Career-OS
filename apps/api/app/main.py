@@ -16,7 +16,7 @@ import fitz
 import httpx
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -92,19 +92,19 @@ _FULL_JSON_OBJECT_CONTRACT = (
 )
 _EDUCATION_JSON_OBJECT_CONTRACT = (
     " Return only a JSON object (JSON only; no Markdown or commentary) with exactly this object shape: "
-    '{"education":[{"institution":"...","degree":null,"field_of_study":null,"dates":null,'
-    '"relevant_courses":[]}],"skills":[],"experiences":[],"certifications":[]}. '
+    '{"items":[{"institution":"...","degree":null,"field_of_study":null,"dates":null,'
+    '"relevant_courses":[]}]}. '
     "Education items must use exactly institution, degree, field_of_study, dates, and relevant_courses; "
-    "use null for missing optional scalar values and [] for no courses. All unused top-level arrays must be []. "
+    "use null for missing optional scalar values and [] for no courses. "
     "Do not include evidence, provenance, raw, canonical, or any other fields."
 )
 _EXPERIENCE_JSON_OBJECT_CONTRACT = (
     " Return only a JSON object (JSON only; no Markdown or commentary) with exactly this object shape: "
-    '{"education":[],"skills":[],"experiences":[{"title":"...","organization":null,"dates":null,'
-    '"description":null,"experience_type":"WORK"}],"certifications":[]}. '
+    '{"items":[{"title":"...","organization":null,"dates":null,'
+    '"description":null,"experience_type":"WORK"}]}. '
     "Experience items must use exactly title, organization, dates, description, and experience_type; use the "
     "supported WORK, INTERNSHIP, PROJECT, or CAMPUS value when the heading supports it, and use null for "
-    "missing optional scalar values. All unused top-level arrays must be []. "
+    "missing optional scalar values. "
     "For each experience item, each optional field returned must be copied VERBATIM as one contiguous source value "
     "from the supplied section. "
     "Do not combine bullets or lines, normalize date punctuation, rewrite an organization, synthesize date ranges, "
@@ -113,10 +113,10 @@ _EXPERIENCE_JSON_OBJECT_CONTRACT = (
 )
 _CAMPUS_JSON_OBJECT_CONTRACT = (
     " Return only a JSON object (JSON only; no Markdown or commentary) with exactly this object shape: "
-    '{"education":[],"skills":[],"experiences":[{"title":"...","organization":null,"dates":null,'
-    '"description":null,"experience_type":"CAMPUS"}],"certifications":[]}. '
+    '{"items":[{"title":"...","organization":null,"dates":null,'
+    '"description":null,"experience_type":"CAMPUS"}]}. '
     "Experience items must use exactly title, organization, dates, description, and experience_type=CAMPUS; use "
-    "null for missing optional scalar values. All unused top-level arrays must be []. "
+    "null for missing optional scalar values. "
     "For each experience item, each optional field returned must be copied VERBATIM as one contiguous source value "
     "from the supplied section. "
     "Do not combine bullets or lines, normalize date punctuation, rewrite an organization, synthesize date ranges, "
@@ -125,29 +125,114 @@ _CAMPUS_JSON_OBJECT_CONTRACT = (
 )
 _SKILLS_JSON_OBJECT_CONTRACT = (
     " Return only a JSON object (JSON only; no Markdown or commentary) with exactly this object shape: "
-    '{"education":[],"skills":[{"name":"..."}],"experiences":[],"certifications":[]}. '
-    "Skill items must use exactly name; do not include proficiency or any other field. All unused top-level arrays "
-    "must be []. Do not include evidence, provenance, raw, canonical, or any other fields."
+    '{"items":[{"name":"..."}]}. '
+    "Skill items must use exactly name; do not include proficiency or any other field. "
+    "Do not include evidence, provenance, raw, canonical, or any other fields."
 )
 _CREDENTIALS_JSON_OBJECT_CONTRACT = (
     " Return only a JSON object (JSON only; no Markdown or commentary) with exactly this object shape: "
-    '{"education":[],"skills":[],"experiences":[],"certifications":[{"name":"...","issuer":null,'
-    '"date":null,"score":null}]}. '
+    '{"items":[{"name":"...","issuer":null,"date":null,"score":null}]}. '
     "LeanCertification keys are exactly: name, issuer, date, score; it must not include status, credential_type, "
-    "level, "
-    "type, category, or any other key. Use null for missing optional scalar values and [] for unused top-level "
-    "arrays. Do not include evidence, provenance, raw, canonical, or any other fields."
+    "level, type, category, or any other key. Use null for missing optional scalar values. "
+    "Do not include evidence, provenance, raw, canonical, or any other fields."
 )
 _LANGUAGE_JSON_OBJECT_CONTRACT = (
     " Return only a JSON object (JSON only; no Markdown or commentary) with exactly this object shape when both kinds "
     "are present: "
-    '{"education":[],"skills":[{"name":"..."}],"experiences":[],"certifications":[{"name":"...",'
-    '"issuer":null,"date":null,"score":null}]}. '
+    '{"skills":[{"name":"..."}],"certifications":[{"name":"...","issuer":null,"date":null,"score":null}]}. '
     "Return only LeanSkill items with exactly name and LeanCertification items with exactly name, issuer, date, "
     "and score; either array may be [] when unsupported. Never add status, credential_type, level, type, category, "
-    "or any other key. Use null for missing optional scalar values and [] for unused top-level arrays. Do not include "
+    "or any other key. Use null for missing optional scalar values. Do not include "
     "evidence, provenance, raw, canonical, or any other fields."
 )
+
+
+class EducationSectionPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[LeanEducation] = Field(default_factory=list)
+
+
+class ExperienceSectionPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[LeanExperience] = Field(default_factory=list)
+
+
+class CampusSectionPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[LeanExperience] = Field(default_factory=list)
+
+
+class SkillsSectionPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[LeanSkill] = Field(default_factory=list)
+
+
+class CredentialSectionPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[LeanCertification] = Field(default_factory=list)
+
+
+class LanguageSectionPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    skills: list[LeanSkill] = Field(default_factory=list)
+    certifications: list[LeanCertification] = Field(default_factory=list)
+
+
+_SECTION_PAYLOAD_MODELS: dict[str, type[BaseModel]] = {
+    "EDUCATION": EducationSectionPayload,
+    "COURSES": EducationSectionPayload,
+    "EXPERIENCE": ExperienceSectionPayload,
+    "CAMPUS": CampusSectionPayload,
+    "SKILLS": SkillsSectionPayload,
+    "CREDENTIALS": CredentialSectionPayload,
+    "LANGUAGE": LanguageSectionPayload,
+}
+_GENERIC_SECTION_KEYS = frozenset({"education", "skills", "experiences", "certifications"})
+
+
+def _section_payload_to_lean_result(
+    payload: BaseModel,
+    section_label: str,
+) -> LeanResumeExtractionResult:
+    if section_label in {"EDUCATION", "COURSES"}:
+        section_payload = payload
+        assert isinstance(section_payload, EducationSectionPayload)
+        return LeanResumeExtractionResult(education=section_payload.items)
+    if section_label == "EXPERIENCE":
+        section_payload = payload
+        assert isinstance(section_payload, ExperienceSectionPayload)
+        return LeanResumeExtractionResult(experiences=section_payload.items)
+    if section_label == "CAMPUS":
+        section_payload = payload
+        assert isinstance(section_payload, CampusSectionPayload)
+        return LeanResumeExtractionResult(
+            experiences=[
+                item.model_copy(update={"experience_type": ExperienceType.CAMPUS})
+                for item in section_payload.items
+            ]
+        )
+    if section_label == "SKILLS":
+        section_payload = payload
+        assert isinstance(section_payload, SkillsSectionPayload)
+        return LeanResumeExtractionResult(skills=section_payload.items)
+    if section_label == "CREDENTIALS":
+        section_payload = payload
+        assert isinstance(section_payload, CredentialSectionPayload)
+        return LeanResumeExtractionResult(certifications=section_payload.items)
+    if section_label == "LANGUAGE":
+        section_payload = payload
+        assert isinstance(section_payload, LanguageSectionPayload)
+        return LeanResumeExtractionResult(
+            skills=section_payload.skills,
+            certifications=section_payload.certifications,
+        )
+    raise ValueError(f"unsupported section label: {section_label}")
 
 
 _SAFE_DIAGNOSTIC_TOKEN = re.compile(r"^[A-Za-z0-9_]+$")
@@ -383,11 +468,22 @@ class OpenAIResumeProvider:
         return self.client.chat.completions.create(**request)
 
     @staticmethod
-    def _parse_json_completion(response: object, model_type: type[_MODEL_T]) -> _MODEL_T:
+    def _parse_json_completion(
+        response: object,
+        model_type: type[_MODEL_T],
+        *,
+        ignored_keys: frozenset[str] = frozenset(),
+    ) -> _MODEL_T:
         content = response.choices[0].message.content
         if not isinstance(content, str) or not content.strip():
             raise ValueError("OpenAI returned no JSON resume result")
         data = json.loads(content)
+        if ignored_keys and isinstance(data, dict):
+            data = {
+                key: value
+                for key, value in data.items()
+                if key not in ignored_keys
+            }
         return model_type.model_validate(data)
 
     def extract(self, evidence_text: str) -> ResumeExtractionResult:
@@ -420,6 +516,9 @@ class OpenAIResumeProvider:
         section_text: str,
         section_label: str,
     ) -> LeanResumeExtractionResult:
+        payload_model = _SECTION_PAYLOAD_MODELS.get(section_label)
+        if payload_model is None:
+            raise ValueError(f"unsupported section label: {section_label}")
         source_surface_instruction = (
             "Every returned string that represents a source fact must be copied VERBATIM from the supplied "
             "section (source surface). Do not paraphrase, summarize, translate, or rewrite source values; never "
@@ -480,7 +579,13 @@ class OpenAIResumeProvider:
             system_prompt=system_prompt,
             user_content=section_text,
         )
-        return self._parse_json_completion(response, LeanResumeExtractionResult)
+        ignored_keys = _GENERIC_SECTION_KEYS - set(payload_model.model_fields)
+        payload = self._parse_json_completion(
+            response,
+            payload_model,
+            ignored_keys=frozenset(ignored_keys),
+        )
+        return _section_payload_to_lean_result(payload, section_label)
 
 
 _resume_provider: ResumeProvider | None = None
@@ -2227,10 +2332,23 @@ def extract_section_first_resume(
                 timing_ms.setdefault(field_name, 0.0)
     deterministic = recover_explicit_facts(ResumeExtractionResult(), source_text)
     sections = detect_sections(source_text)
+    detected_keys = ",".join(section.key for section in sections) or "none"
+    logger.info(
+        "resume_sections detected=%s detected_count=%d",
+        detected_keys,
+        len(sections),
+    )
     if not sections:
+        logger.info("resume_plan planned=none planned_count=0")
         return _run_full_resume_fallback(provider, source_text, timing_ms=timing_ms)
 
     plan = build_section_extraction_plan(source_text, deterministic)
+    planned_keys = ",".join(section.key for section in plan) or "none"
+    logger.info(
+        "resume_plan planned=%s planned_count=%d",
+        planned_keys,
+        len(plan),
+    )
     merged = deterministic
     warnings: list[ValidationWarning] = []
     planned_sections = {(section.key, section.start, section.end) for section in plan}

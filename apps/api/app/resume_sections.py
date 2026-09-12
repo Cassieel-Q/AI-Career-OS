@@ -62,17 +62,61 @@ _SECTION_ALIASES: tuple[tuple[str, tuple[str, ...]], ...] = (
 )
 
 
+_LEADING_SECTION_NUMBER_RE = re.compile(
+    r"^\s*(?:(?:\d{1,3}|[一二三四五六七八九十百千万]+)\s*"
+    r"(?:[.．、:：)\]）-]\s*|\s+)|"
+    r"[（(]\s*(?:\d{1,3}|[一二三四五六七八九十百千万]+)\s*[)）]\s*)"
+)
+_HEADING_DECORATOR_CHARS = " \t|/／()（）[]【】<>《》-–—:："
+
+
+def _normalize_heading_surface(value: str) -> str:
+    normalized = unicodedata.normalize("NFKC", value).casefold()
+    normalized = "".join(
+        character for character in normalized if unicodedata.category(character) != "Cf"
+    )
+    return re.sub(r"\s+", " ", normalized).strip()
+
+
+def _strip_leading_section_number(value: str) -> str:
+    match = _LEADING_SECTION_NUMBER_RE.match(value)
+    return value[match.end() :].strip() if match else value
+
+
+def _decorated_heading_suffix(value: str) -> str:
+    return value.strip(_HEADING_DECORATOR_CHARS).strip()
+
+
 def _match_heading(line: str) -> tuple[str, str, str | None] | None:
     stripped = line.strip()
+    candidate = _strip_leading_section_number(stripped)
+    normalized_candidate = _normalize_heading_surface(candidate.rstrip(":：").strip())
+    if not normalized_candidate:
+        return None
     for key, aliases in _SECTION_ALIASES:
-        for alias in aliases:
-            if stripped.casefold() == alias.casefold() or stripped.rstrip(":：").strip().casefold() == alias.casefold():
+        normalized_aliases = {
+            _normalize_heading_surface(other_alias)
+            for other_alias in aliases
+        }
+        for alias in sorted(aliases, key=len, reverse=True):
+            normalized_alias = _normalize_heading_surface(alias)
+            if normalized_candidate == normalized_alias:
                 return key, stripped.rstrip(":：").strip(), None
-            prefix = f"{alias}:".casefold()
-            prefix_cn = f"{alias}：".casefold()
-            if stripped.casefold().startswith(prefix) or stripped.casefold().startswith(prefix_cn):
-                content = stripped[len(alias) :].lstrip(" :：")
-                return key, stripped[: len(alias)].strip(), content
+
+            inline_match = re.match(rf"^{re.escape(alias)}\s*[:：]", candidate, re.IGNORECASE)
+            if inline_match:
+                content = candidate[inline_match.end() :].strip()
+                prefix_offset = len(stripped) - len(candidate)
+                heading_end = prefix_offset + inline_match.end()
+                heading = stripped[:heading_end].rstrip(":：").strip()
+                return key, heading, content
+
+            if not candidate.casefold().startswith(alias.casefold()):
+                continue
+            suffix = candidate[len(alias) :]
+            normalized_suffix = _normalize_heading_surface(_decorated_heading_suffix(suffix))
+            if normalized_suffix and normalized_suffix in normalized_aliases - {normalized_alias}:
+                return key, stripped, None
     return None
 
 
@@ -125,6 +169,9 @@ def _has_language_fact(result: ResumeExtractionResult) -> bool:
 
 def _normalize_section_value(value: str) -> str:
     normalized = unicodedata.normalize("NFKC", value).casefold()
+    normalized = "".join(
+        character for character in normalized if unicodedata.category(character) != "Cf"
+    )
     return re.sub(r"\s+", "", normalized)
 
 

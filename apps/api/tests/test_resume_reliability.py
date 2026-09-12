@@ -45,6 +45,209 @@ def test_inline_section_heading_is_not_duplicated_in_target_text() -> None:
     ]
 
 
+@pytest.mark.parametrize(
+    ("heading", "expected_key"),
+    [
+        ("二、教育背景", "EDUCATION"),
+        ("2. 教育背景", "EDUCATION"),
+        ("02 教育背景", "EDUCATION"),
+        ("教育背景 EDUCATION", "EDUCATION"),
+        ("教育背景 | EDUCATION", "EDUCATION"),
+        ("教育背景 / EDUCATION", "EDUCATION"),
+        ("教育背景（EDUCATION）", "EDUCATION"),
+        ("三、实习/工作经历", "EXPERIENCE"),
+        ("工作经历 WORK EXPERIENCE", "EXPERIENCE"),
+        ("实习经历 INTERNSHIP EXPERIENCE", "EXPERIENCE"),
+        ("四、校园经历", "CAMPUS"),
+        ("校园经历 CAMPUS EXPERIENCE", "CAMPUS"),
+        ("五、专业技能", "SKILLS"),
+        ("资格证书 CERTIFICATIONS", "CREDENTIALS"),
+    ],
+)
+def test_conservative_heading_normalization_accepts_numbered_and_decorated_forms(
+    heading: str,
+    expected_key: str,
+) -> None:
+    source = f"Introductory body\n{heading}\nGrounded content"
+
+    sections = detect_sections(source)
+
+    assert [(section.key, section.heading) for section in sections] == [(expected_key, heading)]
+    assert sections[0].start == source.index(heading)
+    assert source[sections[0].start : sections[0].start + len(heading)] == heading
+
+
+def test_numbered_ordinary_body_sentence_is_not_misclassified_as_heading() -> None:
+    source = "经历说明\n2. 教育背景相关课程需要进一步确认\n这是一句普通正文。"
+
+    assert detect_sections(source) == []
+
+
+def test_heading_matching_ignores_unicode_format_characters_without_changing_offsets() -> None:
+    heading = "二、教育背景\u200b"
+    source = f"简介\n{heading}\nXX理工学院"
+
+    sections = detect_sections(source)
+
+    assert [(section.key, section.heading) for section in sections] == [
+        ("EDUCATION", heading.strip()),
+    ]
+    assert sections[0].start == source.index(heading)
+    assert source[sections[0].start : sections[0].start + len(heading)] == heading
+
+
+def test_numbered_headings_preserve_core_section_planner_priority() -> None:
+    source = (
+        "五、专业技能\nPython\n\n"
+        "三、实习/工作经历\nOperations Assistant\n\n"
+        "四、校园经历\n班级干事\n\n"
+        "二、教育背景\n工商管理本科"
+    )
+
+    plan = main.build_section_extraction_plan(source, ResumeExtractionResult())
+
+    assert [section.key for section in plan] == [
+        "EDUCATION",
+        "EXPERIENCE",
+        "CAMPUS",
+        "SKILLS",
+    ]
+
+
+def test_numbered_recognized_sections_feed_existing_completeness_warnings() -> None:
+    source = (
+        "二、教育背景\nAcademic record\n\n"
+        "三、实习/工作经历\nWork record\n\n"
+        "四、校园经历\nCampus record\n\n"
+        "五、专业技能\nPython"
+    )
+
+    class Provider:
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            if section_label == "SKILLS":
+                return main.LeanResumeExtractionResult(skills=[main.LeanSkill(name="Python")])
+            return main.LeanResumeExtractionResult()
+
+    processed = main.extract_section_first_resume(Provider(), source)
+
+    assert "MISSING_SECTION_CONTENT:EDUCATION" in processed.completeness_warnings
+    assert "MISSING_SECTION_CONTENT:EXPERIENCE" in processed.completeness_warnings
+    assert "MISSING_SECTION_CONTENT:CAMPUS" in processed.completeness_warnings
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        (
+            "二、教育背景\nXX理工学院 工商管理 本科 2020-2024\n\n"
+            "三、实习/工作经历\n运营助理 XX公司 2024\n\n"
+            "四、校园经历\n班级干事\n\n"
+            "五、专业技能\nWord Excel PPT\n\n"
+            "资格证书\nCET-6 500"
+        ),
+        (
+            "教育背景\nXX理工学院 工商管理 本科 2020-2024\n\n"
+            "工作经历\n运营助理 XX公司 2024\n\n"
+            "校园经历\n班级干事\n\n"
+            "专业技能\nWord Excel PPT\n\n"
+            "证书\nCET-6 500"
+        ),
+        (
+            "EDUCATION\nXX理工学院 工商管理 Bachelor 2020-2024\n\n"
+            "WORK EXPERIENCE\n运营助理 XX公司 2024\n\n"
+            "CAMPUS EXPERIENCE\n班级干事\n\n"
+            "SKILLS\nWord Excel PPT\n\n"
+            "CERTIFICATIONS\nCET-6 500"
+        ),
+        (
+            "SKILLS\nWord Excel PPT\n\n"
+            "资格证书 CERTIFICATIONS\nCET-6 500\n\n"
+            "校园经历 CAMPUS EXPERIENCE\n班级干事\n\n"
+            "教育背景 EDUCATION\nXX理工学院 工商管理 本科 2020-2024\n\n"
+            "实习经历 INTERNSHIP EXPERIENCE\n运营助理 XX公司 2024"
+        ),
+    ],
+)
+def test_structurally_different_resume_layouts_keep_routing_and_deterministic_recovery(
+    source: str,
+) -> None:
+    class Provider:
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            if section_label in {"EDUCATION", "COURSES"}:
+                return main.LeanResumeExtractionResult(
+                    education=[
+                        main.LeanEducation(
+                            institution="XX理工学院",
+                            degree="本科",
+                            field_of_study="工商管理",
+                            dates="2020-2024",
+                        )
+                    ]
+                )
+            if section_label == "EXPERIENCE":
+                return main.LeanResumeExtractionResult(
+                    experiences=[
+                        main.LeanExperience(
+                            title="运营助理",
+                            organization="XX公司",
+                            dates="2024",
+                            experience_type=ExperienceType.WORK,
+                        )
+                    ]
+                )
+            if section_label == "CAMPUS":
+                return main.LeanResumeExtractionResult(
+                    experiences=[
+                        main.LeanExperience(
+                            title="班级干事",
+                            experience_type=ExperienceType.CAMPUS,
+                        )
+                    ]
+                )
+            return main.LeanResumeExtractionResult()
+
+    processed = main.extract_section_first_resume(Provider(), source)
+    skills = {skill.name for skill in processed.result.skills}
+    certifications = {certification.name for certification in processed.result.certifications}
+
+    assert processed.result.education
+    assert processed.result.education[0].institution == "XX理工学院"
+    assert processed.result.education[0].field_of_study == "工商管理"
+    assert any(item.title == "运营助理" for item in processed.result.experiences)
+    assert any(item.title == "班级干事" and item.experience_type == ExperienceType.CAMPUS for item in processed.result.experiences)
+    assert {"Word", "Excel", "PowerPoint"} <= skills
+    assert "CET-6" in certifications
+    assert "普通话二级甲等" not in certifications
+    assert "计算机二级" not in certifications
+
+
+def test_section_routing_logs_only_detected_and_planned_keys(caplog) -> None:
+    source = (
+        "二、教育背景\nPlaceholder Institute\n\n"
+        "三、实习/工作经历\nOperations Assistant\n\n"
+        "四、校园经历\n班级干事\n\n"
+        "五、专业技能\nPython"
+    )
+
+    class Provider:
+        def extract_section(self, section_text: str, section_label: str) -> object:
+            return main.LeanResumeExtractionResult()
+
+    with caplog.at_level(logging.INFO, logger=main.logger.name):
+        main.extract_section_first_resume(Provider(), source)
+
+    routing_messages = [
+        record.getMessage()
+        for record in caplog.records
+        if "resume_sections" in record.getMessage() or "resume_plan" in record.getMessage()
+    ]
+    assert "resume_sections detected=EDUCATION,EXPERIENCE,CAMPUS,SKILLS detected_count=4" in routing_messages
+    assert "resume_plan planned=EDUCATION,EXPERIENCE,CAMPUS,SKILLS planned_count=4" in routing_messages
+    assert all("Placeholder Institute" not in message for message in routing_messages)
+    assert all("Operations Assistant" not in message for message in routing_messages)
+    assert all("班级干事" not in message for message in routing_messages)
+
+
 def test_section_plan_skips_supported_credential_score_only_content() -> None:
     plan = main.build_section_extraction_plan(
         "Credentials\nCET-6 score: 300",
