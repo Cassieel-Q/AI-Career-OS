@@ -1,3 +1,5 @@
+import type { CareerPreferences } from "./career-preferences";
+
 export type ProfileStatus = "DRAFT" | "CONFIRMED";
 export type Proficiency = "AWARE" | "BASIC" | "PROJECT_READY" | "PROFICIENT";
 export type ExperienceType = "WORK" | "INTERNSHIP" | "CAMPUS" | "PROJECT" | "OTHER";
@@ -51,6 +53,7 @@ export type Profile = {
   skills: Skill[];
   experiences: Experience[];
   certifications: Certification[];
+  preferences?: CareerPreferences | null;
 };
 
 export function createEmptyEducation(): Education {
@@ -68,6 +71,7 @@ export function createEmptyEducation(): Education {
 export function normalizeProfile(profile: Profile): Profile {
   return {
     ...profile,
+    preferences: profile.preferences ?? null,
     education: (profile.education ?? []).map((item) => ({
       ...item,
       relevant_courses: item.relevant_courses ?? [],

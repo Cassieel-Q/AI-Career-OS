@@ -13,6 +13,14 @@ import {
   validateProfileForSave,
 } from "../app/profile-flow.ts";
 import type { Profile, ProfileRequester } from "../app/profile-flow.ts";
+import {
+  CAREER_PREFERENCE_OPTIONS,
+  careerPreferencesDraftFromProfile,
+  isCareerPreferencesDraftValid,
+  profileCanEditCareerPreferences,
+  saveCareerPreferencesRequest,
+  toggleCareerPreference,
+} from "../app/career-preferences.ts";
 
 const profile: Profile = {
   profile_id: "profile-1",
@@ -205,6 +213,132 @@ test("clean confirmation does not issue an unnecessary PUT", async () => {
 
   assert.deepEqual(calls.map(({ init }) => init?.method), ["POST"]);
   assert.equal(result.status, "CONFIRMED");
+});
+
+test("the five frozen priority options have Chinese labels", () => {
+  assert.equal(CAREER_PREFERENCE_OPTIONS.length, 5);
+  assert.deepEqual(CAREER_PREFERENCE_OPTIONS.map((option) => option.label), [
+    "薪资优先",
+    "少写代码",
+    "尽快就业",
+    "当前匹配度",
+    "长期成长",
+  ]);
+});
+
+test("selection order appends, caps at two, and removes the clicked item", () => {
+  const first = toggleCareerPreference([], "FAST_EMPLOYMENT");
+  const second = toggleCareerPreference(first, "CURRENT_FIT");
+  assert.deepEqual(toggleCareerPreference(second, "COMPENSATION"), second);
+  assert.deepEqual(toggleCareerPreference(second, "FAST_EMPLOYMENT"), ["CURRENT_FIT"]);
+});
+
+test("draft validity requires two priorities and integer hours from one to sixty", () => {
+  assert.equal(isCareerPreferencesDraftValid([], "20"), false);
+  assert.equal(isCareerPreferencesDraftValid(["FAST_EMPLOYMENT"], "20"), false);
+  assert.equal(isCareerPreferencesDraftValid(["FAST_EMPLOYMENT", "CURRENT_FIT"], "0"), false);
+  assert.equal(isCareerPreferencesDraftValid(["FAST_EMPLOYMENT", "CURRENT_FIT"], "20.5"), false);
+  assert.equal(isCareerPreferencesDraftValid(["FAST_EMPLOYMENT", "CURRENT_FIT"], "20"), true);
+});
+
+test("career preferences edit only becomes available after confirmation", () => {
+  assert.equal(profileCanEditCareerPreferences(profile), false);
+  assert.equal(profileCanEditCareerPreferences({ ...profile, status: "CONFIRMED" }), true);
+  assert.equal(profileCanEditCareerPreferences(null), false);
+});
+
+test("profile normalization keeps missing or null preferences compatible", () => {
+  const missing = normalizeProfile({ ...profile } as Profile);
+  const explicitlyNull = normalizeProfile({ ...profile, preferences: null });
+
+  assert.equal(missing.preferences, null);
+  assert.equal(explicitlyNull.preferences, null);
+  assert.deepEqual(careerPreferencesDraftFromProfile(missing), { priority_order: [], weekly_hours: "" });
+  assert.deepEqual(careerPreferencesDraftFromProfile(explicitlyNull), { priority_order: [], weekly_hours: "" });
+});
+
+test("stored preferences rehydrate into an editable draft", () => {
+  const stored = {
+    id: "preference-1",
+    profile_id: profile.profile_id,
+    priority_order: ["CURRENT_FIT", "LONG_TERM_GROWTH"] as ["CURRENT_FIT", "LONG_TERM_GROWTH"],
+    weekly_hours: 12,
+    created_at: "2026-09-04T00:00:00Z",
+    updated_at: "2026-09-04T00:00:00Z",
+  };
+
+  assert.deepEqual(
+    careerPreferencesDraftFromProfile({ ...profile, status: "CONFIRMED", preferences: stored }),
+    { priority_order: ["CURRENT_FIT", "LONG_TERM_GROWTH"], weekly_hours: "12" },
+  );
+});
+
+test("career preferences PUT sends the exact endpoint and JSON payload", async () => {
+  const calls: Array<{ input: RequestInfo | URL; init?: RequestInit }> = [];
+  const response = {
+    id: "preference-1",
+    profile_id: profile.profile_id,
+    priority_order: ["FAST_EMPLOYMENT", "CURRENT_FIT"],
+    weekly_hours: 20,
+    created_at: "2026-09-04T00:00:00Z",
+    updated_at: "2026-09-04T00:00:00Z",
+  };
+  const request: ProfileRequester = async (input, init) => {
+    calls.push({ input, init });
+    return jsonResponse(response);
+  };
+
+  const saved = await saveCareerPreferencesRequest(
+    profile.profile_id,
+    { priority_order: ["FAST_EMPLOYMENT", "CURRENT_FIT"], weekly_hours: "20" },
+    "http://api.test",
+    request,
+  );
+
+  assert.equal(calls[0].input, "http://api.test/api/v1/profiles/profile-1/preferences");
+  assert.equal(calls[0].init?.method, "PUT");
+  assert.deepEqual(JSON.parse(String(calls[0].init?.body)), {
+    priority_order: ["FAST_EMPLOYMENT", "CURRENT_FIT"],
+    weekly_hours: 20,
+  });
+  assert.deepEqual(saved, response);
+});
+
+test("career preferences PUT reports safe API errors", async () => {
+  const request: ProfileRequester = async () => jsonResponse({ detail: [{ msg: "invalid preference" }] }, 422);
+
+  await assert.rejects(
+    saveCareerPreferencesRequest(
+      profile.profile_id,
+      { priority_order: ["FAST_EMPLOYMENT", "CURRENT_FIT"], weekly_hours: "20" },
+      "http://api.test",
+      request,
+    ),
+    /invalid preference/,
+  );
+});
+
+test("career preference save eligibility requires a confirmed profile, two priorities, and valid hours", () => {
+  const draft = { priority_order: ["FAST_EMPLOYMENT", "CURRENT_FIT"] as const, weekly_hours: "20" };
+  assert.equal(
+    profileCanEditCareerPreferences(profile) && isCareerPreferencesDraftValid([...draft.priority_order], draft.weekly_hours),
+    false,
+  );
+  assert.equal(
+    profileCanEditCareerPreferences({ ...profile, status: "CONFIRMED" }) &&
+      isCareerPreferencesDraftValid([...draft.priority_order], draft.weekly_hours),
+    true,
+  );
+  assert.equal(
+    profileCanEditCareerPreferences({ ...profile, status: "CONFIRMED" }) &&
+      isCareerPreferencesDraftValid(["FAST_EMPLOYMENT"], draft.weekly_hours),
+    false,
+  );
+});
+
+test("removing the first selected preference promotes the remaining item to priority one", () => {
+  const selected = toggleCareerPreference(toggleCareerPreference([], "COMPENSATION"), "LONG_TERM_GROWTH");
+  assert.deepEqual(toggleCareerPreference(selected, "COMPENSATION"), ["LONG_TERM_GROWTH"]);
 });
 
 function jsonResponse(payload: unknown, status = 200): Response {

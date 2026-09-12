@@ -279,6 +279,59 @@ button:disabled {
   padding-top: 0.4rem;
 }
 
+.career-preferences {
+  display: grid;
+  gap: 0.8rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid #edf1eb;
+}
+
+.career-preferences h3 {
+  margin: 0;
+}
+
+.preference-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.preference-card {
+  display: grid;
+  gap: 0.4rem;
+  width: 100%;
+  min-height: 4.2rem;
+  align-content: center;
+  justify-items: center;
+  padding: 0.7rem 0.5rem;
+  border: 1px solid #d6dfd4;
+  background: #ffffff;
+  color: #36563d;
+  text-align: center;
+}
+
+.preference-card.selected {
+  border-color: #36563d;
+  background: #e2f4e5;
+}
+
+.preference-order {
+  min-height: 1em;
+  color: #236333;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.preference-card:disabled {
+  background: #f0f3ef;
+  color: #8a968c;
+  cursor: not-allowed;
+}
+
+.career-preferences > button {
+  justify-self: start;
+}
+
 .evidence {
   display: grid;
   gap: 0.2rem;
@@ -308,6 +361,10 @@ button:disabled {
   .field-grid,
   .skill-grid {
     grid-template-columns: 1fr;
+  }
+
+  .preference-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .profile-heading,

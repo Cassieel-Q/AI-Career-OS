@@ -21,11 +21,12 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.profile_schemas import ProfileRead, ProfileUpdate
+from app.profile_schemas import CareerPreferencesInput, CareerPreferencesRead, ProfileRead, ProfileUpdate
 from app.profile_service import (
     confirm_profile,
     create_draft_profile,
     get_profile,
+    upsert_career_preferences,
     update_draft_profile,
 )
 from app.resume_normalization import normalize_resume_extraction
@@ -2569,3 +2570,15 @@ def save_profile(
 @app.post("/api/v1/profiles/{profile_id}/confirm", response_model=ProfileRead)
 def confirm_saved_profile(profile_id: UUID, db: Session = Depends(get_db)) -> ProfileRead:
     return confirm_profile(db, profile_id)
+
+
+@app.put(
+    "/api/v1/profiles/{profile_id}/preferences",
+    response_model=CareerPreferencesRead,
+)
+def save_career_preferences(
+    profile_id: UUID,
+    payload: CareerPreferencesInput,
+    db: Session = Depends(get_db),
+) -> CareerPreferencesRead:
+    return upsert_career_preferences(db, profile_id, payload)

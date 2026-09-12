@@ -11,9 +11,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine, make_url
 from sqlalchemy.orm import Session
 
-from app import main
+from app import main, models
 from app.database import get_db
-from app.profile_service import create_draft_profile
+from app.profile_service import create_draft_profile, get_profile
 from app.resume_schemas import ResumeExtractionResult
 
 
@@ -130,3 +130,43 @@ def test_postgres_profile_api_round_trip(postgres_client: TestClient, postgres_e
     response = postgres_client.get(f"/api/v1/profiles/{profile_id}")
     assert response.status_code == 200
     assert response.json()["status"] == "CONFIRMED"
+
+
+@pytest.mark.integration
+def test_postgres_career_preferences_survive_fresh_session(
+    postgres_client: TestClient, postgres_engine: Engine
+) -> None:
+    with Session(postgres_engine) as session:
+        profile = create_draft_profile(
+            session,
+            ResumeExtractionResult(skills=[{"name": "Python", "evidence_text": "Python"}]),
+        )
+        profile_id = profile.id
+
+    response = postgres_client.post(f"/api/v1/profiles/{profile_id}/confirm")
+    assert response.status_code == 200
+
+    response = postgres_client.put(
+        f"/api/v1/profiles/{profile_id}/preferences",
+        json={
+            "priority_order": ["FAST_EMPLOYMENT", "CURRENT_FIT"],
+            "weekly_hours": 20,
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["priority_order"] == ["FAST_EMPLOYMENT", "CURRENT_FIT"]
+
+    with Session(postgres_engine) as fresh_session:
+        profile_read = get_profile(fresh_session, profile_id)
+        assert profile_read.preferences is not None
+        assert profile_read.preferences.weekly_hours == 20
+        assert profile_read.preferences.priority_order == [
+            "FAST_EMPLOYMENT",
+            "CURRENT_FIT",
+        ]
+        assert (
+            fresh_session.query(models.CareerPreference)
+            .filter_by(profile_id=profile_id)
+            .count()
+            == 1
+        )
