@@ -70,6 +70,23 @@ def test_preferences_read_exposes_stored_order() -> None:
     assert result.priority_order[0] is CareerPreferencePriority.COMPENSATION
 
 
+def test_preferences_read_maps_orm_priority_columns() -> None:
+    preference = CareerPreference(
+        id=uuid4(),
+        profile_id=uuid4(),
+        priority_1="COMPENSATION",
+        priority_2="LESS_CODING",
+        weekly_hours=12,
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+    result = CareerPreferencesRead.model_validate(preference)
+    assert result.priority_order == [
+        CareerPreferencePriority.COMPENSATION,
+        CareerPreferencePriority.LESS_CODING,
+    ]
+
+
 def test_career_preference_model_is_one_to_one_and_metadata_creates_table() -> None:
     assert UserProfile.career_preference.property.uselist is False
     assert CareerPreference.profile.property.back_populates == "career_preference"

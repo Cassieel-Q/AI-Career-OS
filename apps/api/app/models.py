@@ -102,6 +102,10 @@ class CareerPreference(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
 
+    @property
+    def priority_order(self) -> list[str]:
+        return [self.priority_1, self.priority_2]
+
     profile: Mapped[UserProfile] = relationship(
         "UserProfile", back_populates="career_preference"
     )
