@@ -19,6 +19,14 @@ class Proficiency(StrEnum):
     PROFICIENT = "PROFICIENT"
 
 
+class ExperienceType(StrEnum):
+    WORK = "WORK"
+    INTERNSHIP = "INTERNSHIP"
+    CAMPUS = "CAMPUS"
+    PROJECT = "PROJECT"
+    OTHER = "OTHER"
+
+
 class SourceType(StrEnum):
     AI_EXTRACTED = "AI_EXTRACTED"
     USER_ENTERED = "USER_ENTERED"
@@ -49,11 +57,21 @@ class ProfileItemInput(BaseModel):
         return self
 
 
+class ProfileItemRead(ProfileItemInput):
+    model_config = ConfigDict(from_attributes=True)
+    id: UUID
+    raw_value: str | None = None
+    canonical_value: str | None = None
+    evidence_start: int | None = None
+    evidence_end: int | None = None
+
+
 class EducationInput(ProfileItemInput):
     institution: str
     degree: str | None = None
     field_of_study: str | None = None
     dates: str | None = None
+    relevant_courses: list[str] = Field(default_factory=list)
 
     @field_validator("institution", mode="before")
     @classmethod
@@ -67,6 +85,13 @@ class EducationInput(ProfileItemInput):
     @classmethod
     def normalize_optional_fields(cls, value: str | None) -> str | None:
         return _blank_to_none(value)
+
+    @field_validator("relevant_courses", mode="before")
+    @classmethod
+    def normalize_courses(cls, value: list[str] | None) -> list[str]:
+        if value is None:
+            return []
+        return list(dict.fromkeys(course.strip() for course in value if course and course.strip()))
 
 
 class ProfileSkillInput(ProfileItemInput):
@@ -87,6 +112,7 @@ class ExperienceInput(ProfileItemInput):
     organization: str | None = None
     dates: str | None = None
     description: str | None = None
+    experience_type: ExperienceType = ExperienceType.OTHER
 
     @field_validator("title", mode="before")
     @classmethod
@@ -106,6 +132,8 @@ class CertificationInput(ProfileItemInput):
     name: str
     issuer: str | None = None
     date: str | None = None
+    score: str | None = None
+    status: str | None = None
 
     @field_validator("name", mode="before")
     @classmethod
@@ -115,7 +143,7 @@ class CertificationInput(ProfileItemInput):
             raise ValueError("name must not be blank")
         return normalized
 
-    @field_validator("issuer", "date", mode="before")
+    @field_validator("issuer", "date", "score", "status", mode="before")
     @classmethod
     def normalize_optional_fields(cls, value: str | None) -> str | None:
         return _blank_to_none(value)
@@ -128,24 +156,20 @@ class ProfileUpdate(BaseModel):
     certifications: list[CertificationInput] = Field(default_factory=list)
 
 
-class EducationRead(EducationInput):
-    model_config = ConfigDict(from_attributes=True)
-    id: UUID
+class EducationRead(EducationInput, ProfileItemRead):
+    pass
 
 
-class ProfileSkillRead(ProfileSkillInput):
-    model_config = ConfigDict(from_attributes=True)
-    id: UUID
+class ProfileSkillRead(ProfileSkillInput, ProfileItemRead):
+    pass
 
 
-class ExperienceRead(ExperienceInput):
-    model_config = ConfigDict(from_attributes=True)
-    id: UUID
+class ExperienceRead(ExperienceInput, ProfileItemRead):
+    pass
 
 
-class CertificationRead(CertificationInput):
-    model_config = ConfigDict(from_attributes=True)
-    id: UUID
+class CertificationRead(CertificationInput, ProfileItemRead):
+    pass
 
 
 class ProfileRead(BaseModel):

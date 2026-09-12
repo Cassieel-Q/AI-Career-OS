@@ -1,0 +1,26 @@
+{
+  "source_text": "教育背景\nExample University\nComputer Science\n主修课程：Machine Learning、Database Systems\n专业技能：Word、Excel、PPT；Python\n语言能力：普通话沟通良好；English communication ability\n证书：CET-6",
+  "extraction": {
+    "education": [
+      {
+        "institution": "Example University",
+        "field_of_study": "Computer Science",
+        "relevant_courses": ["Machine Learning", "Database Systems"],
+        "evidence_text": "教育背景 Example University Computer Science 主修课程：Machine Learning、Database Systems"
+      }
+    ],
+    "skills": [
+      {"name": "Word、Excel、PPT", "evidence_text": "专业技能：Word、Excel、PPT；Python"},
+      {"name": "Python", "evidence_text": "专业技能：Word、Excel、PPT；Python"},
+      {"name": "普通话沟通良好", "evidence_text": "语言能力：普通话沟通良好；English communication ability"},
+      {"name": "English communication ability", "evidence_text": "语言能力：普通话沟通良好；English communication ability"}
+    ],
+    "certifications": [{"name": "CET-6", "evidence_text": "证书：CET-6"}]
+  },
+  "expected": {
+    "education": [{"institution": "Example University", "field_of_study": "Computer Science", "relevant_courses": ["Machine Learning", "Database Systems"]}],
+    "skills": ["Word", "Excel", "PowerPoint", "Python", "普通话", "English"],
+    "experiences": [],
+    "certifications": ["CET-6"]
+  }
+}

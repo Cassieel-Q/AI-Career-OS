@@ -61,8 +61,13 @@ def create_draft_profile(db: Session, extraction: ResumeExtractionResult) -> mod
             degree=item.degree,
             field_of_study=item.field_of_study,
             dates=item.dates,
+            relevant_courses=item.relevant_courses,
             evidence_text=item.evidence_text,
             source_type=SourceType.AI_EXTRACTED.value,
+            raw_value=item.raw_value,
+            canonical_value=item.canonical_value,
+            evidence_start=item.evidence_start,
+            evidence_end=item.evidence_end,
         )
         for item in extraction.education
     ]
@@ -72,6 +77,10 @@ def create_draft_profile(db: Session, extraction: ResumeExtractionResult) -> mod
             proficiency=None,
             evidence_text=item.evidence_text,
             source_type=SourceType.AI_EXTRACTED.value,
+            raw_value=item.raw_value,
+            canonical_value=item.canonical_value,
+            evidence_start=item.evidence_start,
+            evidence_end=item.evidence_end,
         )
         for item in extraction.skills
     ]
@@ -81,8 +90,13 @@ def create_draft_profile(db: Session, extraction: ResumeExtractionResult) -> mod
             organization=item.organization,
             dates=item.dates,
             description=item.description,
+            experience_type=item.experience_type.value,
             evidence_text=item.evidence_text,
             source_type=SourceType.AI_EXTRACTED.value,
+            raw_value=item.raw_value,
+            canonical_value=item.canonical_value,
+            evidence_start=item.evidence_start,
+            evidence_end=item.evidence_end,
         )
         for item in extraction.experiences
     ]
@@ -91,8 +105,14 @@ def create_draft_profile(db: Session, extraction: ResumeExtractionResult) -> mod
             name=item.name,
             issuer=item.issuer,
             date=item.date,
+            score=item.score,
+            status=item.status,
             evidence_text=item.evidence_text,
             source_type=SourceType.AI_EXTRACTED.value,
+            raw_value=item.raw_value,
+            canonical_value=item.canonical_value,
+            evidence_start=item.evidence_start,
+            evidence_end=item.evidence_end,
         )
         for item in extraction.certifications
     ]
@@ -161,10 +181,28 @@ def update_draft_profile(db: Session, profile_id: UUID, payload: ProfileUpdate) 
     profile = _get_profile(db, profile_id, for_update=True)
     if profile.status == ProfileStatus.CONFIRMED.value:
         raise HTTPException(status_code=409, detail="Confirmed profiles cannot be edited")
-    _replace_collection(profile, "education", payload.education, ("institution", "degree", "field_of_study", "dates"), models.Education)
+    _replace_collection(
+        profile,
+        "education",
+        payload.education,
+        ("institution", "degree", "field_of_study", "dates", "relevant_courses"),
+        models.Education,
+    )
     _replace_collection(profile, "skills", payload.skills, ("name", "proficiency"), models.ProfileSkill)
-    _replace_collection(profile, "experiences", payload.experiences, ("title", "organization", "dates", "description"), models.Experience)
-    _replace_collection(profile, "certifications", payload.certifications, ("name", "issuer", "date"), models.Certification)
+    _replace_collection(
+        profile,
+        "experiences",
+        payload.experiences,
+        ("title", "organization", "dates", "description", "experience_type"),
+        models.Experience,
+    )
+    _replace_collection(
+        profile,
+        "certifications",
+        payload.certifications,
+        ("name", "issuer", "date", "score", "status"),
+        models.Certification,
+    )
     profile.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(profile)

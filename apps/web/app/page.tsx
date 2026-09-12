@@ -4,13 +4,15 @@ import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import {
   confirmProfileRequest,
+  createEmptyEducation,
   getProfileIdFromSearch,
+  normalizeProfile,
   profileHref,
   readApiPayload,
   saveProfileRequest,
   validateProfileForSave,
 } from "./profile-flow";
-import type { Education, Experience, Certification, Profile, ProfileItem, Proficiency, Skill } from "./profile-flow";
+import type { Education, Experience, Certification, ExperienceType, Profile, ProfileItem, Proficiency, Skill } from "./profile-flow";
 
 type EditableSection = "education" | "skills" | "experiences" | "certifications";
 
@@ -19,6 +21,13 @@ const proficiencyOptions: Array<{ value: Proficiency; label: string }> = [
   { value: "BASIC", label: "BASIC" },
   { value: "PROJECT_READY", label: "PROJECT_READY" },
   { value: "PROFICIENT", label: "PROFICIENT" },
+];
+const experienceTypeOptions: Array<{ value: ExperienceType; label: string }> = [
+  { value: "WORK", label: "Work" },
+  { value: "INTERNSHIP", label: "Internship" },
+  { value: "CAMPUS", label: "Campus" },
+  { value: "PROJECT", label: "Project" },
+  { value: "OTHER", label: "Other" },
 ];
 
 const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
@@ -43,7 +52,7 @@ export default function Home() {
         const response = await fetch(`${apiUrl}/api/v1/profiles/${profileId}`);
         const payload = await readApiPayload<Profile>(response);
         if (active) {
-          setProfile(payload);
+          setProfile(normalizeProfile(payload));
           setDirty(false);
         }
       } catch (loadError) {
@@ -86,7 +95,7 @@ export default function Home() {
         body,
       });
       const payload = await readApiPayload<Profile>(response);
-      setProfile(payload);
+      setProfile(normalizeProfile(payload));
       setDirty(false);
       window.history.replaceState(null, "", profileHref(window.location.href, payload.profile_id));
     } catch (uploadError) {
@@ -118,6 +127,24 @@ export default function Home() {
     });
   }
 
+  function updateEducationCourses(index: number, value: string) {
+    if (!profile || profile.status === "CONFIRMED") return;
+    setDirty(true);
+    const relevant_courses = value
+      .split(/[,，、;；]/)
+      .map((course) => course.trim())
+      .filter(Boolean);
+    setProfile((current) => {
+      if (!current || current.status === "CONFIRMED") return current;
+      return {
+        ...current,
+        education: current.education.map((item, itemIndex) =>
+          itemIndex === index ? { ...item, relevant_courses } : item,
+        ),
+      };
+    });
+  }
+
   function deleteItem(section: EditableSection, index: number) {
     if (!profile || profile.status === "CONFIRMED") return;
     setDirty(true);
@@ -142,7 +169,7 @@ export default function Home() {
     setError("");
     try {
       const payload = await saveProfileRequest(currentProfile, apiUrl);
-      setProfile(payload);
+      setProfile(normalizeProfile(payload));
       setDirty(false);
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Profile could not be saved.");
@@ -163,7 +190,7 @@ export default function Home() {
     setError("");
     try {
       const payload = await confirmProfileRequest(currentProfile, dirty, apiUrl);
-      setProfile(payload);
+      setProfile(normalizeProfile(payload));
       setDirty(false);
     } catch (confirmError) {
       setError(confirmError instanceof Error ? confirmError.message : "Profile could not be confirmed.");
@@ -223,6 +250,7 @@ export default function Home() {
                   <TextField label="Degree" value={item.degree} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("education", index, "degree", value)} />
                   <TextField label="Major" value={item.field_of_study} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("education", index, "field_of_study", value)} />
                   <TextField label="Dates" value={item.dates} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("education", index, "dates", value)} />
+                  <TextField label="Relevant courses" value={(item.relevant_courses ?? []).join(", ")} disabled={profileLocked || mutationBusy} onChange={(value) => updateEducationCourses(index, value ?? "")} />
                 </div>
                 <Evidence item={item} />
               </>
@@ -269,6 +297,16 @@ export default function Home() {
                   <TextField label="Organization" value={item.organization} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("experiences", index, "organization", value)} />
                   <TextField label="Dates" value={item.dates} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("experiences", index, "dates", value)} />
                   <TextField label="Description" value={item.description} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("experiences", index, "description", value)} multiline />
+                  <label className="field-label">
+                    Experience type
+                    <select
+                      value={item.experience_type}
+                      disabled={profileLocked || mutationBusy}
+                      onChange={(event) => updateItem("experiences", index, "experience_type", event.target.value)}
+                    >
+                      {experienceTypeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                    </select>
+                  </label>
                 </div>
                 <Evidence item={item} />
               </>
@@ -287,6 +325,8 @@ export default function Home() {
                   <TextField label="Certification" value={item.name} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("certifications", index, "name", value)} />
                   <TextField label="Issuer" value={item.issuer} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("certifications", index, "issuer", value)} />
                   <TextField label="Date" value={item.date} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("certifications", index, "date", value)} />
+                  <TextField label="Score" value={item.score} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("certifications", index, "score", value)} />
+                  <TextField label="Status" value={item.status} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("certifications", index, "status", value)} />
                 </div>
                 <Evidence item={item} />
               </>
@@ -308,10 +348,10 @@ export default function Home() {
 
 function newItem(section: EditableSection): Profile[EditableSection][number] {
   const base = { evidence_text: null, source_type: "USER_ENTERED" as const };
-  if (section === "education") return { ...base, institution: "", degree: null, field_of_study: null, dates: null };
+  if (section === "education") return createEmptyEducation();
   if (section === "skills") return { ...base, name: "", proficiency: null };
-  if (section === "experiences") return { ...base, title: "", organization: null, dates: null, description: null };
-  return { ...base, name: "", issuer: null, date: null };
+  if (section === "experiences") return { ...base, title: "", organization: null, dates: null, description: null, experience_type: "OTHER" as const };
+  return { ...base, name: "", issuer: null, date: null, score: null, status: null };
 }
 
 function ProfileSection<T extends ProfileItem>({

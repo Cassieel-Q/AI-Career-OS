@@ -3,9 +3,9 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.types import Uuid
+from sqlalchemy.types import JSON, Uuid
 
 from app.database import Base
 
@@ -29,6 +29,10 @@ class ProfileChild:
     profile_id: Mapped[UUID] = mapped_column(ForeignKey("user_profiles.id", ondelete="CASCADE"), nullable=False, index=True)
     evidence_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     source_type: Mapped[str] = mapped_column(String(16), nullable=False, default="USER_ENTERED")
+    raw_value: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    canonical_value: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    evidence_start: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    evidence_end: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
 
 class Education(ProfileChild, Base):
@@ -38,6 +42,7 @@ class Education(ProfileChild, Base):
     degree: Mapped[str | None] = mapped_column(String(255), nullable=True)
     field_of_study: Mapped[str | None] = mapped_column(String(255), nullable=True)
     dates: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    relevant_courses: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
     profile: Mapped[UserProfile] = relationship(back_populates="education")
 
 
@@ -56,6 +61,7 @@ class Experience(ProfileChild, Base):
     organization: Mapped[str | None] = mapped_column(String(255), nullable=True)
     dates: Mapped[str | None] = mapped_column(String(255), nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    experience_type: Mapped[str] = mapped_column(String(16), nullable=False, default="OTHER", server_default="OTHER")
     profile: Mapped[UserProfile] = relationship(back_populates="experiences")
 
 
@@ -65,4 +71,6 @@ class Certification(ProfileChild, Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     issuer: Mapped[str | None] = mapped_column(String(255), nullable=True)
     date: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    score: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    status: Mapped[str | None] = mapped_column(String(32), nullable=True)
     profile: Mapped[UserProfile] = relationship(back_populates="certifications")

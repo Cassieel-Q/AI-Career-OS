@@ -1,11 +1,16 @@
 export type ProfileStatus = "DRAFT" | "CONFIRMED";
 export type Proficiency = "AWARE" | "BASIC" | "PROJECT_READY" | "PROFICIENT";
+export type ExperienceType = "WORK" | "INTERNSHIP" | "CAMPUS" | "PROJECT" | "OTHER";
 export type SourceType = "AI_EXTRACTED" | "USER_ENTERED" | "USER_EDITED";
 
 export type ProfileItem = {
   id?: string;
   evidence_text: string | null;
   source_type: SourceType;
+  raw_value?: string | null;
+  canonical_value?: string | null;
+  evidence_start?: number | null;
+  evidence_end?: number | null;
 };
 
 export type Education = ProfileItem & {
@@ -13,6 +18,7 @@ export type Education = ProfileItem & {
   degree: string | null;
   field_of_study: string | null;
   dates: string | null;
+  relevant_courses?: string[] | null;
 };
 
 export type Skill = ProfileItem & {
@@ -25,12 +31,15 @@ export type Experience = ProfileItem & {
   organization: string | null;
   dates: string | null;
   description: string | null;
+  experience_type: ExperienceType;
 };
 
 export type Certification = ProfileItem & {
   name: string;
   issuer: string | null;
   date: string | null;
+  score: string | null;
+  status: string | null;
 };
 
 export type Profile = {
@@ -44,6 +53,31 @@ export type Profile = {
   certifications: Certification[];
 };
 
+export function createEmptyEducation(): Education {
+  return {
+    evidence_text: null,
+    source_type: "USER_ENTERED",
+    institution: "",
+    degree: null,
+    field_of_study: null,
+    dates: null,
+    relevant_courses: [],
+  };
+}
+
+export function normalizeProfile(profile: Profile): Profile {
+  return {
+    ...profile,
+    education: (profile.education ?? []).map((item) => ({
+      ...item,
+      relevant_courses: item.relevant_courses ?? [],
+    })),
+    skills: profile.skills ?? [],
+    experiences: profile.experiences ?? [],
+    certifications: profile.certifications ?? [],
+  };
+}
+
 export type ProfileUpdatePayload = {
   education: Array<{
     id?: string;
@@ -51,6 +85,7 @@ export type ProfileUpdatePayload = {
     degree: string | null;
     field_of_study: string | null;
     dates: string | null;
+    relevant_courses: string[];
   }>;
   skills: Array<{ id?: string; name: string; proficiency: Proficiency | null }>;
   experiences: Array<{
@@ -59,8 +94,16 @@ export type ProfileUpdatePayload = {
     organization: string | null;
     dates: string | null;
     description: string | null;
+    experience_type: ExperienceType;
   }>;
-  certifications: Array<{ id?: string; name: string; issuer: string | null; date: string | null }>;
+  certifications: Array<{
+    id?: string;
+    name: string;
+    issuer: string | null;
+    date: string | null;
+    score: string | null;
+    status: string | null;
+  }>;
 };
 
 export type ProfileRequester = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
@@ -69,30 +112,34 @@ export function toUpdatePayload(profile: Profile): ProfileUpdatePayload {
   return {
     // evidence_text and source_type are intentionally omitted: existing
     // evidence is server-owned and new rows default to USER_ENTERED server-side.
-    education: profile.education.map(({ id, institution, degree, field_of_study, dates }) => ({
+    education: (profile.education ?? []).map(({ id, institution, degree, field_of_study, dates, relevant_courses }) => ({
       ...(id ? { id } : {}),
       institution,
       degree,
       field_of_study,
       dates,
+      relevant_courses: relevant_courses ?? [],
     })),
     skills: profile.skills.map(({ id, name, proficiency }) => ({
       ...(id ? { id } : {}),
       name,
       proficiency,
     })),
-    experiences: profile.experiences.map(({ id, title, organization, dates, description }) => ({
+    experiences: profile.experiences.map(({ id, title, organization, dates, description, experience_type }) => ({
       ...(id ? { id } : {}),
       title,
       organization,
       dates,
       description,
+      experience_type,
     })),
-    certifications: profile.certifications.map(({ id, name, issuer, date }) => ({
+    certifications: profile.certifications.map(({ id, name, issuer, date, score, status }) => ({
       ...(id ? { id } : {}),
       name,
       issuer,
       date,
+      score,
+      status,
     })),
   };
 }
@@ -122,7 +169,7 @@ export async function saveProfileRequest(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(toUpdatePayload(profile)),
   });
-  return readApiPayload<Profile>(response);
+  return normalizeProfile(await readApiPayload<Profile>(response));
 }
 
 export async function confirmProfileRequest(
@@ -131,11 +178,11 @@ export async function confirmProfileRequest(
   apiUrl: string,
   request: ProfileRequester = fetch,
 ): Promise<Profile> {
-  const persistedProfile = dirty ? await saveProfileRequest(profile, apiUrl, request) : profile;
+  const persistedProfile = dirty ? await saveProfileRequest(profile, apiUrl, request) : normalizeProfile(profile);
   const response = await request(`${apiUrl}/api/v1/profiles/${persistedProfile.profile_id}/confirm`, {
     method: "POST",
   });
-  return readApiPayload<Profile>(response);
+  return normalizeProfile(await readApiPayload<Profile>(response));
 }
 
 export function getProfileIdFromSearch(search: string): string | null {

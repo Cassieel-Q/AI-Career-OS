@@ -1,35 +1,98 @@
 from __future__ import annotations
 
+from enum import StrEnum
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class Education(BaseModel):
+class ExperienceType(StrEnum):
+    WORK = "WORK"
+    INTERNSHIP = "INTERNSHIP"
+    CAMPUS = "CAMPUS"
+    PROJECT = "PROJECT"
+    OTHER = "OTHER"
+
+
+class ExtractedFact(BaseModel):
+    evidence_text: str = Field(min_length=1)
+    raw_value: str | None = None
+    canonical_value: str | None = None
+    evidence_start: int | None = None
+    evidence_end: int | None = None
+
+
+class Education(ExtractedFact):
     institution: str
     degree: str | None = None
     field_of_study: str | None = None
     dates: str | None = None
-    evidence_text: str = Field(min_length=1)
+    relevant_courses: list[str] = Field(default_factory=list)
 
 
-class Skill(BaseModel):
+class Skill(ExtractedFact):
     name: str
-    evidence_text: str = Field(min_length=1)
     proficiency: None = None
 
 
-class Experience(BaseModel):
+class Experience(ExtractedFact):
     title: str
     organization: str | None = None
     dates: str | None = None
     description: str | None = None
-    evidence_text: str = Field(min_length=1)
+    experience_type: ExperienceType = ExperienceType.OTHER
+    source_section: str | None = None
 
 
-class Certification(BaseModel):
+class Certification(ExtractedFact):
     name: str
     issuer: str | None = None
     date: str | None = None
-    evidence_text: str = Field(min_length=1)
+    score: str | None = None
+    status: str | None = None
+
+
+class LeanEducation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    institution: str
+    degree: str | None = None
+    field_of_study: str | None = None
+    dates: str | None = None
+    relevant_courses: list[str] = Field(default_factory=list)
+
+
+class LeanSkill(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+
+
+class LeanExperience(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str
+    organization: str | None = None
+    dates: str | None = None
+    description: str | None = None
+    experience_type: ExperienceType | None = None
+
+
+class LeanCertification(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    issuer: str | None = None
+    date: str | None = None
+    score: str | None = None
+
+
+class LeanResumeExtractionResult(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    education: list[LeanEducation] = Field(default_factory=list)
+    skills: list[LeanSkill] = Field(default_factory=list)
+    experiences: list[LeanExperience] = Field(default_factory=list)
+    certifications: list[LeanCertification] = Field(default_factory=list)
 
 
 class ResumeExtractionResult(BaseModel):

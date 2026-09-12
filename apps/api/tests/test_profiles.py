@@ -1,9 +1,12 @@
 from io import BytesIO
+from types import SimpleNamespace
+from uuid import uuid4
 
 import fitz
 from fastapi.testclient import TestClient
 
 from app.main import ResumeExtractionResult, set_resume_provider
+from app.profile_schemas import EducationRead
 
 
 def pdf_bytes(text: str) -> bytes:
@@ -50,6 +53,62 @@ def test_profile_can_be_read(client: TestClient, persisted_profile) -> None:
     assert response.status_code == 200
     assert response.json()["profile_id"] == str(persisted_profile.id)
     assert response.json()["education"][0]["institution"] == "Example University"
+    assert response.json()["education"][0]["relevant_courses"] == []
+
+
+def test_legacy_education_missing_or_null_courses_serializes_as_empty_list() -> None:
+    base = {
+        "id": uuid4(),
+        "institution": "Legacy University",
+        "evidence_text": None,
+        "source_type": "USER_ENTERED",
+    }
+
+    assert EducationRead.model_validate(base).relevant_courses == []
+    assert EducationRead.model_validate({**base, "relevant_courses": None}).relevant_courses == []
+    legacy_orm_row = SimpleNamespace(
+        id=base["id"],
+        institution=base["institution"],
+        degree=None,
+        field_of_study=None,
+        dates=None,
+        relevant_courses=None,
+        evidence_text=None,
+        source_type="USER_ENTERED",
+    )
+    assert EducationRead.model_validate(legacy_orm_row).relevant_courses == []
+
+
+def test_normalized_courses_and_experience_type_are_persisted(client: TestClient, persisted_profile) -> None:
+    education_id = str(persisted_profile.education[0].id)
+    experience_id = str(persisted_profile.experiences[0].id)
+    response = client.put(
+        f"/api/v1/profiles/{persisted_profile.id}",
+        json={
+            "education": [
+                {
+                    "id": education_id,
+                    "institution": "Example University",
+                    "relevant_courses": ["Machine Learning", "Database Systems"],
+                }
+            ],
+            "experiences": [
+                {
+                    "id": experience_id,
+                    "title": "Research Assistant",
+                    "experience_type": "PROJECT",
+                }
+            ],
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["education"][0]["relevant_courses"] == ["Machine Learning", "Database Systems"]
+    assert response.json()["experiences"][0]["experience_type"] == "PROJECT"
+
+    reloaded = client.get(f"/api/v1/profiles/{persisted_profile.id}")
+    assert reloaded.json()["education"][0]["relevant_courses"] == ["Machine Learning", "Database Systems"]
+    assert reloaded.json()["experiences"][0]["experience_type"] == "PROJECT"
 
 
 def test_put_edits_adds_and_deletes_items(client: TestClient, persisted_profile) -> None:
@@ -81,6 +140,20 @@ def test_put_edits_adds_and_deletes_items(client: TestClient, persisted_profile)
     assert edited_skill["source_type"] == "USER_EDITED"
     assert body["certifications"][0]["evidence_text"] is None
     assert body["certifications"][0]["source_type"] == "USER_ENTERED"
+
+
+def test_credential_score_and_status_survive_profile_round_trip(client: TestClient, persisted_profile) -> None:
+    response = client.put(
+        f"/api/v1/profiles/{persisted_profile.id}",
+        json={"certifications": [{"name": "CET-6", "score": "300", "status": None}]},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["certifications"][0]["score"] == "300"
+    assert response.json()["certifications"][0]["status"] is None
+
+    reloaded = client.get(f"/api/v1/profiles/{persisted_profile.id}")
+    assert reloaded.json()["certifications"][0]["score"] == "300"
 
 
 def test_existing_ai_evidence_is_server_owned_and_edit_becomes_user_edited(
@@ -134,7 +207,9 @@ def test_confirm_changes_state_and_reads_back(client: TestClient, persisted_prof
 
     assert response.status_code == 200
     assert response.json()["status"] == "CONFIRMED"
-    assert client.get(f"/api/v1/profiles/{persisted_profile.id}").json()["status"] == "CONFIRMED"
+    reloaded = client.get(f"/api/v1/profiles/{persisted_profile.id}").json()
+    assert reloaded["status"] == "CONFIRMED"
+    assert reloaded["education"][0]["relevant_courses"] == []
 
 
 def test_confirm_rejects_empty_profile(client: TestClient, db_session) -> None:
