@@ -42,7 +42,7 @@ Scope: final cross-layer verification of the Career Preferences vertical slice. 
 ## Remaining gaps and limitations
 
 - PostgreSQL persistence/migration integration is not executable in this environment because `TEST_DATABASE_URL` is absent. The tests correctly skip and do not fall back to the configured application `DATABASE_URL`; running against a dedicated isolated PostgreSQL URL remains required before production deployment.
-- The primary G: checkout has a partial frontend dependency tree, but type-check, Next lint, and production build were verified successfully from the clean NTFS clone `C:\temp\ai-career-os-devcheck-task003` at the same branch HEAD after `npm.cmd ci`.
+- The primary G: checkout has a partial frontend dependency tree, but type-check, Next lint, and production build were verified successfully from the clean NTFS clone `C:\temp\ai-career-os-devcheck-task003` at implementation commit `1cda0f9` (the current branch then added only documentation commits) after `npm.cmd ci`.
 - Prior Task 4 review noted a non-blocking DOM-test gap: no React DOM harness currently asserts section suppression, card `disabled`/`aria-pressed` transitions, or Save-button transitions. This is test coverage debt, not a demonstrated runtime defect.
 
 ## Review decision
