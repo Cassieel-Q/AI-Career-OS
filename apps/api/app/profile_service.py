@@ -246,32 +246,34 @@ def upsert_career_preferences(
     profile_id: UUID,
     payload: CareerPreferencesInput,
 ) -> CareerPreferencesRead:
-    profile = _get_profile(db, profile_id, for_update=True)
-    if profile.status != ProfileStatus.CONFIRMED.value:
-        raise HTTPException(
-            status_code=409,
-            detail="Career preferences require a confirmed profile",
-        )
-    preference = db.execute(
-        select(models.CareerPreference)
-        .where(models.CareerPreference.profile_id == profile_id)
-        .with_for_update()
-    ).scalar_one_or_none()
-    values = {
-        "priority_1": payload.priority_order[0].value,
-        "priority_2": payload.priority_order[1].value,
-        "weekly_hours": payload.weekly_hours,
-        "updated_at": datetime.now(timezone.utc),
-    }
-    if preference is None:
-        preference = models.CareerPreference(profile_id=profile_id, **values)
-        db.add(preference)
-    else:
-        for field, value in values.items():
-            setattr(preference, field, value)
     try:
+        profile = _get_profile(db, profile_id, for_update=True)
+        if profile.status != ProfileStatus.CONFIRMED.value:
+            raise HTTPException(
+                status_code=409,
+                detail="Career preferences require a confirmed profile",
+            )
+        preference = db.execute(
+            select(models.CareerPreference)
+            .where(models.CareerPreference.profile_id == profile_id)
+            .with_for_update()
+        ).scalar_one_or_none()
+        values = {
+            "priority_1": payload.priority_order[0].value,
+            "priority_2": payload.priority_order[1].value,
+            "weekly_hours": payload.weekly_hours,
+            "updated_at": datetime.now(timezone.utc),
+        }
+        if preference is None:
+            preference = models.CareerPreference(profile_id=profile_id, **values)
+            db.add(preference)
+        else:
+            for field, value in values.items():
+                setattr(preference, field, value)
         db.commit()
         db.refresh(preference)
+    except HTTPException:
+        raise
     except SQLAlchemyError as error:
         db.rollback()
         raise HTTPException(

@@ -216,3 +216,34 @@ def test_preference_persistence_failure_returns_safe_503(
     assert error.value.status_code == 503
     assert error.value.detail == "Career preferences persistence failed"
     assert "database details" not in error.value.detail
+
+
+@pytest.mark.parametrize("failure_call", [1, 2])
+def test_preference_query_failure_returns_safe_503(
+    db_session, persisted_profile, monkeypatch, failure_call: int
+) -> None:
+    persisted_profile.status = "CONFIRMED"
+    db_session.commit()
+    profile_id = persisted_profile.id
+    original_execute = db_session.execute
+    execute_count = 0
+
+    def fail_preference_query(statement, *args, **kwargs):
+        nonlocal execute_count
+        execute_count += 1
+        if execute_count == failure_call:
+            raise SQLAlchemyError("query internals must not leak")
+        return original_execute(statement, *args, **kwargs)
+
+    monkeypatch.setattr(db_session, "execute", fail_preference_query)
+    with pytest.raises(HTTPException) as error:
+        upsert_career_preferences(
+            db_session,
+            profile_id,
+            CareerPreferencesInput(
+                priority_order=["CURRENT_FIT", "COMPENSATION"], weekly_hours=20
+            ),
+        )
+    assert error.value.status_code == 503
+    assert error.value.detail == "Career preferences persistence failed"
+    assert "query internals" not in error.value.detail
