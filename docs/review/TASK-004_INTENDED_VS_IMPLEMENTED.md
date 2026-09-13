@@ -1,7 +1,7 @@
 # TASK-004 intended vs implemented review
 
-Date: 2026-09-13  
-Branch: `feature/role-exploration`  
+Date: 2026-09-13
+Branch: `feature/role-exploration`
 Scope: synthetic backend evaluation and regression coverage for the bounded Role Exploration slice.
 
 ## Contract summary
@@ -36,4 +36,3 @@ No personal data, live provider calls, market data, or acceptance-resume values 
 ## Non-goals
 
 This review does not add ranking science, employment probabilities, salary or demand estimates, credential inference, new role codes, free-form role names, profile editing, frontend UI, or production-provider behavior. PostgreSQL execution remains covered by the existing dedicated integration tests and is skipped when no isolated `TEST_DATABASE_URL` is configured.
-
