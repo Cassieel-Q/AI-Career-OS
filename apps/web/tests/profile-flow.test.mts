@@ -21,6 +21,15 @@ import {
   saveCareerPreferencesRequest,
   toggleCareerPreference,
 } from "../app/career-preferences.ts";
+import {
+  ROLE_EXPLORATION_LEVEL_LABELS,
+  ROLE_EXPLORATION_DISCLAIMER,
+  profileCanExploreRoles,
+  getRoleExplorationRequest,
+  createRoleExplorationRequest,
+  roleExplorationViewData,
+} from "../app/role-exploration.ts";
+import type { RoleExplorationRead } from "../app/role-exploration.ts";
 
 const profile: Profile = {
   profile_id: "profile-1",
@@ -339,6 +348,57 @@ test("career preference save eligibility requires a confirmed profile, two prior
 test("removing the first selected preference promotes the remaining item to priority one", () => {
   const selected = toggleCareerPreference(toggleCareerPreference([], "COMPENSATION"), "LONG_TERM_GROWTH");
   assert.deepEqual(toggleCareerPreference(selected, "COMPENSATION"), ["LONG_TERM_GROWTH"]);
+});
+
+test("role exploration readiness requires confirmed profile and persisted valid preferences", () => {
+  const confirmed = {
+    ...profile,
+    status: "CONFIRMED" as const,
+    preferences: {
+      id: "pref-1", profile_id: profile.profile_id,
+      priority_order: ["CURRENT_FIT", "LONG_TERM_GROWTH"] as ["CURRENT_FIT", "LONG_TERM_GROWTH"],
+      weekly_hours: 12, created_at: "2026-09-04T00:00:00Z", updated_at: "2026-09-04T00:00:00Z",
+    },
+  };
+  assert.equal(profileCanExploreRoles(profile), false);
+  assert.equal(profileCanExploreRoles({ ...confirmed, preferences: null }), false);
+  assert.equal(profileCanExploreRoles(confirmed), true);
+});
+
+test("role exploration requests use exact GET and POST contracts", async () => {
+  const calls: Array<{ input: RequestInfo | URL; init?: RequestInit }> = [];
+  const snapshot = { id: "explore-1", profile_id: "profile-1", role_profile_version: "v1", result: { role_profile_version: "v1", items: [] }, created_at: "2026-09-04T00:00:00Z", updated_at: "2026-09-04T00:00:00Z" } as unknown as RoleExplorationRead;
+  const request: ProfileRequester = async (input, init) => { calls.push({ input, init }); return jsonResponse(snapshot); };
+  await getRoleExplorationRequest("profile-1", "http://api.test", request);
+  await createRoleExplorationRequest("profile-1", "http://api.test", request);
+  assert.equal(calls[0].input, "http://api.test/api/v1/profiles/profile-1/role-exploration");
+  assert.equal(calls[0].init?.method, undefined);
+  assert.equal(calls[1].input, "http://api.test/api/v1/role-explorations");
+  assert.equal(calls[1].init?.method, "POST");
+  assert.deepEqual(JSON.parse(String(calls[1].init?.body)), { profile_id: "profile-1" });
+});
+
+test("not-generated exploration GET returns null while other errors remain safe", async () => {
+  const notGenerated: ProfileRequester = async () => jsonResponse({ detail: "Role exploration has not been generated" }, 404);
+  assert.equal(await getRoleExplorationRequest("profile-1", "http://api.test", notGenerated), null);
+  const failed: ProfileRequester = async () => jsonResponse({ detail: [{ msg: "backend unavailable" }] }, 503);
+  await assert.rejects(getRoleExplorationRequest("profile-1", "http://api.test", failed), /backend unavailable/);
+});
+
+test("role exploration labels, six-card data, references, and disclaimer are display-safe", () => {
+  assert.deepEqual(ROLE_EXPLORATION_LEVEL_LABELS, { RECOMMENDED: "推荐", POSSIBLE: "可探索", LOW_PRIORITY: "暂不优先" });
+  const snapshot = {
+    id: "explore-1", profile_id: "profile-1", role_profile_version: "v1",
+    result: { role_profile_version: "v1", items: Array.from({ length: 6 }, (_, index) => ({
+      role_code: `ROLE_${index}`, role_name: `Role ${index}`, level: "POSSIBLE", reasons: ["reason"], concerns: ["concern"], evidence_refs: [`evidence-${index}`], preference_refs: ["CURRENT_FIT"],
+    })) }, created_at: "2026-09-04T00:00:00Z", updated_at: "2026-09-04T00:00:00Z",
+  } as unknown as RoleExplorationRead;
+  const cards = roleExplorationViewData(snapshot);
+  assert.equal(cards.length, 6);
+  assert.deepEqual(cards[0].evidence_refs, ["evidence-0"]);
+  assert.deepEqual(cards[0].preference_refs, ["CURRENT_FIT"]);
+  assert.match(ROLE_EXPLORATION_DISCLAIMER, /confirmed Profile/);
+  assert.match(ROLE_EXPLORATION_DISCLAIMER, /no real JD/i);
 });
 
 function jsonResponse(payload: unknown, status = 200): Response {

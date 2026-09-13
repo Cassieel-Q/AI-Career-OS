@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import {
   confirmProfileRequest,
@@ -22,6 +22,15 @@ import {
   toggleCareerPreference,
 } from "./career-preferences";
 import type { CareerPreferencePriority, CareerPreferencesDraft } from "./career-preferences";
+import {
+  ROLE_EXPLORATION_DISCLAIMER,
+  ROLE_EXPLORATION_LEVEL_LABELS,
+  createRoleExplorationRequest,
+  getRoleExplorationRequest,
+  profileCanExploreRoles,
+  roleExplorationViewData,
+} from "./role-exploration";
+import type { RoleExplorationRead } from "./role-exploration";
 
 type EditableSection = "education" | "skills" | "experiences" | "certifications";
 
@@ -54,6 +63,10 @@ export default function Home() {
     weekly_hours: "",
   });
   const [savingPreferences, setSavingPreferences] = useState(false);
+  const [roleExploration, setRoleExploration] = useState<RoleExplorationRead | null>(null);
+  const [loadingExploration, setLoadingExploration] = useState(false);
+  const [creatingExploration, setCreatingExploration] = useState(false);
+  const explorationHydratedProfileId = useRef<string | null>(null);
 
   useEffect(() => {
     const profileId = getProfileIdFromSearch(window.location.search);
@@ -82,6 +95,22 @@ export default function Home() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!profile || !profileCanExploreRoles(profile)) {
+      setRoleExploration(null);
+      return;
+    }
+    if (explorationHydratedProfileId.current === profile.profile_id) return;
+    explorationHydratedProfileId.current = profile.profile_id;
+    let active = true;
+    setLoadingExploration(true);
+    void getRoleExplorationRequest(profile.profile_id, apiUrl)
+      .then((snapshot) => { if (active) setRoleExploration(snapshot); })
+      .catch(() => { /* 404/not-generated and transient errors keep the page usable. */ })
+      .finally(() => { if (active) setLoadingExploration(false); });
+    return () => { active = false; };
+  }, [profile]);
 
   function chooseFile(event: ChangeEvent<HTMLInputElement>) {
     setFile(event.target.files?.[0] ?? null);
@@ -225,6 +254,7 @@ export default function Home() {
 
   function selectPreference(value: CareerPreferencePriority) {
     if (!profileCanEditCareerPreferences(profile) || savingPreferences) return;
+    setRoleExploration(null);
     setPreferenceDraft((current) => ({
       ...current,
       priority_order: toggleCareerPreference(current.priority_order, value),
@@ -237,6 +267,7 @@ export default function Home() {
     if (!isCareerPreferencesDraftValid(preferenceDraft.priority_order, preferenceDraft.weekly_hours)) return;
     setSavingPreferences(true);
     setError("");
+    setRoleExploration(null);
     try {
       const saved = await saveCareerPreferencesRequest(currentProfile.profile_id, preferenceDraft, apiUrl);
       setPreferenceDraft(careerPreferencesDraftFromProfile({ ...currentProfile, preferences: saved }));
@@ -245,6 +276,20 @@ export default function Home() {
       setError(saveError instanceof Error ? saveError.message : "Career preferences could not be saved.");
     } finally {
       setSavingPreferences(false);
+    }
+  }
+
+  async function exploreRoles() {
+    const currentProfile = profile;
+    if (!currentProfile || !profileCanExploreRoles(currentProfile) || creatingExploration) return;
+    setCreatingExploration(true);
+    setError("");
+    try {
+      setRoleExploration(await createRoleExplorationRequest(currentProfile.profile_id, apiUrl));
+    } catch (explorationError) {
+      setError(explorationError instanceof Error ? explorationError.message : "Role exploration could not be generated.");
+    } finally {
+      setCreatingExploration(false);
     }
   }
 
@@ -422,7 +467,10 @@ export default function Home() {
                   step={1}
                   value={preferenceDraft.weekly_hours}
                   disabled={savingPreferences}
-                  onChange={(event) => setPreferenceDraft((current) => ({ ...current, weekly_hours: event.target.value }))}
+                  onChange={(event) => {
+                    setRoleExploration(null);
+                    setPreferenceDraft((current) => ({ ...current, weekly_hours: event.target.value }));
+                  }}
                 />
               </label>
               <button
@@ -432,9 +480,30 @@ export default function Home() {
               >
                 {savingPreferences ? "Saving..." : "Save preferences"}
               </button>
-              <button type="button" className="button-secondary" disabled>
-                下一步：探索适合我的岗位
+              <button type="button" className="button-secondary" onClick={exploreRoles} disabled={!profileCanExploreRoles(profile) || loadingExploration || creatingExploration}>
+                {creatingExploration ? "正在探索..." : "下一步：探索适合我的岗位"}
               </button>
+              {loadingExploration && <p className="profile-note">正在加载最近一次探索结果...</p>}
+              {roleExploration && (
+                <section className="role-exploration" aria-label="Role exploration results">
+                  <div className="section-heading">
+                    <div><p className="section-kicker">Exploratory guidance</p><h3>适合探索的岗位方向</h3></div>
+                    <span className="role-version">{roleExploration.role_profile_version}</span>
+                  </div>
+                  <div className="role-card-grid">
+                    {roleExplorationViewData(roleExploration).map((item) => (
+                      <article className="role-card" key={item.role_code}>
+                        <div className="role-card-heading"><h4>{item.role_name}</h4><span className={`role-level ${item.level.toLowerCase()}`}>{ROLE_EXPLORATION_LEVEL_LABELS[item.level]}</span></div>
+                        <div className="role-card-list"><strong>为什么</strong><ul>{item.reasons.map((reason, index) => <li key={`${item.role_code}-reason-${index}`}>{reason}</li>)}</ul></div>
+                        {item.concerns.length > 0 && <div className="role-card-list concern"><strong>需要留意</strong><ul>{item.concerns.map((concern, index) => <li key={`${item.role_code}-concern-${index}`}>{concern}</li>)}</ul></div>}
+                        <p className="role-refs"><span>Profile evidence</span>{item.evidence_refs.join(", ")}</p>
+                        <p className="role-refs"><span>Preference refs</span>{item.preference_refs.join(", ") || "—"}</p>
+                      </article>
+                    ))}
+                  </div>
+                  <p className="role-disclaimer">{ROLE_EXPLORATION_DISCLAIMER}</p>
+                </section>
+              )}
             </section>
           )}
         </section>
