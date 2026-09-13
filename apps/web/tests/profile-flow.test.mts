@@ -372,7 +372,7 @@ test("role exploration requests use exact GET and POST contracts", async () => {
   await getRoleExplorationRequest("profile-1", "http://api.test", request);
   await createRoleExplorationRequest("profile-1", "http://api.test", request);
   assert.equal(calls[0].input, "http://api.test/api/v1/profiles/profile-1/role-exploration");
-  assert.equal(calls[0].init?.method, undefined);
+  assert.equal(calls[0].init?.method, "GET");
   assert.equal(calls[1].input, "http://api.test/api/v1/role-explorations");
   assert.equal(calls[1].init?.method, "POST");
   assert.deepEqual(JSON.parse(String(calls[1].init?.body)), { profile_id: "profile-1" });

@@ -62,7 +62,7 @@ export async function getRoleExplorationRequest(
   apiUrl: string,
   request: ProfileRequester = fetch,
 ): Promise<RoleExplorationRead | null> {
-  const response = await request(`${apiUrl}/api/v1/profiles/${profileId}/role-exploration`);
+  const response = await request(`${apiUrl}/api/v1/profiles/${profileId}/role-exploration`, { method: "GET" });
   if (response.status === 404) return null;
   return readApiPayload<RoleExplorationRead>(response);
 }
