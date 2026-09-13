@@ -281,7 +281,7 @@ export default function Home() {
 
   async function exploreRoles() {
     const currentProfile = profile;
-    if (!currentProfile || !profileCanExploreRoles(currentProfile) || creatingExploration) return;
+    if (!currentProfile || !explorationReady || creatingExploration) return;
     setCreatingExploration(true);
     setError("");
     try {
@@ -295,6 +295,13 @@ export default function Home() {
 
   const profileLocked = profile?.status === "CONFIRMED";
   const mutationBusy = saving !== null || savingPreferences;
+  const explorationReady = Boolean(
+    profileCanExploreRoles(profile) &&
+      profile?.preferences &&
+      profile.preferences.priority_order.length === preferenceDraft.priority_order.length &&
+      profile.preferences.priority_order.every((value, index) => value === preferenceDraft.priority_order[index]) &&
+      String(profile.preferences.weekly_hours) === preferenceDraft.weekly_hours,
+  );
 
   return (
     <main className="shell">
@@ -480,7 +487,7 @@ export default function Home() {
               >
                 {savingPreferences ? "Saving..." : "Save preferences"}
               </button>
-              <button type="button" className="button-secondary" onClick={exploreRoles} disabled={!profileCanExploreRoles(profile) || loadingExploration || creatingExploration}>
+              <button type="button" className="button-secondary" onClick={exploreRoles} disabled={!explorationReady || loadingExploration || creatingExploration}>
                 {creatingExploration ? "正在探索..." : "下一步：探索适合我的岗位"}
               </button>
               {loadingExploration && <p className="profile-note">正在加载最近一次探索结果...</p>}
