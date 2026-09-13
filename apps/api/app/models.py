@@ -28,6 +28,12 @@ class UserProfile(Base):
         uselist=False,
         cascade="all, delete-orphan",
     )
+    role_exploration: Mapped[RoleExploration | None] = relationship(
+        "RoleExploration",
+        back_populates="profile",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
 
 class ProfileChild:
@@ -108,4 +114,28 @@ class CareerPreference(Base):
 
     profile: Mapped[UserProfile] = relationship(
         "UserProfile", back_populates="career_preference"
+    )
+
+
+class RoleExploration(Base):
+    __tablename__ = "role_explorations"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    profile_id: Mapped[UUID] = mapped_column(
+        ForeignKey("user_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    role_profile_version: Mapped[str] = mapped_column(String(32), nullable=False)
+    result: Mapped[dict] = mapped_column(JSON, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    profile: Mapped[UserProfile] = relationship(
+        "UserProfile", back_populates="role_exploration"
     )
