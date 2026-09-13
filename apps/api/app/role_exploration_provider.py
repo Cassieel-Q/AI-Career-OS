@@ -149,6 +149,10 @@ def build_role_exploration_context(profile: Any, preferences: Any | None = None)
     stored_preferences = preferences
     if stored_preferences is None:
         stored_preferences = getattr(profile, "preferences", None)
+    if stored_preferences is None:
+        # ORM UserProfile exposes the one-to-one relation as ``career_preference``;
+        # read-model profiles expose the copied relation as ``preferences``.
+        stored_preferences = getattr(profile, "career_preference", None)
     raw_order = getattr(stored_preferences, "priority_order", stored_preferences or ())
     preference_values = tuple(raw_order or ())
     copied_preferences = tuple(
@@ -250,7 +254,7 @@ class OpenAIRoleExplorationProvider:
             "once. Use only those codes and levels RECOMMENDED, POSSIBLE, or LOW_PRIORITY. Return reasons and "
             "concerns as short bounded explanations grounded in supplied fact UUIDs and preference values. "
             "Return evidence_refs as supplied UUIDs and preference_refs as supplied preference values. "
-            "Do not output role names, display names, new roles, raw evidence text, profile fields, or mutations. "
+            "Output no role names, display names, new roles, raw evidence text, profile fields, or mutations. "
             "Do not invent facts, proficiency, credentials, percentages, probabilities, salary, hiring, demand, "
             "company counts, live-market claims, or other market predictions. Output JSON only; no markdown."
         )

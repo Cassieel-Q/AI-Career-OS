@@ -16,6 +16,7 @@ from app.role_exploration_provider import (
     RoleExplorationProviderInvalidResponseError,
     RoleExplorationProviderNotConfiguredError,
     RoleExplorationProviderTimeoutError,
+    build_role_exploration_context,
     get_role_exploration_provider,
     set_role_exploration_provider,
 )
@@ -73,11 +74,127 @@ def test_prompt_contains_ids_preferences_and_role_codes_without_output_logging(m
     prompt = f"{captured['messages']}"
     assert "11111111-1111-4111-8111-111111111111" in prompt
     assert "CURRENT_FIT" in prompt
-    assert "AI_PRODUCT_MANAGER" in prompt
+    for role_code in RoleCode:
+        assert role_code.value in prompt
     assert "Python" in prompt
     assert "no role names" in prompt.lower()
     assert "percentage" in prompt.lower()
     assert all("Python" not in record.getMessage() for record in caplog.records)
+
+
+def test_context_builder_copies_orm_career_preference_relation() -> None:
+    profile_id = UUID("22222222-2222-4222-8222-222222222222")
+    career_preference = SimpleNamespace(
+        priority_order=["FAST_EMPLOYMENT", "CURRENT_FIT"],
+        weekly_hours=20,
+    )
+    profile = SimpleNamespace(
+        id=profile_id,
+        education=[],
+        skills=[],
+        experiences=[],
+        certifications=[],
+        career_preference=career_preference,
+    )
+
+    context = build_role_exploration_context(profile)
+
+    assert [preference.value for preference in context.preferences] == [
+        CareerPreferencePriority.FAST_EMPLOYMENT,
+        CareerPreferencePriority.CURRENT_FIT,
+    ]
+    assert [preference.position for preference in context.preferences] == [1, 2]
+    assert context.weekly_hours == 20
+    assert context.profile_id == profile_id
+
+
+def test_model_environment_fallback_precedence(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setenv("OPENAI_MODEL", "shared-model")
+    monkeypatch.setenv("OPENAI_ROLE_EXPLORATION_MODEL", "role-model")
+    provider = OpenAIRoleExplorationProvider(client=object())
+    assert provider.model == "role-model"
+
+    monkeypatch.delenv("OPENAI_ROLE_EXPLORATION_MODEL")
+    provider = OpenAIRoleExplorationProvider(client=object())
+    assert provider.model == "shared-model"
+
+    monkeypatch.delenv("OPENAI_MODEL")
+    provider = OpenAIRoleExplorationProvider(client=object())
+    assert provider.model == "gpt-4o-mini"
+
+
+def test_deepseek_request_disables_thinking(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://api.deepseek.com/v1")
+    captured: dict[str, object] = {}
+
+    class FakeCompletions:
+        def create(self, **kwargs):
+            captured.update(kwargs)
+            payload = {
+                "items": [
+                    {
+                        "role_code": RoleCode.AI_PRODUCT_MANAGER,
+                        "level": ExplorationLevel.POSSIBLE,
+                        "reasons": ["grounded"],
+                        "evidence_refs": ["11111111-1111-4111-8111-111111111111"],
+                    }
+                ]
+            }
+            return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=json.dumps(payload)))])
+
+    provider = OpenAIRoleExplorationProvider(
+        client=SimpleNamespace(chat=SimpleNamespace(completions=FakeCompletions()))
+    )
+    provider.explore(_context())
+
+    assert captured["extra_body"] == {"thinking": {"type": "disabled"}}
+
+
+def test_extra_keys_and_unknown_role_codes_are_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+
+    class ExtraKeyCompletions:
+        def create(self, **kwargs):
+            payload = {
+                "items": [
+                    {
+                        "role_code": RoleCode.AI_PRODUCT_MANAGER,
+                        "level": ExplorationLevel.POSSIBLE,
+                        "reasons": ["grounded"],
+                        "evidence_refs": ["11111111-1111-4111-8111-111111111111"],
+                        "role_name": "must not be accepted",
+                    }
+                ]
+            }
+            return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=json.dumps(payload)))])
+
+    provider = OpenAIRoleExplorationProvider(
+        client=SimpleNamespace(chat=SimpleNamespace(completions=ExtraKeyCompletions()))
+    )
+    with pytest.raises(RoleExplorationProviderInvalidResponseError):
+        provider.explore(_context())
+
+    class UnknownCodeCompletions:
+        def create(self, **kwargs):
+            payload = {
+                "items": [
+                    {
+                        "role_code": "UNKNOWN_ROLE",
+                        "level": ExplorationLevel.POSSIBLE,
+                        "reasons": ["grounded"],
+                        "evidence_refs": ["11111111-1111-4111-8111-111111111111"],
+                    }
+                ]
+            }
+            return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=json.dumps(payload)))])
+
+    provider = OpenAIRoleExplorationProvider(
+        client=SimpleNamespace(chat=SimpleNamespace(completions=UnknownCodeCompletions()))
+    )
+    with pytest.raises(RoleExplorationProviderInvalidResponseError):
+        provider.explore(_context())
 
 
 def test_valid_json_object_is_parsed(monkeypatch: pytest.MonkeyPatch) -> None:
