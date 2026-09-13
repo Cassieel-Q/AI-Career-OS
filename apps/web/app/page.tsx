@@ -107,7 +107,9 @@ export default function Home() {
     setLoadingExploration(true);
     void getRoleExplorationRequest(profile.profile_id, apiUrl)
       .then((snapshot) => { if (active) setRoleExploration(snapshot); })
-      .catch(() => { /* 404/not-generated and transient errors keep the page usable. */ })
+      .catch((loadError) => {
+        if (active) setError(loadError instanceof Error ? loadError.message : "Role exploration could not be loaded.");
+      })
       .finally(() => { if (active) setLoadingExploration(false); });
     return () => { active = false; };
   }, [profile]);
