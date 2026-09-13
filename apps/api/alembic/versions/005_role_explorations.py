@@ -38,7 +38,6 @@ def upgrade() -> None:
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
-        sa.UniqueConstraint("profile_id", name="uq_role_explorations_profile_id"),
     )
     op.create_index("ix_role_explorations_profile_id", "role_explorations", ["profile_id"], unique=True)
 
@@ -46,4 +45,3 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_index("ix_role_explorations_profile_id", table_name="role_explorations")
     op.drop_table("role_explorations")
-

@@ -40,6 +40,13 @@ class EntryBarrier(StrEnum):
 BoundedText = Annotated[str, Field(min_length=1, max_length=240)]
 
 
+def _normalize_bounded_texts(values: list[str]) -> list[str]:
+    normalized = [value.strip() for value in values]
+    if any(not value for value in normalized):
+        raise ValueError("text entries must not be blank")
+    return normalized
+
+
 class _StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -55,10 +62,10 @@ class RoleExplorationProviderItem(_StrictModel):
     evidence_refs: list[UUID] = Field(min_length=1, max_length=8)
     preference_refs: list[CareerPreferencePriority] = Field(default_factory=list, max_length=2)
 
-    @field_validator("reasons", "concerns")
+    @field_validator("reasons", "concerns", mode="after")
     @classmethod
     def normalize_text(cls, values: list[str]) -> list[str]:
-        return [value.strip() for value in values]
+        return _normalize_bounded_texts(values)
 
 
 class RoleExplorationProviderPayload(_StrictModel):
@@ -85,6 +92,11 @@ class RoleExplorationItem(_StrictModel):
     evidence_refs: list[UUID] = Field(min_length=1, max_length=8)
     preference_refs: list[CareerPreferencePriority] = Field(default_factory=list, max_length=2)
 
+    @field_validator("reasons", "concerns", mode="after")
+    @classmethod
+    def normalize_text(cls, values: list[str]) -> list[str]:
+        return _normalize_bounded_texts(values)
+
     @property
     def exploration_level(self) -> ExplorationLevel:
         return self.level
@@ -97,6 +109,15 @@ class RoleExplorationResult(_StrictModel):
         max_length=6,
         validation_alias=AliasChoices("items", "roles"),
     )
+
+    @model_validator(mode="after")
+    def validate_role_set_and_recommendation_cap(self) -> Self:
+        role_codes = [item.role_code for item in self.items]
+        if len(role_codes) != len(set(role_codes)) or set(role_codes) != set(RoleCode):
+            raise ValueError("result must contain each supported role exactly once")
+        if sum(item.level is ExplorationLevel.RECOMMENDED for item in self.items) > 3:
+            raise ValueError("result may contain at most three recommended roles")
+        return self
 
     @property
     def roles(self) -> list[RoleExplorationItem]:

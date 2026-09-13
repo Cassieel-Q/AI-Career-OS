@@ -23,6 +23,29 @@ from app.role_exploration_schemas import (
 from app.role_profiles import ROLE_PROFILE_BY_CODE, ROLE_PROFILE_VERSION, ROLE_PROFILES
 
 
+def _provider_item(role_code: RoleCode, *, level: ExplorationLevel = ExplorationLevel.POSSIBLE) -> RoleExplorationProviderItem:
+    return RoleExplorationProviderItem(
+        role_code=role_code,
+        level=level,
+        reasons=["Grounded reason"],
+        concerns=[],
+        evidence_refs=[uuid4()],
+        preference_refs=[],
+    )
+
+
+def _result_item(role_code: RoleCode, *, level: ExplorationLevel = ExplorationLevel.POSSIBLE) -> RoleExplorationItem:
+    return RoleExplorationItem(
+        role_code=role_code,
+        role_name=ROLE_PROFILE_BY_CODE[role_code].display_name,
+        level=level,
+        reasons=["Grounded reason"],
+        concerns=[],
+        evidence_refs=[uuid4()],
+        preference_refs=[],
+    )
+
+
 def test_role_catalog_is_exactly_six_codes_and_v1() -> None:
     assert ROLE_PROFILE_VERSION == "v1"
     assert len(ROLE_PROFILES) == 6
@@ -40,7 +63,9 @@ def test_strict_provider_payload_and_bounded_references() -> None:
         evidence_refs=[evidence],
         preference_refs=[CareerPreferencePriority.CURRENT_FIT],
     )
-    payload = RoleExplorationProviderPayload(items=[item] * 6)
+    payload = RoleExplorationProviderPayload(
+        items=[item] + [_provider_item(role_code) for role_code in list(RoleCode)[1:]]
+    )
     assert payload.items[0].evidence_refs == [evidence]
     with pytest.raises(ValidationError):
         RoleExplorationProviderItem(
@@ -51,6 +76,39 @@ def test_strict_provider_payload_and_bounded_references() -> None:
             evidence_refs=[evidence],
             unknown="reject",
         )
+
+
+@pytest.mark.parametrize("model", [RoleExplorationProviderItem, RoleExplorationItem])
+@pytest.mark.parametrize("field", ["reasons", "concerns"])
+def test_role_exploration_text_lists_reject_blank_after_strip(model, field: str) -> None:
+    kwargs = {
+        "role_code": RoleCode.AI_PRODUCT_MANAGER,
+        "level": ExplorationLevel.POSSIBLE,
+        "reasons": ["Grounded reason"],
+        "concerns": [],
+        "evidence_refs": [uuid4()],
+    }
+    if model is RoleExplorationItem:
+        kwargs["role_name"] = "AI Product Manager"
+    kwargs[field] = ["   "]
+    with pytest.raises(ValidationError):
+        model(**kwargs)
+
+
+def test_result_requires_exact_role_set_without_duplicates_and_caps_recommendations() -> None:
+    items = [_result_item(role_code) for role_code in RoleCode]
+    result = RoleExplorationResult(role_profile_version=ROLE_PROFILE_VERSION, items=items)
+    assert {item.role_code for item in result.items} == set(RoleCode)
+
+    with pytest.raises(ValidationError):
+        RoleExplorationResult(role_profile_version=ROLE_PROFILE_VERSION, items=items[:-1] + [items[0]])
+
+    too_many_recommended = [
+        _result_item(role_code, level=ExplorationLevel.RECOMMENDED if index < 4 else ExplorationLevel.POSSIBLE)
+        for index, role_code in enumerate(RoleCode)
+    ]
+    with pytest.raises(ValidationError):
+        RoleExplorationResult(role_profile_version=ROLE_PROFILE_VERSION, items=too_many_recommended)
 
 
 def test_result_and_read_models_serialize_uuid_fields_and_recommendation_level() -> None:
@@ -64,7 +122,10 @@ def test_result_and_read_models_serialize_uuid_fields_and_recommendation_level()
         evidence_refs=[evidence],
         preference_refs=[],
     )
-    result = RoleExplorationResult(role_profile_version=ROLE_PROFILE_VERSION, items=[item])
+    result = RoleExplorationResult(
+        role_profile_version=ROLE_PROFILE_VERSION,
+        items=[item] + [_result_item(role_code) for role_code in list(RoleCode)[1:]],
+    )
     read = RoleExplorationRead(
         id=uuid4(),
         profile_id=uuid4(),
@@ -88,4 +149,3 @@ def test_role_exploration_model_relationship_and_unique_profile_id() -> None:
     engine = create_engine("sqlite://")
     Base.metadata.create_all(engine)
     assert "role_explorations" in inspect(engine).get_table_names()
-

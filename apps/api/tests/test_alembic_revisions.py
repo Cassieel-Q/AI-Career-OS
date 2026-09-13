@@ -1,6 +1,8 @@
 import ast
 from pathlib import Path
 
+from alembic.config import Config
+from alembic.script import ScriptDirectory
 
 VERSIONS_DIR = Path(__file__).parents[1] / "alembic" / "versions"
 
@@ -62,3 +64,21 @@ def test_role_explorations_revision_is_latest_and_follows_career_preferences() -
             ):
                 revisions.append(assignment.value.value)
     assert "005_role_explorations" in revisions
+
+
+def test_alembic_graph_has_single_latest_head_and_preserves_prior_chain() -> None:
+    config = Config()
+    config.set_main_option("script_location", str(VERSIONS_DIR.parent))
+    script = ScriptDirectory.from_config(config)
+
+    assert script.get_heads() == ["005_role_explorations"]
+
+    expected_down_revisions = {
+        "001_create_profile_tables": None,
+        "002_profile_normalization": "001_create_profile_tables",
+        "003_credential_details": "002_profile_normalization",
+        "004_career_preferences": "003_credential_details",
+        "005_role_explorations": "004_career_preferences",
+    }
+    revisions = {revision.revision: revision.down_revision for revision in script.walk_revisions()}
+    assert revisions == expected_down_revisions
