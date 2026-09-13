@@ -29,6 +29,8 @@ from app.profile_service import (
     upsert_career_preferences,
     update_draft_profile,
 )
+from app.role_exploration_schemas import RoleExplorationRead, RoleExplorationRequest
+from app.role_exploration_service import create_role_exploration, get_role_exploration
 from app.resume_normalization import normalize_resume_extraction
 from app.resume_schemas import (
     Certification,
@@ -2582,3 +2584,16 @@ def save_career_preferences(
     db: Session = Depends(get_db),
 ) -> CareerPreferencesRead:
     return upsert_career_preferences(db, profile_id, payload)
+
+
+@app.post("/api/v1/role-explorations", response_model=RoleExplorationRead)
+def create_saved_role_exploration(
+    payload: RoleExplorationRequest,
+    db: Session = Depends(get_db),
+) -> RoleExplorationRead:
+    return create_role_exploration(db, payload.profile_id)
+
+
+@app.get("/api/v1/profiles/{profile_id}/role-exploration", response_model=RoleExplorationRead)
+def read_saved_role_exploration(profile_id: UUID, db: Session = Depends(get_db)) -> RoleExplorationRead:
+    return get_role_exploration(db, profile_id)
