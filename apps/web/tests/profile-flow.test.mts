@@ -383,6 +383,8 @@ test("role exploration requests use exact GET and POST contracts", async () => {
 test("not-generated exploration GET returns null while other errors remain safe", async () => {
   const notGenerated: ProfileRequester = async () => jsonResponse({ detail: "Role exploration has not been generated" }, 404);
   assert.equal(await getRoleExplorationRequest("profile-1", "http://api.test", notGenerated), null);
+  const missingProfile: ProfileRequester = async () => jsonResponse({ detail: "Profile not found" }, 404);
+  await assert.rejects(getRoleExplorationRequest("missing-profile", "http://api.test", missingProfile), /Profile not found/);
   const failed: ProfileRequester = async () => jsonResponse({ detail: [{ msg: "backend unavailable" }] }, 503);
   await assert.rejects(getRoleExplorationRequest("profile-1", "http://api.test", failed), /backend unavailable/);
 });

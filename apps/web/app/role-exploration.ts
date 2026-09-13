@@ -93,7 +93,10 @@ export async function getRoleExplorationRequest(
   request: ProfileRequester = fetch,
 ): Promise<RoleExplorationRead | null> {
   const response = await request(`${apiUrl}/api/v1/profiles/${profileId}/role-exploration`, { method: "GET" });
-  if (response.status === 404) return null;
+  if (response.status === 404) {
+    const payload = await response.clone().json().catch(() => null) as { detail?: unknown } | null;
+    if (payload?.detail === "Role exploration has not been generated") return null;
+  }
   return readApiPayload<RoleExplorationRead>(response);
 }
 
