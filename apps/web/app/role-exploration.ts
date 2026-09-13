@@ -1,4 +1,4 @@
-import type { CareerPreferencePriority } from "./career-preferences.ts";
+import type { CareerPreferencePriority, CareerPreferencesDraft } from "./career-preferences.ts";
 import { isCareerPreferencesDraftValid } from "./career-preferences.ts";
 import type { Profile, ProfileRequester } from "./profile-flow.ts";
 import { readApiPayload } from "./profile-flow.ts";
@@ -54,6 +54,36 @@ export function profileCanExploreRoles(profile: Profile | null): boolean {
     [...preferences.priority_order],
     String(preferences.weekly_hours),
   );
+}
+
+export type RoleExplorationInputKey = string;
+
+/** Identifies the persisted inputs a request uses, but only while the draft still matches them. */
+export function roleExplorationInputKey(
+  profile: Profile | null,
+  draft: CareerPreferencesDraft,
+): RoleExplorationInputKey | null {
+  if (!profileCanExploreRoles(profile) || !profile?.preferences) return null;
+  const preferences = profile.preferences;
+  const draftMatchesPersisted =
+    preferences.priority_order.length === draft.priority_order.length &&
+    preferences.priority_order.every((value, index) => value === draft.priority_order[index]) &&
+    String(preferences.weekly_hours) === draft.weekly_hours;
+  if (!draftMatchesPersisted) return null;
+  return JSON.stringify([
+    profile.profile_id,
+    preferences.priority_order,
+    preferences.weekly_hours,
+  ]);
+}
+
+/** A response is current only if the live profile and preference draft retain its request identity. */
+export function roleExplorationInputMatches(
+  captured: RoleExplorationInputKey | null,
+  profile: Profile | null,
+  draft: CareerPreferencesDraft,
+): boolean {
+  return captured !== null && captured === roleExplorationInputKey(profile, draft);
 }
 
 /** Read the latest persisted snapshot. A missing snapshot is an expected empty state. */

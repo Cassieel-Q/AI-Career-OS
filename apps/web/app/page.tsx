@@ -28,6 +28,7 @@ import {
   createRoleExplorationRequest,
   getRoleExplorationRequest,
   profileCanExploreRoles,
+  roleExplorationInputKey,
   roleExplorationViewData,
 } from "./role-exploration";
 import type { RoleExplorationRead } from "./role-exploration";
@@ -67,6 +68,19 @@ export default function Home() {
   const [loadingExploration, setLoadingExploration] = useState(false);
   const [creatingExploration, setCreatingExploration] = useState(false);
   const explorationHydratedProfileId = useRef<string | null>(null);
+  const componentActive = useRef(false);
+  const explorationRequestToken = useRef(0);
+  const currentExplorationInputKey = roleExplorationInputKey(profile, preferenceDraft);
+  const latestExplorationInputKey = useRef(currentExplorationInputKey);
+  latestExplorationInputKey.current = currentExplorationInputKey;
+  const explorationReady = currentExplorationInputKey !== null;
+
+  useEffect(() => {
+    componentActive.current = true;
+    return () => {
+      componentActive.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     const profileId = getProfileIdFromSearch(window.location.search);
@@ -103,18 +117,39 @@ export default function Home() {
     }
     if (explorationHydratedProfileId.current === profile.profile_id) return;
     explorationHydratedProfileId.current = profile.profile_id;
+    const requestInputKey = roleExplorationInputKey(profile, careerPreferencesDraftFromProfile(profile));
+    if (!requestInputKey) return;
+    const requestToken = ++explorationRequestToken.current;
     let active = true;
     setLoadingExploration(true);
     void getRoleExplorationRequest(profile.profile_id, apiUrl)
-      .then((snapshot) => { if (active) setRoleExploration(snapshot); })
+      .then((snapshot) => {
+        if (
+          componentActive.current &&
+          active &&
+          requestToken === explorationRequestToken.current &&
+          latestExplorationInputKey.current === requestInputKey
+        ) {
+          setRoleExploration(snapshot);
+        }
+      })
       .catch((loadError) => {
-        if (active) setError(loadError instanceof Error ? loadError.message : "Role exploration could not be loaded.");
+        if (
+          componentActive.current &&
+          active &&
+          requestToken === explorationRequestToken.current &&
+          latestExplorationInputKey.current === requestInputKey
+        ) {
+          setError(loadError instanceof Error ? loadError.message : "Role exploration could not be loaded.");
+        }
       })
       .finally(() => { if (active) setLoadingExploration(false); });
     return () => { active = false; };
   }, [profile]);
 
   function chooseFile(event: ChangeEvent<HTMLInputElement>) {
+    explorationRequestToken.current += 1;
+    latestExplorationInputKey.current = null;
     setFile(event.target.files?.[0] ?? null);
     setProfile(null);
     setPreferenceDraft({ priority_order: [], weekly_hours: "" });
@@ -133,6 +168,8 @@ export default function Home() {
     }
     setLoading(true);
     setError("");
+    explorationRequestToken.current += 1;
+    latestExplorationInputKey.current = null;
     setProfile(null);
     setPreferenceDraft({ priority_order: [], weekly_hours: "" });
     setDirty(false);
@@ -256,11 +293,14 @@ export default function Home() {
 
   function selectPreference(value: CareerPreferencePriority) {
     if (!profileCanEditCareerPreferences(profile) || savingPreferences) return;
+    const nextDraft = {
+      ...preferenceDraft,
+      priority_order: toggleCareerPreference(preferenceDraft.priority_order, value),
+    };
+    explorationRequestToken.current += 1;
+    latestExplorationInputKey.current = roleExplorationInputKey(profile, nextDraft);
     setRoleExploration(null);
-    setPreferenceDraft((current) => ({
-      ...current,
-      priority_order: toggleCareerPreference(current.priority_order, value),
-    }));
+    setPreferenceDraft(nextDraft);
   }
 
   async function savePreferences() {
@@ -283,28 +323,35 @@ export default function Home() {
 
   async function exploreRoles() {
     const currentProfile = profile;
-    if (!currentProfile || !explorationReady || creatingExploration) return;
+    const requestInputKey = roleExplorationInputKey(currentProfile, preferenceDraft);
+    if (!currentProfile || !requestInputKey || creatingExploration) return;
+    const requestToken = ++explorationRequestToken.current;
     setCreatingExploration(true);
     setError("");
     try {
-      setRoleExploration(await createRoleExplorationRequest(currentProfile.profile_id, apiUrl));
+      const snapshot = await createRoleExplorationRequest(currentProfile.profile_id, apiUrl);
+      if (
+        componentActive.current &&
+        requestToken === explorationRequestToken.current &&
+        latestExplorationInputKey.current === requestInputKey
+      ) {
+        setRoleExploration(snapshot);
+      }
     } catch (explorationError) {
-      setError(explorationError instanceof Error ? explorationError.message : "Role exploration could not be generated.");
+      if (
+        componentActive.current &&
+        requestToken === explorationRequestToken.current &&
+        latestExplorationInputKey.current === requestInputKey
+      ) {
+        setError(explorationError instanceof Error ? explorationError.message : "Role exploration could not be generated.");
+      }
     } finally {
-      setCreatingExploration(false);
+      if (componentActive.current) setCreatingExploration(false);
     }
   }
 
   const profileLocked = profile?.status === "CONFIRMED";
   const mutationBusy = saving !== null || savingPreferences;
-  const explorationReady = Boolean(
-    profileCanExploreRoles(profile) &&
-      profile?.preferences &&
-      profile.preferences.priority_order.length === preferenceDraft.priority_order.length &&
-      profile.preferences.priority_order.every((value, index) => value === preferenceDraft.priority_order[index]) &&
-      String(profile.preferences.weekly_hours) === preferenceDraft.weekly_hours,
-  );
-
   return (
     <main className="shell">
       <p className="eyebrow">AI Career OS / Resume intake</p>
@@ -477,8 +524,11 @@ export default function Home() {
                   value={preferenceDraft.weekly_hours}
                   disabled={savingPreferences}
                   onChange={(event) => {
+                    const nextDraft = { ...preferenceDraft, weekly_hours: event.target.value };
+                    explorationRequestToken.current += 1;
+                    latestExplorationInputKey.current = roleExplorationInputKey(profile, nextDraft);
                     setRoleExploration(null);
-                    setPreferenceDraft((current) => ({ ...current, weekly_hours: event.target.value }));
+                    setPreferenceDraft(nextDraft);
                   }}
                 />
               </label>

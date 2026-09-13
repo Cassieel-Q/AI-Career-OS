@@ -27,6 +27,8 @@ import {
   profileCanExploreRoles,
   getRoleExplorationRequest,
   createRoleExplorationRequest,
+  roleExplorationInputKey,
+  roleExplorationInputMatches,
   roleExplorationViewData,
 } from "../app/role-exploration.ts";
 import type { RoleExplorationRead } from "../app/role-exploration.ts";
@@ -383,6 +385,42 @@ test("not-generated exploration GET returns null while other errors remain safe"
   assert.equal(await getRoleExplorationRequest("profile-1", "http://api.test", notGenerated), null);
   const failed: ProfileRequester = async () => jsonResponse({ detail: [{ msg: "backend unavailable" }] }, 503);
   await assert.rejects(getRoleExplorationRequest("profile-1", "http://api.test", failed), /backend unavailable/);
+});
+
+test("role exploration input identity accepts unchanged input and rejects changed profile or preferences", () => {
+  const confirmed = {
+    ...profile,
+    status: "CONFIRMED" as const,
+    preferences: {
+      id: "pref-1",
+      profile_id: profile.profile_id,
+      priority_order: ["CURRENT_FIT", "LONG_TERM_GROWTH"] as ["CURRENT_FIT", "LONG_TERM_GROWTH"],
+      weekly_hours: 12,
+      created_at: "2026-09-04T00:00:00Z",
+      updated_at: "2026-09-04T00:00:00Z",
+    },
+  };
+  const unchangedDraft = {
+    priority_order: ["CURRENT_FIT", "LONG_TERM_GROWTH"] as ["CURRENT_FIT", "LONG_TERM_GROWTH"],
+    weekly_hours: "12",
+  };
+  const captured = roleExplorationInputKey(confirmed, unchangedDraft);
+
+  assert.equal(roleExplorationInputMatches(captured, confirmed, unchangedDraft), true);
+  assert.equal(
+    roleExplorationInputMatches(captured, confirmed, { ...unchangedDraft, priority_order: ["LONG_TERM_GROWTH", "CURRENT_FIT"] }),
+    false,
+  );
+  assert.equal(roleExplorationInputMatches(captured, confirmed, { ...unchangedDraft, weekly_hours: "20" }), false);
+  assert.equal(roleExplorationInputMatches(captured, { ...confirmed, profile_id: "profile-2" }, unchangedDraft), false);
+  assert.equal(
+    roleExplorationInputMatches(
+      captured,
+      { ...confirmed, preferences: { ...confirmed.preferences, weekly_hours: 20 } },
+      unchangedDraft,
+    ),
+    false,
+  );
 });
 
 test("role exploration labels, six-card data, references, and disclaimer are display-safe", () => {
