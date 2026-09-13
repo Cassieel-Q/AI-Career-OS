@@ -31,3 +31,17 @@ Type-check and lint require installing the existing frontend dependencies in an 
 
 Implementation commit SHAs: `e619d120e04ab0f834326beb0eefa2feb8e2da9a`, `f9f1359984b8c0d66cdc031b16064734d9f0dbad`, `a765858ec2dfc7b4c0aafe81f828cb278e947d77`, `ba3274437c7032788b4c3d2171dab5ac27aff8e8`.
 Report commit SHA: `b678013`.
+
+## Fix report (2026-09-13)
+
+Status: fixed and verified.
+
+- Final fix commit: `ef361ddc37579e0c690ccca224d3e6ecc6f0dd4b` (`fix: guard role exploration responses against stale inputs`).
+- Added pure persisted-input/draft identity helpers and a regression test covering unchanged input plus changed priorities, hours, profile identity, and persisted preference values.
+- GET hydration and POST generation now capture an input key and request token, and apply results/errors only while the component is active and the live key/token still match. Priority/hour edits, file selection, and upload invalidate in-flight exploration responses while continuing to clear stale UI.
+- Non-404 GET errors continue to surface through the existing safe API error path when the request remains current.
+- `npm.cmd test -- --runInBand` — PASS (28 tests).
+- `npm.cmd run type-check` — NOT RUN successfully: local `node_modules` is absent (`tsc` not recognized).
+- `npm.cmd run lint` — NOT RUN successfully: local `node_modules` is absent (`next` not recognized).
+
+Concerns: the guard is covered by pure Node tests; browser/DOM request interleavings remain unverified because this package has no DOM test harness and frontend dependencies are unavailable in this checkout.
