@@ -29,4 +29,5 @@ Type-check and lint require installing the existing frontend dependencies in an 
 
 ## Commit
 
-Pending commit SHA: generated after staging the four implementation files and tests.
+Implementation commit SHA: `e619d120e04ab0f834326beb0eefa2feb8e2da9a`.
+Report commit SHA: `b678013`.
