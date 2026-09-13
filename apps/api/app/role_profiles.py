@@ -31,4 +31,3 @@ ROLE_PROFILES: tuple[RoleProfile, ...] = (
 )
 
 ROLE_PROFILE_BY_CODE: dict[RoleCode, RoleProfile] = {profile.role_code: profile for profile in ROLE_PROFILES}
-
