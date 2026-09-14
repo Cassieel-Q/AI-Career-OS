@@ -15,7 +15,16 @@ from app.profile_schemas import (
     CareerPreferencesInput,
     CareerPreferencePriority,
     CareerPreferencesRead,
+    ProfileStatus,
 )
+from app.role_exploration_provider import set_role_exploration_provider
+from app.role_exploration_schemas import (
+    ExplorationLevel,
+    RoleCode,
+    RoleExplorationProviderItem,
+    RoleExplorationProviderPayload,
+)
+from app.role_exploration_service import create_role_exploration, get_role_exploration
 
 
 def test_preferences_accept_two_ordered_priorities_and_hours() -> None:
@@ -184,6 +193,109 @@ def test_second_put_updates_one_row_and_keeps_profile_facts(
         .count()
         == 1
     )
+
+
+@pytest.mark.parametrize(
+    ("priority_order", "weekly_hours"),
+    [
+        (["FAST_EMPLOYMENT", "LONG_TERM_GROWTH"], 10),
+        (["CURRENT_FIT", "LESS_CODING"], 10),
+        (["CURRENT_FIT", "LONG_TERM_GROWTH"], 20),
+    ],
+)
+def test_changed_career_preferences_invalidate_existing_role_exploration(
+    db_session, persisted_profile, priority_order, weekly_hours
+) -> None:
+    persisted_profile.status = ProfileStatus.CONFIRMED.value
+    db_session.add(
+        models.CareerPreference(
+            profile_id=persisted_profile.id,
+            priority_1="CURRENT_FIT",
+            priority_2="LONG_TERM_GROWTH",
+            weekly_hours=10,
+        )
+    )
+    db_session.commit()
+    evidence = persisted_profile.skills[0].id
+    payload = RoleExplorationProviderPayload(
+        items=[
+            RoleExplorationProviderItem(
+                role_code=role_code,
+                level=ExplorationLevel.POSSIBLE,
+                reasons=["Grounded reason"],
+                evidence_refs=[evidence],
+            )
+            for role_code in RoleCode
+        ]
+    )
+
+    class Provider:
+        def explore(self, context):
+            return payload
+
+    set_role_exploration_provider(Provider())
+    try:
+        create_role_exploration(db_session, persisted_profile.id)
+    finally:
+        set_role_exploration_provider(None)
+
+    upsert_career_preferences(
+        db_session,
+        persisted_profile.id,
+        CareerPreferencesInput(priority_order=priority_order, weekly_hours=weekly_hours),
+    )
+
+    with pytest.raises(HTTPException) as error:
+        get_role_exploration(db_session, persisted_profile.id)
+    assert error.value.status_code == 404
+    assert error.value.detail == "Role exploration has not been generated"
+
+
+def test_saving_exact_same_career_preferences_keeps_existing_role_exploration(
+    db_session, persisted_profile
+) -> None:
+    persisted_profile.status = ProfileStatus.CONFIRMED.value
+    db_session.add(
+        models.CareerPreference(
+            profile_id=persisted_profile.id,
+            priority_1="CURRENT_FIT",
+            priority_2="LONG_TERM_GROWTH",
+            weekly_hours=10,
+        )
+    )
+    db_session.commit()
+    evidence = persisted_profile.skills[0].id
+    payload = RoleExplorationProviderPayload(
+        items=[
+            RoleExplorationProviderItem(
+                role_code=role_code,
+                level=ExplorationLevel.POSSIBLE,
+                reasons=["Grounded reason"],
+                evidence_refs=[evidence],
+            )
+            for role_code in RoleCode
+        ]
+    )
+
+    class Provider:
+        def explore(self, context):
+            return payload
+
+    set_role_exploration_provider(Provider())
+    try:
+        created = create_role_exploration(db_session, persisted_profile.id)
+    finally:
+        set_role_exploration_provider(None)
+
+    upsert_career_preferences(
+        db_session,
+        persisted_profile.id,
+        CareerPreferencesInput(
+            priority_order=["CURRENT_FIT", "LONG_TERM_GROWTH"], weekly_hours=10
+        ),
+    )
+    loaded = get_role_exploration(db_session, persisted_profile.id)
+    assert loaded.id == created.id
 
 
 def test_invalid_preferences_request_returns_422(client, persisted_profile) -> None:

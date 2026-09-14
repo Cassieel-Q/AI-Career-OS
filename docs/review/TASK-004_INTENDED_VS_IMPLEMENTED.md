@@ -12,7 +12,7 @@ Scope: synthetic backend evaluation and regression coverage for the bounded Role
 - Every result must contain each of the six roles exactly once (at most three `RECOMMENDED`), with references grounded in current Profile child UUIDs and preference values limited to the two saved priorities.
 - Context construction copies Profile child values/IDs, ordered preferences, weekly hours, and the immutable catalog into an isolated provider context. It does not mutate Profile or preference rows.
 - Explicit Office aliases, technical skills, and credential values that already exist in the confirmed Profile remain available as grounded input. No unsupported credential is synthesized by Role Exploration.
-- The frontend boundary is the existing Profile-confirmed/preferences flow plus the role-exploration API contract; this task adds no frontend behavior.
+- The frontend boundary is the existing Profile-confirmed/preferences flow plus the role-exploration API contract; this task adds the role-exploration cards, readiness gate, loading/error states, and refresh-safe interaction.
 
 ## Synthetic evaluation coverage
 

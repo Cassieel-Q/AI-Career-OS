@@ -264,6 +264,19 @@ def upsert_career_preferences(
             "weekly_hours": payload.weekly_hours,
             "updated_at": datetime.now(timezone.utc),
         }
+        preferences_changed = preference is None or any(
+            getattr(preference, field) != value
+            for field, value in values.items()
+            if field != "updated_at"
+        )
+        if preferences_changed:
+            role_exploration = db.execute(
+                select(models.RoleExploration)
+                .where(models.RoleExploration.profile_id == profile_id)
+                .with_for_update()
+            ).scalar_one_or_none()
+            if role_exploration is not None:
+                db.delete(role_exploration)
         if preference is None:
             preference = models.CareerPreference(profile_id=profile_id, **values)
             db.add(preference)

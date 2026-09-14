@@ -41,6 +41,10 @@ def _http(status: int, detail: str) -> HTTPException:
     return HTTPException(status_code=status, detail=detail)
 
 
+def _preference_state(preference: models.CareerPreference) -> tuple[str, str, int]:
+    return preference.priority_1, preference.priority_2, preference.weekly_hours
+
+
 def _load_confirmed_profile(db: Session, profile_id: UUID) -> tuple[models.UserProfile, models.CareerPreference]:
     try:
         profile = db.execute(select(models.UserProfile).where(models.UserProfile.id == profile_id)).scalar_one_or_none()
@@ -158,10 +162,10 @@ def _read_row(row: models.RoleExploration, profile: models.UserProfile, preferen
 
 def create_role_exploration(db: Session, profile_id: UUID) -> RoleExplorationRead:
     profile, preference = _load_confirmed_profile(db, profile_id)
+    requested_preference_state = _preference_state(preference)
     try:
         context = build_role_exploration_context(profile, preference)
         payload = get_role_exploration_provider().explore(context)
-        result = _validate_and_build_result(payload, profile, preference)
     except HTTPException:
         raise
     except RoleExplorationProviderTimeoutError as exc:
@@ -176,6 +180,24 @@ def create_role_exploration(db: Session, profile_id: UUID) -> RoleExplorationRea
         raise _http(503, "Role exploration provider is unavailable") from exc
     except Exception as exc:
         raise _http(503, "Role exploration provider is unavailable") from exc
+    try:
+        current_preference = db.execute(
+            select(models.CareerPreference)
+            .where(models.CareerPreference.profile_id == profile_id)
+            .with_for_update()
+        ).scalar_one_or_none()
+    except SQLAlchemyError as exc:
+        db.rollback()
+        raise _http(503, "Role exploration persistence failed") from exc
+    if current_preference is None or _preference_state(current_preference) != requested_preference_state:
+        raise _http(
+            409,
+            "Career preferences changed during role exploration; please generate again.",
+        )
+    try:
+        result = _validate_and_build_result(payload, profile, current_preference)
+    except (ValidationError, ValueError, TypeError) as exc:
+        raise _http(502, "Role exploration provider returned invalid output") from exc
     try:
         row = db.execute(select(models.RoleExploration).where(models.RoleExploration.profile_id == profile_id).with_for_update()).scalar_one_or_none()
         now = datetime.now(timezone.utc)

@@ -5,7 +5,8 @@ from fastapi import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 
 from app import models
-from app.profile_schemas import CareerPreferencePriority, ProfileStatus
+from app.profile_schemas import CareerPreferencesInput, CareerPreferencePriority, ProfileStatus
+from app.profile_service import upsert_career_preferences
 from app.role_exploration_provider import set_role_exploration_provider
 from app.role_exploration_provider import (
     RoleExplorationProviderConnectionError,
@@ -218,3 +219,79 @@ def test_persistence_failure_rolls_back_and_maps_to_503(db_session, persisted_pr
         assert "database internals" not in str(exc.value.detail)
     finally:
         set_role_exploration_provider(None)
+
+
+def test_stale_provider_result_is_rejected_and_new_generation_can_replace_it(
+    db_session, persisted_profile
+):
+    _confirmed_with_preferences(db_session, persisted_profile)
+    evidence = persisted_profile.skills[0].id
+    profile_facts_before = [
+        (item.id, item.raw_value, item.canonical_value)
+        for collection in (
+            persisted_profile.education,
+            persisted_profile.skills,
+            persisted_profile.experiences,
+            persisted_profile.certifications,
+        )
+        for item in collection
+    ]
+    stale_payload = RoleExplorationProviderPayload(
+        items=[
+            item.model_copy(update={"preference_refs": [CareerPreferencePriority.CURRENT_FIT]})
+            for item in _payload(evidence).items
+        ]
+    )
+
+    class StaleProvider:
+        def explore(self, context):
+            assert [item.value for item in context.preferences] == [
+                CareerPreferencePriority.CURRENT_FIT,
+                CareerPreferencePriority.LONG_TERM_GROWTH,
+            ]
+            upsert_career_preferences(
+                db_session,
+                persisted_profile.id,
+                CareerPreferencesInput(
+                    priority_order=["FAST_EMPLOYMENT", "LESS_CODING"], weekly_hours=24
+                ),
+            )
+            return stale_payload
+
+    set_role_exploration_provider(StaleProvider())
+    try:
+        with pytest.raises(HTTPException) as exc:
+            create_role_exploration(db_session, persisted_profile.id)
+        assert exc.value.status_code == 409
+        assert exc.value.detail == (
+            "Career preferences changed during role exploration; please generate again."
+        )
+    finally:
+        set_role_exploration_provider(None)
+
+    assert db_session.query(models.RoleExploration).filter_by(profile_id=persisted_profile.id).count() == 0
+    saved_preference = db_session.query(models.CareerPreference).filter_by(profile_id=persisted_profile.id).one()
+    assert (saved_preference.priority_1, saved_preference.priority_2, saved_preference.weekly_hours) == (
+        CareerPreferencePriority.FAST_EMPLOYMENT.value,
+        CareerPreferencePriority.LESS_CODING.value,
+        24,
+    )
+    profile_facts_after = [
+        (item.id, item.raw_value, item.canonical_value)
+        for collection in (
+            persisted_profile.education,
+            persisted_profile.skills,
+            persisted_profile.experiences,
+            persisted_profile.certifications,
+        )
+        for item in collection
+    ]
+    assert profile_facts_after == profile_facts_before
+
+    set_role_exploration_provider(_Provider(_payload(evidence)))
+    try:
+        created = create_role_exploration(db_session, persisted_profile.id)
+        loaded = get_role_exploration(db_session, persisted_profile.id)
+    finally:
+        set_role_exploration_provider(None)
+    assert loaded.id == created.id
