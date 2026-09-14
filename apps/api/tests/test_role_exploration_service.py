@@ -2,6 +2,7 @@ from uuid import uuid4
 
 import pytest
 from fastapi import HTTPException
+from sqlalchemy import update
 from sqlalchemy.exc import SQLAlchemyError
 
 from app import models
@@ -295,3 +296,39 @@ def test_stale_provider_result_is_rejected_and_new_generation_can_replace_it(
     finally:
         set_role_exploration_provider(None)
     assert loaded.id == created.id
+
+
+def test_stale_provider_detection_refreshes_preference_row_before_compare(
+    db_session, persisted_profile
+):
+    _confirmed_with_preferences(db_session, persisted_profile)
+    evidence = persisted_profile.skills[0].id
+    stale_payload = RoleExplorationProviderPayload(
+        items=[
+            item.model_copy(update={"preference_refs": [CareerPreferencePriority.CURRENT_FIT]})
+            for item in _payload(evidence).items
+        ]
+    )
+
+    class DirectDatabaseUpdateProvider:
+        def explore(self, context):
+            db_session.execute(
+                update(models.CareerPreference)
+                .where(models.CareerPreference.profile_id == persisted_profile.id)
+                .values(
+                    priority_1=CareerPreferencePriority.FAST_EMPLOYMENT.value,
+                    priority_2=CareerPreferencePriority.LESS_CODING.value,
+                    weekly_hours=24,
+                )
+                .execution_options(synchronize_session=False)
+            )
+            return stale_payload
+
+    set_role_exploration_provider(DirectDatabaseUpdateProvider())
+    try:
+        with pytest.raises(HTTPException) as exc:
+            create_role_exploration(db_session, persisted_profile.id)
+        assert exc.value.status_code == 409
+    finally:
+        set_role_exploration_provider(None)
+    assert db_session.query(models.RoleExploration).count() == 0

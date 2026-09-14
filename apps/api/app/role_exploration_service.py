@@ -184,6 +184,7 @@ def create_role_exploration(db: Session, profile_id: UUID) -> RoleExplorationRea
         current_preference = db.execute(
             select(models.CareerPreference)
             .where(models.CareerPreference.profile_id == profile_id)
+            .execution_options(populate_existing=True)
             .with_for_update()
         ).scalar_one_or_none()
     except SQLAlchemyError as exc:
