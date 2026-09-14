@@ -32,6 +32,13 @@ import {
   roleExplorationViewData,
 } from "../app/role-exploration.ts";
 import type { RoleExplorationRead } from "../app/role-exploration.ts";
+import {
+  TARGET_ROLE_CODES,
+  getTargetRoleRequest,
+  selectTargetRoleRequest,
+  targetRoleViewData,
+} from "../app/target-role.ts";
+import type { TargetRoleRead } from "../app/target-role.ts";
 
 const profile: Profile = {
   profile_id: "profile-1",
@@ -439,6 +446,76 @@ test("role exploration labels, six-card data, references, and disclaimer are dis
   assert.deepEqual(cards[0].preference_refs, ["CURRENT_FIT"]);
   assert.match(ROLE_EXPLORATION_DISCLAIMER, /confirmed Profile/);
   assert.match(ROLE_EXPLORATION_DISCLAIMER, /no real JD/i);
+});
+
+test("target role GET treats only an unselected target as the empty state", async () => {
+  const selected: TargetRoleRead = {
+    id: "target-1",
+    profile_id: "profile-1",
+    role_code: "AI_PRODUCT_MANAGER",
+    role_name: "AI Product Manager",
+    role_profile_version: "v1",
+    role_exploration_id: "explore-1",
+    selected_at: "2026-09-14T00:00:00Z",
+    updated_at: "2026-09-14T00:00:00Z",
+  };
+  const request: ProfileRequester = async () => jsonResponse(selected);
+  assert.deepEqual(await getTargetRoleRequest("profile-1", "http://api.test", request), selected);
+
+  const emptyRequest: ProfileRequester = async () => jsonResponse({ detail: "Target role has not been selected" }, 404);
+  assert.equal(await getTargetRoleRequest("profile-1", "http://api.test", emptyRequest), null);
+
+  const missingProfile: ProfileRequester = async () => jsonResponse({ detail: "Profile not found" }, 404);
+  await assert.rejects(getTargetRoleRequest("profile-1", "http://api.test", missingProfile), /Profile not found/);
+});
+
+test("target role PUT sends only the canonical role code for every supported role", async () => {
+  const calls: Array<{ input: RequestInfo | URL; init?: RequestInit }> = [];
+  const selected = {
+    id: "target-1",
+    profile_id: "profile-1",
+    role_code: "AI_APPLICATION_ENGINEER",
+    role_name: "AI Application Engineer",
+    role_profile_version: "v1",
+    role_exploration_id: "explore-1",
+    selected_at: "2026-09-14T00:00:00Z",
+    updated_at: "2026-09-14T00:00:00Z",
+  } satisfies TargetRoleRead;
+  const request: ProfileRequester = async (input, init) => {
+    calls.push({ input, init });
+    return jsonResponse(selected);
+  };
+
+  for (const roleCode of TARGET_ROLE_CODES) {
+    await selectTargetRoleRequest("profile-1", roleCode, "http://api.test", request);
+  }
+
+  assert.equal(calls.length, TARGET_ROLE_CODES.length);
+  assert.equal(calls[0].input, "http://api.test/api/v1/profiles/profile-1/target-role");
+  assert.equal(calls[0].init?.method, "PUT");
+  assert.deepEqual(JSON.parse(String(calls[0].init?.body)), { role_code: TARGET_ROLE_CODES[0] });
+  assert.equal(Object.keys(JSON.parse(String(calls[0].init?.body))).length, 1);
+});
+
+test("target role view data preserves selected state and supports all six roles", () => {
+  assert.equal(TARGET_ROLE_CODES.length, 6);
+  const selected: TargetRoleRead = {
+    id: "target-1",
+    profile_id: "profile-1",
+    role_code: "AI_DATA_ANALYST",
+    role_name: "AI Data Analyst",
+    role_profile_version: "v1",
+    role_exploration_id: "explore-1",
+    selected_at: "2026-09-14T00:00:00Z",
+    updated_at: "2026-09-14T00:00:00Z",
+  };
+  assert.deepEqual(targetRoleViewData(selected), {
+    role_code: "AI_DATA_ANALYST",
+    role_name: "AI Data Analyst",
+    role_profile_version: "v1",
+    role_exploration_id: "explore-1",
+  });
+  assert.equal(targetRoleViewData(null), null);
 });
 
 function jsonResponse(payload: unknown, status = 200): Response {

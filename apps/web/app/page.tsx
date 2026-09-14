@@ -32,6 +32,8 @@ import {
   roleExplorationViewData,
 } from "./role-exploration";
 import type { RoleExplorationRead } from "./role-exploration";
+import { getTargetRoleRequest, selectTargetRoleRequest, targetRoleViewData } from "./target-role";
+import type { TargetRoleCode, TargetRoleRead } from "./target-role";
 
 type EditableSection = "education" | "skills" | "experiences" | "certifications";
 
@@ -67,9 +69,13 @@ export default function Home() {
   const [roleExploration, setRoleExploration] = useState<RoleExplorationRead | null>(null);
   const [loadingExploration, setLoadingExploration] = useState(false);
   const [creatingExploration, setCreatingExploration] = useState(false);
+  const [targetRole, setTargetRole] = useState<TargetRoleRead | null>(null);
+  const [loadingTargetRole, setLoadingTargetRole] = useState(false);
+  const [selectingTargetRole, setSelectingTargetRole] = useState<TargetRoleCode | null>(null);
   const explorationHydratedProfileId = useRef<string | null>(null);
   const componentActive = useRef(false);
   const explorationRequestToken = useRef(0);
+  const targetRoleRequestToken = useRef(0);
   const currentExplorationInputKey = roleExplorationInputKey(profile, preferenceDraft);
   const latestExplorationInputKey = useRef(currentExplorationInputKey);
   latestExplorationInputKey.current = currentExplorationInputKey;
@@ -96,6 +102,7 @@ export default function Home() {
           const normalized = normalizeProfile(payload);
           setProfile(normalized);
           setPreferenceDraft(careerPreferencesDraftFromProfile(normalized));
+          setTargetRole(null);
           setDirty(false);
         }
       } catch (loadError) {
@@ -111,18 +118,49 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!profile || !profileCanExploreRoles(profile)) {
+    const currentProfile = profile;
+    if (!currentProfile || !profileCanExploreRoles(currentProfile)) {
       setRoleExploration(null);
+      setTargetRole(null);
       return;
     }
-    if (explorationHydratedProfileId.current === profile.profile_id) return;
-    explorationHydratedProfileId.current = profile.profile_id;
-    const requestInputKey = roleExplorationInputKey(profile, careerPreferencesDraftFromProfile(profile));
+    if (explorationHydratedProfileId.current === currentProfile.profile_id) return;
+    explorationHydratedProfileId.current = currentProfile.profile_id;
+    const requestInputKey = roleExplorationInputKey(currentProfile, careerPreferencesDraftFromProfile(currentProfile));
     if (!requestInputKey) return;
     const requestToken = ++explorationRequestToken.current;
     let active = true;
+    async function hydrateTargetRole(snapshot: RoleExplorationRead) {
+      const targetRequestToken = ++targetRoleRequestToken.current;
+      setLoadingTargetRole(true);
+      try {
+        const selection = await getTargetRoleRequest(currentProfile.profile_id, apiUrl);
+        if (
+          componentActive.current &&
+          active &&
+          targetRequestToken === targetRoleRequestToken.current &&
+          requestToken === explorationRequestToken.current &&
+          latestExplorationInputKey.current === requestInputKey &&
+          selection?.role_exploration_id === snapshot.id
+        ) {
+          setTargetRole(selection);
+        }
+      } catch (loadError) {
+        if (
+          componentActive.current &&
+          active &&
+          targetRequestToken === targetRoleRequestToken.current &&
+          requestToken === explorationRequestToken.current &&
+          latestExplorationInputKey.current === requestInputKey
+        ) {
+          setError(loadError instanceof Error ? loadError.message : "Target role could not be loaded.");
+        }
+      } finally {
+        if (targetRequestToken === targetRoleRequestToken.current) setLoadingTargetRole(false);
+      }
+    }
     setLoadingExploration(true);
-    void getRoleExplorationRequest(profile.profile_id, apiUrl)
+    void getRoleExplorationRequest(currentProfile.profile_id, apiUrl)
       .then((snapshot) => {
         if (
           componentActive.current &&
@@ -131,6 +169,8 @@ export default function Home() {
           latestExplorationInputKey.current === requestInputKey
         ) {
           setRoleExploration(snapshot);
+          setTargetRole(null);
+          if (snapshot) void hydrateTargetRole(snapshot);
         }
       })
       .catch((loadError) => {
@@ -149,10 +189,12 @@ export default function Home() {
 
   function chooseFile(event: ChangeEvent<HTMLInputElement>) {
     explorationRequestToken.current += 1;
+    targetRoleRequestToken.current += 1;
     latestExplorationInputKey.current = null;
     setFile(event.target.files?.[0] ?? null);
     setProfile(null);
     setPreferenceDraft({ priority_order: [], weekly_hours: "" });
+    setTargetRole(null);
     setDirty(false);
     setError("");
     const url = new URL(window.location.href);
@@ -169,9 +211,11 @@ export default function Home() {
     setLoading(true);
     setError("");
     explorationRequestToken.current += 1;
+    targetRoleRequestToken.current += 1;
     latestExplorationInputKey.current = null;
     setProfile(null);
     setPreferenceDraft({ priority_order: [], weekly_hours: "" });
+    setTargetRole(null);
     setDirty(false);
     const body = new FormData();
     body.append("file", file);
@@ -298,8 +342,10 @@ export default function Home() {
       priority_order: toggleCareerPreference(preferenceDraft.priority_order, value),
     };
     explorationRequestToken.current += 1;
+    targetRoleRequestToken.current += 1;
     latestExplorationInputKey.current = roleExplorationInputKey(profile, nextDraft);
     setRoleExploration(null);
+    setTargetRole(null);
     setPreferenceDraft(nextDraft);
   }
 
@@ -310,6 +356,8 @@ export default function Home() {
     setSavingPreferences(true);
     setError("");
     setRoleExploration(null);
+    targetRoleRequestToken.current += 1;
+    setTargetRole(null);
     try {
       const saved = await saveCareerPreferencesRequest(currentProfile.profile_id, preferenceDraft, apiUrl);
       setPreferenceDraft(careerPreferencesDraftFromProfile({ ...currentProfile, preferences: saved }));
@@ -350,8 +398,37 @@ export default function Home() {
     }
   }
 
+  async function chooseTargetRole(roleCode: TargetRoleCode) {
+    const currentProfile = profile;
+    const currentExploration = roleExploration;
+    const requestInputKey = roleExplorationInputKey(currentProfile, preferenceDraft);
+    if (!currentProfile || !currentExploration || !requestInputKey || selectingTargetRole) return;
+    const requestToken = ++targetRoleRequestToken.current;
+    setSelectingTargetRole(roleCode);
+    setError("");
+    try {
+      const selection = await selectTargetRoleRequest(currentProfile.profile_id, roleCode, apiUrl);
+      if (
+        componentActive.current &&
+        requestToken === targetRoleRequestToken.current &&
+        latestExplorationInputKey.current === requestInputKey &&
+        roleExploration?.id === currentExploration.id &&
+        selection.role_exploration_id === currentExploration.id
+      ) {
+        setTargetRole(selection);
+      }
+    } catch (selectionError) {
+      if (componentActive.current && requestToken === targetRoleRequestToken.current) {
+        setError(selectionError instanceof Error ? selectionError.message : "Target role could not be saved.");
+      }
+    } finally {
+      if (componentActive.current && requestToken === targetRoleRequestToken.current) setSelectingTargetRole(null);
+    }
+  }
+
   const profileLocked = profile?.status === "CONFIRMED";
   const mutationBusy = saving !== null || savingPreferences;
+  const targetRoleView = targetRoleViewData(targetRole);
   return (
     <main className="shell">
       <p className="eyebrow">AI Career OS / Resume intake</p>
@@ -526,8 +603,10 @@ export default function Home() {
                   onChange={(event) => {
                     const nextDraft = { ...preferenceDraft, weekly_hours: event.target.value };
                     explorationRequestToken.current += 1;
+                    targetRoleRequestToken.current += 1;
                     latestExplorationInputKey.current = roleExplorationInputKey(profile, nextDraft);
                     setRoleExploration(null);
+                    setTargetRole(null);
                     setPreferenceDraft(nextDraft);
                   }}
                 />
@@ -553,10 +632,14 @@ export default function Home() {
                     {roleExplorationViewData(roleExploration).map((item) => (
                       <article className="role-card" key={item.role_code}>
                         <div className="role-card-heading"><h4>{item.role_name}</h4><span className={`role-level ${item.level.toLowerCase()}`}>{ROLE_EXPLORATION_LEVEL_LABELS[item.level]}</span></div>
+                        {targetRoleView?.role_code === item.role_code && targetRoleView.role_exploration_id === roleExploration.id && <span className="target-role-badge">当前目标岗位</span>}
                         <div className="role-card-list"><strong>为什么</strong><ul>{item.reasons.map((reason, index) => <li key={`${item.role_code}-reason-${index}`}>{reason}</li>)}</ul></div>
                         {item.concerns.length > 0 && <div className="role-card-list concern"><strong>需要留意</strong><ul>{item.concerns.map((concern, index) => <li key={`${item.role_code}-concern-${index}`}>{concern}</li>)}</ul></div>}
                         <p className="role-refs"><span>Profile evidence</span>{item.evidence_refs.join(", ")}</p>
                         <p className="role-refs"><span>Preference refs</span>{item.preference_refs.join(", ") || "—"}</p>
+                        <button type="button" className="target-role-button" onClick={() => chooseTargetRole(item.role_code)} disabled={loadingTargetRole || selectingTargetRole !== null}>
+                          {selectingTargetRole === item.role_code ? "保存中..." : targetRoleView?.role_code === item.role_code && targetRoleView.role_exploration_id === roleExploration.id ? "当前目标岗位" : "选择为目标岗位"}
+                        </button>
                       </article>
                     ))}
                   </div>

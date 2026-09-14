@@ -372,6 +372,32 @@ button:disabled {
   font-size: 1rem;
 }
 
+.target-role-badge {
+  justify-self: start;
+  padding: 0.25rem 0.45rem;
+  border-radius: 999px;
+  background: #dcefe0;
+  color: #236333;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.target-role-button {
+  justify-self: start;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid #36563d;
+  border-radius: 0.25rem;
+  background: #ffffff;
+  color: #36563d;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.target-role-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
 .role-level {
   flex: none;
   padding: 0.25rem 0.45rem;
