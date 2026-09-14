@@ -124,9 +124,10 @@ export default function Home() {
       setTargetRole(null);
       return;
     }
-    if (explorationHydratedProfileId.current === currentProfile.profile_id) return;
-    explorationHydratedProfileId.current = currentProfile.profile_id;
-    const requestInputKey = roleExplorationInputKey(currentProfile, careerPreferencesDraftFromProfile(currentProfile));
+    const confirmedProfile: Profile = currentProfile;
+    if (explorationHydratedProfileId.current === confirmedProfile.profile_id) return;
+    explorationHydratedProfileId.current = confirmedProfile.profile_id;
+    const requestInputKey = roleExplorationInputKey(confirmedProfile, careerPreferencesDraftFromProfile(confirmedProfile));
     if (!requestInputKey) return;
     const requestToken = ++explorationRequestToken.current;
     let active = true;
@@ -134,7 +135,7 @@ export default function Home() {
       const targetRequestToken = ++targetRoleRequestToken.current;
       setLoadingTargetRole(true);
       try {
-        const selection = await getTargetRoleRequest(currentProfile.profile_id, apiUrl);
+        const selection = await getTargetRoleRequest(confirmedProfile.profile_id, apiUrl);
         if (
           componentActive.current &&
           active &&
@@ -160,7 +161,7 @@ export default function Home() {
       }
     }
     setLoadingExploration(true);
-    void getRoleExplorationRequest(currentProfile.profile_id, apiUrl)
+    void getRoleExplorationRequest(confirmedProfile.profile_id, apiUrl)
       .then((snapshot) => {
         if (
           componentActive.current &&

@@ -2,10 +2,12 @@ from uuid import uuid4
 
 import pytest
 from fastapi import HTTPException
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from app import models
-from app.profile_schemas import CareerPreferencePriority, ProfileStatus
+from app.profile_schemas import CareerPreferencePriority, CareerPreferencesInput, ProfileStatus
+from app.profile_service import upsert_career_preferences
 from app.role_exploration_provider import set_role_exploration_provider
 from app.role_exploration_schemas import ExplorationLevel, RoleCode, RoleExplorationProviderItem, RoleExplorationProviderPayload
 from app.role_exploration_service import create_role_exploration
@@ -84,6 +86,48 @@ def test_get_target_role_returns_the_saved_selection(db_session, persisted_profi
 
     assert loaded.id == selected.id
     assert loaded.role_code is RoleCode.AI_DATA_ANALYST
+
+
+def test_preference_invalidation_cascades_to_the_bound_target_role(db_session, persisted_profile):
+    db_session.connection().exec_driver_sql("PRAGMA foreign_keys=ON")
+    _ready_profile(db_session, persisted_profile)
+    select_target_role(db_session, persisted_profile.id, RoleCode.AI_PRODUCT_MANAGER)
+
+    upsert_career_preferences(
+        db_session,
+        persisted_profile.id,
+        CareerPreferencesInput(
+            priority_order=[CareerPreferencePriority.FAST_EMPLOYMENT, CareerPreferencePriority.LESS_CODING],
+            weekly_hours=24,
+        ),
+    )
+
+    assert db_session.query(models.RoleExploration).filter_by(profile_id=persisted_profile.id).count() == 0
+    assert db_session.query(models.TargetRole).filter_by(profile_id=persisted_profile.id).count() == 0
+
+
+def test_get_target_role_rejects_a_selection_bound_to_an_old_exploration(db_session, persisted_profile):
+    _ready_profile(db_session, persisted_profile)
+    selected = select_target_role(db_session, persisted_profile.id, RoleCode.AI_PRODUCT_MANAGER)
+    other_profile = models.UserProfile(status=ProfileStatus.CONFIRMED.value)
+    db_session.add(other_profile)
+    db_session.commit()
+    old_exploration = models.RoleExploration(
+        profile_id=other_profile.id,
+        role_profile_version="v1",
+        result={"role_profile_version": "v1", "items": []},
+    )
+    db_session.add(old_exploration)
+    db_session.commit()
+    row = db_session.query(models.TargetRole).filter_by(profile_id=persisted_profile.id).one()
+    row.role_exploration_id = old_exploration.id
+    db_session.commit()
+
+    with pytest.raises(HTTPException) as exc:
+        get_target_role(db_session, persisted_profile.id)
+
+    assert exc.value.status_code == 409
+    assert selected.role_exploration_id != row.role_exploration_id
 
 
 def test_target_role_requires_confirmed_profile_and_current_exploration(db_session, persisted_profile):
