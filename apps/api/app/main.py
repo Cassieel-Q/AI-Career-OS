@@ -31,6 +31,8 @@ from app.profile_service import (
 )
 from app.role_exploration_schemas import RoleExplorationRead, RoleExplorationRequest
 from app.role_exploration_service import create_role_exploration, get_role_exploration
+from app.target_role_schemas import TargetRoleInput, TargetRoleRead
+from app.target_role_service import get_target_role, select_target_role
 from app.resume_normalization import normalize_resume_extraction
 from app.resume_schemas import (
     Certification,
@@ -2597,3 +2599,17 @@ def create_saved_role_exploration(
 @app.get("/api/v1/profiles/{profile_id}/role-exploration", response_model=RoleExplorationRead)
 def read_saved_role_exploration(profile_id: UUID, db: Session = Depends(get_db)) -> RoleExplorationRead:
     return get_role_exploration(db, profile_id)
+
+
+@app.put("/api/v1/profiles/{profile_id}/target-role", response_model=TargetRoleRead)
+def save_target_role(
+    profile_id: UUID,
+    payload: TargetRoleInput,
+    db: Session = Depends(get_db),
+) -> TargetRoleRead:
+    return select_target_role(db, profile_id, payload.role_code)
+
+
+@app.get("/api/v1/profiles/{profile_id}/target-role", response_model=TargetRoleRead)
+def read_saved_target_role(profile_id: UUID, db: Session = Depends(get_db)) -> TargetRoleRead:
+    return get_target_role(db, profile_id)

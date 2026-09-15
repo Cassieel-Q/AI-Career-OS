@@ -34,6 +34,12 @@ class UserProfile(Base):
         uselist=False,
         cascade="all, delete-orphan",
     )
+    target_role: Mapped[TargetRole | None] = relationship(
+        "TargetRole",
+        back_populates="profile",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
 
 class ProfileChild:
@@ -138,4 +144,37 @@ class RoleExploration(Base):
 
     profile: Mapped[UserProfile] = relationship(
         "UserProfile", back_populates="role_exploration"
+    )
+
+
+class TargetRole(Base):
+    __tablename__ = "target_roles"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    profile_id: Mapped[UUID] = mapped_column(
+        ForeignKey("user_profiles.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    role_code: Mapped[str] = mapped_column(String(64), nullable=False)
+    role_profile_version: Mapped[str] = mapped_column(String(32), nullable=False)
+    role_exploration_id: Mapped[UUID] = mapped_column(
+        ForeignKey("role_explorations.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    selected_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    profile: Mapped[UserProfile] = relationship(
+        "UserProfile", back_populates="target_role"
+    )
+    role_exploration: Mapped[RoleExploration] = relationship(
+        "RoleExploration"
     )
