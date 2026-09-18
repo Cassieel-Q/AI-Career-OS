@@ -418,6 +418,49 @@ button:disabled {
 .role-refs span { display: block; color: #718074; font-size: 0.66rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
 .role-disclaimer { margin: 0; padding: 0.75rem; border-radius: 0.35rem; background: #f0f3ef; color: #5d685f; font-size: 0.8rem; line-height: 1.45; }
 
+.job-descriptions {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #dce3da;
+}
+
+.jd-heading { align-items: flex-end; }
+.jd-heading h3 { margin: 0.15rem 0 0; }
+.jd-count { color: #36563d; font-size: 1rem; }
+.jd-list { display: grid; gap: 0.9rem; }
+
+.jd-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #dce3da;
+  border-radius: 0.5rem;
+  background: #ffffff;
+}
+
+.jd-card h4 { margin: 0; color: #36563d; }
+.jd-card textarea { min-height: 10rem; resize: vertical; }
+.jd-card-new { border-style: dashed; background: #fbfcfa; }
+.jd-actions { display: flex; gap: 0.65rem; align-items: center; }
+.jd-actions .delete-button { margin-left: 0; }
+.jd-add { justify-self: start; }
+
+.jd-readiness,
+.jd-next-step {
+  padding: 0.75rem;
+  border-radius: 0.35rem;
+  background: #f0f3ef;
+  color: #5d685f;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.jd-readiness.ready { background: #e2f4e5; color: #236333; }
+.jd-next-step { text-align: center; opacity: 0.6; }
+.jd-next-step.ready { border: 1px solid #36563d; background: #ffffff; color: #36563d; opacity: 1; }
+
 .evidence {
   display: grid;
   gap: 0.2rem;
@@ -470,4 +513,7 @@ button:disabled {
   .profile-actions button {
     width: 100%;
   }
+
+  .jd-actions { align-items: stretch; flex-direction: column; }
+  .jd-actions button { width: 100%; }
 }

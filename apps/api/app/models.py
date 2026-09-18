@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON, Uuid
 
@@ -177,4 +177,39 @@ class TargetRole(Base):
     )
     role_exploration: Mapped[RoleExploration] = relationship(
         "RoleExploration"
+    )
+    job_descriptions: Mapped[list[JobDescription]] = relationship(
+        "JobDescription",
+        back_populates="target_role",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by=lambda: (JobDescription.created_at, JobDescription.id),
+    )
+
+
+class JobDescription(Base):
+    __tablename__ = "job_descriptions"
+    __table_args__ = (
+        # Hash uniqueness is scoped to the current Target Role collection.
+        UniqueConstraint(
+            "target_role_id", "content_hash", name="uq_job_descriptions_target_role_content_hash"
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    target_role_id: Mapped[UUID] = mapped_column(
+        ForeignKey("target_roles.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    raw_text: Mapped[str] = mapped_column(Text, nullable=False)
+    source_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    target_role: Mapped[TargetRole] = relationship(
+        "TargetRole", back_populates="job_descriptions"
     )

@@ -82,6 +82,22 @@ def test_target_roles_revision_is_latest_and_follows_role_explorations() -> None
     assert len(assignments["revision"]) <= 32
 
 
+def test_job_descriptions_revision_is_latest_and_follows_target_roles() -> None:
+    tree = ast.parse((VERSIONS_DIR / "007_job_descriptions.py").read_text(encoding="utf-8"))
+    assignments = {
+        target.id: assignment.value.value
+        for assignment in ast.walk(tree)
+        if isinstance(assignment, ast.Assign)
+        and isinstance(assignment.value, ast.Constant)
+        and isinstance(assignment.value.value, str)
+        for target in assignment.targets
+        if isinstance(target, ast.Name)
+    }
+    assert assignments["revision"] == "007_job_descriptions"
+    assert assignments["down_revision"] == "006_target_roles"
+    assert len(assignments["revision"]) <= 32
+
+
 def test_alembic_graph_has_single_latest_head_and_preserves_prior_chain() -> None:
     config = Config()
     config.set_main_option("script_location", str(VERSIONS_DIR.parent))
@@ -94,7 +110,8 @@ def test_alembic_graph_has_single_latest_head_and_preserves_prior_chain() -> Non
         "004_career_preferences": "003_credential_details",
         "005_role_explorations": "004_career_preferences",
         "006_target_roles": "005_role_explorations",
+        "007_job_descriptions": "006_target_roles",
     }
-    assert script.get_heads() == ["006_target_roles"]
+    assert script.get_heads() == ["007_job_descriptions"]
     revisions = {revision.revision: revision.down_revision for revision in script.walk_revisions()}
     assert revisions == expected_down_revisions
