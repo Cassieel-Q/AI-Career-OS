@@ -1,6 +1,7 @@
 import type { ProfileRequester } from "./profile-flow.ts";
 import { readApiPayload } from "./profile-flow.ts";
 import type { RoleCode } from "./role-exploration.ts";
+import type { RoleExplorationRead } from "./role-exploration.ts";
 
 export type TargetRoleCode = RoleCode;
 
@@ -24,6 +25,19 @@ export type TargetRoleRead = {
   updated_at: string;
 };
 
+export function targetRoleMatchesExploration(
+  targetRole: TargetRoleRead | null,
+  exploration: RoleExplorationRead | null,
+): targetRole is TargetRoleRead {
+  return Boolean(
+    targetRole &&
+      exploration &&
+      targetRole.profile_id === exploration.profile_id &&
+      targetRole.role_exploration_id === exploration.id &&
+      exploration.result.items.some((item) => item.role_code === targetRole.role_code),
+  );
+}
+
 /** Read the current user selection. A missing selection is an expected empty state. */
 export async function getTargetRoleRequest(
   profileId: string,
@@ -31,9 +45,14 @@ export async function getTargetRoleRequest(
   request: ProfileRequester = fetch,
 ): Promise<TargetRoleRead | null> {
   const response = await request(`${apiUrl}/api/v1/profiles/${profileId}/target-role`, { method: "GET" });
-  if (response.status === 404) {
+  if (response.status === 404 || response.status === 409) {
     const payload = await response.clone().json().catch(() => null) as { detail?: unknown } | null;
-    if (payload?.detail === "Target role has not been selected") return null;
+    if (
+      payload?.detail === "Target role has not been selected" ||
+      payload?.detail === "Target role requires a confirmed profile" ||
+      payload?.detail === "Career preferences are required before target role selection" ||
+      payload?.detail === "Role exploration is required before target role selection"
+    ) return null;
   }
   return readApiPayload<TargetRoleRead>(response);
 }

@@ -86,6 +86,17 @@ test("GET and POST use the exact target collection contract", async () => {
   assert.equal(calls[1].init?.body, JSON.stringify({ raw_text: "Raw JD", source_url: null }));
 });
 
+test("a cascaded target-role 404 is an empty collection while other 404s stay errors", async () => {
+  assert.deepEqual(
+    await getJobDescriptionsRequest(target.id, "http://api.test", async () => jsonResponse({ detail: "Target role not found" }, 404)),
+    [],
+  );
+  await assert.rejects(
+    getJobDescriptionsRequest(target.id, "http://api.test", async () => jsonResponse({ detail: "Job description endpoint missing" }, 404)),
+    /Job description endpoint missing/,
+  );
+});
+
 test("PATCH preserves omission and sends explicit null for clearing", async () => {
   const bodies: string[] = [];
   const request = async (_input: string | URL | Request, init?: RequestInit) => {

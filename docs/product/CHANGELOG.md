@@ -1,5 +1,13 @@
 # AI Career OS — CHANGELOG
 
+## 2026-09-19 — UIX-001 Workflow Navigation Shell — FROZEN
+
+- Product Owner browser manual acceptance: PASS.
+- UIX-001 is complete and frozen; the shared workflow now uses focused, URL-addressable step pages with server-backed guards.
+- UIX-001 did not change backend code, API contracts, or database schema.
+- The next planned phase is one P0 Completion Sprint covering TASK-007 through TASK-014; it has not started.
+- Frontend verification: 56 tests passed; TypeScript and ESLint passed; production build and dynamic-route smoke passed from the authorized temporary C: validation copy after the G: Next filesystem issue.
+
 ## 2026-09-04 — TASK-002 Profile Confirmation & Supplement
 
 - Resume parsing creates a persisted `DRAFT` Profile after evidence validation.

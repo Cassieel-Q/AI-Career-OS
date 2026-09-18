@@ -29,21 +29,31 @@ export function JobDescriptionsSection({
   targetRole,
   apiUrl,
   disabled = false,
+  initialRecords,
 }: {
   targetRole: TargetRoleRead;
   apiUrl: string;
   disabled?: boolean;
+  initialRecords?: JobDescriptionRead[];
 }) {
-  const [records, setRecords] = useState<JobDescriptionRead[]>([]);
+  const [records, setRecords] = useState<JobDescriptionRead[]>(initialRecords ?? []);
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [newDraft, setNewDraft] = useState<Draft>({ raw_text: "", source_url: "" });
   const [showNew, setShowNew] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [editingIds, setEditingIds] = useState<string[]>([]);
+  const [loading, setLoading] = useState(initialRecords === undefined);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const requestToken = useRef(0);
 
   useEffect(() => {
+    if (initialRecords !== undefined) {
+      setRecords(initialRecords);
+      setDrafts(Object.fromEntries(initialRecords.map((record) => [record.id, draftFrom(record)])));
+      setLoading(false);
+      setError("");
+      return;
+    }
     let active = true;
     const token = ++requestToken.current;
     setLoading(true);
@@ -66,7 +76,7 @@ export function JobDescriptionsSection({
       active = false;
       requestToken.current += 1;
     };
-  }, [apiUrl, targetRole.id]);
+  }, [apiUrl, initialRecords, targetRole.id]);
 
   const busy = disabled || pendingId !== null;
   const readiness = jobDescriptionReadiness(records.length);
@@ -102,6 +112,7 @@ export function JobDescriptionsSection({
       const updated = await updateJobDescriptionRequest(record.id, payload, apiUrl);
       setRecords((current) => updateJobDescriptionInCollection(current, updated));
       setDrafts((current) => ({ ...current, [updated.id]: draftFrom(updated) }));
+      setEditingIds((current) => current.filter((id) => id !== updated.id));
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "岗位样本更新失败。请重试。");
     } finally {
@@ -144,31 +155,54 @@ export function JobDescriptionsSection({
         </div>
         <strong className="jd-count">{records.length} / {MAXIMUM_JOB_DESCRIPTIONS}</strong>
       </div>
-      <p className="profile-note">建议添加 5–10 个真实 JD，至少 3 个后再进行市场要求分析。</p>
+      <p className="profile-note">建议添加 5–10 个真实 JD；保存满 3 个后达到当前阶段的最低样本数。</p>
       {error && <p className="message error" role="alert">{error}</p>}
       {loading ? <p className="profile-note">正在加载已保存的岗位样本...</p> : (
         <>
           <div className="jd-list">
+            {records.length === 0 && !showNew && (
+              <p className="jd-empty-state">添加真实 JD，建立该岗位的市场样本。</p>
+            )}
             {records.map((record, index) => {
               const draft = drafts[record.id] ?? draftFrom(record);
               const changed = draft.raw_text !== record.raw_text || normalizeJobDescriptionSourceUrl(draft.source_url) !== record.source_url;
+              const editing = editingIds.includes(record.id);
               return (
                 <article className="jd-card" key={record.id}>
-                  <h4>JD #{index + 1}</h4>
-                  <label className="field-label">
-                    岗位描述原文
-                    <textarea rows={8} value={draft.raw_text} disabled={busy} onChange={(event) => updateDraft(record.id, "raw_text", event.target.value)} />
-                  </label>
-                  <label className="field-label">
-                    来源链接（可选）
-                    <input type="url" value={draft.source_url} disabled={busy} placeholder="https://..." onChange={(event) => updateDraft(record.id, "source_url", event.target.value)} />
-                  </label>
-                  <div className="jd-actions">
-                    <button type="button" disabled={busy || !draft.raw_text.trim() || !changed} onClick={() => void updateRecord(record)}>
-                      {pendingId === record.id ? "保存中..." : "保存修改"}
-                    </button>
-                    <button type="button" className="delete-button" disabled={busy} onClick={() => void deleteRecord(record)}>删除</button>
+                  <div className="jd-record-heading">
+                    <h4>JD #{index + 1}</h4>
+                    {record.source_url ? <span className="jd-source-status">已添加来源链接</span> : <span className="jd-source-status">未添加来源链接</span>}
                   </div>
+                  {editing ? (
+                    <>
+                      <label className="field-label">
+                        岗位描述原文
+                        <textarea rows={10} value={draft.raw_text} disabled={busy} onChange={(event) => updateDraft(record.id, "raw_text", event.target.value)} />
+                      </label>
+                      <label className="field-label">
+                        来源链接（可选）
+                        <input type="url" value={draft.source_url} disabled={busy} placeholder="https://..." onChange={(event) => updateDraft(record.id, "source_url", event.target.value)} />
+                      </label>
+                      <div className="jd-actions">
+                        <button type="button" disabled={busy || !draft.raw_text.trim() || !changed} onClick={() => void updateRecord(record)}>
+                          {pendingId === record.id ? "保存中…" : "保存修改"}
+                        </button>
+                        <button type="button" className="button-secondary" disabled={busy} onClick={() => {
+                          setDrafts((current) => ({ ...current, [record.id]: draftFrom(record) }));
+                          setEditingIds((current) => current.filter((id) => id !== record.id));
+                        }}>取消</button>
+                        <button type="button" className="delete-button" disabled={busy} onClick={() => void deleteRecord(record)}>删除</button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="jd-preview">{record.raw_text}</p>
+                      <div className="jd-actions">
+                        <button type="button" className="button-secondary" disabled={busy} onClick={() => setEditingIds((current) => [...current, record.id])}>编辑</button>
+                        <button type="button" className="delete-button" disabled={busy} onClick={() => void deleteRecord(record)}>删除</button>
+                      </div>
+                    </>
+                  )}
                 </article>
               );
             })}
@@ -198,7 +232,6 @@ export function JobDescriptionsSection({
           <div className={`jd-readiness ${readiness.ready ? "ready" : ""}`} aria-live="polite">
             {readiness.ready ? "✓ 已达到最低分析要求" : `还需添加 ${readiness.remaining} 个 JD 才达到最低分析要求`}
           </div>
-          <div className={`jd-next-step ${readiness.ready ? "ready" : ""}`} aria-disabled={!readiness.ready}>下一步：分析市场要求</div>
         </>
       )}
     </section>
