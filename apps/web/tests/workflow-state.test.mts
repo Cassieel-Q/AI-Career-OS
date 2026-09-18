@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import {
   canEnterStep,
   latestValidStep,
+  readWorkflowSnapshot,
   workflowCompletion,
   workflowHref,
 } from "../app/workflow-state.ts";
@@ -122,3 +124,37 @@ test("job-description step completes only at the three-record readiness threshol
 test("workflowHref carries profile identity in every dynamic route", () => {
   assert.equal(workflowHref("profile-1", "job-descriptions"), "/workflow/profile-1/job-descriptions");
 });
+
+test("server snapshot rehydrates the persisted profile, exploration, target, and JD collection", async () => {
+  const calls: string[] = [];
+  const request = async (input: RequestInfo | URL) => {
+    const url = String(input);
+    calls.push(url);
+    if (url.endsWith("/api/v1/profiles/profile-1")) return jsonResponse(confirmedProfile);
+    if (url.endsWith("/api/v1/profiles/profile-1/role-exploration")) return jsonResponse(exploration);
+    if (url.endsWith("/api/v1/profiles/profile-1/target-role")) return jsonResponse(targetRole);
+    if (url.endsWith(`/api/v1/target-roles/${targetRole.id}/job-descriptions`)) return jsonResponse([jd("jd-1")]);
+    throw new Error(`Unexpected request: ${url}`);
+  };
+
+  const result = await readWorkflowSnapshot("profile-1", "http://api.test", request);
+
+  assert.equal(result.profile?.profile_id, "profile-1");
+  assert.equal(result.roleExploration?.id, exploration.id);
+  assert.equal(result.targetRole?.id, targetRole.id);
+  assert.deepEqual(result.jobDescriptions.map((record) => record.id), ["jd-1"]);
+  assert.equal(calls.length, 4);
+});
+
+test("home page delegates to the canonical workflow start route", async () => {
+  const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  assert.match(source, /redirect\(["']\/workflow\/start["']\)/);
+  assert.doesNotMatch(source, /<section className="career-preferences"/);
+});
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+}

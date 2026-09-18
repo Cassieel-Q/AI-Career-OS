@@ -46,6 +46,18 @@ export const ROLE_EXPLORATION_LEVEL_LABELS: Record<RoleExplorationLevel, string>
 export const ROLE_EXPLORATION_DISCLAIMER =
   "本探索基于已确认的 Profile、已保存的职业偏好与内置岗位知识（confirmed Profile + saved preferences + built-in role knowledge）；未使用真实 JD (no real JD)。";
 
+export const ROLE_EXPLORATION_GENERATION_ERROR = "岗位探索暂时生成失败，请重试。";
+
+export function roleExplorationGenerationView(creating: boolean, error: string) {
+  return {
+    buttonLabel: creating ? "正在生成…" : error ? "重试岗位探索" : "开始探索岗位",
+    disabled: creating,
+    showLoading: creating,
+    showRetry: Boolean(error) && !creating,
+    error: error || null,
+  };
+}
+
 /** A result may only be requested once the profile and its preferences are persisted. */
 export function profileCanExploreRoles(profile: Profile | null): boolean {
   const preferences = profile?.preferences;

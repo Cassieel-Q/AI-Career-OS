@@ -1,4 +1,5 @@
 import type { CareerPreferences } from "./career-preferences.ts";
+import type { Route } from "next";
 import {
   getJobDescriptionsRequest,
   MINIMUM_JOB_DESCRIPTIONS,
@@ -31,6 +32,13 @@ export type WorkflowSnapshot = {
   jobDescriptions: JobDescriptionRead[];
 };
 
+export class WorkflowProfileNotFoundError extends Error {
+  constructor() {
+    super("Profile not found");
+    this.name = "WorkflowProfileNotFoundError";
+  }
+}
+
 export const WORKFLOW_STEPS: readonly WorkflowStep[] = [
   "profile",
   "preferences",
@@ -39,8 +47,10 @@ export const WORKFLOW_STEPS: readonly WorkflowStep[] = [
   "job-descriptions",
 ];
 
-export function workflowHref(profileId: string, step: WorkflowStep): string {
-  return `/workflow/${encodeURIComponent(profileId)}/${step}`;
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+
+export function workflowHref(profileId: string, step: WorkflowStep): Route {
+  return `/workflow/${encodeURIComponent(profileId)}/${step}` as Route;
 }
 
 function hasValidPreferences(profile: Profile | null): profile is Profile & { preferences: CareerPreferences } {
@@ -113,6 +123,7 @@ export async function readWorkflowSnapshot(
   request: ProfileRequester = fetch,
 ): Promise<WorkflowSnapshot> {
   const profileResponse = await request(`${apiUrl}/api/v1/profiles/${encodeURIComponent(profileId)}`, { method: "GET" });
+  if (profileResponse.status === 404) throw new WorkflowProfileNotFoundError();
   const profile = normalizeProfile(await readApiPayload<Profile>(profileResponse));
   let roleExploration: RoleExplorationRead | null = null;
   let targetRole: TargetRoleRead | null = null;
