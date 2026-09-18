@@ -1,8 +1,8 @@
 # UIX-001 Workflow Navigation Shell Design
 
-**Date:** 2026-09-18  
-**Status:** Frozen for implementation  
-**Branch:** `feature/workflow-navigation-shell`  
+**Date:** 2026-09-18
+**Status:** Frozen for implementation
+**Branch:** `feature/workflow-navigation-shell`
 **Source:** Product Owner handoff pasted on 2026-09-18; existing API and UI inspected from `ab9c54b`
 
 ## Goal
@@ -98,4 +98,3 @@ Add focused frontend unit tests for workflow state/guard mapping, route construc
 - invalidation-aware route selection.
 
 Run the required frontend tests, TypeScript type-check, ESLint, production build, and `git diff --check`. No backend changes are expected, so backend remains untouched and its existing regression evidence is reported separately.
-

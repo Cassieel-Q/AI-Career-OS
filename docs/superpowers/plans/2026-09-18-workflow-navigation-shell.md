@@ -155,4 +155,3 @@ Files:
 - [ ] Run from the worktree root: git diff --name-only ab9c54b..HEAD; git diff --check; rg -n "TASK-007|Market Profile|Gap Analysis|salary analysis|fit score" apps/web/app.
 - [ ] Inspect Get-ChildItem apps/web/app/workflow -Recurse -File; git status --short --branch; git log -1 --oneline.
 - [ ] Report branch, HEAD, worktree path, changed files, route structure, component and guard strategy, refresh/history/invalidation behavior, Role Exploration loading/error, tests, type-check, lint, build, diff check, and known non-blocking debt. State UIX-001 READY FOR PRODUCT OWNER MANUAL ACCEPTANCE. Do not merge, push main, or start TASK-007.
-
