@@ -67,15 +67,24 @@ def test_select_target_role_accepts_low_priority_and_derives_catalog_fields(db_s
     assert selected.role_exploration_id == exploration.id
 
 
-def test_select_target_role_replaces_the_single_active_selection(db_session, persisted_profile):
+def test_select_target_role_replaces_the_single_active_selection_with_a_new_parent(db_session, persisted_profile):
     _ready_profile(db_session, persisted_profile)
 
     first = select_target_role(db_session, persisted_profile.id, RoleCode.AI_PRODUCT_MANAGER)
     second = select_target_role(db_session, persisted_profile.id, RoleCode.LLM_ALGORITHM_ENGINEER)
 
-    assert second.id == first.id
+    assert second.id != first.id
     assert second.role_code is RoleCode.LLM_ALGORITHM_ENGINEER
     assert db_session.query(models.TargetRole).filter_by(profile_id=persisted_profile.id).count() == 1
+
+
+def test_reselecting_the_same_target_role_keeps_its_parent_identity(db_session, persisted_profile):
+    _ready_profile(db_session, persisted_profile)
+
+    first = select_target_role(db_session, persisted_profile.id, RoleCode.AI_PRODUCT_MANAGER)
+    second = select_target_role(db_session, persisted_profile.id, RoleCode.AI_PRODUCT_MANAGER)
+
+    assert second.id == first.id
 
 
 def test_get_target_role_returns_the_saved_selection(db_session, persisted_profile):

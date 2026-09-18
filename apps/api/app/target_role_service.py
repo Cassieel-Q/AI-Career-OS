@@ -111,6 +111,15 @@ def select_target_role(db: Session, profile_id: UUID, role_code: RoleCode) -> Ta
             .with_for_update()
         ).scalar_one_or_none()
         now = datetime.now(timezone.utc)
+        replace_row = row is not None and (
+            row.role_code != role_code.value
+            or row.role_profile_version != current_exploration.role_profile_version
+            or row.role_exploration_id != exploration.id
+        )
+        if replace_row:
+            db.delete(row)
+            db.flush()
+            row = None
         if row is None:
             row = models.TargetRole(
                 profile_id=profile_id,
@@ -122,9 +131,6 @@ def select_target_role(db: Session, profile_id: UUID, role_code: RoleCode) -> Ta
             )
             db.add(row)
         else:
-            row.role_code = role_code.value
-            row.role_profile_version = current_exploration.role_profile_version
-            row.role_exploration_id = exploration.id
             row.selected_at = now
             row.updated_at = now
         db.commit()

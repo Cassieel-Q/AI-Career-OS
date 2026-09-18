@@ -21,6 +21,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.job_description_routes import router as job_description_router
 from app.profile_schemas import CareerPreferencesInput, CareerPreferencesRead, ProfileRead, ProfileUpdate
 from app.profile_service import (
     confirm_profile,
@@ -2468,6 +2469,7 @@ def validate_evidence_trace(result: ResumeExtractionResult, source_text: str) ->
 
 
 app = FastAPI(title="AI Career OS API", version="0.1.0")
+app.include_router(job_description_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_allowed_frontend_origins(),
