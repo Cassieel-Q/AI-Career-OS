@@ -1,7 +1,7 @@
 # UIX-001 Workflow Navigation Shell Design
 
 **Date:** 2026-09-18
-**Status:** Frozen for implementation
+**Status:** FROZEN — Product Owner manual acceptance PASS (2026-09-19)
 **Branch:** `feature/workflow-navigation-shell`
 **Source:** Product Owner handoff pasted on 2026-09-18; existing API and UI inspected from `ab9c54b`
 
