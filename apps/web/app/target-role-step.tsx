@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { ROLE_EXPLORATION_LEVEL_LABELS, roleExplorationViewData } from "./role-exploration.ts";
 import type { RoleCode } from "./role-exploration.ts";
 import type { TargetRoleRead } from "./target-role.ts";
-import { selectTargetRoleRequest, targetRoleViewData } from "./target-role.ts";
+import { selectTargetRoleRequest, targetRoleMatchesExploration, targetRoleViewData } from "./target-role.ts";
 import type { WorkflowStepControls } from "./workflow-route.tsx";
 import type { WorkflowSnapshot } from "./workflow-state.ts";
 
@@ -16,15 +16,15 @@ export function TargetRoleStep({ snapshot, controls }: { snapshot: WorkflowSnaps
   const [error, setError] = useState("");
   const inFlight = useRef(false);
   const currentTarget = targetRoleViewData(
-    targetRole && targetRole.role_exploration_id === exploration?.id ? targetRole : null,
+    targetRoleMatchesExploration(targetRole, exploration) ? targetRole : null,
   );
   const hasCurrentTarget = Boolean(currentTarget);
   const setNextReady = controls.setNextReady;
 
   useEffect(() => setTargetRole(snapshot.targetRole), [snapshot.targetRole]);
   useEffect(() => {
-    setNextReady(hasCurrentTarget);
-  }, [hasCurrentTarget, setNextReady]);
+    setNextReady(selecting === null && !controls.busy && hasCurrentTarget);
+  }, [controls.busy, hasCurrentTarget, selecting, setNextReady]);
 
   async function chooseTargetRole(roleCode: RoleCode) {
     if (!snapshot.profile || !exploration || inFlight.current || controls.busy) return;

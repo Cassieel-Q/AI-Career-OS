@@ -105,9 +105,13 @@ export async function getRoleExplorationRequest(
   request: ProfileRequester = fetch,
 ): Promise<RoleExplorationRead | null> {
   const response = await request(`${apiUrl}/api/v1/profiles/${profileId}/role-exploration`, { method: "GET" });
-  if (response.status === 404) {
+  if (response.status === 404 || response.status === 409) {
     const payload = await response.clone().json().catch(() => null) as { detail?: unknown } | null;
-    if (payload?.detail === "Role exploration has not been generated") return null;
+    if (
+      payload?.detail === "Role exploration has not been generated" ||
+      payload?.detail === "Role exploration requires a confirmed profile" ||
+      payload?.detail === "Career preferences are required before role exploration"
+    ) return null;
   }
   return readApiPayload<RoleExplorationRead>(response);
 }

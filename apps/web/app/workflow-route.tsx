@@ -62,9 +62,14 @@ export function WorkflowRoute({ profileId, currentStep, renderStep }: WorkflowRo
         const destination = latestHref(profileId, result);
         setSnapshot(null);
         setNextReady(false);
-        setLoading(true);
-        redirecting = true;
-        if (destination !== workflowHref(profileId, currentStep)) router.replace(destination);
+        if (destination !== workflowHref(profileId, currentStep)) {
+          setLoading(true);
+          redirecting = true;
+          router.replace(destination);
+        } else {
+          setLoading(false);
+          setError("当前步骤的前置条件已变化，请重试。");
+        }
         return null;
       }
       return result;
@@ -110,10 +115,16 @@ export function WorkflowRoute({ profileId, currentStep, renderStep }: WorkflowRo
       }
       if (!canEnterStep(latest, currentStep)) {
         const destination = latestHref(profileId, latest);
-        setSnapshot(null);
         setNextReady(false);
-        setLoading(true);
-        if (destination !== workflowHref(profileId, currentStep)) router.replace(destination);
+        if (destination !== workflowHref(profileId, currentStep)) {
+          setSnapshot(null);
+          setLoading(true);
+          router.replace(destination);
+        } else {
+          setSnapshot(latest);
+          setLoading(false);
+          setError("当前步骤的前置条件已变化，请重试。");
+        }
         return;
       }
       const action = nextAction.current;
@@ -133,18 +144,29 @@ export function WorkflowRoute({ profileId, currentStep, renderStep }: WorkflowRo
         setSnapshot(persisted);
         if (!canNavigateNext(persisted, currentStep)) {
           const destination = latestHref(profileId, persisted);
-          setSnapshot(null);
           setNextReady(false);
-          setLoading(true);
-          if (destination !== workflowHref(profileId, currentStep)) router.replace(destination);
+          if (destination !== workflowHref(profileId, currentStep)) {
+            setSnapshot(null);
+            setLoading(true);
+            router.replace(destination);
+          } else {
+            setLoading(false);
+            setError("当前步骤尚未完成，请完成后再继续。");
+          }
           return;
         }
       } else if (!canNavigateNext(latest, currentStep)) {
         const destination = latestHref(profileId, latest);
-        setSnapshot(null);
         setNextReady(false);
-        setLoading(true);
-        if (destination !== workflowHref(profileId, currentStep)) router.replace(destination);
+        if (destination !== workflowHref(profileId, currentStep)) {
+          setSnapshot(null);
+          setLoading(true);
+          router.replace(destination);
+        } else {
+          setSnapshot(latest);
+          setLoading(false);
+          setError("当前步骤尚未完成，请完成后再继续。");
+        }
         return;
       } else {
         setSnapshot(latest);

@@ -38,7 +38,18 @@ const exploration: RoleExplorationRead = {
   id: "exploration-1",
   profile_id: "profile-1",
   role_profile_version: "v1",
-  result: { role_profile_version: "v1", items: [] },
+  result: {
+    role_profile_version: "v1",
+    items: [{
+      role_code: "AI_PRODUCT_MANAGER",
+      role_name: "AI Product Manager",
+      level: "RECOMMENDED",
+      reasons: [],
+      concerns: [],
+      evidence_refs: [],
+      preference_refs: ["CURRENT_FIT"],
+    }],
+  },
   created_at: "2026-09-18T00:00:00Z",
   updated_at: "2026-09-18T00:00:00Z",
 };
@@ -116,6 +127,21 @@ test("stale target and JD records bound to another exploration are ignored", () 
   assert.equal(canEnterStep(result, "job-descriptions"), false);
 });
 
+test("a target role is current only when its role code is in the exploration result", () => {
+  const result = snapshot({ targetRole: { ...targetRole, role_code: "AI_DATA_ANALYST" } });
+
+  assert.equal(workflowCompletion(result)["target-role"], false);
+  assert.equal(latestValidStep(result), "target-role");
+  assert.equal(canEnterStep(result, "job-descriptions"), false);
+});
+
+test("a target role from another profile is never current", () => {
+  const result = snapshot({ targetRole: { ...targetRole, profile_id: "other-profile" } });
+
+  assert.equal(workflowCompletion(result)["target-role"], false);
+  assert.equal(latestValidStep(result), "target-role");
+});
+
 test("job-description step completes only at the three-record readiness threshold", () => {
   assert.equal(workflowCompletion(snapshot({ jobDescriptions: [jd("one"), jd("two")] }))["job-descriptions"], false);
   assert.equal(workflowCompletion(snapshot({ jobDescriptions: [jd("one"), jd("two"), jd("three")] }))["job-descriptions"], true);
@@ -144,6 +170,25 @@ test("server snapshot rehydrates the persisted profile, exploration, target, and
   assert.equal(result.targetRole?.id, targetRole.id);
   assert.deepEqual(result.jobDescriptions.map((record) => record.id), ["jd-1"]);
   assert.equal(calls.length, 4);
+});
+
+test("a target-role deletion racing the JD read invalidates the target in the snapshot", async () => {
+  const request = async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url.endsWith("/api/v1/profiles/profile-1")) return jsonResponse(confirmedProfile);
+    if (url.endsWith("/api/v1/profiles/profile-1/role-exploration")) return jsonResponse(exploration);
+    if (url.endsWith("/api/v1/profiles/profile-1/target-role")) return jsonResponse(targetRole);
+    if (url.endsWith(`/api/v1/target-roles/${targetRole.id}/job-descriptions`)) {
+      return jsonResponse({ detail: "Target role not found" }, 404);
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  };
+
+  const result = await readWorkflowSnapshot("profile-1", "http://api.test", request);
+
+  assert.equal(result.targetRole, null);
+  assert.deepEqual(result.jobDescriptions, []);
+  assert.equal(latestValidStep(result), "target-role");
 });
 
 test("home page delegates to the canonical workflow start route", async () => {

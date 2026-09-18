@@ -24,8 +24,8 @@ export function RoleExplorationStep({ snapshot, controls }: { snapshot: Workflow
 
   useEffect(() => setExploration(snapshot.roleExploration), [snapshot.roleExploration]);
   useEffect(() => {
-    setNextReady(Boolean(exploration && exploration.profile_id === profile?.profile_id));
-  }, [exploration, profile?.profile_id, setNextReady]);
+    setNextReady(!creating && !controls.busy && Boolean(exploration && exploration.profile_id === profile?.profile_id));
+  }, [controls.busy, creating, exploration, profile?.profile_id, setNextReady]);
 
   async function generate() {
     if (!profile || inFlight.current || controls.busy) return;
@@ -99,7 +99,7 @@ export function RoleExplorationStep({ snapshot, controls }: { snapshot: Workflow
           <p className="role-disclaimer">{ROLE_EXPLORATION_DISCLAIMER}</p>
           {error && <p className="message error" role="alert">{error}</p>}
           <button type="button" className="button-secondary" onClick={() => void generate()} disabled={disabled}>
-            {creating ? "正在生成…" : "重新探索岗位"}
+            {generationView.buttonLabel}
           </button>
           {creating && <p className="profile-note" role="status" aria-live="polite">正在根据你的 Profile 和职业偏好探索岗位…</p>}
         </section>

@@ -25,6 +25,11 @@ export type JobDescriptionPatch = {
   source_url?: string | null;
 };
 
+export type JobDescriptionsReadState = {
+  records: JobDescriptionRead[];
+  targetMissing: boolean;
+};
+
 export function normalizeJobDescriptionSourceUrl(value: string | null | undefined): string | null | undefined {
   if (value === undefined || value === null) return value;
   const trimmed = value.trim();
@@ -62,10 +67,22 @@ export async function getJobDescriptionsRequest(
   apiUrl: string,
   request: ProfileRequester = fetch,
 ): Promise<JobDescriptionRead[]> {
+  return (await getJobDescriptionsStateRequest(targetRoleId, apiUrl, request)).records;
+}
+
+export async function getJobDescriptionsStateRequest(
+  targetRoleId: string,
+  apiUrl: string,
+  request: ProfileRequester = fetch,
+): Promise<JobDescriptionsReadState> {
   const response = await request(`${apiUrl}/api/v1/target-roles/${targetRoleId}/job-descriptions`, {
     method: "GET",
   });
-  return readApiPayload<JobDescriptionRead[]>(response);
+  if (response.status === 404) {
+    const payload = await response.clone().json().catch(() => null) as { detail?: unknown } | null;
+    if (payload?.detail === "Target role not found") return { records: [], targetMissing: true };
+  }
+  return { records: await readApiPayload<JobDescriptionRead[]>(response), targetMissing: false };
 }
 
 export async function createJobDescriptionRequest(

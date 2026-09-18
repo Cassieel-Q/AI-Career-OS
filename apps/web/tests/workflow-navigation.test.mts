@@ -32,7 +32,18 @@ const exploration = {
   id: "exploration-1",
   profile_id: "profile-1",
   role_profile_version: "v1",
-  result: { role_profile_version: "v1", items: [] },
+  result: {
+    role_profile_version: "v1",
+    items: [{
+      role_code: "AI_PRODUCT_MANAGER" as const,
+      role_name: "AI Product Manager",
+      level: "RECOMMENDED" as const,
+      reasons: [],
+      concerns: [],
+      evidence_refs: [],
+      preference_refs: ["CURRENT_FIT" as const],
+    }],
+  },
   created_at: "2026-09-18T00:00:00Z",
   updated_at: "2026-09-18T00:00:00Z",
 };

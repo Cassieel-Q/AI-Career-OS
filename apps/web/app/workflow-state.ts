@@ -1,7 +1,7 @@
 import type { CareerPreferences } from "./career-preferences.ts";
 import type { Route } from "next";
 import {
-  getJobDescriptionsRequest,
+  getJobDescriptionsStateRequest,
   MINIMUM_JOB_DESCRIPTIONS,
 } from "./job-descriptions.ts";
 import type { JobDescriptionRead } from "./job-descriptions.ts";
@@ -15,7 +15,7 @@ import {
   profileCanExploreRoles,
 } from "./role-exploration.ts";
 import type { RoleExplorationRead } from "./role-exploration.ts";
-import { getTargetRoleRequest } from "./target-role.ts";
+import { getTargetRoleRequest, targetRoleMatchesExploration } from "./target-role.ts";
 import type { TargetRoleRead } from "./target-role.ts";
 
 export type WorkflowStep =
@@ -71,7 +71,7 @@ function hasCurrentTargetRole(snapshot: WorkflowSnapshot): boolean {
     hasCurrentExploration(snapshot) &&
       snapshot.targetRole &&
       snapshot.targetRole.profile_id === snapshot.profile?.profile_id &&
-      snapshot.targetRole.role_exploration_id === snapshot.roleExploration?.id,
+      targetRoleMatchesExploration(snapshot.targetRole, snapshot.roleExploration),
   );
 }
 
@@ -133,8 +133,10 @@ export async function readWorkflowSnapshot(
     roleExploration = await getRoleExplorationRequest(profile.profile_id, apiUrl, request);
     if (roleExploration && roleExploration.profile_id === profile.profile_id) {
       targetRole = await getTargetRoleRequest(profile.profile_id, apiUrl, request);
-      if (targetRole && targetRole.role_exploration_id === roleExploration.id) {
-        jobDescriptions = await getJobDescriptionsRequest(targetRole.id, apiUrl, request);
+      if (targetRole && targetRoleMatchesExploration(targetRole, roleExploration)) {
+        const jobDescriptionState = await getJobDescriptionsStateRequest(targetRole.id, apiUrl, request);
+        jobDescriptions = jobDescriptionState.records;
+        if (jobDescriptionState.targetMissing) targetRole = null;
       }
     }
   }

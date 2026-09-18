@@ -394,6 +394,8 @@ test("not-generated exploration GET returns null while other errors remain safe"
   await assert.rejects(getRoleExplorationRequest("missing-profile", "http://api.test", missingProfile), /Profile not found/);
   const failed: ProfileRequester = async () => jsonResponse({ detail: [{ msg: "backend unavailable" }] }, 503);
   await assert.rejects(getRoleExplorationRequest("profile-1", "http://api.test", failed), /backend unavailable/);
+  const preferenceRace: ProfileRequester = async () => jsonResponse({ detail: "Career preferences are required before role exploration" }, 409);
+  assert.equal(await getRoleExplorationRequest("profile-1", "http://api.test", preferenceRace), null);
 });
 
 test("role exploration input identity accepts unchanged input and rejects changed profile or preferences", () => {
@@ -467,6 +469,8 @@ test("target role GET treats only an unselected target as the empty state", asyn
 
   const missingProfile: ProfileRequester = async () => jsonResponse({ detail: "Profile not found" }, 404);
   await assert.rejects(getTargetRoleRequest("profile-1", "http://api.test", missingProfile), /Profile not found/);
+  const invalidatedExploration: ProfileRequester = async () => jsonResponse({ detail: "Role exploration is required before target role selection" }, 409);
+  assert.equal(await getTargetRoleRequest("profile-1", "http://api.test", invalidatedExploration), null);
 });
 
 test("target role PUT sends only the canonical role code for every supported role", async () => {
