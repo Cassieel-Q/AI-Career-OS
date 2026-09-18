@@ -2473,7 +2473,7 @@ app.include_router(job_description_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_allowed_frontend_origins(),
-    allow_methods=["POST", "GET", "PUT"],
+    allow_methods=["POST", "GET", "PUT", "PATCH", "DELETE"],
     allow_headers=["*"],
 )
 
