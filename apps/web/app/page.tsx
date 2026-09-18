@@ -34,6 +34,7 @@ import {
 import type { RoleExplorationRead } from "./role-exploration";
 import { getTargetRoleRequest, selectTargetRoleRequest, targetRoleViewData } from "./target-role";
 import type { TargetRoleCode, TargetRoleRead } from "./target-role";
+import { JobDescriptionsSection } from "./job-descriptions-section";
 
 type EditableSection = "education" | "skills" | "experiences" | "certifications";
 
@@ -646,6 +647,14 @@ export default function Home() {
                   </div>
                   <p className="role-disclaimer">{ROLE_EXPLORATION_DISCLAIMER}</p>
                 </section>
+              )}
+              {targetRole && roleExploration && targetRole.role_exploration_id === roleExploration.id && (
+                <JobDescriptionsSection
+                  key={targetRole.id}
+                  targetRole={targetRole}
+                  apiUrl={apiUrl}
+                  disabled={loadingTargetRole || selectingTargetRole !== null}
+                />
               )}
             </section>
           )}
