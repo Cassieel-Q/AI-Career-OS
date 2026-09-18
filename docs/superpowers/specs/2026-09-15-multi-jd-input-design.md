@@ -1,7 +1,7 @@
 # TASK-006 Multi-JD Input Design
 
-**Date:** 2026-09-15  
-**Status:** Frozen for implementation  
+**Date:** 2026-09-15
+**Status:** Frozen for implementation
 **Branch:** `feature/multi-jd-input`
 
 ## Goal

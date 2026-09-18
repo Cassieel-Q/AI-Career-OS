@@ -1,7 +1,7 @@
 # TASK-006 intended vs implemented review
 
-Date: 2026-09-18  
-Branch: `feature/multi-jd-input`  
+Date: 2026-09-18
+Branch: `feature/multi-jd-input`
 Scope: collect and edit raw Job Description samples for the one active Target Role.
 
 ## Approved contract
