@@ -1,0 +1,188 @@
+[
+  {
+    "id": "case-1-rewrite-existing-experience",
+    "scenario": "The user has the experience, but the resume wording is too weak.",
+    "expected": {
+      "grounded": true,
+      "readiness_status": "DEFENDABLE",
+      "evidence_refs": ["experience-llm-eval"],
+      "gap_type": "ARTICULATION_GAP",
+      "followup_relevant": true,
+      "artifact_producing": true
+    }
+  },
+  {
+    "id": "case-2-claim-without-evidence",
+    "scenario": "The user claims the capability, but no profile evidence is available.",
+    "expected": {
+      "grounded": false,
+      "readiness_status": "WEAK_EVIDENCE",
+      "evidence_refs": [],
+      "gap_type": "EVIDENCE_GAP",
+      "followup_relevant": true,
+      "artifact_producing": true
+    }
+  },
+  {
+    "id": "case-3-unsupported-jd-requirement",
+    "scenario": "The JD requires a capability that is absent from the profile.",
+    "expected": {
+      "grounded": false,
+      "readiness_status": "UNSUPPORTED",
+      "evidence_refs": [],
+      "gap_type": "KNOWLEDGE_GAP",
+      "followup_relevant": true,
+      "artifact_producing": true
+    }
+  },
+  {
+    "id": "case-4-knowledge-without-project",
+    "scenario": "The interview answer is technically correct but has no project case.",
+    "expected": {
+      "grounded": true,
+      "readiness_status": "WEAK_EVIDENCE",
+      "evidence_refs": ["skill-llm"],
+      "gap_type": "PROJECT_GAP",
+      "followup_relevant": true,
+      "artifact_producing": true
+    }
+  },
+  {
+    "id": "case-5-project-articulation",
+    "scenario": "The user did the project, but explains it in a confusing way.",
+    "expected": {
+      "grounded": true,
+      "readiness_status": "DEFENDABLE",
+      "evidence_refs": ["experience-project"],
+      "gap_type": "ARTICULATION_GAP",
+      "followup_relevant": true,
+      "artifact_producing": true
+    }
+  },
+  {
+    "id": "case-6-jd-grounding",
+    "scenario": "The parser must tie a product metrics requirement to exact JD evidence.",
+    "expected": {
+      "grounded": true,
+      "jd_grounded": true,
+      "unsupported_requirement": false,
+      "readiness_status": "WEAK_EVIDENCE",
+      "evidence_refs": [],
+      "gap_type": "EVIDENCE_GAP",
+      "followup_relevant": true,
+      "artifact_producing": true
+    }
+  },
+  {
+    "id": "case-7-experience-selection",
+    "scenario": "An LLM evaluation project is more relevant than a generic campus activity for an AI PM JD.",
+    "expected": {
+      "grounded": true,
+      "experience_selection_relevant": true,
+      "readiness_status": "DEFENDABLE",
+      "evidence_refs": ["experience-llm-eval"],
+      "gap_type": "ARTICULATION_GAP",
+      "followup_relevant": true,
+      "artifact_producing": true
+    }
+  },
+  {
+    "id": "case-8-deemphasize-weak-fit",
+    "scenario": "A bookkeeping task is retained in the master profile but deemphasized for an AI product role.",
+    "expected": {
+      "grounded": true,
+      "experience_selection_relevant": true,
+      "readiness_status": "WEAK_EVIDENCE",
+      "evidence_refs": ["experience-bookkeeping"],
+      "gap_type": "ARTICULATION_GAP",
+      "followup_relevant": true,
+      "artifact_producing": false
+    }
+  },
+  {
+    "id": "case-9-recover-existing-evidence",
+    "scenario": "The user performed error analysis but never wrote it into the resume; recovery should precede a new sprint.",
+    "expected": {
+      "grounded": true,
+      "readiness_status": "DEFENDABLE",
+      "evidence_refs": ["user-confirmed-error-log"],
+      "gap_type": "EVIDENCE_GAP",
+      "followup_relevant": true,
+      "artifact_producing": true
+    }
+  },
+  {
+    "id": "case-10-no-fabricated-metrics",
+    "scenario": "The model has no measured conversion result and must leave the number as user-confirmation required.",
+    "expected": {
+      "grounded": false,
+      "readiness_status": "WEAK_EVIDENCE",
+      "evidence_refs": ["experience-launch"],
+      "gap_type": "EVIDENCE_GAP",
+      "followup_relevant": true,
+      "artifact_producing": true
+    }
+  },
+  {
+    "id": "case-11-red-team-high-risk",
+    "scenario": "A high relevance claim about model evaluation has no reproducible artifact and should be recalled as high risk.",
+    "expected": {
+      "grounded": true,
+      "red_team_recalled": true,
+      "readiness_status": "WEAK_EVIDENCE",
+      "evidence_refs": ["experience-llm-eval"],
+      "gap_type": "EVIDENCE_GAP",
+      "followup_relevant": true,
+      "artifact_producing": true
+    }
+  },
+  {
+    "id": "case-12-company-retrieval",
+    "scenario": "Baidu AI PM retrieval ranks same-company AI PM skills before generic interview skills.",
+    "expected": {
+      "grounded": true,
+      "interview_retrieval_relevant": true,
+      "readiness_status": "DEFENDABLE",
+      "evidence_refs": ["skill-baidu-metrics"],
+      "gap_type": "KNOWLEDGE_GAP",
+      "followup_relevant": true,
+      "artifact_producing": true
+    }
+  },
+  {
+    "id": "case-13-followup-relevance",
+    "scenario": "The second mock interview question follows the user's answer about a false-positive evaluation case.",
+    "expected": {
+      "grounded": true,
+      "followup_relevant": true,
+      "readiness_status": "DEFENDABLE",
+      "evidence_refs": ["experience-llm-eval"],
+      "gap_type": "ARTICULATION_GAP",
+      "artifact_producing": true
+    }
+  },
+  {
+    "id": "case-14-gap-classification",
+    "scenario": "The user knows the metric concept but has no project example, which is a project gap rather than a knowledge gap.",
+    "expected": {
+      "grounded": true,
+      "readiness_status": "WEAK_EVIDENCE",
+      "evidence_refs": ["skill-product-metrics"],
+      "gap_type": "PROJECT_GAP",
+      "followup_relevant": true,
+      "artifact_producing": true
+    }
+  },
+  {
+    "id": "case-15-existing-project-proof-action",
+    "scenario": "The recommended proof action adds a small evaluation report to the existing AI Career OS project.",
+    "expected": {
+      "grounded": true,
+      "readiness_status": "WEAK_EVIDENCE",
+      "evidence_refs": ["project-ai-career-os"],
+      "gap_type": "PROJECT_GAP",
+      "followup_relevant": true,
+      "artifact_producing": true
+    }
+  }
+]
