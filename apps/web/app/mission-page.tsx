@@ -395,11 +395,25 @@ export function MissionPage({ missionId, currentTab }: MissionPageProps) {
       try {
         if (shouldGenerateSelection) {
           await generateMissionStep(missionId, "experience-selection/generate");
+          // The AI-first resume page should not stop after creating the
+          // selection draft. Continue the same transition through strategy
+          // confirmation and target-resume generation. Previously this effect
+          // refreshed once, cleared its ref, and then returned without a
+          // dependency change, leaving the right column on "正在生成逐条改写…".
+          const generatedSelection = await readExperienceSelection(missionId);
+          await saveExperienceSelection(missionId, generatedSelection, undefined, undefined, true);
+          await generateMissionStep(missionId, "resume-strategy");
+          await confirmStrategy(missionId);
+          await generateMissionStep(missionId, "target-resumes");
         } else if (shouldConfirmSelection) {
           await saveExperienceSelection(missionId, experienceSelection, undefined, undefined, true);
           await generateMissionStep(missionId, "resume-strategy");
+          await confirmStrategy(missionId);
+          await generateMissionStep(missionId, "target-resumes");
         } else if (shouldGenerateStrategy) {
           await generateMissionStep(missionId, "resume-strategy");
+          await confirmStrategy(missionId);
+          await generateMissionStep(missionId, "target-resumes");
         } else if (shouldConfirmStrategy) {
           await confirmStrategy(missionId);
           await generateMissionStep(missionId, "target-resumes");
@@ -1092,8 +1106,16 @@ useEffect(() => {
     const rewriteIds = new Set((latestResume?.bullets ?? []).map((bullet) => bullet.source_experience_id).filter(Boolean) as string[]);
     const regenerate = async () => {
       await run(async () => {
-        await regenerateResumeOptimization(missionId);
         setResumes([]);
+        await regenerateResumeOptimization(missionId);
+        // Regeneration is an explicit user action, so finish the complete
+        // AI-first pipeline in this request instead of relying on a later
+        // effect pass to notice the intermediate workflow state.
+        const generatedSelection = await readExperienceSelection(missionId);
+        await saveExperienceSelection(missionId, generatedSelection, undefined, undefined, true);
+        await generateMissionStep(missionId, "resume-strategy");
+        await confirmStrategy(missionId);
+        await generateMissionStep(missionId, "target-resumes");
       });
     };
     return (
