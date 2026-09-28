@@ -1,0 +1,91 @@
+{
+  "selections": [
+    {
+      "supporting_evidence_refs": [],
+      "decision": "DEEMPHASIZE",
+      "related_capabilities": [
+        "活动组织",
+        "跨团队协作",
+        "可核对的交付事实"
+      ],
+      "why": "「大连理工大学建设工程学院学生会体育部副部长」包含活动组织经验，但与智能硬件产品定义、技术方案和测试验证的直接关联有限，建议弱化，只保留可核对的组织与交付事实。",
+      "confidence": 0.78,
+      "experience_id": "2a1cc6e3-0416-4e3b-bf38-b5856cd5ac03"
+    },
+    {
+      "supporting_evidence_refs": [],
+      "decision": "KEEP_AND_HIGHLIGHT",
+      "related_capabilities": [
+        "项目中的个人负责部分",
+        "使用的方法与决策",
+        "可核对的结果或奖项"
+      ],
+      "why": "「第五届中国海洋工程设计大赛」包含与AI 产品经理实习生相关的可验证内容：聚酯缆系泊系统优化。建议围绕个人动作、方法和结果展开。",
+      "confidence": 0.86,
+      "experience_id": "7fc0b837-225a-4639-8188-4d0f0558101f"
+    },
+    {
+      "supporting_evidence_refs": [],
+      "decision": "KEEP_AND_HIGHLIGHT",
+      "related_capabilities": [
+        "项目中的个人负责部分",
+        "使用的方法与决策",
+        "可核对的结果或奖项"
+      ],
+      "why": "「第五届全国大学生可再生能源优秀科技作品竞赛」包含与AI 产品经理实习生相关的可验证内容：10 MW 驳船式浮式风机--养殖网箱多功能融合结构设计。建议围绕个人动作、方法和结果展开。",
+      "confidence": 0.86,
+      "experience_id": "714171bb-b69f-4429-9b6a-8d1b02cc46b2"
+    },
+    {
+      "supporting_evidence_refs": [],
+      "decision": "DEEMPHASIZE",
+      "related_capabilities": [
+        "事务协调",
+        "可核对的执行事实"
+      ],
+      "why": "主要是校园行政事务，与智能硬件产品定义、技术方案和测试验证的直接关联有限，建议弱化。",
+      "confidence": 0.92,
+      "experience_id": "591d0f73-7df0-451f-bf06-943635bdf962"
+    },
+    {
+      "supporting_evidence_refs": [],
+      "decision": "KEEP_AND_HIGHLIGHT",
+      "related_capabilities": [
+        "项目中的个人负责部分",
+        "使用的方法与决策",
+        "可核对的结果或奖项"
+      ],
+      "why": "「第十二届全国海洋航行器设计与制作大赛」包含与AI 产品经理实习生相关的可验证内容：一种集成垂荡型波能转换器的半潜式海上风力机。建议围绕个人动作、方法和结果展开。",
+      "confidence": 0.86,
+      "experience_id": "f8ad6a18-da4e-4956-abd4-11a29a6f9f4e"
+    },
+    {
+      "supporting_evidence_refs": [],
+      "decision": "OMIT",
+      "related_capabilities": [],
+      "why": "主要是班级事务，与目标岗位核心的智能硬件、产品定义、系统集成和测试验证关联较弱，有限篇幅应优先留给科研、竞赛和项目经历。",
+      "confidence": 0.92,
+      "experience_id": "8e821e1e-bbaa-4a8e-8da0-6b7136ae0e89"
+    },
+    {
+      "supporting_evidence_refs": [],
+      "decision": "KEEP_AND_HIGHLIGHT",
+      "related_capabilities": [
+        "项目中的个人负责部分",
+        "使用的方法与决策",
+        "可核对的结果或奖项"
+      ],
+      "why": "「附有垂荡板振荡水柱波能装置水动力性能的模拟研究」包含与AI 产品经理实习生相关的可验证内容：通过模拟运算评估垂荡板与振荡水柱协同工作效果以优化装置、提升波能利用效率。。建议围绕个人动作、方法和结果展开。",
+      "confidence": 0.86,
+      "experience_id": "215f3a4a-3cc5-409c-abc2-bfeac1574bc7"
+    },
+    {
+      "supporting_evidence_refs": [],
+      "decision": "OMIT",
+      "related_capabilities": [],
+      "why": "主要是班级事务，与目标岗位核心的智能硬件、产品定义、系统集成和测试验证关联较弱，有限篇幅应优先留给科研、竞赛和项目经历。",
+      "confidence": 0.92,
+      "experience_id": "ebbc7474-d847-422b-94ec-5d5d8f9d983d"
+    }
+  ]
+}
