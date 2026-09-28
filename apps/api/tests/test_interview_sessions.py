@@ -210,6 +210,40 @@ def test_interview_start_passes_bounded_curated_intel_to_provider(db_session, pe
     assert "body" not in provider.target_job["interview_intel"][0]
 
 
+def test_interview_uses_current_pack_topics_schema(db_session, persisted_profile):
+    claim_id = prepared_claim(db_session, persisted_profile)
+    claim = db_session.get(models.ResumeClaim, claim_id)
+    assert claim is not None
+    mission = models.JobMission(
+        profile_id=persisted_profile.id,
+        target_job_id=claim.target_job_id,
+        display_name="通用岗位面试任务",
+    )
+    db_session.add(mission)
+    db_session.flush()
+    db_session.add(models.InterviewPack(
+        mission_id=mission.id,
+        version=1,
+        topics=[{
+            "priority": "HIGH",
+            "topic": "项目决策与验证",
+            "why": "验证候选人的真实项目能力",
+            "claims": ["完成项目验证"],
+            "capabilities": ["项目决策"],
+            "intel_refs": [],
+            "question_patterns": ["你如何选择测试指标？"],
+            "evidence_expected": ["测试方案"],
+        }],
+    ))
+    db_session.commit()
+
+    provider = CapturingInterviewProvider()
+    start_interview_session(db_session, claim_id, provider=provider)
+
+    assert provider.target_job is not None
+    assert provider.target_job["interview_pack"][0]["topic"] == "项目决策与验证"
+
+
 def test_starting_fresh_interview_invalidates_previous_active_session(db_session, persisted_profile):
     claim_id = prepared_claim(db_session, persisted_profile)
     provider = FakeInterviewProvider()

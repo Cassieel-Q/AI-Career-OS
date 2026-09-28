@@ -576,6 +576,15 @@ def _final_resume_context(mission: models.JobMission | None) -> dict[str, object
     }
 
 
+def _interview_pack_topics(mission: models.JobMission | None) -> list[dict[str, object]]:
+    """Read the current InterviewPack schema without coupling interviews to one resume."""
+    if mission is None or not getattr(mission, "interview_packs", None):
+        return []
+    latest_pack = max(mission.interview_packs, key=lambda row: row.version)
+    topics = getattr(latest_pack, "topics", None)
+    return list(topics) if isinstance(topics, list) else []
+
+
 def start_interview_session(db: Session, claim_id: UUID, provider=None) -> InterviewSessionRead:
     claim = _claim(db, claim_id)
     readiness = str(claim.readiness_status or "").strip().upper()
@@ -602,10 +611,7 @@ def start_interview_session(db: Session, claim_id: UUID, provider=None) -> Inter
         active.next_skill_id = None
         active.updated_at = datetime.now(timezone.utc)
     provider = provider or get_interview_provider()
-    pack_topics = []
-    if mission is not None and getattr(mission, "interview_packs", None):
-        latest_pack = mission.interview_packs[-1]
-        pack_topics = list((latest_pack.pack or {}).get("topics") or []) if isinstance(latest_pack.pack, dict) else []
+    pack_topics = _interview_pack_topics(mission)
     try:
         interview_intel = bounded_intel_records(mission.interview_intel if mission is not None else [])
         response = provider.ask(
@@ -689,10 +695,7 @@ def submit_interview_turn(db: Session, session_id: UUID, payload: InterviewTurnC
         raise _http(409, "Interview sessions are limited to five rounds")
     provider = provider or get_interview_provider()
     mission = _mission_for_target_and_profile(db, target_job.id, profile.id)
-    pack_topics = []
-    if mission is not None and getattr(mission, "interview_packs", None):
-        latest_pack = mission.interview_packs[-1]
-        pack_topics = list((latest_pack.pack or {}).get("topics") or []) if isinstance(latest_pack.pack, dict) else []
+    pack_topics = _interview_pack_topics(mission)
     try:
         interview_intel = bounded_intel_records(mission.interview_intel if mission is not None else [])
         response = provider.ask(
