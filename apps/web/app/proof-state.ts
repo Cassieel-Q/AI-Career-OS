@@ -46,7 +46,7 @@ export const PROOF_STEP_LABELS: Record<ProofStep, string> = {
   "re-evaluate": "再评估",
 };
 
-export const PROOF_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+export const PROOF_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
 export function proofHref(profileId: string, step: ProofStep, missionId?: string): Route {
   const base = `/proof/${encodeURIComponent(profileId)}/${step}`;

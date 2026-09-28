@@ -47,7 +47,19 @@ export function MissionsHome() {
       setProfiles(ensureProfileOption(normalized, listProfileLabelOptions()));
       setMissions(await listMissions(normalized));
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "读取岗位准备失败。");
+      const message = caught instanceof Error ? caught.message : "读取岗位准备失败。";
+      if (/profile not found|档案不存在|HTTP 404/i.test(message)) {
+        window.localStorage.removeItem(PROFILE_STORAGE_KEY);
+        removeProfileLabel(normalized);
+        setProfileId("");
+        setProfiles(listProfileLabelOptions());
+        setMissions([]);
+        setError("本地演示数据库中没有这份简历档案，请重新上传简历。");
+      } else if (/failed to fetch|networkerror|网络请求失败/i.test(message)) {
+        setError("无法连接后端服务，请确认 API 已启动：http://127.0.0.1:8000。");
+      } else {
+        setError(message);
+      }
     } finally {
       setLoading(false);
     }
