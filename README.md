@@ -23,47 +23,85 @@ The product is designed for AI product, technical product, and intelligent-hardw
 
 ## Product tour
 
-The product tour follows one continuous preparation loop. The screenshots below use a Baidu AI product-manager mission to show what the user sees at each decision point.
+The tour below follows one real preparation loop from a pasted JD to an interview coaching plan. Each mission keeps its own resume decisions, final resume, interview questions, answers, scores, and memory.
 
-### 1. Upload a real resume
+### 1. Start from the target job / 从目标岗位开始
 
-![上传简历并选择档案](docs/screenshots/mission-home-profile-picker.png)
+Paste the complete JD. The system reads the responsibilities and requirements before it touches the resume, so every later decision stays tied to the role the candidate is actually applying for.
 
-Start with the candidate's real resume instead of an empty template. The profile picker keeps the uploaded document, parsed profile, and target-role work separate, so a new mission can reuse the same source resume without silently overwriting it. The user can upload a new PDF, select an existing profile, or remove an obsolete profile and its dependent workflow records.
+![粘贴完整 JD 并开始分析](docs/screenshots/product-tour-01-jd-input.png)
 
-### 2. Paste the job description
+AI identifies the company, role, seniority, location, and the job's core focus. The user can correct these fields before continuing; the saved result becomes the identity of this job mission.
 
-![粘贴 JD 创建岗位任务](docs/screenshots/mission-home.png)
+![AI 识别岗位并允许用户校正](docs/screenshots/product-tour-02-role-recognition.png)
 
-Create one job mission per target role by pasting the JD. The mission stores the company, role, location, source JD, resume decisions, interview preparation, and later interview memory in one place. This makes the target role explicit before the AI starts editing the resume.
+### 2. Bind the real source resume / 选择真实简历
 
-### 3. Understand what the role actually requires
+Choose a reusable Master Resume, upload a mission-specific PDF, or paste resume text. The selected source remains the source of truth, while every optimized version stays scoped to the current mission.
 
-![岗位理解与 JD 能力映射](docs/screenshots/mission-shell.png)
+![为当前岗位选择简历来源](docs/screenshots/product-tour-03-resume-source.png)
 
-The role-understanding step turns the JD into a short set of capability signals and priorities. It explains what the hiring team is likely to test, then maps those signals back to the candidate's evidence. This context powers the ranking and rewrite steps; it is not a separate strategy exercise the user has to complete manually.
+The confirmed resume is then displayed in its original section order. Education, projects, competitions, campus experience, awards, and skills remain traceable to the uploaded source.
 
-### 4. Review the AI resume optimization
+![原始简历与 AI 优化版本并排展示](docs/screenshots/product-tour-04-resume-optimization-overview.png)
 
-![原始简历与针对 JD 的 AI 优化版本](docs/screenshots/resume-optimization.png)
+### 3. Let AI produce the first draft / AI 判断优先级并直接改写
 
-AI compares the complete JD with the complete source resume and ranks each experience as highlight, keep, weaken, or exclude. For high-value projects it writes actual resume bullets, explains the one-line reason for the edit, and keeps fact confirmation separate from wording approval. The user can accept, edit, or reject each rewrite before generating the final resume and PDF.
+AI compares the complete JD with the complete resume, ranks experiences within a limited page budget, and writes the strongest project bullets directly. The left column preserves the original content; the right column shows the mission-specific rewrite and a short reason for the change.
 
-The rewrite is grounded in the original evidence. It can structure an existing action such as “测试发电效率” into a clearer testing statement, but it must flag any new number or fact for confirmation instead of inventing it.
+![左右双栏查看原文与岗位定向改写](docs/screenshots/product-tour-05-resume-optimization-two-column.png)
 
-### 5. Practice, answer, and turn feedback into next steps
+For each experience, AI supplies a default decision: highlight, keep, weaken, or exclude. Low-relevance campus roles can be omitted automatically, while project and competition experience receives deeper rewriting. Users can override any decision.
 
-![模拟面试问题预览](docs/screenshots/interview-question-preview.png)
+![AI 经历排序、补做项目建议与事实确认](docs/screenshots/product-tour-06-experience-ranking-fact-check.png)
 
-After the final resume is confirmed, the interview flow uses the JD, final resume, curated interview skills, and company interview packs to generate a question preview. The user starts answering only after reviewing the preview, then receives a score and targeted follow-up for the current question.
+Suggested portfolio projects and newly inferred facts are visually separated from confirmed experience. They do not enter the formal resume until the user confirms that the facts are true.
 
-![面试记录与复盘](docs/screenshots/interview-memory.png)
+### 4. Confirm the final resume and export PDF / 确认最终简历并导出
 
-Every completed round is retained in Interview Memory with the question, answer, strengths, gaps, and next practice focus. The record can be revisited after starting another session, so feedback does not disappear when the next question is generated.
+Once the selected rewrites are accepted or edited, one action confirms the final resume and generates the PDF. Another action starts the mock interview from exactly this confirmed version.
 
-![补强建议](docs/screenshots/coaching-suggestions.png)
+![确认最终简历、生成 PDF 或进入模拟面试](docs/screenshots/product-tour-07-final-resume-actions.png)
 
-When an answer exposes a weak project detail, the product turns that gap into a concrete coaching suggestion: answer a few factual follow-up questions or improve the project background, personal contribution, and result. The suggestions are instructions for what to do next; they are not silently added to the resume as completed experience.
+The final resume includes only accepted or edited real experience. Suggested projects remain outside the PDF until they have actually been completed and fact-confirmed.
+
+![最终确认版简历预览](docs/screenshots/product-tour-08-final-resume-preview.png)
+
+### 5. Preview, answer, review, and strengthen / 预览问题、逐题作答、复盘与补强
+
+Before answering, the user sees a question preview generated from the JD, confirmed final resume, curated Nowcoder interview packs, and interview skills. The preview covers both capability requirements and likely follow-up directions.
+
+![根据最终简历和 JD 生成的问题预览](docs/screenshots/product-tour-09-interview-question-preview.png)
+
+![问题预览中的岗位能力与追问方向](docs/screenshots/product-tour-10-interview-question-preview-detail.png)
+
+Each interview starts with one focused question and a full-width answer area. Questions stay grounded in the current mission and selected resume evidence.
+
+![围绕简历项目生成第一道问题](docs/screenshots/product-tour-11-first-question-project.png)
+
+The same workflow adapts to a different JD: this example begins with role fit and asks the candidate to choose the most memorable experience from the resume.
+
+![针对不同岗位生成定位与代表经历问题](docs/screenshots/product-tour-12-first-question-role-fit.png)
+
+After every answer, AI records a score, strengths, gaps, and a reference answer, then generates the next non-duplicate question. Feedback stays visible while the next round begins.
+
+![单题评分、参考回答与下一道追问](docs/screenshots/product-tour-13-answer-evaluation.png)
+
+The interview closes after the configured round limit and sends the user to the session review instead of silently resetting to question one.
+
+![完成本轮模拟面试](docs/screenshots/product-tour-14-interview-completed.png)
+
+Interview Memory keeps the complete question-and-answer history, per-question scores, what went well, and what needs strengthening.
+
+![面试记录、逐题回答与总体复盘](docs/screenshots/product-tour-15-interview-memory.png)
+
+The final coaching step converts observed gaps into actions. The user can request another 3–5 factual questions or ask AI for a concrete project-improvement guide; no proof link or artificial evidence submission is required.
+
+![AI 生成事实追问和项目补齐步骤](docs/screenshots/product-tour-16-coaching-questions.png)
+
+The guide finishes with recommended knowledge and reusable outputs, such as a project narrative, reproducible workflow, decision record, progress tracker, and a revised interview answer.
+
+![AI 补强指南中的学习重点与完成产出](docs/screenshots/product-tour-17-coaching-learning-output.png)
 
 ## Repository layout
 
