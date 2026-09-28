@@ -23,23 +23,47 @@ The product is designed for AI product, technical product, and intelligent-hardw
 
 ## Product tour
 
-### 1. Start from a job mission
+The product tour follows one continuous preparation loop. The screenshots below use a Baidu AI product-manager mission to show what the user sees at each decision point.
 
-![岗位准备工作台](docs/screenshots/mission-home.png)
+### 1. Upload a real resume
 
-Create a mission from a JD or select an existing resume profile. Each mission keeps its target company, role, resume decisions, interview preparation, and history together.
+![上传简历并选择档案](docs/screenshots/mission-home-profile-picker.png)
 
-### 2. Understand the target role
+Start with the candidate's real resume instead of an empty template. The profile picker keeps the uploaded document, parsed profile, and target-role work separate, so a new mission can reuse the same source resume without silently overwriting it. The user can upload a new PDF, select an existing profile, or remove an obsolete profile and its dependent workflow records.
 
-![岗位理解](docs/screenshots/mission-shell.png)
+### 2. Paste the job description
 
-The role page explains what the JD is asking for before resume decisions are made.
+![粘贴 JD 创建岗位任务](docs/screenshots/mission-home.png)
 
-### 3. Keep resume profiles organized
+Create one job mission per target role by pasting the JD. The mission stores the company, role, location, source JD, resume decisions, interview preparation, and later interview memory in one place. This makes the target role explicit before the AI starts editing the resume.
 
-![简历档案选择](docs/screenshots/mission-home-profile-picker.png)
+### 3. Understand what the role actually requires
 
-Profiles can be selected, recovered by ID, or permanently deleted. Deletion removes the profile and its associated target jobs, missions, resumes, interview sessions, proof records, and local picker entry.
+![岗位理解与 JD 能力映射](docs/screenshots/mission-shell.png)
+
+The role-understanding step turns the JD into a short set of capability signals and priorities. It explains what the hiring team is likely to test, then maps those signals back to the candidate's evidence. This context powers the ranking and rewrite steps; it is not a separate strategy exercise the user has to complete manually.
+
+### 4. Review the AI resume optimization
+
+![原始简历与针对 JD 的 AI 优化版本](docs/screenshots/resume-optimization.png)
+
+AI compares the complete JD with the complete source resume and ranks each experience as highlight, keep, weaken, or exclude. For high-value projects it writes actual resume bullets, explains the one-line reason for the edit, and keeps fact confirmation separate from wording approval. The user can accept, edit, or reject each rewrite before generating the final resume and PDF.
+
+The rewrite is grounded in the original evidence. It can structure an existing action such as “测试发电效率” into a clearer testing statement, but it must flag any new number or fact for confirmation instead of inventing it.
+
+### 5. Practice, answer, and turn feedback into next steps
+
+![模拟面试问题预览](docs/screenshots/interview-question-preview.png)
+
+After the final resume is confirmed, the interview flow uses the JD, final resume, curated interview skills, and company interview packs to generate a question preview. The user starts answering only after reviewing the preview, then receives a score and targeted follow-up for the current question.
+
+![面试记录与复盘](docs/screenshots/interview-memory.png)
+
+Every completed round is retained in Interview Memory with the question, answer, strengths, gaps, and next practice focus. The record can be revisited after starting another session, so feedback does not disappear when the next question is generated.
+
+![补强建议](docs/screenshots/coaching-suggestions.png)
+
+When an answer exposes a weak project detail, the product turns that gap into a concrete coaching suggestion: answer a few factual follow-up questions or improve the project background, personal contribution, and result. The suggestions are instructions for what to do next; they are not silently added to the resume as completed experience.
 
 ## Repository layout
 
