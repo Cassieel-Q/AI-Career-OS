@@ -2,7 +2,10 @@ import type { Route } from "next";
 
 import { readApiPayload } from "./profile-flow.ts";
 
-export const MISSION_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+// Use the IPv4 loopback by default. On Windows, `localhost` can resolve to
+// ::1 while the local API is bound to 127.0.0.1, which surfaces as a vague
+// browser "Failed to fetch" error.
+export const MISSION_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 /** User-facing mission stages. The legacy proof route remains addressable by direct links,
  * but it is deliberately excluded from the main shell so users only see the core job-search flow. */
 export const CORE_MISSION_TABS = ["role", "resume", "interview", "outcome"] as const;
