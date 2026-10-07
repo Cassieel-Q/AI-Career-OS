@@ -2,15 +2,18 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from copy import deepcopy
 from datetime import datetime, timezone
+import re
 from uuid import UUID, uuid4
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from . import models
 from .mission_service import _effective_profile_for_mission
+from .resume_studio_schemas import StudioOperation
 
 
 def _node(
@@ -168,3 +171,206 @@ def read_document(row: models.ResumeStudioDocument) -> dict:
         "template_id": row.template_id,
         "document": row.document_json,
     }
+
+
+def _find_node(document: dict, node_id: str) -> dict | None:
+    for node in (document.get("basics") or {}).values():
+        if isinstance(node, dict) and node.get("id") == node_id:
+            return node
+    for section in document.get("sections") or []:
+        if section.get("id") == node_id:
+            return section
+        if section.get("title", {}).get("id") == node_id:
+            return section["title"]
+        for entry in section.get("entries") or []:
+            if entry.get("id") == node_id:
+                return entry
+            for field in ("title", "subtitle", "date", "location"):
+                if entry.get(field, {}).get("id") == node_id:
+                    return entry[field]
+            for bullet in entry.get("bullets") or []:
+                if bullet.get("id") == node_id:
+                    return bullet
+    return None
+
+
+def _list_containing(document: dict, node_id: str) -> list[dict] | None:
+    for section in document.get("sections") or []:
+        if any(entry.get("id") == node_id for entry in section.get("entries") or []):
+            return section["entries"]
+        for entry in section.get("entries") or []:
+            if any(bullet.get("id") == node_id for bullet in entry.get("bullets") or []):
+                return entry["bullets"]
+    return None
+
+
+_METRIC = re.compile(r"\d|[%％]|(?:主导|负责|led|increased|reduced|grew)", re.IGNORECASE)
+
+
+def _risk_for_text(text: str, previous: str = "LOW") -> str:
+    return "HIGH" if previous == "HIGH" or _METRIC.search(text) else "LOW"
+
+
+def export_checks(document: dict) -> list[dict]:
+    """Only rendered high-risk unresolved claims block a formal PDF."""
+    checks: list[dict] = []
+    rendered_bullets = 0
+
+    def inspect(node: dict) -> None:
+        if node.get("claim_status") == "OMITTED" or not node.get("text"):
+            return
+        status = node.get("claim_status")
+        if status in {"NEEDS_CONFIRMATION", "BLOCKED_MISSING"}:
+            level = "block" if node.get("risk_level") == "HIGH" else "warn"
+            checks.append({"level": level, "code": "unconfirmed_fact", "node_id": node["id"], "message": "这项内容需要核对事实。"})
+
+    for node in (document.get("basics") or {}).values():
+        if isinstance(node, dict):
+            inspect(node)
+    for section in document.get("sections") or []:
+        inspect(section["title"])
+        for entry in section.get("entries") or []:
+            if entry.get("status") == "OMITTED":
+                continue
+            for field in ("title", "subtitle", "date", "location"):
+                inspect(entry[field])
+            for bullet in entry.get("bullets") or []:
+                inspect(bullet)
+                if bullet.get("claim_status") != "OMITTED" and bullet.get("text"):
+                    rendered_bullets += 1
+    if rendered_bullets == 0:
+        checks.append({"level": "block", "code": "empty_resume", "message": "请先加入至少一条经历要点。"})
+    return checks
+
+
+def apply_operation(db: Session, mission_id: UUID, expected_revision: int, raw_operation: StudioOperation | dict) -> dict:
+    operation = raw_operation if isinstance(raw_operation, StudioOperation) else StudioOperation.model_validate(raw_operation)
+    row = get_or_create_document(db, mission_id)
+    if row.revision != expected_revision:
+        raise HTTPException(409, {"message": "简历已在另一处更新，请核对最新版本后重试。", "latest": read_document(row)})
+    document = deepcopy(row.document_json)
+    kind = operation.type
+
+    if kind == "set_text":
+        if operation.node_id is None or operation.text is None:
+            raise HTTPException(422, "缺少文字节点或内容。")
+        node = _find_node(document, str(operation.node_id))
+        if node is None or "text" not in node:
+            raise HTTPException(404, "文字节点不存在。")
+        text = operation.text.strip()
+        if not text and node.get("risk_level") == "HIGH":
+            node["claim_status"] = "BLOCKED_MISSING"
+        elif text != node["text"] and node.get("source_kind") != "system":
+            node["claim_status"] = "NEEDS_CONFIRMATION"
+        node["risk_level"] = _risk_for_text(text, node.get("risk_level", "LOW"))
+        node["text"] = text
+    elif kind == "add_entry":
+        if operation.section_id is None or not (operation.title or "").strip():
+            raise HTTPException(422, "请提供板块与经历名称。")
+        section = _find_node(document, str(operation.section_id))
+        if section is None or "entries" not in section:
+            raise HTTPException(404, "板块不存在。")
+        title = operation.title.strip()
+        section["entries"].append(_entry(
+            uuid4(),
+            title=_node(title, source_kind="user_entered", risk_level="HIGH", claim_status="NEEDS_CONFIRMATION"),
+            subtitle=_node("", source_kind="user_entered", claim_status="NEEDS_CONFIRMATION"),
+            date=_node("", source_kind="user_entered", risk_level="HIGH", claim_status="BLOCKED_MISSING"),
+            location=_node("", source_kind="user_entered"),
+            bullets=[],
+        ))
+    elif kind == "add_bullet":
+        if operation.entry_id is None or not (operation.text or "").strip():
+            raise HTTPException(422, "请提供经历与要点内容。")
+        entry = _find_node(document, str(operation.entry_id))
+        if entry is None or "bullets" not in entry:
+            raise HTTPException(404, "经历不存在。")
+        text = operation.text.strip()
+        entry["bullets"].append(_node(text, source_kind="user_entered", risk_level=_risk_for_text(text), claim_status="NEEDS_CONFIRMATION"))
+    elif kind in {"omit", "restore"}:
+        if operation.node_id is None:
+            raise HTTPException(422, "缺少目标节点。")
+        node = _find_node(document, str(operation.node_id))
+        if node is None:
+            raise HTTPException(404, "目标节点不存在。")
+        key = "claim_status" if "claim_status" in node else "status"
+        if kind == "omit" and node.get(key) != "OMITTED":
+            node["previous_status"] = node[key]
+            node[key] = "OMITTED"
+        elif kind == "restore" and node.get(key) == "OMITTED":
+            node[key] = node.pop("previous_status", "NEEDS_CONFIRMATION" if key == "claim_status" else "INCLUDED")
+    elif kind == "move":
+        if operation.node_id is None:
+            raise HTTPException(422, "缺少移动节点。")
+        group = _list_containing(document, str(operation.node_id))
+        if group is None:
+            raise HTTPException(404, "只支持同一板块中的经历或要点排序。")
+        item = next(value for value in group if value["id"] == str(operation.node_id))
+        if operation.before_id is not None and not any(value["id"] == str(operation.before_id) for value in group):
+            raise HTTPException(422, "排序目标必须位于同一板块。")
+        group.remove(item)
+        if operation.before_id is None:
+            group.append(item)
+        else:
+            index = next(index for index, value in enumerate(group) if value["id"] == str(operation.before_id))
+            group.insert(index, item)
+    elif kind == "confirm_fact":
+        if operation.node_id is None:
+            raise HTTPException(422, "缺少事实节点。")
+        node = _find_node(document, str(operation.node_id))
+        if node is None or "claim_status" not in node:
+            raise HTTPException(404, "事实节点不存在。")
+        if node.get("claim_status") == "OMITTED":
+            raise HTTPException(422, "已省略内容无需确认。")
+        if not node.get("text"):
+            raise HTTPException(422, "请先填写事实内容。")
+        node["claim_status"] = "CONFIRMED"
+        node["confirmed_at"] = datetime.now(timezone.utc).isoformat()
+    elif kind == "set_evidence":
+        if operation.node_id is None or operation.evidence_refs is None:
+            raise HTTPException(422, "缺少来源节点或引用。")
+        node = _find_node(document, str(operation.node_id))
+        if node is None or "evidence_refs" not in node:
+            raise HTTPException(404, "来源节点不存在。")
+        mission = db.get(models.JobMission, mission_id)
+        profile = _effective_profile_for_mission(db, mission)
+        valid_ids = {str(item.id) for collection in (profile.education, profile.experiences, profile.skills, profile.certifications) for item in collection}
+        refs = [str(ref) for ref in operation.evidence_refs]
+        if any(ref not in valid_ids for ref in refs):
+            raise HTTPException(422, "来源引用不属于当前简历。")
+        node["evidence_refs"] = refs
+        node["claim_status"] = "NEEDS_CONFIRMATION"
+    elif kind == "set_language":
+        if operation.language is None:
+            raise HTTPException(422, "缺少语言。")
+        row.language = operation.language
+        row.template_id = f"{operation.language}-classic"
+    elif kind == "set_template":
+        if not operation.template_id:
+            raise HTTPException(422, "缺少模板。")
+        from .resume_studio_templates import get_template
+        template = get_template(operation.template_id)
+        if template["language"] != row.language:
+            raise HTTPException(422, "请先完成当前简历语言的内容。")
+        row.template_id = operation.template_id
+
+    result = db.execute(
+        update(models.ResumeStudioDocument)
+        .where(models.ResumeStudioDocument.id == row.id, models.ResumeStudioDocument.revision == expected_revision)
+        .values(
+            document_json=document,
+            revision=expected_revision + 1,
+            confirmed_revision=None,
+            language=row.language,
+            template_id=row.template_id,
+            updated_at=datetime.now(timezone.utc),
+        )
+    )
+    if result.rowcount != 1:
+        db.rollback()
+        db.expire_all()
+        fresh = db.get(models.ResumeStudioDocument, row.id)
+        raise HTTPException(409, {"message": "简历已在另一处更新，请核对最新版本后重试。", "latest": read_document(fresh)})
+    db.commit()
+    db.refresh(row)
+    return read_document(row)
