@@ -737,6 +737,22 @@ class TargetResumeBullet(Base):
     target_resume: Mapped[TargetResume] = relationship("TargetResume", back_populates="bullets")
 
 
+class ResumeStudioDocument(Base):
+    __tablename__ = "resume_studio_documents"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    mission_id: Mapped[UUID] = mapped_column(ForeignKey("job_missions.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    source_target_resume_id: Mapped[UUID] = mapped_column(ForeignKey("target_resumes.id", ondelete="CASCADE"), nullable=False)
+    schema_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    language: Mapped[str] = mapped_column(String(2), nullable=False, default="zh", server_default="zh")
+    template_id: Mapped[str] = mapped_column(String(64), nullable=False, default="zh-classic", server_default="zh-classic")
+    document_json: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict, server_default="{}")
+    confirmed_revision: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
 class RedTeamReport(Base):
     __tablename__ = "red_team_reports"
 
