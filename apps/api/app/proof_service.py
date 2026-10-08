@@ -10,7 +10,7 @@ from uuid import UUID
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, object_session, selectinload
 
 from . import models, proof_action_provider as proof_action_provider_module
 from .claim_provider import (
@@ -553,9 +553,34 @@ def _interview_turn_context(session: models.InterviewSession) -> list[dict[str, 
 
 
 def _final_resume_context(mission: models.JobMission | None) -> dict[str, object] | None:
-    """Return only the latest confirmed target resume for interview prompting."""
+    """Use the confirmed Studio revision when available, then legacy target resume."""
     if mission is None:
         return None
+    session = object_session(mission)
+    studio = session.scalar(select(models.ResumeStudioDocument).where(models.ResumeStudioDocument.mission_id == mission.id)) if session else None
+    if studio and studio.confirmed_revision == studio.revision:
+        document = studio.document_json or {}
+        bullets = []
+        for section in document.get("sections") or []:
+            for entry in section.get("entries") or []:
+                if entry.get("status") == "OMITTED":
+                    continue
+                for bullet in entry.get("bullets") or []:
+                    if bullet.get("claim_status") == "OMITTED" or not bullet.get("text"):
+                        continue
+                    bullets.append({
+                        "source_experience_id": entry.get("id"),
+                        "text": bullet["text"],
+                        "status": bullet.get("claim_status"),
+                        "evidence_refs": bullet.get("evidence_refs") or [],
+                    })
+        return {
+            "source": "resume_studio",
+            "revision": studio.revision,
+            "language": studio.language,
+            "source_target_resume_id": str(studio.source_target_resume_id),
+            "bullets": bullets,
+        }
     resumes = [row for row in (mission.target_resumes or []) if str(row.status).upper() == "CONFIRMED"]
     if not resumes:
         return None
