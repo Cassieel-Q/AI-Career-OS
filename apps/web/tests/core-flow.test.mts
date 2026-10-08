@@ -9,8 +9,8 @@ import { buildTargetResumeExportHtml } from "../app/export-target-resume.ts";
 test("core flow exposes only ordinary user stages", () => {
   assert.deepEqual(CORE_MISSION_TABS, ["role", "resume", "interview", "outcome"]);
   assert.deepEqual(MISSION_TABS, CORE_MISSION_TABS);
-  assert.equal(missionTabLabel("role"), "目标岗位");
-  assert.equal(missionTabLabel("resume"), "简历优化");
+  assert.equal(missionTabLabel("role"), "岗位");
+  assert.equal(missionTabLabel("resume"), "简历");
   assert.equal(missionTabLabel("interview"), "模拟面试");
   assert.equal(missionTabLabel("outcome"), "面试记录");
   assert.equal(CORE_RESUME_SUGGESTION_LIMIT, 4);

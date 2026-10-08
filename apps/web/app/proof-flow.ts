@@ -158,6 +158,11 @@ export async function listTargetJobs(profileId: string, apiUrl: string, request:
   return readApiPayload<TargetJob[]>(response);
 }
 
+export async function readTargetJob(targetJobId: string, apiUrl: string, request: ProofRequester = fetch): Promise<TargetJob> {
+  const response = await request(`${apiUrl}/api/v1/target-jobs/${encodeURIComponent(targetJobId)}`);
+  return readApiPayload<TargetJob>(response);
+}
+
 export async function readClaimAnalysis(targetJobId: string, apiUrl: string, request: ProofRequester = fetch): Promise<ClaimAnalysis> {
   const response = await request(`${apiUrl}/api/v1/target-jobs/${encodeURIComponent(targetJobId)}/claim-analysis`);
   return readApiPayload<ClaimAnalysis>(response);

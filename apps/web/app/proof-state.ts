@@ -37,12 +37,12 @@ export const PROOF_STEPS: readonly ProofStep[] = [
 ];
 
 export const PROOF_STEP_LABELS: Record<ProofStep, string> = {
-  "target-job": "目标岗位",
-  "resume-suggestions": "简历建议",
-  "claim-check": "主张核对",
+  "target-job": "岗位档案",
+  "resume-suggestions": "岗位版本",
+  "claim-check": "简历要点",
   interview: "模拟面试",
-  debrief: "复盘",
-  "proof-actions": "证明行动",
+  debrief: "面试复盘",
+  "proof-actions": "补强建议",
   "re-evaluate": "再评估",
 };
 
