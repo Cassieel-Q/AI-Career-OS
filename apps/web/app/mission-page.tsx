@@ -21,6 +21,7 @@ import {
   ingestResumePdf,
   ingestResumeText,
   isDebugMode,
+  MISSION_API_BASE_URL,
   missionHref,
   readExperienceSelection,
   readInterviewPack,
@@ -54,7 +55,12 @@ import type {
   ProfileSnapshot,
   TargetResume,
 } from "./missions.ts";
+import { readTargetJob, type TargetJob } from "./proof-flow.ts";
 import { MissionShell } from "./mission-shell.tsx";
+import { deriveMissionProgress } from "./mission-progress.ts";
+import { TaskProgress } from "./task-progress.tsx";
+import { withTaskTimeout } from "./task-progress.ts";
+import { factConfirmationPatch, isChosenRewrite, resumeDecisionProgress } from "./resume-decision.ts";
 import {
   countHighRiskFindings,
   CORE_RESUME_SUGGESTION_LIMIT,
@@ -70,7 +76,6 @@ import {
   primaryCta,
   resumeStepTitle,
   summarizeIntelCoverage,
-  targetResumeConfirmed,
   targetResumeBulletDisplayText,
   buildTargetResumeInlineEditPatch,
   targetResumeBulletStatusLabel,
@@ -237,6 +242,8 @@ function TextButton({ children, onClick, disabled = false }: { children: ReactNo
 export function MissionPage({ missionId, currentTab }: MissionPageProps) {
   const router = useRouter();
   const [mission, setMission] = useState<Mission | null>(null);
+  const [targetJob, setTargetJob] = useState<TargetJob | null>(null);
+  const [targetJobError, setTargetJobError] = useState(false);
   const [readiness, setReadiness] = useState<Readiness | null>(null);
   const [resumes, setResumes] = useState<TargetResume[]>([]);
   const [experienceSelection, setExperienceSelection] = useState<ExperienceSelection[]>([]);
@@ -247,6 +254,16 @@ export function MissionPage({ missionId, currentTab }: MissionPageProps) {
   const [redTeamSettled, setRedTeamSettled] = useState(false);
   const [interviewPack, setInterviewPack] = useState<{ topics: Array<Record<string, unknown>> }>({ topics: [] });
   const [lastMockDebrief, setLastMockDebrief] = useState<LastMockDebrief | null>(null);
+  const [interviewSessionStatus, setInterviewSessionStatus] = useState<string | null>(null);
+  const [optimizationStage, setOptimizationStage] = useState<number | null>(null);
+  const [optimizationError, setOptimizationError] = useState("");
+  const [regenerationFailed, setRegenerationFailed] = useState(false);
+  const [resumeParseStage, setResumeParseStage] = useState<number | null>(null);
+  const [questionStage, setQuestionStage] = useState<number | null>(null);
+  const [questionError, setQuestionError] = useState("");
+  const [highlightedExperienceId, setHighlightedExperienceId] = useState<string | null>(null);
+  const [finalPreviewMode, setFinalPreviewMode] = useState<"original" | "target">("target");
+  const finalPreviewRef = useRef<HTMLDivElement | null>(null);
   const [proof, setProof] = useState<ProofState | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -313,6 +330,7 @@ export function MissionPage({ missionId, currentTab }: MissionPageProps) {
         setRedTeamSettled(true);
         setInterviewPack(nextPack);
         setLastMockDebrief(resolveLastMockDebrief(missionId, nextProofSnap?.latest_completed_session ?? nextProofSnap?.session ?? null));
+        setInterviewSessionStatus(nextProofSnap?.session?.status ?? nextProofSnap?.latest_completed_session?.status ?? null);
         setProof(nextProof);
       });
       const warnings = Array.isArray(loaded.warnings) ? loaded.warnings : [];
@@ -343,41 +361,29 @@ export function MissionPage({ missionId, currentTab }: MissionPageProps) {
   }, [refresh]);
 
   useEffect(() => {
+    if (currentTab !== "role" || !mission?.target_job_id) return;
+    let active = true;
+    setTargetJob(null);
+    setTargetJobError(false);
+    void readTargetJob(mission.target_job_id, MISSION_API_BASE_URL)
+      .then((job) => { if (active) setTargetJob(job); })
+      .catch(() => { if (active) setTargetJobError(true); });
+    return () => { active = false; };
+  }, [currentTab, mission?.target_job_id]);
+
+  useEffect(() => {
     if (currentTab !== "proof") return;
     markProofVisited(missionId);
   }, [currentTab, missionId]);
-
-  // When entering experience selection with empty draft, generate once (LLM) but do not auto-advance.
-  useEffect(() => {
-    if (!mission) return;
-    const state = normalizeWorkflowState(mission.workflow_state);
-    if (currentTab !== "resume") return;
-    if (state !== "EXPERIENCE_SELECTION_REQUIRED" && state !== "RESUME_SELECTED") return;
-    if (experienceSelection.length > 0 || busy || loading) return;
-    let cancelled = false;
-    void (async () => {
-      try {
-        setBusy(true);
-        await generateMissionStep(missionId, "experience-selection/generate");
-        if (!cancelled) await refresh();
-      } catch (caught) {
-        if (!cancelled) setError(humanizeMissionError(caught instanceof Error ? caught.message : "", "generic"));
-      } finally {
-        if (!cancelled) setBusy(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mission?.workflow_state, currentTab, experienceSelection.length]);
 
   // The ordinary resume path is AI-first: once a source is bound, generate the
   // selection, strategy, and target rewrite without making the user walk three
   // internal workflow pages. The user still edits decisions and bullets before
   // confirming the final resume.
   useEffect(() => {
-    if (!mission || currentTab !== "resume" || forceResumeSource || boundNeedsConfirm || loading || busy || optimizationSyncRef.current) return;
+    if (!mission || currentTab !== "resume" || forceResumeSource || boundNeedsConfirm || loading || busy || optimizationError || optimizationSyncRef.current) return;
+    const boundId = boundProfileIdOf(mission);
+    if (boundId && (sourceProfile?.profile_id !== boundId || sourceProfile.status !== "CONFIRMED")) return;
     const currentResumeStep = forceResumeSource ? "source" : (forceResumeStep ?? deriveResumeSubstep(normalizeWorkflowState(mission.workflow_state)));
     if (!mission.resume_source?.mode || currentResumeStep === "source") return;
     const state = normalizeWorkflowState(mission.workflow_state);
@@ -393,8 +399,10 @@ export function MissionPage({ missionId, currentTab }: MissionPageProps) {
     optimizationSyncRef.current = true;
     void (async () => {
       try {
+        setBusy(true);
         if (shouldGenerateSelection) {
-          await generateMissionStep(missionId, "experience-selection/generate");
+          setOptimizationStage(0);
+          await withTaskTimeout(generateMissionStep(missionId, "experience-selection/generate"), 180_000, "经历整理");
           // The AI-first resume page should not stop after creating the
           // selection draft. Continue the same transition through strategy
           // confirmation and target-resume generation. Previously this effect
@@ -402,21 +410,30 @@ export function MissionPage({ missionId, currentTab }: MissionPageProps) {
           // dependency change, leaving the right column on "正在生成逐条改写…".
           const generatedSelection = await readExperienceSelection(missionId);
           await saveExperienceSelection(missionId, generatedSelection, undefined, undefined, true);
-          await generateMissionStep(missionId, "resume-strategy");
+          setOptimizationStage(1);
+          await withTaskTimeout(generateMissionStep(missionId, "resume-strategy"), 180_000, "岗位策略生成");
           await confirmStrategy(missionId);
-          await generateMissionStep(missionId, "target-resumes");
+          setOptimizationStage(2);
+          await withTaskTimeout(generateMissionStep(missionId, "target-resumes"), 180_000, "岗位版本生成");
         } else if (shouldConfirmSelection) {
+          setOptimizationStage(0);
           await saveExperienceSelection(missionId, experienceSelection, undefined, undefined, true);
-          await generateMissionStep(missionId, "resume-strategy");
+          setOptimizationStage(1);
+          await withTaskTimeout(generateMissionStep(missionId, "resume-strategy"), 180_000, "岗位策略生成");
           await confirmStrategy(missionId);
-          await generateMissionStep(missionId, "target-resumes");
+          setOptimizationStage(2);
+          await withTaskTimeout(generateMissionStep(missionId, "target-resumes"), 180_000, "岗位版本生成");
         } else if (shouldGenerateStrategy) {
-          await generateMissionStep(missionId, "resume-strategy");
+          setOptimizationStage(1);
+          await withTaskTimeout(generateMissionStep(missionId, "resume-strategy"), 180_000, "岗位策略生成");
           await confirmStrategy(missionId);
-          await generateMissionStep(missionId, "target-resumes");
+          setOptimizationStage(2);
+          await withTaskTimeout(generateMissionStep(missionId, "target-resumes"), 180_000, "岗位版本生成");
         } else if (shouldConfirmStrategy) {
+          setOptimizationStage(1);
           await confirmStrategy(missionId);
-          await generateMissionStep(missionId, "target-resumes");
+          setOptimizationStage(2);
+          await withTaskTimeout(generateMissionStep(missionId, "target-resumes"), 180_000, "岗位版本生成");
         } else if (shouldGenerateTarget) {
           // RESUME_STRATEGY_CONFIRMED is already persisted. Calling the
           // confirmation endpoint again added an avoidable round trip (and
@@ -424,44 +441,21 @@ export function MissionPage({ missionId, currentTab }: MissionPageProps) {
           if (state === "RESUME_STRATEGY_REQUIRED" || state === "EXPERIENCES_CONFIRMED") {
             await confirmStrategy(missionId);
           }
-          await generateMissionStep(missionId, "target-resumes");
+          setOptimizationStage(2);
+          await withTaskTimeout(generateMissionStep(missionId, "target-resumes"), 180_000, "岗位版本生成");
         }
         await refresh({ quiet: true });
+        setOptimizationStage(null);
       } catch (caught) {
-        setError(humanizeMissionError(caught instanceof Error ? caught.message : "", "generic"));
+        setRegenerationFailed(false);
+        setOptimizationError(humanizeMissionError(caught instanceof Error ? caught.message : "", "generic"));
       } finally {
         optimizationSyncRef.current = false;
+        setBusy(false);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mission?.id, mission?.workflow_state, mission?.resume_strategy, currentTab, forceResumeStep, experienceSelection.length, resumes.length, boundNeedsConfirm, forceResumeSource, loading, busy]);
-
-  
-  // When entering resume strategy with empty draft, generate once (LLM) but do not auto-confirm/advance.
-  useEffect(() => {
-    if (!mission) return;
-    const state = normalizeWorkflowState(mission.workflow_state);
-    if (currentTab !== "resume") return;
-    if (state !== "RESUME_STRATEGY_REQUIRED" && state !== "EXPERIENCES_CONFIRMED") return;
-    const already = Boolean(mission.resume_strategy && Object.keys(mission.resume_strategy).length > 0);
-    if (already || busy || loading || optimizationSyncRef.current) return;
-    let cancelled = false;
-    void (async () => {
-      try {
-        setBusy(true);
-        await generateMissionStep(missionId, "resume-strategy");
-        if (!cancelled) await refresh();
-      } catch (caught) {
-        if (!cancelled) setError(humanizeMissionError(caught instanceof Error ? caught.message : "", "generic"));
-      } finally {
-        if (!cancelled) setBusy(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mission?.workflow_state, currentTab, mission?.resume_strategy]);
+  }, [mission?.id, mission?.workflow_state, mission?.resume_strategy, mission?.resume_source, sourceProfile?.profile_id, sourceProfile?.status, currentTab, forceResumeStep, experienceSelection.length, resumes.length, boundNeedsConfirm, forceResumeSource, loading, busy, optimizationError]);
 
 useEffect(() => {
     // Intentionally no auto-replace from role/overview.
@@ -545,7 +539,8 @@ useEffect(() => {
 
 
   const resumeBound = Boolean(currentMission.resume_source?.mode);
-  const bulletsDecided = targetResumeConfirmed((latestResume?.bullets ?? []).map((b) => ({ status: b.status })));
+  const decisionProgress = resumeDecisionProgress(latestResume?.bullets ?? []);
+  const bulletsDecided = decisionProgress.total > 0 && decisionProgress.decided === decisionProgress.total;
   const targetConfirmed =
     ["TARGET_RESUME_CONFIRMED", "STRESS_TEST_REQUIRED", "STRENGTHENING_REQUIRED", "PROOF_IN_PROGRESS", "INTERVIEW_PREP_READY", "INTERVIEW_IN_PROGRESS", "INTERVIEW_DEBRIEF_READY", "OUTCOME"].includes(workflowState) ||
     (latestResume?.status === "CONFIRMED");
@@ -632,6 +627,7 @@ useEffect(() => {
     let errorKind: "resume_ingest" | "resume_bind" | "experience_selection" = "resume_ingest";
     setBusy(true);
     setError("");
+    setResumeParseStage(0);
     try {
       if (resumeMode === "master") {
         const profile = await readProfile(currentMission.profile_id);
@@ -639,7 +635,7 @@ useEffect(() => {
           throw new Error("当前档案还没有经历，请上传或粘贴简历。");
         }
         if (looksLikePlaceholderResume(profile)) {
-          throw new Error("当前 Master 档案看起来是占位模板（如 XX 公司 / 文职助理），不是你的真实简历。请改用「上传 PDF」或「粘贴文本」绑定本岗位专用简历，再继续补强。");
+          throw new Error("当前简历包含占位内容。请上传真实 PDF 或粘贴简历文本后继续。");
         }
         errorKind = "resume_bind";
         await confirmResumeSource(missionId, "master");
@@ -658,17 +654,17 @@ useEffect(() => {
               .join("、");
             const extra = affected.length > 5 ? ` 等 ${affected.length} 个岗位` : "";
             const ok = window.confirm(
-              `警告：Master 档案是共享的。继续将改写 Master，可能影响这些岗位：${names}${extra}。
+              `这份简历也用于其他岗位。更新后可能影响这些岗位：${names}${extra}。
 
-确定要更新 Master 吗？`,
+确定要更新已有简历档案吗？`,
             );
             if (!ok) return;
           } else {
-            const ok = window.confirm("警告：Master 档案是共享的，更新后其他使用 Master 的岗位也会看到新经历。确定继续？");
+            const ok = window.confirm("这份简历也用于其他岗位。更新后相关岗位会看到新经历。确定继续？");
             if (!ok) return;
           }
         }
-        const bound = await bindMissionResumePdf(missionId, uploadFile, { updateMaster: updateMasterResume });
+        const bound = await withTaskTimeout(bindMissionResumePdf(missionId, uploadFile, { updateMaster: updateMasterResume }), 180_000, "简历解析");
         upsertProfileLabelFromFilename(
           updateMasterResume ? currentMission.profile_id : bound.bound_profile_id || currentMission.profile_id,
           uploadFile.name,
@@ -695,10 +691,10 @@ useEffect(() => {
       } else {
         if (pasteText.trim().length < 40) throw new Error("粘贴的简历文本太短。");
         if (updateMasterResume) {
-          const ok = window.confirm("警告：Master 档案是共享的，更新后其他使用 Master 的岗位也会看到新经历。确定继续？");
+          const ok = window.confirm("这份简历也用于其他岗位。更新后相关岗位会看到新经历。确定继续？");
           if (!ok) return;
         }
-        const bound = await bindMissionResumeText(missionId, pasteText.trim(), { updateMaster: updateMasterResume });
+        const bound = await withTaskTimeout(bindMissionResumeText(missionId, pasteText.trim(), { updateMaster: updateMasterResume }), 180_000, "简历解析");
         if (!bound.experiences.length) {
           throw new Error("未能从文本提取到经历，请检查粘贴内容后重试。");
         }
@@ -718,12 +714,15 @@ useEffect(() => {
         setUpdateMasterResume(false);
       }
       errorKind = "experience_selection";
+      setResumeParseStage(1);
       // Auto-generate selection draft if empty — stay on EXPERIENCE_SELECTION_REQUIRED until user confirms
       const selection = await readExperienceSelection(missionId).catch(() => []);
+      setResumeParseStage(2);
       if (!selection.length) {
-        await generateMissionStep(missionId, "experience-selection/generate");
+        await withTaskTimeout(generateMissionStep(missionId, "experience-selection/generate"), 180_000, "经历整理");
       }
       await refresh();
+      setResumeParseStage(null);
     } catch (caught) {
       const message = humanizeMissionError(caught instanceof Error ? caught.message : "", errorKind);
       setError(message);
@@ -774,7 +773,10 @@ useEffect(() => {
     }
     if (resumeStep === "target" || workflowState === "TARGET_RESUME_DRAFT" || workflowState === "TARGET_RESUME_CONFIRMED") {
       if (workflowState === "TARGET_RESUME_DRAFT" || (latestResume && !targetConfirmed)) {
-        // Default-accept: BE promotes remaining SUGGESTED -> ACCEPTED; user may still edit/reject.
+        if (!bulletsDecided) {
+          setError(`请先处理所有改写，当前已处理 ${decisionProgress.decided} / ${decisionProgress.total} 项。`);
+          return;
+        }
         await run(async () => {
           await confirmTargetResume(missionId);
         });
@@ -869,9 +871,9 @@ useEffect(() => {
       <>
         <div className="mission-heading mission-heading-compact">
           <div>
-            <p className="eyebrow">目标岗位</p>
-            <h2>先确认目标，再选择简历</h2>
-            <p className="summary">我们已读取这份 JD。接下来会用它指导简历优化和模拟面试。</p>
+            <p className="eyebrow">岗位档案</p>
+            <h2>确认岗位信息</h2>
+            <p className="summary">核对识别结果，再选择简历来源。</p>
           </div>
         </div>
 
@@ -885,6 +887,10 @@ useEffect(() => {
           <p className="summary">
             这个岗位主要关注：{capabilities.join("、") || "AI 产品能力、项目经验、数据分析"}。
           </p>
+          <div className="mission-original-jd">
+            <p className="section-kicker">原始岗位描述</p>
+            {targetJob?.raw_text ? <div className="mission-original-jd-text">{targetJob.raw_text}</div> : <p className="summary">{targetJobError ? "原始岗位描述暂时无法读取，请刷新页面重试。" : "正在读取原始岗位描述…"}</p>}
+          </div>
         </section>
 
         <form
@@ -928,13 +934,13 @@ useEffect(() => {
               <input name="location" defaultValue={locationLabel(currentMission.location)} placeholder="可选" />
             </label>
           </div>
-          <button type="submit" className="button-secondary" disabled={busy}>保存识别结果</button>
+          <button type="submit" className="button-secondary" disabled={busy}>保存岗位</button>
         </form>
 
         <section className="mission-card">
           <p className="section-kicker">下一步</p>
-          <h3>选择你的简历</h3>
-          <p className="summary">上传或选择一份真实简历。AI 会保留原有结构，只修改最值得优化的 3～4 条经历。</p>
+          <h3>简历来源</h3>
+          <p className="summary">选择已有简历，或为当前岗位上传新版本。</p>
           <PrimaryButton
             disabled={busy}
             onClick={() => {
@@ -949,7 +955,7 @@ useEffect(() => {
               router.push(nextRoute(workflowState, missionId));
             }}
           >
-            下一步：选择简历
+            选择简历来源
           </PrimaryButton>
         </section>
       </>
@@ -960,7 +966,8 @@ useEffect(() => {
     return (
       <section className="mission-card">
         <p className="section-kicker">简历来源</p>
-        <h3>选择这份岗位要用的简历</h3>
+        <h3>选择简历来源</h3>
+        <p className="summary">选择已有简历，或为当前岗位上传新版本。</p>
         {(forceResumeSource || Boolean(currentMission.resume_source)) && (
           <p className="mission-pipeline-note">
             当前已绑定：{resumeSourceLine(currentMission, experiences)}。
@@ -979,24 +986,27 @@ useEffect(() => {
           <label className={resumeMode === "master" ? "proof-select-card selected" : "proof-select-card"}>
             <input type="radio" name="resume-mode" checked={resumeMode === "master"} onChange={() => { setResumeMode("master"); setModeTouched(true); }} />
             <span>
-              <strong>使用 Master Resume（共享档案）</strong>
+              <strong>已有简历</strong>
+              {resumeMode === "master" ? <small>■ 已选择</small> : null}
               <small>
-                绑定后使用个人主档案中的真实经历。若主档案是占位模板（XX 公司 / 文职助理），请改用上传 PDF 或粘贴文本。
+                使用已有简历中的真实经历。
               </small>
             </span>
           </label>
           <label className={resumeMode === "upload" ? "proof-select-card selected" : "proof-select-card"}>
             <input type="radio" name="resume-mode" checked={resumeMode === "upload"} onChange={() => { setResumeMode("upload"); setModeTouched(true); }} />
             <span>
-              <strong>上传另一份 Resume（PDF）</strong>
-              <small>默认仅绑定本岗位，不会改写其他岗位使用的 Master 档案</small>
+              <strong>上传 PDF</strong>
+              {resumeMode === "upload" ? <small>■ 已选择</small> : null}
+              <small>作为当前岗位的简历来源。</small>
             </span>
           </label>
           <label className={resumeMode === "paste" ? "proof-select-card selected" : "proof-select-card"}>
             <input type="radio" name="resume-mode" checked={resumeMode === "paste"} onChange={() => { setResumeMode("paste"); setModeTouched(true); }} />
             <span>
-              <strong>粘贴 Resume 文本</strong>
-              <small>默认仅绑定本岗位；适合还没有 PDF 的时候</small>
+              <strong>粘贴文本</strong>
+              {resumeMode === "paste" ? <small>■ 已选择</small> : null}
+              <small>粘贴完整简历内容。</small>
             </span>
           </label>
         </div>
@@ -1026,17 +1036,18 @@ useEffect(() => {
               onChange={(event) => setUpdateMasterResume(event.target.checked)}
             />
             <span>
-              <strong>同时更新 Master 档案（共享）</strong>
+              <strong>同时更新已有简历档案</strong>
               <br />
-              默认不勾选：只绑定本岗位。勾选后会改写 Master，其他仍使用 Master 的岗位可能受到影响。
+              默认只用于当前岗位。勾选后，其他使用此档案的岗位也会受影响。
               {masterImpactLabel ? <><br />{masterImpactLabel}</> : null}
             </span>
           </label>
         )}
 
         <PrimaryButton disabled={busy || !modeTouched || !resumeMode || (resumeMode === "upload" && !uploadFile) || (resumeMode === "paste" && pasteText.trim().length < 40)} onClick={() => void advanceResume()}>
-          {busy ? "处理中…" : primaryCta("RESUME_REQUIRED", ctaContext)}
+          {busy ? "正在读取简历…" : "使用这份简历"}
         </PrimaryButton>
+        {resumeParseStage !== null && <TaskProgress kind="resume-parse" activeIndex={resumeParseStage} error={!busy ? error : ""} onRetry={() => void bindResume()} />}
         {confirmableProfileIdOf(currentMission) ? (
           <div style={{ marginTop: "1rem" }}>
             <MissionProfileConfirmCard
@@ -1044,6 +1055,7 @@ useEffect(() => {
               busy={busy}
               onConfirmed={async () => {
                 setBoundNeedsConfirm(false);
+                setOptimizationError("");
                 await refresh();
                 await run(async () => {
                   await generateMissionStep(missionId, "claim-analysis");
@@ -1077,7 +1089,17 @@ useEffect(() => {
       });
       if (!rows.length) return null;
       const heading = kind === "project" ? "主要科研及竞赛经历" : kind === "campus" ? "校园经历" : "实习与工作经历";
-      return <div className="resume-source-section" key={kind}><strong>{heading}</strong>{rows.map((item) => <div className="resume-source-item" key={item.id}><strong>{item.title || "未命名经历"}</strong><small>{[item.organization, item.dates].filter(Boolean).join(" · ")}</small><p>{item.description || "原简历未填写具体描述。"}</p></div>)}</div>;
+      return <div className="resume-source-section" key={kind}><strong>{heading}</strong>{rows.map((item) => (
+        <div className={`resume-source-item ${highlightedExperienceId === item.id ? "is-linked" : ""}`} key={item.id} id={`resume-source-${item.id}`}>
+          <strong>{item.title || "未命名经历"}</strong>
+          <small>{[item.organization, item.dates].filter(Boolean).join(" · ")}</small>
+          <p>{item.description || "原简历未填写具体描述。"}</p>
+          <button type="button" className="mission-text-btn" onClick={() => {
+            setHighlightedExperienceId(item.id);
+            document.getElementById(`resume-rewrite-${item.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+          }}>查看对应改写</button>
+        </div>
+      ))}</div>;
     };
     const renderSkills = skills.length ? <div className="resume-source-section" key="skills"><strong>个人技能</strong><p>{skills.join("、")}</p></div> : null;
     const renderHonors = certifications.length ? <div className="resume-source-section" key="honors"><strong>荣誉与证书</strong>{certifications.map((item, index) => <div className="resume-source-item" key={item.id || index}><strong>{item.name || "证书/荣誉"}</strong><small>{[item.issuer, item.date, item.score].filter(Boolean).join(" · ")}</small></div>)}</div> : null;
@@ -1105,44 +1127,60 @@ useEffect(() => {
     const selectionByExperience = new Map(experienceSelection.map((item) => [item.experience_id, item]));
     const rewriteIds = new Set((latestResume?.bullets ?? []).map((bullet) => bullet.source_experience_id).filter(Boolean) as string[]);
     const regenerate = async () => {
-      await run(async () => {
-        setResumes([]);
-        await regenerateResumeOptimization(missionId);
+      setBusy(true);
+      setError("");
+      setRegenerationFailed(false);
+      try {
+        setOptimizationStage(0);
+        setOptimizationError("");
+        await withTaskTimeout(regenerateResumeOptimization(missionId), 180_000, "岗位版本重新生成");
         // Regeneration is an explicit user action, so finish the complete
         // AI-first pipeline in this request instead of relying on a later
         // effect pass to notice the intermediate workflow state.
-        const generatedSelection = await readExperienceSelection(missionId);
+        const generatedSelection = await withTaskTimeout(readExperienceSelection(missionId), 180_000, "经历整理");
         await saveExperienceSelection(missionId, generatedSelection, undefined, undefined, true);
-        await generateMissionStep(missionId, "resume-strategy");
+        setOptimizationStage(1);
+        await withTaskTimeout(generateMissionStep(missionId, "resume-strategy"), 180_000, "岗位策略生成");
         await confirmStrategy(missionId);
-        await generateMissionStep(missionId, "target-resumes");
-      });
+        setOptimizationStage(2);
+        await withTaskTimeout(generateMissionStep(missionId, "target-resumes"), 180_000, "岗位版本生成");
+        await refresh();
+        setOptimizationStage(null);
+      } catch (caught) {
+        setRegenerationFailed(true);
+        setOptimizationError(humanizeMissionError(caught instanceof Error ? caught.message : "", "generic"));
+      } finally {
+        setBusy(false);
+      }
     };
     return (
       <section className="mission-card">
         <div className="section-heading">
           <div>
-            <p className="section-kicker">Resume Optimization</p>
-            <h3>原始简历 → 针对当前 JD 的 AI 优化版本</h3>
-            <p className="summary">AI 已先按有限篇幅判断经历优先级，再直接改写值得展示的项目；你只需要检查、编辑或拒绝。</p>
-            {directionHighlight.length || directionAvoid.length ? <p className="mission-pipeline-note">AI 优化方向：强化 {directionHighlight.join("、") || "与岗位最相关的动作和结果"}；弱化 {directionAvoid.join("、") || "与岗位无关的细节"}。</p> : null}
+            <p className="section-kicker">岗位定向版本</p>
+            <h3>原始简历 / 岗位定向版本</h3>
+            <p className="summary">对照原文审阅改写，并逐条决定是否采用。</p>
+            {directionHighlight.length || directionAvoid.length ? <p className="mission-pipeline-note">调整重点：突出 {directionHighlight.join("、") || "与岗位相关的动作和结果"}；精简 {directionAvoid.join("、") || "无关细节"}。</p> : null}
           </div>
-          <TextButton disabled={busy} onClick={() => void regenerate()}>重新生成 AI 优化版本</TextButton>
+          <TextButton disabled={busy} onClick={() => void regenerate()}>重新生成岗位版本</TextButton>
         </div>
+        {optimizationStage !== null && <TaskProgress kind="resume-optimize" activeIndex={optimizationStage} error={optimizationError} onRetry={() => { if (regenerationFailed) void regenerate(); else setOptimizationError(""); }} />}
+        <p className="mission-pipeline-note" role="status">已处理 {decisionProgress.decided} / {decisionProgress.total} 项</p>
         <div className="resume-optimization-workspace">
           <div className="resume-optimization-column">
             <p className="section-kicker">原始简历</p>
             <h3>保留原文与原有结构</h3>
             {renderSourceResumeColumn()}
-            {experienceSelection.length ? <div className="resume-source-section"><strong>AI 经历判断</strong>{dedupeExperienceSelections(experienceSelection, experienceMap).map((selection) => {
+            {experienceSelection.length ? <div className="resume-source-section"><strong>经历筛选</strong>{dedupeExperienceSelections(experienceSelection, experienceMap).map((selection) => {
               const label = experienceLabel(selection.experience_id);
               return <div className="resume-source-item" key={selection.id}><strong>{label.title}</strong><span className="resume-decision-note">AI 建议：{selection.decision === "KEEP_AND_HIGHLIGHT" ? "重点优化" : selection.decision === "KEEP" ? "保留" : selection.decision === "DEEMPHASIZE" ? "弱化" : "暂不放入"}</span><p>{stripEvidenceDump(selection.why)}</p><div className="decision-chip-row">{EXPERIENCE_DECISION_OPTIONS.map((option) => <button key={option.value} type="button" className={selection.decision === option.value ? "decision-chip active" : "decision-chip"} disabled={savingDecision || busy} onClick={() => void updateDecision(selection.id, option.value)}>{option.label}</button>)}</div></div>;
             })}</div> : null}
           </div>
           <div className="resume-optimization-column">
-            <p className="section-kicker">针对当前 JD 的 AI 优化版本</p>
-            <h3>{latestResume ? `目标简历 v${latestResume.version}` : "正在生成逐条改写…"}</h3>
-            {!latestResume ? <p className="mission-empty">AI 正在比较完整 JD 与原始简历，并生成项目级改写。</p> : null}
+            <p className="section-kicker">岗位定向版本</p>
+            <h3>{latestResume ? `岗位版本 v${latestResume.version}` : "正在生成岗位版本…"}</h3>
+            <div className="resume-mobile-source"><details><summary>查看完整原始简历</summary>{renderSourceResumeColumn()}</details></div>
+            {!latestResume ? <p className="mission-empty">正在整理原始简历与岗位要求。</p> : null}
             {(latestResume?.bullets ?? []).map((bullet, bulletIndex) => {
               const guidanceItem = bullet.source_experience_id ? guidanceById.get(bullet.source_experience_id) : null;
               const needsTruthCheck = bullet.grounding_status === "NEEDS_CONFIRMATION" || bullet.grounding_status === "UNSUPPORTED";
@@ -1154,21 +1192,29 @@ useEffect(() => {
               const highlightText = listOf(guidanceItem?.what_to_highlight).map((value) => textOf(value)).filter(Boolean).join("、") || listOf(bullet.target_capabilities).map((value) => textOf(value)).filter(Boolean).join("、") || "项目中的个人动作、方案取舍和测试结果";
               const avoidText = listOf(guidanceItem?.what_to_avoid).map((value) => textOf(value)).filter(Boolean).join("、") || "无关的专业细节和未经验证的数字";
               const statusLabel = targetResumeBulletStatusLabel(bullet.status);
-              return <article className={`resume-ai-item ${statusLabel === "已接受" ? "resume-ai-item-accepted" : statusLabel === "已拒绝" ? "resume-ai-item-rejected" : ""}`} key={bullet.id}>{!sameExperienceBefore ? <h4>{isSyntheticProject ? "项目草案" : experienceLabel(bullet.source_experience_id || "").title}</h4> : <p className="resume-bullet-group-label">同一经历的下一条改写（只能选择一条）</p>}<div className="resume-original">原文：{bullet.original_text || "—"}</div>{isEditing ? <textarea className="textarea mission-bullet-edit-textarea" rows={5} value={editingDraft} disabled={busy} onChange={(event) => setEditingDraft(event.target.value)} /> : <div className="resume-rewrite">AI 推荐改写：{targetResumeBulletDisplayText(bullet)}</div>}<div className="resume-ai-reason">为什么这样改：{bullet.reason || "把原始事实改写成更容易被招聘方理解的岗位语言。"}</div><div className="resume-ai-reason">AI 优化方向：强化 {highlightText}；弱化 {avoidText}。</div>{siblingAlreadyChosen && statusLabel !== "已接受" && statusLabel !== "已编辑" ? <div className="resume-fact-warning">同一经历已有一条改写被选择；如需更换，请先拒绝已选择的版本。</div> : null}{isSyntheticProject ? <div className="resume-fact-warning">这是 AI 建议补做项目，不是原简历中的已完成经历。完成并确认真实存在后再放入正式简历。</div> : null}{needsTruthCheck ? <div className="resume-fact-warning">AI 增加了原简历没有明确提供的信息：请先确认事实，再进入正式简历。</div> : null}{statusLabel ? <span className={`mission-bullet-badge mission-bullet-badge-${statusLabel === "已接受" ? "accepted" : statusLabel === "已拒绝" ? "rejected" : "edited"}`}>{statusLabel}</span> : null}<div className="mission-bullet-actions">{(needsTruthCheck || isSyntheticProject) && !factConfirmed ? <TextButton disabled={busy || isEditing || siblingAlreadyChosen} onClick={() => void run(async () => { await updateResumeBullet(bullet.id, { fact_confirmed: true, status: "ACCEPTED" }); setResumes(await readTargetResumes(missionId)); })}>我确认事实真实</TextButton> : null}<TextButton disabled={busy || isEditing || siblingAlreadyChosen || ((needsTruthCheck || isSyntheticProject) && !factConfirmed)} onClick={() => void run(async () => { await updateResumeBullet(bullet.id, { status: "ACCEPTED" }); setResumes(await readTargetResumes(missionId)); })}>{statusLabel === "已接受" ? "已接受" : "接受"}</TextButton>{isEditing ? <><TextButton disabled={busy} onClick={() => { const built = buildTargetResumeInlineEditPatch(editingDraft); if (!built.ok) { setError(built.error); return; } void run(async () => { await updateResumeBullet(bullet.id, built.payload); setEditingBulletId(null); setEditingDraft(""); setResumes(await readTargetResumes(missionId)); }); }}>保存</TextButton><TextButton disabled={busy} onClick={() => { setEditingBulletId(null); setEditingDraft(""); }}>取消</TextButton></> : <TextButton disabled={busy} onClick={() => { setEditingBulletId(bullet.id); setEditingDraft(targetResumeBulletDisplayText(bullet)); }}>编辑</TextButton>}<TextButton disabled={busy || isEditing} onClick={() => void run(async () => { await updateResumeBullet(bullet.id, { status: "REJECTED" }); setResumes(await readTargetResumes(missionId)); })}>{statusLabel === "已拒绝" ? "已拒绝" : "拒绝"}</TextButton></div></article>;
+              return <article id={!sameExperienceBefore && bullet.source_experience_id ? `resume-rewrite-${bullet.source_experience_id}` : undefined} className={`resume-ai-item ${statusLabel === "已接受" ? "resume-ai-item-accepted" : statusLabel === "未采用" ? "resume-ai-item-rejected" : ""}`} key={bullet.id} onMouseEnter={() => setHighlightedExperienceId(bullet.source_experience_id)} onMouseLeave={() => setHighlightedExperienceId(null)} onFocus={() => setHighlightedExperienceId(bullet.source_experience_id)}>{!sameExperienceBefore ? <h4>{isSyntheticProject ? "项目草案" : experienceLabel(bullet.source_experience_id || "").title}</h4> : <p className="resume-bullet-group-label">同一经历的下一条改写（只能选择一条）</p>}<div className="resume-original">原文：{bullet.original_text || "—"}</div>{isEditing ? <textarea className="textarea mission-bullet-edit-textarea" rows={5} value={editingDraft} disabled={busy} onChange={(event) => setEditingDraft(event.target.value)} /> : <div className="resume-rewrite">建议改写：{targetResumeBulletDisplayText(bullet)}</div>}<div className="resume-ai-reason">改写说明：{bullet.reason || "把原始事实改写成更容易被招聘方理解的岗位语言。"}</div><div className="resume-ai-reason">调整重点：强化 {highlightText}；弱化 {avoidText}。</div>{siblingAlreadyChosen && statusLabel !== "已接受" && statusLabel !== "已编辑" ? <div className="resume-fact-warning">同一经历已有选定改写。采用此版本时将自动替换。</div> : null}{isSyntheticProject ? <div className="resume-fact-warning">建议完成的作品集项目 · 尚未写入正式简历。完成并确认事实后才能采用。</div> : null}{needsTruthCheck ? <div className="resume-fact-warning">此处含原始简历未明确提供的信息，请先确认事实。</div> : null}{statusLabel ? <span className={`mission-bullet-badge mission-bullet-badge-${statusLabel === "已接受" ? "accepted" : statusLabel === "未采用" ? "rejected" : "edited"}`}>{statusLabel}</span> : null}<div className="mission-bullet-actions">{(needsTruthCheck || isSyntheticProject) && !factConfirmed ? <TextButton disabled={busy || isEditing} onClick={() => void run(async () => { await updateResumeBullet(bullet.id, { ...factConfirmationPatch() }); setResumes(await readTargetResumes(missionId)); })}>确认事实</TextButton> : null}<TextButton disabled={busy || isEditing || ((needsTruthCheck || isSyntheticProject) && !factConfirmed)} onClick={() => void run(async () => { await updateResumeBullet(bullet.id, { status: "ACCEPTED" }); setResumes(await readTargetResumes(missionId)); })}>{statusLabel === "已接受" ? "已接受" : "接受"}</TextButton>{isEditing ? <><TextButton disabled={busy} onClick={() => { const built = buildTargetResumeInlineEditPatch(editingDraft); if (!built.ok) { setError(built.error); return; } void run(async () => { await updateResumeBullet(bullet.id, built.payload); setEditingBulletId(null); setEditingDraft(""); setResumes(await readTargetResumes(missionId)); }); }}>保存</TextButton><TextButton disabled={busy} onClick={() => { setEditingBulletId(null); setEditingDraft(""); }}>取消</TextButton></> : <TextButton disabled={busy} onClick={() => { setEditingBulletId(bullet.id); setEditingDraft(targetResumeBulletDisplayText(bullet)); }}>编辑</TextButton>}<TextButton disabled={busy || isEditing} onClick={() => void run(async () => { await updateResumeBullet(bullet.id, { status: "REJECTED" }); setResumes(await readTargetResumes(missionId)); })}>{statusLabel === "未采用" ? "未采用" : "不采用"}</TextButton></div></article>;
             })}
             {experienceSelection.filter((selection) => selection.decision === "OMIT" && !rewriteIds.has(selection.experience_id)).map((selection) => <article className="resume-ai-item" key={`omit-${selection.id}`}><h4>{experienceLabel(selection.experience_id).title}</h4><div className="resume-rewrite">AI 建议：暂不放入</div><div className="resume-ai-reason">{stripEvidenceDump(selection.why) || "与当前岗位核心要求关联较弱，建议把篇幅留给更强的科研、项目和竞赛经历。"}</div><div className="mission-bullet-actions"><TextButton disabled={busy} onClick={() => void updateDecision(selection.id, "KEEP")}>改为保留</TextButton></div></article>)}
           </div>
         </div>
         <div className="mission-action-row mission-action-wrap" style={{ marginTop: "1rem" }}>
-          {latestResume && !targetConfirmed ? <PrimaryButton disabled={busy} onClick={() => void advanceResume()}>{busy ? "处理中…" : "确认优化建议并生成最终简历"}</PrimaryButton> : null}
+          {latestResume && !targetConfirmed ? <PrimaryButton disabled={busy || !bulletsDecided} onClick={() => void advanceResume()}>{busy ? "正在确认版本…" : "确认最终版本"}</PrimaryButton> : null}
           {latestResume && targetConfirmed ? <>
-            <PrimaryButton disabled={busy} onClick={() => void exportTargetResumePdf()}>确认最终简历并生成 PDF</PrimaryButton>
-            <PrimaryButton disabled={busy} onClick={() => router.push(missionHref(missionId, "interview"))}>基于最终简历开始模拟面试</PrimaryButton>
+            <PrimaryButton disabled={busy} onClick={() => void exportTargetResumePdf()}>导出 PDF</PrimaryButton>
+            <PrimaryButton disabled={busy} onClick={() => router.push(missionHref(missionId, "interview"))}>开始模拟面试</PrimaryButton>
           </> : null}
         </div>
         {latestResume && targetConfirmed ? <section className="resume-final-preview" aria-label="最终简历预览">
-          <div className="section-heading"><div><p className="section-kicker">最终简历</p><h3>已确认版本</h3><p className="summary">只包含你接受/编辑后的真实经历；“建议补做项目”不会进入 PDF。</p></div><TextButton disabled={busy} onClick={() => void exportTargetResumePdf()}>导出 PDF</TextButton></div>
-          <div className="resume-final-preview-list">{latestResume.bullets.filter((bullet) => bullet.status === "ACCEPTED").slice(0, 8).map((bullet) => <article key={bullet.id}><strong>{bullet.source_experience_id ? experienceLabel(bullet.source_experience_id).title : "已确认经历"}</strong><p>{targetResumeBulletDisplayText(bullet)}</p></article>)}</div>
+          <div className="section-heading"><div><p className="section-kicker">确认版本</p><h3>最终简历</h3><p className="summary">未完成且未确认的建议项目不进入 PDF。</p></div><TextButton disabled={busy} onClick={() => void exportTargetResumePdf()}>导出 PDF</TextButton></div>
+          <div className="mission-action-row" role="group" aria-label="简历版本">
+            {(["original", "target"] as const).map((mode) => <button type="button" className={finalPreviewMode === mode ? "decision-chip active" : "decision-chip"} aria-pressed={finalPreviewMode === mode} key={mode} onClick={() => {
+              const previousScroll = finalPreviewRef.current?.scrollTop ?? 0;
+              setFinalPreviewMode(mode);
+              requestAnimationFrame(() => { if (finalPreviewRef.current) finalPreviewRef.current.scrollTop = previousScroll; });
+            }}>{mode === "original" ? "原始版本" : "岗位版本"}</button>)}
+          </div>
+          <div className="resume-final-preview-list" ref={finalPreviewRef}>{finalPreviewMode === "original" ? renderSourceResumeColumn() : latestResume.bullets.filter((bullet) => isChosenRewrite(bullet.status)).map((bullet) => <article key={bullet.id}><strong>{bullet.source_experience_id ? experienceLabel(bullet.source_experience_id).title : "已确认经历"}</strong><p>{targetResumeBulletDisplayText(bullet)}</p></article>)}</div>
+          <div className="resume-export-checks"><strong>导出前检查</strong>{buildPreExportChecklist({ profile: sourceProfile, experiences, bullets: latestResume.bullets, selections: experienceSelection }).length ? <ul>{buildPreExportChecklist({ profile: sourceProfile, experiences, bullets: latestResume.bullets, selections: experienceSelection }).map((item, index) => <li key={`${item.code}-${index}`}>{item.level === "block" ? "需处理" : "请留意"}：{item.message}</li>)}</ul> : <p>已完成内容检查。</p>}</div>
           {exportNotice ? <p className="summary" role="status">{exportNotice}</p> : null}
         </section> : null}
       </section>
@@ -1178,13 +1224,13 @@ useEffect(() => {
   function renderResume() {
     const showOptimization = resumeStep !== "source" && !boundNeedsConfirm;
     const resumeHeading = resumeStep === "source"
-      ? "选择简历"
+      ? "简历来源"
       : resumeStep === "selection"
         ? "确认经历"
         : resumeStep === "strategy"
           ? "优化方向"
           : resumeStep === "target"
-            ? "AI 优化简历"
+            ? "岗位定向版本"
             : "最终简历";
     return (
       <>
@@ -1192,7 +1238,7 @@ useEffect(() => {
           <div>
             <p className="eyebrow">简历</p>
             <h2>{resumeHeading}</h2>
-            <p className="summary">选择一份真实简历，AI 只修改与目标岗位最相关的 3～4 条内容，并保留原有结构。</p>
+            <p className="summary">对照原始简历审阅岗位版本，确认后再进入模拟面试。</p>
           </div>
         </div>
 
@@ -1202,6 +1248,7 @@ useEffect(() => {
             busy={busy}
             onConfirmed={async () => {
               setBoundNeedsConfirm(false);
+              setOptimizationError("");
               await refresh();
               await run(async () => {
                 await generateMissionStep(missionId, "claim-analysis");
@@ -1228,8 +1275,6 @@ useEffect(() => {
                   setUpdateMasterResume(false);
                   setMasterImpactLabel("");
                   setResumeMode(null);
-                  setUploadFile(null);
-                  setPasteText("");
                   setError("");
                 }}
               >
@@ -1247,7 +1292,7 @@ useEffect(() => {
           <section className="mission-card" role="status">
             <p className="section-kicker">待确认档案</p>
             <h3>上传/粘贴的岗位档案需先确认后再筛选经历</h3>
-            <p className="summary">请先在上方卡片查看并确认 Profile。未确认前不会进入经历筛选；证据补强也会保持锁定。</p>
+            <p className="summary">请先核对并确认简历内容，再继续选择经历。</p>
           </section>
         )}
 
@@ -1320,7 +1365,7 @@ useEffect(() => {
                     </li>
                   ))}
                 </ul>
-                <p className="mission-pipeline-note">AI 会根据岗位要求给出有限的修改建议；没有依据的内容不会自动写入。</p>
+                <p className="mission-pipeline-note">建议基于岗位要求生成；请逐条核对事实。</p>
               </>
             ) : (
               <p className="mission-empty">还没有策略。点击下方按钮，让模型根据你的经历和岗位 JD 生成候选人故事。</p>
@@ -1409,7 +1454,7 @@ useEffect(() => {
                       )}
                       {isSyntheticProject ? <small className="message warning" role="note">AI 项目草案：可直接编辑后放入目标简历。</small> : null}
                       <p className="section-kicker" style={{ marginTop: "0.55rem" }}>AI 建议</p>
-                      <small>为什么这样改：{bullet.reason || "让岗位要求更容易在经历中被看见。"}</small>
+                      <small>改写说明：{bullet.reason || "让岗位要求更容易在经历中被看见。"}</small>
                       <small>对应岗位关注：{(bullet.target_capabilities ?? []).slice(0, 3).join("、") || "与目标岗位要求相关"}</small>
                       {needsTruthCheck ? <small className="message warning" role="note">AI 建议补充，请确认是否真实做过；未确认前不会写入投递版。</small> : null}
                     </div>
@@ -1419,7 +1464,7 @@ useEffect(() => {
                     {statusLabel === "已接受" ? (
                       <span className="mission-bullet-badge mission-bullet-badge-accepted">已接受</span>
                     ) : null}
-                    {statusLabel === "已拒绝" ? (
+                    {statusLabel === "未采用" ? (
                       <span className="mission-bullet-badge mission-bullet-badge-rejected">已拒绝</span>
                     ) : null}
                   </div>
@@ -1602,6 +1647,7 @@ useEffect(() => {
               busy={busy}
               onConfirmed={async () => {
                 setBoundNeedsConfirm(false);
+                setOptimizationError("");
                 await refresh();
                 await run(async () => {
                   await generateMissionStep(missionId, "claim-analysis");
@@ -1647,7 +1693,7 @@ useEffect(() => {
                   });
                 }}
               >
-                去确认 Profile
+                确认简历内容
               </button>
             </div>
           </section>
@@ -1964,6 +2010,22 @@ useEffect(() => {
     );
   }
 
+  async function generateQuestions() {
+    setBusy(true);
+    setQuestionError("");
+    setQuestionStage(0);
+    try {
+      await withTaskTimeout(generateMissionStep(missionId, "interview-pack"), 180_000, "问题生成");
+      setQuestionStage(1);
+      setInterviewPack(await withTaskTimeout(readInterviewPack(missionId), 30_000, "问题读取"));
+      setQuestionStage(null);
+    } catch (caught) {
+      setQuestionError(humanizeMissionError(caught instanceof Error ? caught.message : "", "generic"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function renderInterview() {
     const hasPack = interviewPack.topics.length > 0;
     const copy = coreInterviewCopy({ hasFinalResume: targetConfirmed, hasQuestions: hasPack });
@@ -2006,44 +2068,37 @@ useEffect(() => {
             <section className="mission-card" role="status">
               <p className="section-kicker">面试准备</p>
               <h3>{hasPack ? "问题预览已生成" : "先生成问题预览"}</h3>
-              <p className="summary">问题会优先围绕最终简历中的项目和岗位要求，再补充公司面经中的常见问法。预览确认后，再逐题回答并获得评分与补强建议。</p>
+              <p className="summary">先查看考察主题，再按题作答。</p>
               <div className="mission-action-row mission-action-wrap" style={{ marginTop: "0.75rem" }}>
-                {hasPack && mockHref ? (
-                  <Link className="mission-primary-cta link-cta" href={mockHref}>
-                    开始回答第 1 题
-                  </Link>
-                ) : (
-                  <PrimaryButton disabled={busy} onClick={() => void run(() => generateMissionStep(missionId, "interview-pack"))}>
-                    {busy ? "准备中…" : "生成问题预览"}
+                {!hasPack ? (
+                  <PrimaryButton disabled={busy} onClick={() => void generateQuestions()}>
+                    {busy ? "正在生成问题…" : "生成问题预览"}
                   </PrimaryButton>
-                )}
+                ) : null}
                 <TextButton
                   disabled={busy}
-                  onClick={() => void run(async () => {
-                    await generateMissionStep(missionId, "interview-pack");
-                  })}
+                  onClick={() => void generateQuestions()}
                 >
-                  {busy ? "准备中…" : hasPack ? "重新生成问题预览" : "刷新问题预览"}
+                  {busy ? "正在生成问题…" : hasPack ? "重新生成问题预览" : "重新生成"}
                 </TextButton>
               </div>
+              {questionStage !== null && <TaskProgress kind="interview-questions" activeIndex={questionStage} error={questionError} onRetry={() => void generateQuestions()} />}
             </section>
             {hasPack ? (
               <section className="mission-card">
-                <p className="section-kicker">本轮问题预览</p>
-                <ul className="mission-bullet-list">
+                <p className="section-kicker">问题预览</p>
+                <div className="interview-preview-list">
                   {interviewPack.topics.slice(0, 8).map((topic, index) => {
                     const questions = stringsOf(topic.question_patterns ?? topic.questions ?? topic.question);
                     return (
-                      <li key={index}>
-                        <div>
-                          <strong>{textOf(topic.topic) || `问题 ${index + 1}`}</strong>
-                          <span>{textOf(topic.why) || "与目标岗位和简历经历相关"}</span>
-                          <small>{questions[0] || "请结合一段真实经历回答。"}</small>
-                        </div>
-                      </li>
+                      <details className="interview-preview-card" key={index} open={index === 0}>
+                        <summary><span className="preview-index">{String(index + 1).padStart(2, "0")}</span><span><strong>{textOf(topic.topic) || `问题 ${index + 1}`}</strong><small>{questions[0] || "请结合一段真实经历回答。"}</small></span></summary>
+                        <div className="interview-preview-focus"><strong>考察点</strong><p>{textOf(topic.why) || "与目标岗位和简历经历相关"}</p>{questions.slice(1).map((question, questionIndex) => <p key={questionIndex}>{question}</p>)}</div>
+                      </details>
                     );
                   })}
-                </ul>
+                </div>
+                {mockHref && <div className="interview-preview-action"><Link className="mission-primary-cta link-cta" href={mockHref}>开始模拟面试</Link></div>}
               </section>
             ) : null}
           </>
@@ -2170,7 +2225,14 @@ useEffect(() => {
   const shellTab = currentTab === "overview" ? "role" : currentTab;
 
   return (
-    <MissionShell mission={currentMission} currentTab={shellTab} compactHints={compactHints}>
+    <MissionShell mission={currentMission} currentTab={shellTab} compactHints={compactHints} progressSteps={deriveMissionProgress({
+      missionId,
+      workflowState: currentMission.workflow_state,
+      currentTab: shellTab === "proof" ? "resume" : shellTab,
+      resumeBound,
+      targetConfirmed,
+      sessionStatus: interviewSessionStatus,
+    })}>
       <div className="mission-content">
         {exportNotice && (
           <div className="mission-action-row mission-action-wrap" style={{ marginBottom: "0.75rem" }}>

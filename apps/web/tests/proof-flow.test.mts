@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createTargetJob, generateProofGuidance, submitProofArtifact } from "../app/proof-flow.ts";
+import { createTargetJob, generateProofGuidance, readTargetJob, submitProofArtifact } from "../app/proof-flow.ts";
 
 function response(payload: unknown, status = 200): Response {
   return new Response(JSON.stringify(payload), { status, headers: { "Content-Type": "application/json" } });
@@ -17,6 +17,17 @@ test("target job request preserves one-JD flow and source URL", async () => {
   });
   assert.equal(String(request), "http://api/api/v1/profiles/profile-1/target-jobs");
   assert.equal(result.id, "job-1");
+});
+
+test("target job can be read again so the original JD stays available after recognition", async () => {
+  let request: RequestInfo | URL | undefined;
+  const job = await readTargetJob("job-1", "http://api", async (input, init) => {
+    request = input;
+    assert.equal(init, undefined);
+    return response({ id: "job-1", profile_id: "profile-1", raw_text: "Original JD text", source_url: null, content_hash: "hash", status: "READY", created_at: "now", updated_at: "now" });
+  });
+  assert.equal(String(request), "http://api/api/v1/target-jobs/job-1");
+  assert.equal(job.raw_text, "Original JD text");
 });
 
 test("provider/API errors remain visible to the flow", async () => {

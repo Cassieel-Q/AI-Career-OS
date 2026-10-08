@@ -46,8 +46,8 @@ import { missionTabLabel, MISSION_TABS } from "../app/missions.ts";
 
 test("mission tabs are the four user-facing stages in Chinese", () => {
   assert.deepEqual(MISSION_TABS, ["role", "resume", "interview", "outcome"]);
-  assert.equal(missionTabLabel("role"), "目标岗位");
-  assert.equal(missionTabLabel("resume"), "简历优化");
+  assert.equal(missionTabLabel("role"), "岗位");
+  assert.equal(missionTabLabel("resume"), "简历");
   assert.equal(missionTabLabel("proof"), "补强");
   assert.equal(missionTabLabel("interview"), "模拟面试");
   assert.equal(missionTabLabel("outcome"), "面试记录");
@@ -142,7 +142,7 @@ test("proof next step keeps the user on a concrete forward path", () => {
       claims: [{ id: "c1", readiness_status: "DEFENDABLE", evidence_refs: ["ev-1"] }],
       proofActions: [{ status: "PROPOSED" }],
     }),
-    { kind: "interview", label: "下一步：进入面试拷问" },
+    { kind: "interview", label: "下一步：进入模拟面试" },
   );
 });
 
@@ -718,7 +718,7 @@ test("target_resume_inline_edit builds EDITED patch and status labels", () => {
 
   assert.equal(targetResumeBulletStatusLabel("EDITED"), "已编辑");
   assert.equal(targetResumeBulletStatusLabel("ACCEPTED"), "已接受");
-  assert.equal(targetResumeBulletStatusLabel("REJECTED"), "已拒绝");
+  assert.equal(targetResumeBulletStatusLabel("REJECTED"), "未采用");
   assert.equal(targetResumeBulletStatusLabel("SUGGESTED"), null);
 });
 
@@ -727,6 +727,12 @@ test("humanizeMissionError maps unknown source experience to Chinese recovery co
   const msg = humanizeMissionError("Target Resume contains an unknown source experience");
   assert.match(msg, /不存在的经历|经历筛选|重试生成/);
   assert.doesNotMatch(msg, /Target Resume contains/i);
+});
+
+test("pasted text parse errors do not claim the user uploaded a PDF", () => {
+  const message = humanizeMissionError("未能从文本提取到经历，请检查粘贴内容后重试。", "resume_ingest");
+  assert.match(message, /粘贴内容/);
+  assert.doesNotMatch(message, /PDF/);
 });
 
 
@@ -825,8 +831,9 @@ test("boundResumeSourceSummary shows name/source without UUID", () => {
     { experienceTitle: "港口海岸科研助理" },
   );
   assert.ok(master);
-  assert.match(master!.line, /Master 档案/);
+  assert.match(master!.line, /已有简历/);
   assert.match(master!.line, /港口海岸科研助理/);
-  assert.match(master!.line, /共享 Master/);
+  assert.match(master!.line, /可用于多个岗位/);
+  assert.doesNotMatch(master!.line, /Master/);
 });
 

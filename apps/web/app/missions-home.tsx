@@ -172,13 +172,13 @@ export function MissionsHome() {
         </Link>
       </header>
       <section className="mission-home-content">
-        <p className="eyebrow">岗位准备工作台</p>
-        <h1>我的岗位准备</h1>
-        <p className="summary">每个目标岗位单独一条准备链。先粘贴一份 JD，再选择简历，系统会按步骤带着你走完。</p>
+        <p className="eyebrow">AI Career OS</p>
+        <h1>岗位档案</h1>
+        <p className="summary">集中管理目标岗位、简历版本与面试记录。</p>
 
         <div className="mission-home-actions">
           <Link className="mission-primary-cta link-cta" href={newHref}>
-            准备一个新岗位
+            新建岗位
           </Link>
           <Link className="button-secondary" href="/workflow/start">
             上传简历
@@ -203,7 +203,7 @@ export function MissionsHome() {
                 ))}
               </select>
             ) : (
-              <p className="profile-note">本机还没有记住的档案。若你以前创建过，可在下方输入档案 ID 恢复；也可先上传简历或直接准备新岗位。</p>
+              <p className="profile-note">还没有已保存的简历。可上传新简历，或直接添加岗位。</p>
             )}
           </label>
           {profiles.length ? (
@@ -249,9 +249,7 @@ export function MissionsHome() {
             </p>
           ) : null}
         </div>
-        <p className="profile-note" id="mission-profile-hint">
-          「档案」是系统中的求职档案，不是 PDF。上传「个人简历.pdf」后会显示为「个人简历」。本机缓存清空后不会删除服务器档案，可用档案 ID 恢复。接口若无名称则显示「未命名档案」。
-        </p>
+        <p className="profile-note" id="mission-profile-hint">已保存的简历可用于多个岗位。</p>
 
         {error && (
           <p className="message error" role="alert">
@@ -270,6 +268,12 @@ export function MissionsHome() {
               const company = isUnknownIdentity(mission.company) ? "" : String(mission.company).trim();
               const role = isUnknownIdentity(mission.role) ? "" : String(mission.role).trim();
               const seniority = seniorityLabel(mission.seniority);
+              const workflow = String(mission.workflow_state || "");
+              const resumeState = mission.resume_source?.mode ? "已选择" : "待选择";
+              const interviewState = ["INTERVIEW_DEBRIEF_READY", "OUTCOME"].includes(workflow)
+                ? "已完成"
+                : workflow === "INTERVIEW_IN_PROGRESS" ? "进行中" : "待开始";
+              const updatedAt = new Date(mission.updated_at);
               return (
                 <article className="mission-list-card" key={mission.id}>
                   <Link className="mission-list-card-main" href={missionHref(mission.id, openTab)}>
@@ -277,6 +281,7 @@ export function MissionsHome() {
                       {company ? <p className="section-kicker">{company}</p> : null}
                       <h2>{role || label}</h2>
                       {seniority ? <p>{seniority}</p> : null}
+                      <div className="mission-list-meta"><span>简历：{resumeState}</span><span>面试：{interviewState}</span><time dateTime={mission.updated_at}>更新于 {Number.isNaN(updatedAt.getTime()) ? "未知" : updatedAt.toLocaleDateString("zh-CN")}</time></div>
                     </div>
                     <span className="mission-status-badge">{missionStatusLabel(mission.status)}</span>
                   </Link>
@@ -295,7 +300,7 @@ export function MissionsHome() {
             })
           ) : (
             <div className="mission-empty">
-              还没有岗位准备。点击「准备一个新岗位」，先粘贴一份 JD。
+              还没有岗位档案。添加 JD 后即可开始。
             </div>
           )}
         </section>

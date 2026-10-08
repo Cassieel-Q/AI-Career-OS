@@ -42,7 +42,7 @@ test("dedupeProfileOptions keeps first row per profile_id", () => {
   assert.equal(out[1]?.profileId, "b");
 });
 
-test("formatProfileOptionLabel shows name/time/origin/master/mission without UUID", () => {
+test("formatProfileOptionLabel shows a readable resume name and date without internal flags", () => {
   const text = formatProfileOptionLabel(
     {
       label: "潘佳琪-简历",
@@ -54,8 +54,8 @@ test("formatProfileOptionLabel shows name/time/origin/master/mission without UUI
     { profileId: "e0e40271-25ec-4d6a-8219-da206be34512", currentMissionBoundId: "e0e40271-25ec-4d6a-8219-da206be34512" },
   );
   assert.match(text, /潘佳琪-简历/);
-  assert.match(text, /Master:否/);
-  assert.match(text, /当前岗位专属|岗位专属/);
+  assert.match(text, /岗位专属/);
+  assert.doesNotMatch(text, /Master|岗位专属:|未知来源/);
   assert.equal(text.includes("e0e40271"), false);
 });
 

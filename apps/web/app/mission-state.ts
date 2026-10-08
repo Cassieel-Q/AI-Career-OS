@@ -583,13 +583,13 @@ export function boundResumeSourceSummary(
   if (!src?.mode) return null;
   const mode = String(src.mode);
   const modeLabel =
-    mode === "master" ? "Master 档案" : mode === "upload" ? "上传 PDF" : mode === "paste" ? "粘贴文本" : mode;
+    mode === "master" ? "已有简历" : mode === "upload" ? "上传 PDF" : mode === "paste" ? "粘贴文本" : mode;
   const isolation = String(src.isolation || "");
   const isolationLabel =
     isolation === "mission_local"
       ? "仅本岗位"
       : isolation === "shared_master" || mode === "master"
-        ? "共享 Master"
+        ? "可用于多个岗位"
         : isolation || "已绑定";
   let nameLabel = "";
   const filename = typeof src.filename === "string" ? src.filename.trim() : "";
@@ -600,14 +600,14 @@ export function boundResumeSourceSummary(
   } else if (options?.experienceTitle?.trim()) {
     nameLabel = options.experienceTitle.trim();
   } else if (mode === "master") {
-    nameLabel = "Master 简历";
+    nameLabel = "已有简历";
   } else if (mode === "paste") {
     nameLabel = "粘贴简历";
   } else {
     nameLabel = "已绑定简历";
   }
   if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(nameLabel)) {
-    nameLabel = mode === "master" ? "Master 简历" : "已绑定简历";
+    nameLabel = mode === "master" ? "已有简历" : "已绑定简历";
   }
   const line = `${modeLabel} · ${nameLabel}（${isolationLabel}）`;
   return { mode, modeLabel, nameLabel, isolationLabel, line };
@@ -621,7 +621,7 @@ export function humanizeMissionError(raw: string, kind: FriendlyErrorKind = "gen
     (lower.includes("confirmed profile") && lower.includes("proof")) ||
     text.includes("证明补强需要先确认个人档案")
   ) {
-    return "证明补强需要先确认个人档案。请在本页上方确认 Profile 后，再点「找出最危险的一项」。";
+    return "请先核对并确认简历内容，再继续。";
   }
   if (lower.includes("exceeds the 10 mb") || lower.includes("10 mb limit") || lower.includes("payload too large") || text.includes("413")) {
     return "这份 PDF 超过 10MB，压缩后再上传，或改用「粘贴文本」。";
@@ -658,10 +658,13 @@ export function humanizeMissionError(raw: string, kind: FriendlyErrorKind = "gen
   if (lower.includes("proof actions must target") || text.includes("补强证据必须针对当前主张")) {
     return "补强证据必须针对当前主张。";
   }
+  if (text.includes("未能从文本")) {
+    return "未能从粘贴内容提取到经历，请检查简历文本后重试。";
+  }
   if (
     lower.includes("no extractable text") ||
     lower.includes("could not be extracted") ||
-    lower.includes("未能从") ||
+    (lower.includes("未能从") && lower.includes("pdf")) ||
     lower.includes("扫描件") ||
     lower.includes("图片型")
   ) {
@@ -1161,7 +1164,7 @@ export function buildTargetResumeInlineEditPatch(
 export function targetResumeBulletStatusLabel(status: string): string | null {
   if (status === "EDITED") return "已编辑";
   if (status === "ACCEPTED") return "已接受";
-  if (status === "REJECTED") return "已拒绝";
+  if (status === "REJECTED") return "未采用";
   return null;
 }
 
@@ -1267,7 +1270,7 @@ export function resolveProofNextStep(input: {
   });
   if (pendingAction) {
     if (readiness === "READY_TO_APPLY" && hasInterviewableClaim(input.claims ?? [])) {
-      return { kind: "interview", label: "下一步：进入面试拷问" };
+      return { kind: "interview", label: "下一步：进入模拟面试" };
     }
     return { kind: "strengthen", label: "继续补强" };
   }
@@ -1275,7 +1278,7 @@ export function resolveProofNextStep(input: {
     return { kind: "strengthen", label: "继续补强" };
   }
   if (hasInterviewableClaim(input.claims ?? [])) {
-    return { kind: "interview", label: "下一步：进入面试拷问" };
+    return { kind: "interview", label: "下一步：进入模拟面试" };
   }
   return { kind: "strengthen", label: "继续补强" };
 }

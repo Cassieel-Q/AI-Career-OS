@@ -7,12 +7,17 @@ import type { FormEvent } from "react";
 import { createDraftProfile, createMission, PROFILE_STORAGE_KEY } from "./missions.ts";
 import { humanizeMissionError } from "./mission-state.ts";
 import { upsertProfileLabel } from "./profile-label.ts";
+import { MISSION_COPY } from "./mission-copy.ts";
+import { TaskProgress } from "./task-progress.tsx";
+import { withTaskTimeout } from "./task-progress.ts";
+import { readMission } from "./missions.ts";
 
 export function MissionCreate({ profileId: initialProfileId }: { profileId?: string }) {
   const [rawText, setRawText] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [taskStage, setTaskStage] = useState<number | null>(null);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -22,6 +27,7 @@ export function MissionCreate({ profileId: initialProfileId }: { profileId?: str
     }
     setBusy(true);
     setError("");
+    setTaskStage(0);
     try {
       let profileId = (initialProfileId || window.localStorage.getItem(PROFILE_STORAGE_KEY) || "").trim();
       if (!profileId) {
@@ -33,7 +39,9 @@ export function MissionCreate({ profileId: initialProfileId }: { profileId?: str
         // Keep registry in sync when preparing with an existing profile id.
         upsertProfileLabel(profileId, "档案", "fallback");
       }
-      const mission = await createMission(profileId, rawText.trim(), sourceUrl.trim() || null);
+      const mission = await withTaskTimeout(createMission(profileId, rawText.trim(), sourceUrl.trim() || null), 120_000, "岗位识别");
+      setTaskStage(1);
+      await withTaskTimeout(readMission(mission.id), 30_000, "岗位信息读取");
       // 产品流：分析完成后落到岗位理解（ROLE_UNDERSTOOD）页
       window.location.assign(`/missions/${encodeURIComponent(mission.id)}/role`);
     } catch (caught) {
@@ -50,12 +58,12 @@ export function MissionCreate({ profileId: initialProfileId }: { profileId?: str
           <span className="workflow-brand-mark" aria-hidden="true">A</span>
           <span>AI Career OS</span>
         </Link>
-        <Link className="button-secondary" href="/missions">← 我的岗位</Link>
+        <Link className="button-secondary" href="/missions">← 岗位档案</Link>
       </header>
       <section className="mission-home-content">
-        <p className="eyebrow">准备一个新岗位</p>
-        <h1>你想准备哪个岗位？</h1>
-        <p className="summary">只需要粘贴岗位描述。公司、岗位、级别和要求会自动识别，识别后你可以确认或修改。</p>
+        <p className="eyebrow">岗位档案</p>
+        <h1>{MISSION_COPY.addRoleTitle}</h1>
+        <p className="summary">{MISSION_COPY.addRoleDescription}</p>
         <form className="mission-card mission-form" onSubmit={submit}>
           <label className="field-label">
             粘贴岗位描述（JD）
@@ -77,9 +85,10 @@ export function MissionCreate({ profileId: initialProfileId }: { profileId?: str
               {error}
             </p>
           )}
+          {taskStage !== null && <TaskProgress kind="jd" activeIndex={taskStage} error={error} onRetry={() => document.querySelector<HTMLFormElement>(".mission-form")?.requestSubmit()} />}
           <div className="mission-action-row">
             <button type="submit" className="mission-primary-cta" disabled={busy || rawText.trim().length < 20}>
-              {busy ? "正在分析岗位…" : "分析这个岗位"}
+              {busy ? "正在识别岗位信息…" : error ? "重新识别" : MISSION_COPY.identifyRole}
             </button>
           </div>
         </form>
