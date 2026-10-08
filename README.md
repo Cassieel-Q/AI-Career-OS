@@ -170,7 +170,7 @@ Install the official Typst CLI **0.15.1** separately and set `TYPST_BIN` to its 
 
 For a local API started on a port other than 8000, set `NEXT_PUBLIC_API_BASE_URL` for the Web app and add its origin to the API's `FRONTEND_ORIGINS` comma-separated environment value.
 
-Agent clients use `GET /api/v1/job-missions/{missionId}/resume-studio` and `PATCH` on the same URL with `If-Match: <revision>`. Preview, confirmation and PDF endpoints are documented in `docs/superpowers/specs/2026-10-08-resume-studio-design.md`.
+Agent clients use `GET /api/v1/job-missions/{missionId}/resume-studio` and `PATCH` on the same URL with `If-Match: <revision>`. `GET .../source-diff` reports a newer approved rewrite without changing the Studio document; `POST .../reimport` with `If-Match` explicitly replaces it. Preview, confirmation and PDF endpoints are documented in `docs/superpowers/specs/2026-10-08-resume-studio-design.md`.
 
 ```powershell
 cd apps/web
