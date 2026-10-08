@@ -14,8 +14,8 @@ export type CoreMissionTab = (typeof CORE_MISSION_TABS)[number];
 export type MissionTab = CoreMissionTab | "proof";
 
 const MISSION_TAB_LABELS: Record<MissionTab, string> = {
-  role: "目标岗位",
-  resume: "简历优化",
+  role: "岗位",
+  resume: "简历",
   proof: "补强",
   interview: "模拟面试",
   outcome: "面试记录",

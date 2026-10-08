@@ -238,7 +238,7 @@ export function ProfileStep({ profile: serverProfile, controls }: { profile: Pro
           </button>
         </div>
         {profileLocked && <div className="proof-entry-card">
-          <div><p className="section-kicker">v0.2 · Resume → Proof</p><h3>已有目标岗位？</h3><p>从一份真实 JD 开始，逐条检查简历主张，完成面试压力测试并提交可复用证明。</p></div>
+          <div><p className="section-kicker">岗位准备</p><h3>已有目标岗位</h3><p>添加岗位描述，审阅岗位简历，再进入模拟面试。</p></div>
           <Link className="button-primary" href={`/proof/${encodeURIComponent(profile.profile_id)}/target-job`}>进入证明链</Link>
         </div>}
       </section>

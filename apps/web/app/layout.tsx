@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "AI Career OS",
-  description: "按目标公司优化简历，并用牛客面经做面试拷打",
+  description: "管理目标岗位、简历版本与模拟面试。",
 };
 
 export default function RootLayout({
