@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element -- Typst supplies complete data-URL SVG pages; Next image optimization cannot process these previews. */
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -60,6 +61,7 @@ export function StudioPage({ missionId }: { missionId: string }) {
   const [history, setHistory] = useState<StudioHistory>(emptyHistory);
   const [mobileTab, setMobileTab] = useState<"preview" | "edit">("preview");
   const previewSeq = useRef(0);
+  const sampleLoading = useRef(new Set<string>());
   const draftRef = useRef("");
   const dragId = useRef<string | null>(null);
 
@@ -76,26 +78,27 @@ export function StudioPage({ missionId }: { missionId: string }) {
   }, [missionId]);
   useEffect(() => { void load(); }, [load]);
 
+  const revision = state?.revision;
   useEffect(() => {
-    if (!state) return;
+    if (revision == null) return;
     const seq = ++previewSeq.current;
     const timer = setTimeout(() => {
       setRendering(true);
-      void renderStudio(missionId, state.revision).then(result => {
+      void renderStudio(missionId, revision).then(result => {
         if (seq === previewSeq.current) { setPreview(result); setError(""); }
       }).catch(caught => {
         if (seq === previewSeq.current) setError(`预览失败：${describeError(caught)}。已保留上次成功预览。`);
       }).finally(() => { if (seq === previewSeq.current) setRendering(false); });
     }, 300);
     return () => clearTimeout(timer);
-  }, [missionId, state?.revision]);
+  }, [missionId, revision]);
 
   useEffect(() => {
     if (!gallery || templates.length === 0) return;
-    const missing = templates.filter(item => item.language === galleryLanguage && !samples[item.id]);
+    const missing = templates.filter(item => item.language === galleryLanguage && !samples[item.id] && !sampleLoading.current.has(item.id));
     if (!missing.length) return;
-    let cancelled = false;
     void Promise.all(missing.map(async item => {
+      sampleLoading.current.add(item.id);
       try {
         const url = (item.sample_preview_url as string) || `/api/v1/resume-studio/templates/${item.id}/sample-preview`;
         const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
@@ -103,16 +106,16 @@ export function StudioPage({ missionId }: { missionId: string }) {
           if (!response.ok) throw new Error(`${response.status}`);
           return response.json() as Promise<SamplePreview>;
         });
-        if (!cancelled) setSamples(previous => ({ ...previous, [item.id]: result }));
+        setSamples(previous => ({ ...previous, [item.id]: result }));
       } catch { /* One card can retry when gallery reopens. */ }
+      finally { sampleLoading.current.delete(item.id); }
     }));
-    return () => { cancelled = true; };
-  }, [gallery, galleryLanguage, templates]);
+  }, [gallery, galleryLanguage, templates, samples]);
 
   const selected = state && selectedId ? findNode(state.document, selectedId) : null;
   useEffect(() => {
     if (selected && draftRef.current === "") { setDraft(selected.text); draftRef.current = selected.text; }
-  }, [selectedId, state?.revision]);
+  }, [selected]);
   const choose = (id: string) => {
     const node = state && findNode(state.document, id);
     if (!node) return;

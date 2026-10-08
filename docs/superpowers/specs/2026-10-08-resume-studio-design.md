@@ -45,6 +45,8 @@ PDF 文件名使用清洗后的 `姓名-公司-岗位-简历语言.pdf`，缺失
 - `GET /job-missions/{id}/resume-studio`：懒初始化并返回文档、revision、阻塞摘要。
 - `PATCH /job-missions/{id}/resume-studio`：`If-Match` 修订号，提交单个编辑/增删/移动/事实操作，返回新文档。
 - `GET /resume-studio/templates`：静态 manifest、完整样本预览 URL。
+- `GET /job-missions/{id}/resume-studio/source-diff`：只读比较新版已确认改写稿与当前工作台。
+- `POST /job-missions/{id}/resume-studio/reimport`：携带 `If-Match`，用户明确选择后重新导入新版并生成新修订号。
 - `POST /job-missions/{id}/resume-studio/preview`：按当前已保存 revision 渲染页面、页数、热区。
 - `POST /job-missions/{id}/resume-studio/confirm`：通过事实与排版门槛后标记 `confirmed_revision`。
 - `GET /job-missions/{id}/resume-studio/pdf`：只下载已确认且仍为当前 revision 的 PDF；内容改变后须重新确认。
