@@ -31,6 +31,7 @@ from app.proof_routes import router as proof_router
 from app.evidence_os import router as evidence_os_router
 from app.mission_routes import router as mission_router
 from app.resume_studio_routes import router as resume_studio_router
+from app.interview_record_routes import router as interview_record_router
 from app.profile_schemas import CareerPreferencesInput, CareerPreferencesRead, ProfileRead, ProfileUpdate
 from app.profile_service import (
     confirm_profile,
@@ -2579,6 +2580,7 @@ app.include_router(proof_router)
 app.include_router(evidence_os_router)
 app.include_router(mission_router)
 app.include_router(resume_studio_router)
+app.include_router(interview_record_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_allowed_frontend_origins(),

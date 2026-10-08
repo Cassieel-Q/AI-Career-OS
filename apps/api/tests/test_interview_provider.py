@@ -20,6 +20,24 @@ class FakeCompletions:
         return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=self.content))])
 
 
+def test_interview_provider_evaluates_standalone_record_without_claim() -> None:
+    completions = FakeCompletions(json.dumps({"evaluation": {
+        "score": 8,
+        "strong_points": ["决策具体"],
+        "weak_points": ["缺少结果指标"],
+        "gap_type": "EVIDENCE_GAP",
+        "why": "需要补充指标",
+        "recommended_next_action": "整理复盘材料",
+    }}, ensure_ascii=False))
+    provider = OpenAIInterviewProvider(client=SimpleNamespace(chat=SimpleNamespace(completions=completions)))
+    result = provider.evaluate_answer(
+        question="介绍一次项目取舍", answer="我比较了两种方案。", company="示例公司", role="产品实习生"
+    )
+    assert result.score == 8
+    assert result.gap_type.value == "EVIDENCE_GAP"
+    assert "介绍一次项目取舍" in str(completions.request["messages"][1]["content"])
+
+
 def test_interview_provider_uses_claim_jd_evidence_and_skill_pack(monkeypatch) -> None:
     monkeypatch.setenv("OPENAI_BASE_URL", "https://api.deepseek.com")
     completions = FakeCompletions(json.dumps({"question": "How did you evaluate it?", "skill_id": "LLM_EVALUATION", "followup_dimensions": ["dataset"], "evaluation": {"strong_points": [], "weak_points": []}}))

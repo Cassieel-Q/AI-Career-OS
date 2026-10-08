@@ -1,8 +1,14 @@
 import ast
 from pathlib import Path
 
+from alembic import command
 from alembic.config import Config
 from alembic.script import ScriptDirectory
+from sqlalchemy import create_engine, inspect
+
+from app.database import Base
+from app import models  # noqa: F401
+from app.evidence_os import models as evidence_os_models  # noqa: F401
 
 VERSIONS_DIR = Path(__file__).parents[1] / "alembic" / "versions"
 
@@ -166,7 +172,38 @@ def test_alembic_graph_has_single_latest_head_and_preserves_prior_chain() -> Non
         "012_workflow_state": "011_evidence_os",
         "013_profile_contacts": "012_workflow_state",
         "014_resume_studio": "013_profile_contacts",
+        "015_interview_records": "014_resume_studio",
     }
-    assert script.get_heads() == ["014_resume_studio"]
+    assert script.get_heads() == ["015_interview_records"]
     revisions = {revision.revision: revision.down_revision for revision in script.walk_revisions()}
     assert revisions == expected_down_revisions
+
+
+def test_new_revisions_upgrade_and_downgrade_from_old_head(tmp_path, monkeypatch) -> None:
+    """Exercise 013 -> 015 on an isolated SQLite copy of the old schema."""
+    database_path = tmp_path / "migration-check.db"
+    database_url = f"sqlite:///{database_path.as_posix()}"
+    engine = create_engine(database_url)
+    new_tables = {"resume_studio_documents", "interview_records", "interview_record_items"}
+    Base.metadata.create_all(engine, tables=[table for table in Base.metadata.sorted_tables if table.name not in new_tables])
+    engine.dispose()
+
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    # Keep Alembic from reconfiguring pytest's logging handlers in this process.
+    config = Config()
+    config.set_main_option("script_location", str(VERSIONS_DIR.parent))
+    command.stamp(config, "013_profile_contacts")
+    command.upgrade(config, "head")
+    engine = create_engine(database_url)
+    assert new_tables.issubset(set(inspect(engine).get_table_names()))
+    engine.dispose()
+
+    command.downgrade(config, "013_profile_contacts")
+    engine = create_engine(database_url)
+    assert new_tables.isdisjoint(set(inspect(engine).get_table_names()))
+    engine.dispose()
+
+    command.upgrade(config, "head")
+    engine = create_engine(database_url)
+    assert new_tables.issubset(set(inspect(engine).get_table_names()))
+    engine.dispose()
