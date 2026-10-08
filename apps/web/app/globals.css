@@ -1439,6 +1439,8 @@ a.button-secondary {
 .resume-final-preview-list { display: grid; gap: .65rem; }
 .resume-final-preview-list article { padding: .7rem .8rem; border-radius: 10px; background: #fff; border: 1px solid var(--line, #e6ece6); }
 .resume-final-preview-list p { margin: .35rem 0 0; white-space: pre-wrap; }
+.mission-original-jd { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border, #ddd); }
+.mission-original-jd-text { max-height: 18rem; overflow: auto; white-space: pre-wrap; line-height: 1.65; }
 .resume-optimization-column { min-width: 0; padding: 1rem; border: 1px solid #e0e6de; border-radius: .65rem; background: #fff; }
 .resume-optimization-column > h3 { margin-top: 0; }
 .resume-source-section { margin-top: 1rem; padding-top: .75rem; border-top: 1px solid #edf1eb; }
@@ -1457,3 +1459,245 @@ a.button-secondary {
 .resume-fact-warning { display: block; margin-top: .65rem; padding: .65rem .75rem; border: 1px solid #e5c27d; border-radius: .45rem; background: #fff8e9; color: #78571d; line-height: 1.5; }
 .resume-decision-note { display: block; margin-top: .45rem; color: #536558; line-height: 1.45; }
 @media (max-width: 900px) { .resume-optimization-workspace { grid-template-columns: 1fr; } }
+
+/* AI Career OS: restrained pixel workbench */
+:root {
+  --canvas: #f3efe5;
+  --surface: #fffefa;
+  --surface-muted: #e9eef8;
+  --primary: #3159b8;
+  --primary-hover: #24489a;
+  --primary-soft: #dce6ff;
+  --ink: #172033;
+  --ink-muted: #5c6475;
+  --pixel-border: #23304a;
+  --disabled: #cbc7be;
+  --danger: #b84444;
+  --warning: #a66b18;
+  --success: #2f6f62;
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+body { background: var(--canvas); color: var(--ink); }
+.mission-shell, .mission-home, .workflow-shell { background: var(--canvas); color: var(--ink); }
+.mission-shell, .mission-home {
+  --mission-bg: var(--canvas);
+  --mission-surface: var(--surface);
+  --mission-surface-muted: var(--surface-muted);
+  --mission-ink: var(--ink);
+  --mission-primary: var(--primary);
+  --mission-primary-soft: var(--primary-soft);
+  --mission-accent: var(--primary);
+  --mission-eyebrow: var(--primary);
+  --mission-muted: var(--ink-muted);
+  --mission-meta: var(--ink-muted);
+  --mission-border: var(--pixel-border);
+  --mission-border-subtle: #bbc3d2;
+  --mission-radius: 2px;
+  background: var(--canvas);
+  color: var(--ink);
+}
+.mission-shell .summary, .mission-home .summary,
+.workflow-shell .step-description, .workflow-shell .muted,
+.mission-shell .mission-pipeline-note, .mission-home .profile-note { color: var(--ink-muted); }
+.mission-shell .eyebrow, .mission-home .eyebrow, .section-kicker { color: var(--primary); }
+.mission-shell .workflow-header, .mission-home .workflow-header,
+.workflow-shell .workflow-header {
+  background: var(--surface);
+  border-bottom: 2px solid var(--pixel-border);
+}
+.workflow-brand, .mission-shell .mission-topbar-title { color: var(--ink); }
+.workflow-brand-mark {
+  background: var(--primary);
+  border: 2px solid var(--pixel-border);
+  border-radius: 2px;
+  box-shadow: 3px 3px 0 var(--pixel-border);
+}
+.mission-home-content { width: min(100% - 2rem, 1080px); }
+.mission-home-content > .summary { max-width: 46rem; }
+.mission-layout {
+  display: block;
+  width: min(100% - 2rem, 1080px);
+  margin: 1.5rem auto 0;
+}
+.mission-main, .mission-content { max-width: none; width: 100%; }
+.mission-compact-hints { margin: 0 0 .75rem; color: var(--ink-muted); font-size: .82rem; }
+.mission-card, .mission-list-card, .mission-profile-form, .mission-action-wrap,
+.resume-optimization-column, .resume-final-preview, .workflow-content-panel,
+.proof-card, .proof-entry-card, .proof-select-card, .mission-empty {
+  border: 2px solid var(--pixel-border);
+  border-radius: 2px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 5px 5px 0 #b9c4dc;
+}
+.mission-card, .proof-card { padding: clamp(1rem, 2vw, 1.35rem); }
+.mission-list-card { overflow: visible; }
+.mission-list-card:hover { border-color: var(--primary); background: var(--surface-muted); }
+.mission-list-card-main { color: var(--ink); }
+.mission-list-card-main:hover { background: var(--surface-muted); }
+.mission-list-delete { border-left: 2px solid var(--pixel-border); background: var(--surface); color: var(--danger); }
+.mission-list-delete:hover:not(:disabled) { color: #7d2929; background: #fff0ee; }
+.mission-status-badge, .mission-confidence, .status-chip, .mission-bullet-badge {
+  border: 1px solid var(--primary);
+  border-radius: 2px;
+  background: var(--primary-soft);
+  color: var(--primary-hover);
+  font-weight: 800;
+}
+.mission-shell .mission-chip, .mission-shell .mission-intel-list li,
+.mission-shell .mission-columns li, .mission-shell .resume-source-item,
+.mission-shell .resume-ai-item, .mission-shell .resume-final-preview-list article {
+  border-color: #b8c4db;
+  border-radius: 2px;
+  background: var(--surface);
+}
+.resume-ai-item:hover, .resume-source-item:hover { background: var(--surface-muted); }
+.resume-ai-item-accepted { border-color: var(--primary) !important; background: var(--primary-soft) !important; }
+.resume-ai-item-rejected { border-color: var(--disabled) !important; opacity: .82; }
+.proof-select-card:has(input:checked), .proof-select-card.selected {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  box-shadow: 5px 5px 0 var(--primary);
+}
+.proof-select-card:hover, .guidance-choice:hover:not(:disabled) { background: var(--surface-muted); border-color: var(--primary); }
+.mission-shell button:not(.mission-list-delete), .mission-home button,
+.workflow-shell button, .mission-shell a.button-secondary,
+.mission-home a.button-secondary, .mission-shell a.link-cta, .mission-home a.link-cta {
+  transition: transform 140ms steps(2, end), box-shadow 140ms steps(2, end), background-color 140ms steps(2, end);
+}
+.mission-primary-cta, .mission-home-actions .mission-primary-cta, .mission-home-actions a.link-cta,
+.mission-shell a.mission-primary-cta, .workflow-next, .button-primary {
+  min-height: 44px;
+  border: 2px solid var(--pixel-border);
+  border-radius: 2px;
+  background: var(--primary);
+  color: #fff !important;
+  box-shadow: 4px 4px 0 var(--pixel-border);
+}
+.mission-primary-cta:hover:not(:disabled), .workflow-next:hover:not(:disabled),
+.button-primary:hover:not(:disabled) { transform: translate(-1px, -1px); background: var(--primary-hover); box-shadow: 5px 5px 0 var(--pixel-border); }
+.mission-primary-cta:active:not(:disabled), .workflow-next:active:not(:disabled),
+.button-primary:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--pixel-border); }
+.button-secondary, a.button-secondary, .mission-secondary-cta,
+.workflow-previous, .mission-shell .decision-chip, .mission-home-actions a.button-secondary {
+  min-height: 44px;
+  border: 2px solid var(--pixel-border);
+  border-radius: 2px;
+  background: var(--surface);
+  color: var(--primary-hover) !important;
+  box-shadow: 3px 3px 0 #b9c4dc;
+}
+.button-secondary:hover:not(:disabled), .workflow-previous:hover:not(:disabled),
+.mission-shell .decision-chip:hover:not(:disabled) { transform: translate(-1px, -1px); background: var(--surface-muted); box-shadow: 4px 4px 0 var(--pixel-border); }
+.button-secondary:active:not(:disabled), .workflow-previous:active:not(:disabled),
+.mission-shell .decision-chip:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--pixel-border); }
+.mission-shell .decision-chip.active { background: var(--primary); color: #fff !important; border-color: var(--pixel-border); }
+.mission-text-btn, .text-button { color: var(--primary-hover); background: transparent; }
+.mission-shell :is(input, textarea, select), .mission-home :is(input, textarea, select),
+.workflow-shell :is(input, textarea, select) {
+  border: 1px solid #8f9db8;
+  border-radius: 3px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+}
+.mission-shell :is(input, textarea, select):focus-visible,
+.mission-home :is(input, textarea, select):focus-visible,
+.workflow-shell :is(input, textarea, select):focus-visible {
+  border-color: var(--primary);
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+.mission-shell :is(button, a, input, textarea, select):focus-visible,
+.mission-home :is(button, a, input, textarea, select):focus-visible,
+.workflow-shell :is(button, a, input, textarea, select):focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 3px;
+}
+.mission-shell :is(button, a):disabled, .mission-home button:disabled,
+.workflow-shell button:disabled { color: var(--ink-muted); cursor: not-allowed; opacity: .72; }
+.mission-shell .error, .workflow-shell .error { color: var(--danger); }
+.mission-shell .success, .workflow-shell .success { color: var(--success); }
+
+.mission-progress { width: min(100% - 2rem, 1080px); margin: 1.35rem auto 0; }
+.mission-progress-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.mission-progress-item { position: relative; min-width: 0; }
+.mission-progress-item:not(:last-child)::after { content: ""; position: absolute; top: 21px; left: calc(100% - 2px); width: .55rem; height: 3px; background: var(--disabled); }
+.mission-progress-item.is-complete::after { background: var(--primary); }
+.mission-progress-node {
+  display: flex; align-items: center; gap: .65rem; min-height: 44px; padding: .45rem .55rem;
+  border: 2px solid var(--pixel-border); border-radius: 2px; background: var(--surface);
+  color: var(--ink); font-weight: 700; text-decoration: none;
+}
+a.mission-progress-node:hover { transform: translate(-1px, -1px); background: var(--primary-soft); box-shadow: 3px 3px 0 var(--pixel-border); }
+.mission-progress-number { display: grid; flex: 0 0 1.8rem; width: 1.8rem; height: 1.8rem; place-items: center; border: 2px solid var(--pixel-border); background: #fff; color: var(--primary-hover); font: 800 .75rem/1 monospace; }
+.mission-progress-item.is-current .mission-progress-number, .mission-progress-item.is-complete .mission-progress-number { background: var(--primary); border-color: var(--primary); color: #fff; }
+.mission-progress-item.is-locked .mission-progress-node { border-color: var(--disabled); background: #e9e5dc; color: var(--ink-muted); font-weight: 500; }
+.mission-progress-item.is-locked .mission-progress-number { border-color: var(--disabled); background: #e9e5dc; color: var(--ink-muted); }
+.mission-progress-node small { display: block; margin-left: auto; color: var(--ink-muted); font-size: .65rem; line-height: 1.25; }
+
+.task-progress { padding: .8rem 1rem; border: 2px solid var(--pixel-border); border-radius: 2px; background: var(--surface-muted); }
+.task-progress ol { display: grid; gap: .4rem; margin: 0; padding: 0; list-style: none; }
+.task-progress li { display: flex; gap: .6rem; align-items: center; color: var(--ink-muted); }
+.task-progress li span:first-child { width: 1.1rem; color: var(--primary); font-family: monospace; font-weight: 800; }
+.task-progress-active { color: var(--ink) !important; font-weight: 700; }
+.task-progress-active span:first-child { animation: pixel-pulse 1.4s steps(2, end) infinite; }
+.task-progress-error { display: flex; align-items: center; gap: .75rem; margin-top: .7rem; color: var(--danger); }
+@keyframes pixel-pulse { 50% { opacity: .45; } }
+
+.mission-list-meta { display: flex; flex-wrap: wrap; gap: .35rem 1rem; margin-top: .65rem; color: var(--ink-muted); font-size: .82rem; }
+.mission-list-meta time { margin-left: auto; }
+.resume-source-item.is-linked { border-color: var(--primary) !important; background: var(--primary-soft) !important; box-shadow: 3px 3px 0 var(--primary); }
+.resume-mobile-source { display: none; }
+.resume-final-preview-list { max-height: 28rem; overflow: auto; padding: .25rem .35rem .5rem .1rem; }
+.resume-export-checks { margin-top: 1rem; padding: .8rem 1rem; border: 1px solid var(--pixel-border); background: var(--surface-muted); }
+.resume-export-checks ul { margin-bottom: 0; padding-left: 1.35rem; }
+.interview-preview-list { display: grid; gap: .75rem; margin: 1rem 0; }
+.interview-preview-card { border: 2px solid var(--pixel-border); background: var(--surface); box-shadow: 3px 3px 0 #b9c4dc; }
+.interview-preview-card[open] { border-color: var(--primary); background: var(--primary-soft); }
+.interview-preview-card summary { cursor: pointer; padding: .8rem 1rem; font-weight: 700; }
+.interview-preview-focus { padding: 0 1rem 1rem; line-height: 1.6; }
+.interview-preview-focus p { margin: .45rem 0; }
+.interview-preview-action { position: sticky; bottom: .7rem; z-index: 2; display: flex; justify-content: flex-end; padding: .8rem; background: var(--canvas); border: 1px solid var(--pixel-border); }
+.interview-feedback { margin: 1rem 0; padding: 1rem; border: 2px solid var(--primary); background: var(--primary-soft); color: var(--ink); }
+.interview-feedback p { margin: .55rem 0 0; line-height: 1.65; }
+.interview-question { border: 2px solid var(--pixel-border); background: var(--surface-muted); }
+.interview-question span { color: var(--primary-hover); }
+.interview-step { max-width: 52rem; }
+.guidance-panel { margin-top: 1rem; }
+.guidance-panel .proof-card-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
+.guidance-result { margin-top: 1rem; padding: 1rem; border: 1px solid var(--primary); background: var(--primary-soft); line-height: 1.65; }
+.guidance-result h4 { margin: .75rem 0 .3rem; }
+.guidance-result :is(ol, ul) { padding-left: 1.5rem; }
+.mission-home-actions a.link-cta:hover:not(:disabled) { background: var(--primary-hover); }
+.mission-profile-form { align-items: start; }
+.mission-profile-form .profile-list-actions { align-self: end; }
+.mission-company-pills button.active { background: var(--primary); border-color: var(--primary); }
+.mission-intel-layer > summary { color: var(--primary-hover); }
+
+@media (max-width: 700px) {
+  .mission-progress-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mission-progress-item:nth-child(2)::after { display: none; }
+  .mission-progress-node { align-items: flex-start; flex-wrap: wrap; }
+  .mission-progress-node small { flex-basis: 100%; margin-left: 2.45rem; }
+  .mission-layout, .mission-home-content { width: min(100% - 1.5rem, 40rem); }
+  .mission-home-actions, .mission-action-row { align-items: stretch; }
+  .mission-home-actions > *, .mission-action-row > button { min-height: 44px; }
+  .resume-optimization-workspace, .debrief-grid { grid-template-columns: 1fr; }
+  .resume-optimization-workspace > .resume-optimization-column:first-child { display: none; }
+  .resume-mobile-source { display: block; margin: .8rem 0 1rem; }
+  .resume-mobile-source details { border: 1px solid var(--pixel-border); background: var(--surface); padding: .7rem; }
+  .resume-mobile-source summary { cursor: pointer; color: var(--primary-hover); font-weight: 700; }
+  .resume-ai-item .resume-original { border-left: 3px solid var(--primary); padding-left: .55rem; }
+  .mission-list-meta time { margin-left: 0; }
+  .interview-preview-action .mission-primary-cta { width: 100%; text-align: center; }
+  .guidance-panel .proof-card-list { grid-template-columns: 1fr; }
+  .interview-answer, .interview-question { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mission-shell *, .mission-home *, .workflow-shell * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  .mission-shell :is(button, a):hover, .mission-home :is(button, a):hover,
+  .workflow-shell :is(button, a):hover { transform: none !important; }
+}

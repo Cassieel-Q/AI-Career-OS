@@ -116,15 +116,13 @@ function formatUpdatedAtCn(iso: string | undefined): string {
 }
 
 function originLabelCn(entry: Pick<ProfileLabelEntry, "origin" | "source" | "isMaster" | "isMissionLocal">): string {
-  if (entry.isMissionLocal || entry.origin === "mission_local") return "岗位专属上传/粘贴";
-  if (entry.isMaster || entry.origin === "master") return "Master 档案";
-  if (entry.origin === "upload") return "首页上传";
-  if (entry.source === "resume") return "简历文件名";
-  if (entry.source === "profile") return "档案字段";
-  return "未知来源";
+  if (entry.isMissionLocal || entry.origin === "mission_local") return "岗位专属";
+  if (entry.isMaster || entry.origin === "master") return "已有简历";
+  if (entry.origin === "upload" || entry.source === "resume") return "上传简历";
+  return "已有简历";
 }
 
-/** Build Chinese dropdown line: 档案名称 / 更新时间 / 来源类型 / Master / 岗位专属. */
+/** Keep the selector human-readable; internal storage and sharing flags stay out of the label. */
 export function formatProfileOptionLabel(
   entry: { label?: string } & Partial<ProfileLabelEntry>,
   opts?: { currentMissionBoundId?: string | null; profileId?: string },
@@ -132,15 +130,8 @@ export function formatProfileOptionLabel(
   const name = (entry.label || "").trim() || FALLBACK_LABEL;
   const time = formatUpdatedAtCn(entry.updatedAt);
   const origin = originLabelCn(entry);
-  const isMaster = Boolean(entry.isMaster || entry.origin === "master");
-  const isMissionLocal = Boolean(entry.isMissionLocal || entry.origin === "mission_local");
-  const isCurrent =
-    opts?.currentMissionBoundId &&
-    opts?.profileId &&
-    opts.currentMissionBoundId.trim() === opts.profileId.trim();
-  const masterText = isMaster ? "是" : "否";
-  const missionText = isCurrent ? "当前岗位专属" : isMissionLocal ? "是" : "否";
-  return `${name} · 更新 ${time} · ${origin} · Master:${masterText} · 岗位专属:${missionText}`;
+  const current = opts?.currentMissionBoundId && opts?.profileId && opts.currentMissionBoundId.trim() === opts.profileId.trim();
+  return `${name} · ${current ? "当前岗位专属" : origin} · 更新 ${time}`;
 }
 
 function toOptionView(profileId: string, entry: ProfileLabelEntry): ProfileOptionView {

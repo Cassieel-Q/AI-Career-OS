@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "node --require ./scripts/next-g-drive-fs-compat.cjs ./node_modules/next/dist/bin/next build",
     "start": "next start",
-    "test": "node --experimental-strip-types --test tests/profile-flow.test.mts tests/job-descriptions.test.mts tests/market-profile.test.mts tests/p0-workflow.test.mts tests/dashboard.test.mts tests/workflow-state.test.mts tests/workflow-navigation.test.mts tests/role-exploration-ui.test.mts tests/workflow-boundary.test.mts tests/workflow-actions.test.mts tests/proof-flow.test.mts tests/proof-state.test.mts tests/experience-utils.test.mts tests/mission-flow.test.mts tests/mission-state.test.mts tests/interview-gate.test.mts tests/profile-recovery.test.mts tests/profile-label-dedupe.test.mts tests/core-flow.test.mts tests/resume-studio.test.mts",
+    "test": "node --experimental-strip-types --test tests/*.test.mts",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"app/**/*.{ts,tsx,css}\" \"*.{js,mjs,ts,json}\""

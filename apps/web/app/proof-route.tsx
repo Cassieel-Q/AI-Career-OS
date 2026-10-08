@@ -16,6 +16,7 @@ export type ProofStepControls = {
   busy: boolean;
   refresh: () => Promise<ProofSnapshot | null>;
   setNextReady: (ready: boolean) => void;
+  setNextLabel: (label: string | null) => void;
   setNextAction: (action: ProofNextAction | null) => void;
   setStepError: (message: string) => void;
   setSnapshot: (snapshot: ProofSnapshot) => void;
@@ -29,6 +30,7 @@ export function ProofRoute({ profileId, missionId, currentStep, renderStep }: Pr
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [nextReady, setNextReady] = useState(false);
+  const [nextLabel, setNextLabel] = useState<string | null>(null);
   const [error, setError] = useState("");
   const requestSerial = useRef(0);
   const nextAction = useRef<ProofNextAction | null>(null);
@@ -77,7 +79,7 @@ export function ProofRoute({ profileId, missionId, currentStep, renderStep }: Pr
       return result;
     } catch (loadError) {
       if (serial !== requestSerial.current) return null;
-      setError(loadError instanceof Error ? loadError.message : "无法加载证明链状态，请重试。");
+      setError(loadError instanceof Error ? loadError.message : "无法加载面试准备状态，请重试。");
       return null;
     } finally {
       if (serial === requestSerial.current && showLoading) setLoading(false);
@@ -92,6 +94,7 @@ export function ProofRoute({ profileId, missionId, currentStep, renderStep }: Pr
     busy,
     refresh,
     setNextReady,
+    setNextLabel,
     setNextAction: (action) => { nextAction.current = action; },
     setStepError: setError,
     setSnapshot,
@@ -129,7 +132,7 @@ export function ProofRoute({ profileId, missionId, currentStep, renderStep }: Pr
       if (!canEnterProofStep(persisted, nextStep)) {
         setNextReady(false);
         if (nextStep === "claim-check" && !persisted.analysis?.claims.length) {
-          setError("还没有可核对的简历主张。请先生成主张分析（继续时会自动生成），完成后再进入主张核对。");
+          setError("还没有可核对的简历要点。请先完成简历分析，再继续面试准备。");
         } else {
           setError("当前步骤尚未完成，请先保存后再继续。");
         }
@@ -139,7 +142,7 @@ export function ProofRoute({ profileId, missionId, currentStep, renderStep }: Pr
     } catch (nextError) {
       const raw = nextError instanceof Error ? nextError.message : "";
       if (/Claim analysis has not been generated|尚未生成主张分析/i.test(raw)) {
-        setError("还没有可核对的简历主张。请先生成主张分析，或从左侧进入「主张核对」。");
+        setError("还没有可核对的简历要点。请返回岗位简历，完成分析后重试。");
       } else {
         setError(raw || "无法继续当前步骤，请重试。");
       }
@@ -148,5 +151,5 @@ export function ProofRoute({ profileId, missionId, currentStep, renderStep }: Pr
     }
   }
 
-  return <ProofShell missionId={missionId} profileId={profileId} currentStep={currentStep} snapshot={snapshot} loading={loading} busy={busy} nextReady={nextReady} error={error} onNext={() => void handleNext()} onRetry={() => void load(true)}>{snapshot ? renderStep(snapshot, controls) : null}</ProofShell>;
+  return <ProofShell missionId={missionId} profileId={profileId} currentStep={currentStep} snapshot={snapshot} loading={loading} busy={busy} nextReady={nextReady} nextLabelOverride={nextLabel} error={error} onNext={() => void handleNext()} onRetry={() => void load(true)}>{snapshot ? renderStep(snapshot, controls) : null}</ProofShell>;
 }

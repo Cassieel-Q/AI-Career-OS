@@ -125,7 +125,7 @@ export function MissionProfileConfirmCard({
       setOpen(false);
       await onConfirmed();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "确认 Profile 失败");
+      setError(caught instanceof Error ? caught.message : "确认简历内容失败");
     } finally {
       setSaving(null);
     }
@@ -150,7 +150,7 @@ export function MissionProfileConfirmCard({
             setError("");
           }}
         >
-          查看并确认 Profile
+          查看并确认简历内容
         </button>
       </div>
 
@@ -159,13 +159,13 @@ export function MissionProfileConfirmCard({
           className="mission-card"
           style={{ marginTop: "1rem", background: "var(--surface-muted, #f7f5f1)" }}
           role="dialog"
-          aria-label="确认岗位简历 Profile"
+          aria-label="确认岗位简历内容"
         >
           <div className="section-heading">
             <div>
-              <p className="section-kicker">仅本岗位 · 状态 {profile.status}</p>
+              <p className="section-kicker">仅本岗位 · {String(profile.status) === "CONFIRMED" ? "已确认" : "待确认"}</p>
               <h3>核对教育、技能与经历</h3>
-              <p className="summary">请确认事实与简历证据一致。确认不会改写 Master 档案。</p>
+              <p className="summary">请核对教育、技能与经历是否准确。</p>
             </div>
             <button type="button" className="text-button" disabled={mutationBusy} onClick={() => setOpen(false)}>
               收起
@@ -249,7 +249,7 @@ export function MissionProfileConfirmCard({
               disabled={mutationBusy || profileStatus === "CONFIRMED"}
               onClick={() => void confirmProfile()}
             >
-              {saving === "confirm" ? "确认中…" : "确认 Profile"}
+              {saving === "confirm" ? "确认中…" : "确认简历内容"}
             </button>
           </div>
         </div>
