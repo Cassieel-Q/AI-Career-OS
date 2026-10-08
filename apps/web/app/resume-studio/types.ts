@@ -26,6 +26,7 @@ export type StudioDocument = {
 export type StudioState = {
   id: string;
   mission_id: string;
+  source_target_resume_id: string;
   revision: number;
   confirmed_revision: number | null;
   language: "zh" | "en";
@@ -48,6 +49,16 @@ export type StudioPreview = {
   pages: string[];
   layout_map: { id: string; page: number; x: number; y: number; width: number; height: number }[];
   checks: StudioCheck[];
+};
+export type StudioSourceDiff = {
+  update_available: boolean;
+  current_source_id: string;
+  new_source_id?: string;
+  new_source_version?: number;
+  added_bullets?: string[];
+  removed_bullets?: string[];
+  will_replace_studio_edits?: boolean;
+  will_reset_language?: boolean;
 };
 export type StudioOperation =
   | { type: "set_text"; node_id: string; text: string }

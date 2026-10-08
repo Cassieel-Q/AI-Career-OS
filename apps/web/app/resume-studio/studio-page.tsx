@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  applyStudioOperation, confirmStudio, downloadStudioPdf, readStudio, readStudioTemplates,
+  applyStudioOperation, confirmStudio, downloadStudioPdf, readStudio, readStudioSourceDiff, readStudioTemplates, reimportStudio,
   renderStudio, StudioApiError,
 } from "./api.ts";
 import { emptyHistory, findNode, inverseOperation, recordHistory, redoHistory, replayOperation, undoHistory } from "./history.ts";
 import type { StudioHistory } from "./history.ts";
-import type { StudioNode, StudioOperation, StudioPreview, StudioState, StudioTemplate } from "./types.ts";
+import type { StudioNode, StudioOperation, StudioPreview, StudioSourceDiff, StudioState, StudioTemplate } from "./types.ts";
 import "./studio.css";
 
 type FactFilter = "ALL" | StudioNode["claim_status"];
@@ -43,6 +43,7 @@ function nodesOf(state: StudioState): StudioNode[] {
 export function StudioPage({ missionId }: { missionId: string }) {
   const [state, setState] = useState<StudioState | null>(null);
   const [templates, setTemplates] = useState<StudioTemplate[]>([]);
+  const [sourceDiff, setSourceDiff] = useState<StudioSourceDiff | null>(null);
   const [preview, setPreview] = useState<StudioPreview | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
@@ -64,9 +65,11 @@ export function StudioPage({ missionId }: { missionId: string }) {
 
   const load = useCallback(async () => {
     try {
-      const [loaded, catalog] = await Promise.all([readStudio(missionId), readStudioTemplates()]);
+      const loaded = await readStudio(missionId);
+      const [catalog, difference] = await Promise.all([readStudioTemplates(), readStudioSourceDiff(missionId)]);
       setState(loaded);
       setTemplates(catalog);
+      setSourceDiff(difference);
       setGalleryLanguage(loaded.language);
       setError("");
     } catch (caught) { setError(describeError(caught)); }
@@ -171,6 +174,19 @@ export function StudioPage({ missionId }: { missionId: string }) {
     } catch (caught) { setError(describeError(caught)); }
     finally { setBusy(false); }
   };
+  const reimport = async () => {
+    if (!state || !sourceDiff?.update_available) return;
+    const summary = `新版已确认改写稿有 ${sourceDiff.added_bullets?.length || 0} 条新增、${sourceDiff.removed_bullets?.length || 0} 条移除要点。重新导入会替换当前工作台精修内容，并生成新修订版。`;
+    if (!window.confirm(`${summary}\n\n确定重新导入？`)) return;
+    setBusy(true); setError("");
+    try {
+      const next = await reimportStudio(missionId, state.revision);
+      setState(next); setSourceDiff({ update_available: false, current_source_id: next.source_target_resume_id });
+      setHistory(emptyHistory()); setSelectedId(null); setDraft(""); draftRef.current = "";
+      setMessage("已从新版已确认改写稿重新导入。请重新核对并确认投递版。");
+    } catch (caught) { setError(describeError(caught)); }
+    finally { setBusy(false); }
+  };
   const download = async () => {
     try {
       const { blob, filename } = await downloadStudioPdf(missionId);
@@ -200,6 +216,7 @@ export function StudioPage({ missionId }: { missionId: string }) {
       <div className="rs-toolbar-buttons"><button type="button" className="rs-secondary" onClick={() => setGallery(true)}>选择模板 <b>{activeTemplate?.name || state.template_id}</b></button><button type="button" className="rs-secondary" onClick={() => void doUndo()} disabled={!history.undo.length || busy}>撤销</button><button type="button" className="rs-secondary" onClick={() => void doRedo()} disabled={!history.redo.length || busy}>重做</button></div>
     </div>
     {(error || message) && <div className={error ? "rs-alert rs-alert-error" : "rs-alert"} role={error ? "alert" : "status"}>{error || message}{error && <button type="button" onClick={() => void load()}>重新读取</button>}</div>}
+    {sourceDiff?.update_available && <div className="rs-source-update" role="status"><div><strong>发现新版已确认改写稿</strong><p>新增 {sourceDiff.added_bullets?.length || 0} 条、移除 {sourceDiff.removed_bullets?.length || 0} 条要点。当前精修版会一直保留，直到你主动重新导入。</p><details><summary>查看差异</summary><p>新增：{sourceDiff.added_bullets?.join("；") || "无"}</p><p>移除：{sourceDiff.removed_bullets?.join("；") || "无"}</p></details></div><button type="button" disabled={busy} onClick={() => void reimport()}>重新导入新版</button></div>}
     <div className="rs-mobile-tabs"><button type="button" className={mobileTab === "preview" ? "active" : ""} onClick={() => setMobileTab("preview")}>页面预览</button><button type="button" className={mobileTab === "edit" ? "active" : ""} onClick={() => setMobileTab("edit")}>内容编辑</button></div>
     <div className="rs-workbench">
       <aside className={`rs-outline ${mobileTab === "preview" ? "rs-mobile-hidden" : ""}`}>

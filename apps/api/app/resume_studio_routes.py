@@ -12,7 +12,7 @@ from .database import get_db
 from .resume_studio_render import ResumeRenderError, render_document
 from .resume_studio_schemas import StudioOperation
 from .resume_studio_sample import sample_document
-from .resume_studio_service import apply_operation, export_checks, get_or_create_document, read_document
+from .resume_studio_service import apply_operation, export_checks, get_or_create_document, read_document, reimport_source, source_diff
 from .resume_studio_templates import get_template, list_templates
 
 router = APIRouter(prefix="/api/v1")
@@ -56,6 +56,20 @@ def template_sample_preview(template_id: str) -> dict:
 @router.get("/job-missions/{mission_id}/resume-studio")
 def read_studio(mission_id: UUID, db: Session = Depends(get_db)) -> dict:
     return read_document(get_or_create_document(db, mission_id))
+
+
+@router.get("/job-missions/{mission_id}/resume-studio/source-diff")
+def read_source_diff(mission_id: UUID, db: Session = Depends(get_db)) -> dict:
+    return source_diff(db, mission_id)
+
+
+@router.post("/job-missions/{mission_id}/resume-studio/reimport")
+def reimport_studio(
+    mission_id: UUID,
+    if_match: str | None = Header(default=None, alias="If-Match"),
+    db: Session = Depends(get_db),
+) -> dict:
+    return reimport_source(db, mission_id, _revision(if_match))
 
 
 @router.patch("/job-missions/{mission_id}/resume-studio")

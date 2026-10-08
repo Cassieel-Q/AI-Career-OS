@@ -9,6 +9,7 @@ from uuid import UUID, uuid4
 
 from fastapi import HTTPException
 from sqlalchemy import select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from . import models
@@ -154,9 +155,86 @@ def get_or_create_document(db: Session, mission_id: UUID) -> models.ResumeStudio
         updated_at=datetime.now(timezone.utc),
     )
     db.add(row)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        concurrent = db.scalar(select(models.ResumeStudioDocument).where(models.ResumeStudioDocument.mission_id == mission_id))
+        if concurrent is None:
+            raise
+        return concurrent
     db.refresh(row)
     return row
+
+
+def _latest_confirmed_source(db: Session, mission_id: UUID) -> models.TargetResume | None:
+    return db.scalar(select(models.TargetResume).where(
+        models.TargetResume.mission_id == mission_id,
+        models.TargetResume.status == "CONFIRMED",
+    ).order_by(models.TargetResume.version.desc()))
+
+
+def _included_bullet_texts(document: dict) -> list[str]:
+    return [
+        bullet["text"]
+        for section in document.get("sections") or []
+        for entry in section.get("entries") or [] if entry.get("status") != "OMITTED"
+        for bullet in entry.get("bullets") or []
+        if bullet.get("claim_status") != "OMITTED" and bullet.get("text")
+    ]
+
+
+def source_diff(db: Session, mission_id: UUID) -> dict:
+    """Read a newer approved source without changing a user's Studio edits."""
+    row = get_or_create_document(db, mission_id)
+    latest = _latest_confirmed_source(db, mission_id)
+    if latest is None or latest.id == row.source_target_resume_id:
+        return {"update_available": False, "current_source_id": str(row.source_target_resume_id)}
+    mission = db.get(models.JobMission, mission_id)
+    profile = _effective_profile_for_mission(db, mission)
+    proposed = _import_document(profile, latest, mission)
+    old_texts = _included_bullet_texts(row.document_json)
+    new_texts = _included_bullet_texts(proposed)
+    return {
+        "update_available": True,
+        "current_source_id": str(row.source_target_resume_id),
+        "new_source_id": str(latest.id),
+        "new_source_version": latest.version,
+        "added_bullets": [text for text in new_texts if text not in old_texts],
+        "removed_bullets": [text for text in old_texts if text not in new_texts],
+        "will_replace_studio_edits": True,
+        "will_reset_language": row.language != "zh",
+    }
+
+
+def reimport_source(db: Session, mission_id: UUID, expected_revision: int) -> dict:
+    row = get_or_create_document(db, mission_id)
+    if row.revision != expected_revision:
+        raise HTTPException(409, {"message": "简历已更新，请重新检查来源差异。", "latest": read_document(row)})
+    latest = _latest_confirmed_source(db, mission_id)
+    if latest is None or latest.id == row.source_target_resume_id:
+        raise HTTPException(409, "没有更新的已确认改写稿。")
+    mission = db.get(models.JobMission, mission_id)
+    profile = _effective_profile_for_mission(db, mission)
+    proposed = _import_document(profile, latest, mission)
+    result = db.execute(update(models.ResumeStudioDocument).where(
+        models.ResumeStudioDocument.id == row.id,
+        models.ResumeStudioDocument.revision == expected_revision,
+    ).values(
+        source_target_resume_id=latest.id,
+        document_json=proposed,
+        revision=expected_revision + 1,
+        confirmed_revision=None,
+        language="zh",
+        template_id="zh-classic",
+        updated_at=datetime.now(timezone.utc),
+    ))
+    if result.rowcount != 1:
+        db.rollback()
+        raise HTTPException(409, "简历已在另一处更新，请重新读取。")
+    db.commit()
+    db.refresh(row)
+    return read_document(row)
 
 
 def read_document(row: models.ResumeStudioDocument) -> dict:
