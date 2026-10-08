@@ -22,8 +22,8 @@ Date: 2026-10-08
 - Typst CLI：`typst 0.15.1 (9dfd3a08)`；当前机器 `typst fonts` 可见 `Microsoft YaHei` 和 `Arial`。模板源与虚构样本为项目原创，二进制与字体未提交。
 - 渲染：针对性 pytest 实际编译全部 18 个 manifest，检查 PDF 头、每页 SVG、页数、姓名可提取及节点热区；两份不同简历得到不同可选中文字。`23 passed`，包含迁移链、来源变更、冲突、事实阻塞与面试桥接。
 - API 完整回归：`598 passed, 3 failed, 5 skipped`。三个失败分别来自原有 `test_claim_provider_normalizes_partial_claim_schema`、`test_mission_provider_classifies_structured_output_failures`、`test_claim_analysis_fingerprint_requires_regeneration_after_profile_change`；开工前同三项已失败。新增迁移链测试已更新并通过。
-- Web：`npm test` 为 `175 passed`；`npm run type-check` 通过；`npm run build` 完成生产编译和全部路由生成。G 盘 `readlink` 返回异常通过项目内仅对 G 盘生效的兼容脚本处理。
-- 浏览器：在 1265px 桌面与 390px 手机视口实测工作台；点击真实预览姓名并保存，修订号从 1 到 2；核对事实后到 3；切换模板后到 4；中文与英文画廊各 9 张真实样本页显示；手机预览点击后自动进入编辑视图。截图在浏览器验收中已检查，但未归档为仓库 PNG。
+- Web：集成像素 UI 后，`npm test` 为 `192 passed`；`npm run type-check` 通过；`npm run build` 完成生产编译和全部路由生成。G 盘 `readlink` 返回异常通过项目内仅对 G 盘生效的兼容脚本处理。
+- 浏览器：在 1265px 桌面与 390px 手机视口实测工作台；点击真实预览姓名并保存，修订号从 1 到 2；核对事实后到 3；切换模板后到 4；中文与英文画廊各 9 张真实样本页显示；手机预览点击后自动进入编辑视图。集成像素 UI 后再次加载工作台，实际页面与编辑热区正常显示。截图在浏览器验收中已检查，但未归档为仓库 PNG。
 - PDF：浏览器确认后下载；API 返回 `200`、`attachment` 和 `Ada%20Lin-Acme-PM-zh.pdf` 文件名。保存的虚构样本 PDF 为 26,357 字节、1 页，PyMuPDF 可提取 `Ada Lin` 和 `Built product evaluation dashboards`。
 - `python -m compileall -q app` 与 `git diff --check` 通过。
 
@@ -46,7 +46,8 @@ Date: 2026-10-08
 
 ## 4. Missed-Scope Check
 
-- 并行的 `aioscaree-UI` 工作尚需在其提交后做最终分支集成；它会触及 `mission-page.tsx`、`package.json` 与全局 CSS。
+- `aioscaree-UI` 的 `1ac2934` 已摘取为本分支 `f55a1ae`，`mission-page.tsx` 与 `package.json` 冲突已处理；简历流程的可见 PDF 入口指向 Studio，集成后的 Web 测试、类型检查和生产构建均已通过。
+- 本地样本岗位处于草稿状态，因此旧简历流程目前显示来源选择步骤；Studio 直达页已完成浏览器验收，旧流程在确认目标简历后显示的 Studio 入口由组件代码及 Web 测试覆盖。
 - 现有导出打印函数留在旧页面源中作为遗留代码，但用户可见入口已指向 Studio 的真实 PDF 流程；后续可删去死代码。
 
 ## 5. Innovation Check
@@ -60,5 +61,5 @@ Date: 2026-10-08
 
 ## Final Decision
 
-- 核心 Resume Studio 可在独立工作树中运行并展示；正式合并需完成并行 UI 分支冲突检查与回归。
+- Resume Studio 和像素 UI 已在 `feat/resume-studio` 独立工作树中集成，可在本地浏览器运行并展示；主检出仍含另一项未提交工作，因此保留独立工作树，等待主线整理后再合并。
 - 三个既有 API 失败不由本次改动引入，未把全套 API 错报为通过。
