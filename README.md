@@ -17,6 +17,8 @@ The product is designed for AI product, technical product, and intelligent-hardw
 - Experience ranking: highlight, keep, weaken, or exclude
 - Target-resume approval flow and PDF export
 - Mock interview with persisted sessions, turns, scoring, and follow-up coaching
+- A real-interview records library grouped by company, with saved Q&A, evaluation, review, and coaching
+- Resume Studio with 18 Typst templates, revisioned editing, fact checks, and downloadable PDF
 - Curated company interview skills in `knowledge/interview_skills/`
 - Resume-writing guardrails in `knowledge/resume_skills/`
 - Permanent profile deletion with dependent workflow cleanup
@@ -141,11 +143,15 @@ npm run dev
 
 The web app is `http://localhost:3000/missions`.
 
+The product also serves `/interview-records` for user-authored real interview notes. Each record belongs to a profile and can optionally link to a job mission. Removing a mission keeps the interview note and clears that link; deleting the profile removes its records and items.
+
 ## Environment
 
 Copy `.env.example` to `.env` for local development. API keys and database URLs belong in the server environment only; never commit `.env` or personal resume data.
 
 The backend uses `DATABASE_URL` for runtime persistence. PostgreSQL is the production target; SQLite fixtures are used for fast unit/API tests. `TEST_DATABASE_URL` must point to a separate PostgreSQL database for the integration gate.
+
+The current Alembic chain ends with `013_profile_contacts → 014_resume_studio → 015_interview_records`. Before starting an existing local database, run `python -m alembic upgrade head` from `apps/api` with `DATABASE_URL` pointed at that intended database. Use a dedicated database for migration tests; the API test suite checks upgrade, downgrade, and re-upgrade of the two newest revisions on an isolated SQLite fixture.
 
 ## Curated interview intelligence
 
@@ -176,6 +182,7 @@ Agent clients use `GET /api/v1/job-missions/{missionId}/resume-studio` and `PATC
 cd apps/web
 npm run type-check
 npm test
+npm run build
 
 cd ..\\api
 python -m pytest -q

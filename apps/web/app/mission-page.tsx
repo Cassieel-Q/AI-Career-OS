@@ -1204,8 +1204,8 @@ useEffect(() => {
             <PrimaryButton disabled={busy} onClick={() => router.push(missionHref(missionId, "interview"))}>开始模拟面试</PrimaryButton>
           </> : null}
         </div>
-        {latestResume && targetConfirmed ? <section className="resume-final-preview" aria-label="最终简历预览">
-          <div className="section-heading"><div><p className="section-kicker">确认版本</p><h3>最终简历</h3><p className="summary">未完成且未确认的建议项目不进入 PDF。</p></div><TextButton disabled={busy} onClick={() => router.push(`/missions/${encodeURIComponent(missionId)}/resume/studio`)}>选择模板并导出 PDF</TextButton></div>
+        {latestResume && targetConfirmed ? <section className="resume-final-preview" aria-label="岗位定向文案预览">
+          <div className="section-heading"><div><p className="section-kicker">确认版本</p><h3>岗位定向文案</h3><p className="summary">未完成且未确认的建议项目不进入 PDF。完整投递版及联系方式请在简历工作台核对。</p></div><TextButton disabled={busy} onClick={() => router.push(`/missions/${encodeURIComponent(missionId)}/resume/studio`)}>选择模板并导出 PDF</TextButton></div>
           <div className="mission-action-row" role="group" aria-label="简历版本">
             {(["original", "target"] as const).map((mode) => <button type="button" className={finalPreviewMode === mode ? "decision-chip active" : "decision-chip"} aria-pressed={finalPreviewMode === mode} key={mode} onClick={() => {
               const previousScroll = finalPreviewRef.current?.scrollTop ?? 0;
@@ -1214,7 +1214,7 @@ useEffect(() => {
             }}>{mode === "original" ? "原始版本" : "岗位版本"}</button>)}
           </div>
           <div className="resume-final-preview-list" ref={finalPreviewRef}>{finalPreviewMode === "original" ? renderSourceResumeColumn() : latestResume.bullets.filter((bullet) => isChosenRewrite(bullet.status)).map((bullet) => <article key={bullet.id}><strong>{bullet.source_experience_id ? experienceLabel(bullet.source_experience_id).title : "已确认经历"}</strong><p>{targetResumeBulletDisplayText(bullet)}</p></article>)}</div>
-          <div className="resume-export-checks"><strong>导出前检查</strong>{buildPreExportChecklist({ profile: sourceProfile, experiences, bullets: latestResume.bullets, selections: experienceSelection }).length ? <ul>{buildPreExportChecklist({ profile: sourceProfile, experiences, bullets: latestResume.bullets, selections: experienceSelection }).map((item, index) => <li key={`${item.code}-${index}`}>{item.level === "block" ? "需处理" : "请留意"}：{item.message}</li>)}</ul> : <p>已完成内容检查。</p>}</div>
+          <div className="resume-export-checks"><strong>来源档案检查（工作台可补齐）</strong>{buildPreExportChecklist({ profile: sourceProfile, experiences, bullets: latestResume.bullets, selections: experienceSelection }).length ? <ul>{buildPreExportChecklist({ profile: sourceProfile, experiences, bullets: latestResume.bullets, selections: experienceSelection }).map((item, index) => <li key={`${item.code}-${index}`}>{item.level === "block" ? "需处理" : "请留意"}：{item.message}</li>)}</ul> : <p>已完成内容检查。</p>}</div>
           {exportNotice ? <p className="summary" role="status">{exportNotice}</p> : null}
         </section> : null}
       </section>

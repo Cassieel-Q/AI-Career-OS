@@ -161,14 +161,18 @@ def delete_profile(db: Session, profile_id: UUID) -> None:
     try:
         mission_ids = select(models.JobMission.id).where(models.JobMission.profile_id == profile_id)
         resume_ids = select(models.TargetResume.id).where(models.TargetResume.mission_id.in_(mission_ids))
+        record_ids = select(models.InterviewRecord.id).where(models.InterviewRecord.profile_id == profile_id)
         session_ids = select(models.InterviewSession.id).where(models.InterviewSession.profile_id == profile_id)
         # Delete leaves first so this remains deterministic when a deployment
         # has SQLite foreign keys disabled or a legacy FK uses SET NULL.
         db.execute(delete(models.ProofArtifact).where(models.ProofArtifact.profile_id == profile_id))
         db.execute(delete(models.InterviewTurn).where(models.InterviewTurn.session_id.in_(session_ids)))
+        db.execute(delete(models.InterviewRecordItem).where(models.InterviewRecordItem.record_id.in_(record_ids)))
+        db.execute(delete(models.InterviewRecord).where(models.InterviewRecord.profile_id == profile_id))
         db.execute(delete(models.TargetResumeBullet).where(models.TargetResumeBullet.target_resume_id.in_(resume_ids)))
         db.execute(delete(models.ProofAction).where(models.ProofAction.profile_id == profile_id))
         db.execute(delete(models.InterviewSession).where(models.InterviewSession.profile_id == profile_id))
+        db.execute(delete(models.ResumeStudioDocument).where(models.ResumeStudioDocument.mission_id.in_(mission_ids)))
         db.execute(delete(models.TargetResume).where(models.TargetResume.mission_id.in_(mission_ids)))
         db.execute(delete(models.RedTeamReport).where(models.RedTeamReport.mission_id.in_(mission_ids)))
         db.execute(delete(models.InterviewPack).where(models.InterviewPack.mission_id.in_(mission_ids)))

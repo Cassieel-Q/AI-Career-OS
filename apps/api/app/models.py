@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON, Uuid
 
@@ -26,6 +26,9 @@ class UserProfile(Base):
     skills: Mapped[list[ProfileSkill]] = relationship(back_populates="profile", cascade="all, delete-orphan")
     experiences: Mapped[list[Experience]] = relationship(back_populates="profile", cascade="all, delete-orphan")
     certifications: Mapped[list[Certification]] = relationship(back_populates="profile", cascade="all, delete-orphan")
+    interview_records: Mapped[list["InterviewRecord"]] = relationship(
+        "InterviewRecord", back_populates="profile", cascade="all, delete-orphan", passive_deletes=True
+    )
     career_preference: Mapped[CareerPreference | None] = relationship(
         "CareerPreference",
         back_populates="profile",
@@ -794,3 +797,57 @@ class InterviewOutcome(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
     mission: Mapped[JobMission] = relationship("JobMission", back_populates="outcomes")
+class InterviewRecord(Base):
+    """User-authored real interview log (not mock claim drills; not intel outcomes)."""
+
+    __tablename__ = "interview_records"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    profile_id: Mapped[UUID] = mapped_column(
+        ForeignKey("user_profiles.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    mission_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("job_missions.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    company: Mapped[str] = mapped_column(String(255), nullable=False)
+    role: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    interview_round: Mapped[str] = mapped_column(String(64), nullable=False)
+    interviewed_on: Mapped[date] = mapped_column(Date, nullable=False)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="DRAFT", server_default="DRAFT")
+    strong_points: Mapped[list] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
+    weak_points: Mapped[list] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
+    gap_type: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    gap_why: Mapped[str | None] = mapped_column(Text, nullable=True)
+    recommended_next_action: Mapped[str | None] = mapped_column(Text, nullable=True)
+    coaching: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    profile: Mapped[UserProfile] = relationship("UserProfile", back_populates="interview_records")
+    mission: Mapped[JobMission | None] = relationship("JobMission")
+    items: Mapped[list[InterviewRecordItem]] = relationship(
+        "InterviewRecordItem",
+        back_populates="record",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by=lambda: InterviewRecordItem.sort_order,
+    )
+
+
+class InterviewRecordItem(Base):
+    __tablename__ = "interview_record_items"
+    __table_args__ = (UniqueConstraint("record_id", "sort_order", name="uq_interview_record_items_order"),)
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    record_id: Mapped[UUID] = mapped_column(
+        ForeignKey("interview_records.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    question: Mapped[str] = mapped_column(Text, nullable=False)
+    context: Mapped[str | None] = mapped_column(Text, nullable=True)
+    my_answer: Mapped[str] = mapped_column(Text, nullable=False)
+    evaluation: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    record: Mapped[InterviewRecord] = relationship("InterviewRecord", back_populates="items")

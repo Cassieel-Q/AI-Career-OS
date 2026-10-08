@@ -294,6 +294,77 @@ class OpenAIInterviewProvider:
             raise InterviewProviderInvalidResponseError(reason="schema_validation") from exc
 
 
+    @staticmethod
+    def _evaluate_system_prompt() -> str:
+        return (
+            "Evaluate one interview Q&A for a job candidate. "
+            "Return ONLY a JSON object with an evaluation object. "
+            "Evaluation must include: score (integer 0-10), strong_points (string list), "
+            "weak_points (string list), gap_type (one of KNOWLEDGE_GAP, PROJECT_GAP, EVIDENCE_GAP, ARTICULATION_GAP or null), "
+            "why (short Chinese reason), reference_answer (optional Chinese sample), "
+            "recommended_next_action (short Chinese next step). "
+            "Do not invent employer-specific secrets. Prefer concrete, actionable Chinese feedback."
+        )
+
+    def evaluate_answer(
+        self,
+        *,
+        question: str,
+        answer: str,
+        context: str | None = None,
+        company: str | None = None,
+        role: str | None = None,
+    ):
+        from .proof_schemas import InterviewEvaluation
+
+        payload = {
+            "company": company or "",
+            "role": role or "",
+            "question": question,
+            "context": context or "",
+            "answer": answer,
+        }
+        request: dict[str, object] = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": self._evaluate_system_prompt()},
+                {"role": "user", "content": json.dumps(payload, ensure_ascii=False, separators=(",", ":"))},
+            ],
+            "response_format": {"type": "json_object"},
+        }
+        if self.is_deepseek:
+            request["extra_body"] = {"thinking": {"type": "disabled"}}
+        try:
+            response = self.client.chat.completions.create(**request)
+        except (TimeoutError, httpx.TimeoutException) as exc:
+            raise InterviewProviderTimeoutError("interview provider timed out") from exc
+        except (ConnectionError, httpx.RequestError, httpx.HTTPStatusError) as exc:
+            raise InterviewProviderConnectionError("interview provider request failed") from exc
+        except Exception as exc:
+            if "timeout" in type(exc).__name__.casefold():
+                raise InterviewProviderTimeoutError("interview provider timed out") from exc
+            raise InterviewProviderConnectionError("interview provider request failed") from exc
+        try:
+            content = response.choices[0].message.content
+        except Exception as exc:
+            raise InterviewProviderInvalidResponseError(reason="response_shape") from exc
+        if not isinstance(content, str) or not content.strip():
+            raise InterviewProviderInvalidResponseError(reason="empty_response")
+        try:
+            data = json.loads(content)
+        except json.JSONDecodeError as exc:
+            raise InterviewProviderInvalidResponseError(reason="json_decode") from exc
+        if not isinstance(data, dict):
+            raise InterviewProviderInvalidResponseError(reason="response_shape")
+        evaluation = data.get("evaluation") if isinstance(data.get("evaluation"), dict) else data
+        try:
+            normalized = self._normalize_evaluation(evaluation)
+            return InterviewEvaluation.model_validate(normalized)
+        except (ValidationError, TypeError, ValueError) as exc:
+            raise InterviewProviderInvalidResponseError(reason="schema_validation") from exc
+
+
+
 _provider: InterviewProvider | None = None
 
 

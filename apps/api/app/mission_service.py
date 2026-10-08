@@ -10,7 +10,7 @@ from uuid import UUID
 logger = logging.getLogger(__name__)
 
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -888,6 +888,10 @@ def delete_mission(db: Session, mission_id: UUID) -> dict[str, object]:
     """Hard-delete a job mission (and cascaded children). Prefer archive for soft remove."""
     row = _mission(db, mission_id)
     payload = _mission_read(row)
+    # Keep user-authored interview history after its preparation mission is removed.
+    # Explicit cleanup also works in local SQLite databases without FK enforcement.
+    db.execute(update(models.InterviewRecord).where(models.InterviewRecord.mission_id == mission_id).values(mission_id=None))
+    db.execute(delete(models.ResumeStudioDocument).where(models.ResumeStudioDocument.mission_id == mission_id))
     db.delete(row)
     db.commit()
     return {"deleted": True, "id": str(payload.get("id") or mission_id)}

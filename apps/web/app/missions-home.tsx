@@ -180,6 +180,9 @@ export function MissionsHome() {
           <Link className="mission-primary-cta link-cta" href={newHref}>
             新建岗位
           </Link>
+          <Link className="button-secondary" href={"/interview-records" as Route}>
+            面试记录库
+          </Link>
           <Link className="button-secondary" href="/workflow/start">
             上传简历
           </Link>
