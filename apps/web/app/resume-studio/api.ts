@@ -1,5 +1,5 @@
 import { MISSION_API_BASE_URL } from "../missions.ts";
-import type { StudioOperation, StudioPreview, StudioState, StudioTemplate } from "./types.ts";
+import type { StudioOperation, StudioPreview, StudioSourceDiff, StudioState, StudioTemplate } from "./types.ts";
 
 export class StudioApiError extends Error {
   status: number;
@@ -23,6 +23,9 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export const readStudio = (missionId: string) => request<StudioState>(root(missionId));
+export const readStudioSourceDiff = (missionId: string) => request<StudioSourceDiff>(`${root(missionId)}/source-diff`);
+export const reimportStudio = (missionId: string, revision: number) =>
+  request<StudioState>(`${root(missionId)}/reimport`, { method: "POST", headers: { "If-Match": String(revision) } });
 export const readStudioTemplates = () => request<StudioTemplate[]>(`${MISSION_API_BASE_URL}/api/v1/resume-studio/templates`);
 export const applyStudioOperation = (missionId: string, revision: number, operation: StudioOperation) =>
   request<StudioState>(root(missionId), {

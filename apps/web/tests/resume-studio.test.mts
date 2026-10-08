@@ -6,7 +6,7 @@ import type { StudioState } from "../app/resume-studio/types.ts";
 
 const node = (id: string, text: string) => ({ id, text, source_kind: "profile", source_id: null, evidence_refs: [], risk_level: "LOW" as const, claim_status: "CONFIRMED" as const });
 const state: StudioState = {
-  id: "s", mission_id: "m", revision: 4, confirmed_revision: null, language: "zh", template_id: "zh-classic",
+  id: "s", mission_id: "m", source_target_resume_id: "source", revision: 4, confirmed_revision: null, language: "zh", template_id: "zh-classic",
   document: { schema_version: 1, basics: { name: node("n", "陈林") }, sections: [] },
 };
 

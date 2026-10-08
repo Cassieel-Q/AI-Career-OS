@@ -24,6 +24,7 @@
 .rs-alert { max-width: 1736px; margin: 0 auto 12px; padding: 11px 15px; border: 1px solid #bcd5c6; background: #eef8f0; color: #25533b; display: flex; justify-content: space-between; gap: 14px; font-size: 13px; }
 .rs-alert-error { border-color: #ebc9be; background: #fff1ed; color: #a34534; }
 .rs-alert button { background: none; color: inherit; padding: 0; text-decoration: underline; }
+.rs-source-update { max-width: 1736px; margin: 0 auto 12px; padding: 13px 16px; border: 1px solid #dfcb9f; background: #fff8e9; color: #6d512b; display: flex; align-items: center; justify-content: space-between; gap: 18px; font-size: 12px; }.rs-source-update p { margin: 4px 0; }.rs-source-update details { font-size: 11px; }.rs-source-update summary { cursor: pointer; color: #315dd7; }.rs-source-update button { background: #986e2b; flex: none; font-size: 11px; padding: 8px 10px; }
 .rs-workbench { max-width: 1800px; margin: auto; padding: 0 32px 40px; display: grid; grid-template-columns: minmax(245px, 290px) minmax(460px, 1fr) minmax(275px, 315px); gap: 16px; align-items: start; }
 .rs-outline, .rs-preview-panel, .rs-inspector { min-width: 0; border: 1px solid #dfe4eb; background: #fff; box-shadow: 0 8px 28px #20345308; }
 .rs-outline, .rs-inspector { max-height: calc(100vh - 180px); min-height: 640px; overflow-y: auto; }

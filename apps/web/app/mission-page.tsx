@@ -1162,12 +1162,12 @@ useEffect(() => {
         <div className="mission-action-row mission-action-wrap" style={{ marginTop: "1rem" }}>
           {latestResume && !targetConfirmed ? <PrimaryButton disabled={busy} onClick={() => void advanceResume()}>{busy ? "处理中…" : "确认优化建议并生成最终简历"}</PrimaryButton> : null}
           {latestResume && targetConfirmed ? <>
-            <PrimaryButton disabled={busy} onClick={() => void exportTargetResumePdf()}>确认最终简历并生成 PDF</PrimaryButton>
+            <PrimaryButton disabled={busy} onClick={() => router.push(`/missions/${encodeURIComponent(missionId)}/resume/studio`)}>进入简历工作台并生成 PDF</PrimaryButton>
             <PrimaryButton disabled={busy} onClick={() => router.push(missionHref(missionId, "interview"))}>基于最终简历开始模拟面试</PrimaryButton>
           </> : null}
         </div>
         {latestResume && targetConfirmed ? <section className="resume-final-preview" aria-label="最终简历预览">
-          <div className="section-heading"><div><p className="section-kicker">最终简历</p><h3>已确认版本</h3><p className="summary">只包含你接受/编辑后的真实经历；“建议补做项目”不会进入 PDF。</p></div><TextButton disabled={busy} onClick={() => void exportTargetResumePdf()}>导出 PDF</TextButton></div>
+          <div className="section-heading"><div><p className="section-kicker">最终简历</p><h3>已确认版本</h3><p className="summary">只包含你接受/编辑后的真实经历；“建议补做项目”不会进入 PDF。</p></div><TextButton disabled={busy} onClick={() => router.push(`/missions/${encodeURIComponent(missionId)}/resume/studio`)}>选择模板并导出 PDF</TextButton></div>
           <div className="resume-final-preview-list">{latestResume.bullets.filter((bullet) => bullet.status === "ACCEPTED").slice(0, 8).map((bullet) => <article key={bullet.id}><strong>{bullet.source_experience_id ? experienceLabel(bullet.source_experience_id).title : "已确认经历"}</strong><p>{targetResumeBulletDisplayText(bullet)}</p></article>)}</div>
           {exportNotice ? <p className="summary" role="status">{exportNotice}</p> : null}
         </section> : null}
@@ -1511,8 +1511,8 @@ useEffect(() => {
                 <p className="summary" style={{ marginTop: 8 }}>
                   {exportEntryHint(countExportableBullets(latestResume, experiences.map((exp) => String(exp.id)).filter(Boolean)))}
                 </p>
-                <TextButton disabled={!latestResume} onClick={() => void exportTargetResumePdf()}>
-                  导出投递版 PDF（打印另存，非后台自动下载）
+                <TextButton disabled={!latestResume || !targetConfirmed} onClick={() => router.push(`/missions/${encodeURIComponent(missionId)}/resume/studio`)}>
+                  进入简历工作台，选择模板并下载 PDF
                 </TextButton>
               </>
             )}
@@ -1523,10 +1523,10 @@ useEffect(() => {
           <section className="mission-card" role="status">
             <p className="section-kicker">最终简历</p>
             <h3>简历已确认，可以投递或开始模拟面试</h3>
-            <p className="summary">导出会沿用原简历的教育、经历、项目和技能结构，只替换你确认过的要点。</p>
+            <p className="summary">进入简历工作台，核对完整内容，选择模板并下载投递版 PDF。</p>
             <div className="mission-action-row mission-action-wrap" style={{ marginTop: "0.75rem" }}>
-              <PrimaryButton disabled={busy} onClick={() => void exportTargetResumePdf()}>
-                导出 PDF（打印另存）
+              <PrimaryButton disabled={busy} onClick={() => router.push(`/missions/${encodeURIComponent(missionId)}/resume/studio`)}>
+                打开简历工作台
               </PrimaryButton>
               <PrimaryButton disabled={busy} onClick={() => router.push(missionHref(missionId, "interview"))}>
                 进入模拟面试
