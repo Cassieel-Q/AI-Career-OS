@@ -1,0 +1,20 @@
+[
+  {"id":"zh-classic","language":"zh","name":"经典单栏","style":"classic","header":"center","accent":"#172033","density":"normal","spdx":"LicenseRef-AICareerOS-Original"},
+  {"id":"zh-modern","language":"zh","name":"现代横线","style":"modern","header":"left","accent":"#3159b8","density":"normal","spdx":"LicenseRef-AICareerOS-Original"},
+  {"id":"zh-sidebar","language":"zh","name":"侧栏资料","style":"sidebar","header":"left","accent":"#3159b8","density":"normal","spdx":"LicenseRef-AICareerOS-Original"},
+  {"id":"zh-editorial","language":"zh","name":"编辑式","style":"editorial","header":"large","accent":"#172033","density":"open","spdx":"LicenseRef-AICareerOS-Original"},
+  {"id":"zh-timeline","language":"zh","name":"时间线","style":"timeline","header":"left","accent":"#2f6f62","density":"normal","spdx":"LicenseRef-AICareerOS-Original"},
+  {"id":"zh-grid","language":"zh","name":"双栏网格","style":"grid","header":"center","accent":"#3159b8","density":"normal","spdx":"LicenseRef-AICareerOS-Original"},
+  {"id":"zh-minimal","language":"zh","name":"极简留白","style":"minimal","header":"left","accent":"#172033","density":"open","spdx":"LicenseRef-AICareerOS-Original"},
+  {"id":"zh-banner","language":"zh","name":"蓝色题头","style":"banner","header":"banner","accent":"#3159b8","density":"normal","spdx":"LicenseRef-AICareerOS-Original"},
+  {"id":"zh-compact","language":"zh","name":"紧凑信息","style":"compact","header":"left","accent":"#24489a","density":"compact","spdx":"LicenseRef-AICareerOS-Original"},
+  {"id":"en-classic","language":"en","name":"Classic","style":"classic","header":"center","accent":"#172033","density":"normal","spdx":"LicenseRef-AICareerOS-Original"},
+  {"id":"en-modern","language":"en","name":"Modern Rule","style":"modern","header":"left","accent":"#3159b8","density":"normal","spdx":"LicenseRef-AICareerOS-Original"},
+  {"id":"en-sidebar","language":"en","name":"Profile Sidebar","style":"sidebar","header":"left","accent":"#3159b8","density":"normal","spdx":"LicenseRef-AICareerOS-Original"},
+  {"id":"en-editorial","language":"en","name":"Editorial","style":"editorial","header":"large","accent":"#172033","density":"open","spdx":"LicenseRef-AICareerOS-Original"},
+  {"id":"en-timeline","language":"en","name":"Timeline","style":"timeline","header":"left","accent":"#2f6f62","density":"normal","spdx":"LicenseRef-AICareerOS-Original"},
+  {"id":"en-grid","language":"en","name":"Two Column","style":"grid","header":"center","accent":"#3159b8","density":"normal","spdx":"LicenseRef-AICareerOS-Original"},
+  {"id":"en-minimal","language":"en","name":"Whitespace","style":"minimal","header":"left","accent":"#172033","density":"open","spdx":"LicenseRef-AICareerOS-Original"},
+  {"id":"en-banner","language":"en","name":"Blue Header","style":"banner","header":"banner","accent":"#3159b8","density":"normal","spdx":"LicenseRef-AICareerOS-Original"},
+  {"id":"en-compact","language":"en","name":"Dense","style":"compact","header":"left","accent":"#24489a","density":"compact","spdx":"LicenseRef-AICareerOS-Original"}
+]

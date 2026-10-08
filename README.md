@@ -162,6 +162,16 @@ python -m app.interview_skill_importer `
 
 ## Verification
 
+### Resume Studio
+
+After confirming the岗位定向简历, open `/missions/<missionId>/resume/studio` (or use the entry on the resume page). The workbench imports the accepted rewrite bullets and bound profile once, then saves every edit as a new mission-scoped revision. Its 18 original templates have server-rendered sample pages. A confirmed revision can be downloaded as a real PDF; later edits require reconfirmation.
+
+Install the official Typst CLI **0.15.1** separately and set `TYPST_BIN` to its executable path (or put `typst` on `PATH`). Verify `typst --version` and `typst fonts`; the templates need a Chinese-capable font such as Microsoft YaHei or Noto Sans CJK SC. The binary and fonts are not committed. See [Resume Studio notices](docs/licenses/resume-studio-NOTICES.md) for provenance and license notes.
+
+For a local API started on a port other than 8000, set `NEXT_PUBLIC_API_BASE_URL` for the Web app and add its origin to the API's `FRONTEND_ORIGINS` comma-separated environment value.
+
+Agent clients use `GET /api/v1/job-missions/{missionId}/resume-studio` and `PATCH` on the same URL with `If-Match: <revision>`. Preview, confirmation and PDF endpoints are documented in `docs/superpowers/specs/2026-10-08-resume-studio-design.md`.
+
 ```powershell
 cd apps/web
 npm run type-check

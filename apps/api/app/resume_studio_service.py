@@ -217,7 +217,7 @@ def export_checks(document: dict) -> list[dict]:
     rendered_bullets = 0
 
     def inspect(node: dict) -> None:
-        if node.get("claim_status") == "OMITTED" or not node.get("text"):
+        if node.get("claim_status") == "OMITTED":
             return
         status = node.get("claim_status")
         if status in {"NEEDS_CONFIRMATION", "BLOCKED_MISSING"}:
@@ -293,6 +293,8 @@ def apply_operation(db: Session, mission_id: UUID, expected_revision: int, raw_o
         node = _find_node(document, str(operation.node_id))
         if node is None:
             raise HTTPException(404, "目标节点不存在。")
+        if "claim_status" not in node and "status" not in node:
+            raise HTTPException(422, "只支持省略文字、经历或要点。")
         key = "claim_status" if "claim_status" in node else "status"
         if kind == "omit" and node.get(key) != "OMITTED":
             node["previous_status"] = node[key]
@@ -308,6 +310,8 @@ def apply_operation(db: Session, mission_id: UUID, expected_revision: int, raw_o
         item = next(value for value in group if value["id"] == str(operation.node_id))
         if operation.before_id is not None and not any(value["id"] == str(operation.before_id) for value in group):
             raise HTTPException(422, "排序目标必须位于同一板块。")
+        if operation.before_id == operation.node_id:
+            raise HTTPException(422, "不能将条目移动到自身之前。")
         group.remove(item)
         if operation.before_id is None:
             group.append(item)
