@@ -3,6 +3,9 @@
 The harness deliberately compares structured labels and evidence references. It
 does not call a provider, so reviewers can run it offline against curated
 outputs before deciding whether a prompt or adapter change is safe.
+
+Missing actual outputs are reported as NOT_RUN. They must never be compared
+against expected labels by silently substituting expected for actual.
 """
 
 from __future__ import annotations
@@ -11,9 +14,14 @@ from dataclasses import dataclass
 from typing import Any
 
 
+STATUS_COMPARED = "COMPARED"
+STATUS_NOT_RUN = "NOT_RUN"
+
+
 @dataclass(frozen=True)
 class EvalResult:
     case_id: str
+    status: str
     jd_grounding_accuracy: float
     unsupported_requirement_rate: float
     resume_grounding: float
@@ -30,6 +38,8 @@ class EvalResult:
 
     @property
     def passed(self) -> bool:
+        if self.status != STATUS_COMPARED:
+            return False
         return all(value == 1.0 for value in self.__dict__.values() if isinstance(value, float))
 
 
@@ -37,9 +47,37 @@ def _rate(condition: bool) -> float:
     return 1.0 if condition else 0.0
 
 
+def _not_run_result(case_id: str) -> EvalResult:
+    return EvalResult(
+        case_id=case_id,
+        status=STATUS_NOT_RUN,
+        jd_grounding_accuracy=0.0,
+        unsupported_requirement_rate=0.0,
+        resume_grounding=0.0,
+        unsupported_claim_rate=0.0,
+        claim_evidence_precision=0.0,
+        experience_selection_relevance=0.0,
+        red_team_risk_recall=0.0,
+        interview_retrieval_relevance=0.0,
+        followup_relevance=0.0,
+        gap_type_accuracy=0.0,
+        interview_followup_relevance=0.0,
+        proof_action_artifactability=0.0,
+        action_artifactability=0.0,
+    )
+
+
 def compare_case(case: dict[str, Any], actual: dict[str, Any] | None = None) -> EvalResult:
+    """Compare one curated case against a real actual output.
+
+    ``actual`` must be provided by the caller. ``None`` means the model or
+    pipeline did not produce an output for this case and yields ``NOT_RUN``.
+    An empty dict is treated as a real (poor) actual, not as missing.
+    """
+    if actual is None:
+        return _not_run_result(str(case["id"]))
+
     expected = case["expected"]
-    actual = actual or expected
     expected_claim = expected["readiness_status"]
     actual_claim = actual.get("readiness_status")
     expected_gap = expected.get("gap_type")
@@ -73,6 +111,7 @@ def compare_case(case: dict[str, Any], actual: dict[str, Any] | None = None) -> 
     artifact_actual = actual_metric("artifact_producing", artifact_expected)
     return EvalResult(
         case_id=case["id"],
+        status=STATUS_COMPARED,
         jd_grounding_accuracy=_rate(jd_actual == jd_expected),
         unsupported_requirement_rate=_rate(unsupported_actual == unsupported_expected),
         resume_grounding=_rate(actual.get("grounded", False) == expected["grounded"]),
@@ -83,12 +122,27 @@ def compare_case(case: dict[str, Any], actual: dict[str, Any] | None = None) -> 
         interview_retrieval_relevance=_rate(retrieval_actual == retrieval_expected),
         followup_relevance=_rate(followup_actual == followup_expected),
         gap_type_accuracy=_rate(actual_gap == expected_gap),
-        interview_followup_relevance=_rate(actual.get("followup_relevant", False) == expected["followup_relevant"]),
+        interview_followup_relevance=_rate(
+            actual.get("followup_relevant", False) == expected["followup_relevant"]
+        ),
         proof_action_artifactability=_rate(artifact_actual == artifact_expected),
-        action_artifactability=_rate(actual.get("artifact_producing", False) == expected["artifact_producing"]),
+        action_artifactability=_rate(
+            actual.get("artifact_producing", False) == expected["artifact_producing"]
+        ),
     )
 
 
-def compare_cases(cases: list[dict[str, Any]], actual_by_id: dict[str, dict[str, Any]] | None = None) -> list[EvalResult]:
+def compare_cases(
+    cases: list[dict[str, Any]],
+    actual_by_id: dict[str, dict[str, Any]] | None = None,
+) -> list[EvalResult]:
+    """Compare many cases. Missing ids in ``actual_by_id`` become NOT_RUN."""
     actual_by_id = actual_by_id or {}
-    return [compare_case(case, actual_by_id.get(case["id"])) for case in cases]
+    results: list[EvalResult] = []
+    for case in cases:
+        case_id = case["id"]
+        if case_id not in actual_by_id:
+            results.append(_not_run_result(str(case_id)))
+            continue
+        results.append(compare_case(case, actual_by_id[case_id]))
+    return results

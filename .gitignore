@@ -1,4 +1,4 @@
-# dependencies
+﻿# dependencies
 node_modules/
 **/node_modules/
 .pnpm-store/
@@ -44,3 +44,10 @@ docs/handoff/
 *.sqlite
 *.db
 *.pdf
+# Evaluation isolation (TASK-EVAL-001)
+evals/benchmark/private/**
+!evals/benchmark/private/.gitkeep
+evals/benchmark/runs/**
+!evals/benchmark/runs/.gitkeep
+.runtime/evaluation/
+

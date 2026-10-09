@@ -1,0 +1,73 @@
+[
+  {
+    "case_id": "syn-match-001",
+    "jd_id": "syn-jd-001",
+    "resume_id": "syn-resume-001",
+    "experiences": [
+      {
+        "experience_id": "syn-resume-001-exp-001",
+        "title": "LLM eval internship"
+      },
+      {
+        "experience_id": "syn-resume-001-exp-002",
+        "title": "Campus bookstore cashier"
+      },
+      {
+        "experience_id": "syn-resume-001-exp-003",
+        "title": "RAG prototype project"
+      }
+    ],
+    "expected_labels": {
+      "syn-resume-001-exp-001": "KEEP_AND_HIGHLIGHT",
+      "syn-resume-001-exp-002": "OMIT",
+      "syn-resume-001-exp-003": "KEEP"
+    },
+    "expected_high_priority_experience_ids": [
+      "syn-resume-001-exp-001",
+      "syn-resume-001-exp-003"
+    ],
+    "offline_actual_labels": {
+      "syn-resume-001-exp-001": "KEEP_AND_HIGHLIGHT",
+      "syn-resume-001-exp-002": "OMIT",
+      "syn-resume-001-exp-003": "KEEP"
+    }
+  },
+  {
+    "case_id": "syn-match-002",
+    "jd_id": "syn-jd-002",
+    "resume_id": "syn-resume-001",
+    "experiences": [
+      {
+        "experience_id": "syn-resume-001-exp-001",
+        "title": "LLM eval internship"
+      },
+      {
+        "experience_id": "syn-resume-001-exp-002",
+        "title": "Campus bookstore cashier"
+      },
+      {
+        "experience_id": "syn-resume-001-exp-003",
+        "title": "RAG prototype project"
+      },
+      {
+        "experience_id": "syn-resume-001-exp-004",
+        "title": "Creator A/B test lead"
+      }
+    ],
+    "expected_labels": {
+      "syn-resume-001-exp-001": "KEEP",
+      "syn-resume-001-exp-002": "OMIT",
+      "syn-resume-001-exp-003": "DEEMPHASIZE",
+      "syn-resume-001-exp-004": "KEEP_AND_HIGHLIGHT"
+    },
+    "expected_high_priority_experience_ids": [
+      "syn-resume-001-exp-004"
+    ],
+    "offline_actual_labels": {
+      "syn-resume-001-exp-001": "KEEP",
+      "syn-resume-001-exp-002": "OMIT",
+      "syn-resume-001-exp-003": "DEEMPHASIZE",
+      "syn-resume-001-exp-004": "KEEP_AND_HIGHLIGHT"
+    }
+  }
+]
