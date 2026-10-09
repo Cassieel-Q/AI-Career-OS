@@ -3,18 +3,19 @@
     "case_id": "syn-match-001",
     "jd_id": "syn-jd-001",
     "resume_id": "syn-resume-001",
+    "sample_class": "synthetic",
     "experiences": [
       {
         "experience_id": "syn-resume-001-exp-001",
-        "title": "LLM eval internship"
+        "title": "LLM Evaluation Internship"
       },
       {
         "experience_id": "syn-resume-001-exp-002",
-        "title": "Campus bookstore cashier"
+        "title": "Campus Bookstore Cashier"
       },
       {
         "experience_id": "syn-resume-001-exp-003",
-        "title": "RAG prototype project"
+        "title": "RAG Prototype Project"
       }
     ],
     "expected_labels": {
@@ -36,22 +37,23 @@
     "case_id": "syn-match-002",
     "jd_id": "syn-jd-002",
     "resume_id": "syn-resume-001",
+    "sample_class": "synthetic",
     "experiences": [
       {
         "experience_id": "syn-resume-001-exp-001",
-        "title": "LLM eval internship"
+        "title": "LLM Evaluation Internship"
       },
       {
         "experience_id": "syn-resume-001-exp-002",
-        "title": "Campus bookstore cashier"
+        "title": "Campus Bookstore Cashier"
       },
       {
         "experience_id": "syn-resume-001-exp-003",
-        "title": "RAG prototype project"
+        "title": "RAG Prototype Project"
       },
       {
         "experience_id": "syn-resume-001-exp-004",
-        "title": "Creator A/B test lead"
+        "title": "Creator A/B Test Lead"
       }
     ],
     "expected_labels": {
@@ -68,6 +70,509 @@
       "syn-resume-001-exp-002": "OMIT",
       "syn-resume-001-exp-003": "DEEMPHASIZE",
       "syn-resume-001-exp-004": "KEEP_AND_HIGHLIGHT"
+    }
+  },
+  {
+    "case_id": "syn-match-003",
+    "jd_id": "pub-jd-baidu-001",
+    "resume_id": "syn-resume-001",
+    "sample_class": "synthetic",
+    "experiences": [
+      {
+        "experience_id": "syn-resume-001-exp-001",
+        "title": "LLM Evaluation Internship"
+      },
+      {
+        "experience_id": "syn-resume-001-exp-002",
+        "title": "Campus Bookstore Cashier"
+      },
+      {
+        "experience_id": "syn-resume-001-exp-003",
+        "title": "RAG Prototype Project"
+      },
+      {
+        "experience_id": "syn-resume-001-exp-004",
+        "title": "Creator A/B Test Lead"
+      }
+    ],
+    "expected_labels": {
+      "syn-resume-001-exp-001": "KEEP_AND_HIGHLIGHT",
+      "syn-resume-001-exp-002": "OMIT",
+      "syn-resume-001-exp-003": "KEEP_AND_HIGHLIGHT",
+      "syn-resume-001-exp-004": "KEEP"
+    },
+    "expected_high_priority_experience_ids": [
+      "syn-resume-001-exp-001",
+      "syn-resume-001-exp-003"
+    ],
+    "offline_actual_labels": {
+      "syn-resume-001-exp-001": "KEEP_AND_HIGHLIGHT",
+      "syn-resume-001-exp-002": "OMIT",
+      "syn-resume-001-exp-003": "KEEP_AND_HIGHLIGHT",
+      "syn-resume-001-exp-004": "KEEP"
+    }
+  },
+  {
+    "case_id": "syn-match-004",
+    "jd_id": "pub-jd-baidu-002",
+    "resume_id": "syn-resume-002",
+    "sample_class": "synthetic",
+    "experiences": [
+      {
+        "experience_id": "syn-resume-002-exp-001",
+        "title": "Agent Workflow Platform PM"
+      },
+      {
+        "experience_id": "syn-resume-002-exp-002",
+        "title": "Food Delivery Courier Part-time"
+      },
+      {
+        "experience_id": "syn-resume-002-exp-003",
+        "title": "Multimodal Demo Lab"
+      }
+    ],
+    "expected_labels": {
+      "syn-resume-002-exp-001": "KEEP_AND_HIGHLIGHT",
+      "syn-resume-002-exp-002": "OMIT",
+      "syn-resume-002-exp-003": "KEEP"
+    },
+    "expected_high_priority_experience_ids": [
+      "syn-resume-002-exp-001"
+    ],
+    "offline_actual_labels": {
+      "syn-resume-002-exp-001": "KEEP_AND_HIGHLIGHT",
+      "syn-resume-002-exp-002": "OMIT",
+      "syn-resume-002-exp-003": "KEEP"
+    }
+  },
+  {
+    "case_id": "syn-match-005",
+    "jd_id": "syn-jd-003",
+    "resume_id": "syn-resume-002",
+    "sample_class": "synthetic",
+    "experiences": [
+      {
+        "experience_id": "syn-resume-002-exp-001",
+        "title": "Agent Workflow Platform PM"
+      },
+      {
+        "experience_id": "syn-resume-002-exp-002",
+        "title": "Food Delivery Courier Part-time"
+      },
+      {
+        "experience_id": "syn-resume-002-exp-003",
+        "title": "Multimodal Demo Lab"
+      }
+    ],
+    "expected_labels": {
+      "syn-resume-002-exp-001": "KEEP_AND_HIGHLIGHT",
+      "syn-resume-002-exp-002": "OMIT",
+      "syn-resume-002-exp-003": "KEEP_AND_HIGHLIGHT"
+    },
+    "expected_high_priority_experience_ids": [
+      "syn-resume-002-exp-001",
+      "syn-resume-002-exp-003"
+    ],
+    "offline_actual_labels": {
+      "syn-resume-002-exp-001": "KEEP_AND_HIGHLIGHT",
+      "syn-resume-002-exp-002": "OMIT",
+      "syn-resume-002-exp-003": "KEEP_AND_HIGHLIGHT"
+    }
+  },
+  {
+    "case_id": "syn-match-006",
+    "jd_id": "syn-jd-007",
+    "resume_id": "syn-resume-002",
+    "sample_class": "synthetic",
+    "experiences": [
+      {
+        "experience_id": "syn-resume-002-exp-001",
+        "title": "Agent Workflow Platform PM"
+      },
+      {
+        "experience_id": "syn-resume-002-exp-002",
+        "title": "Food Delivery Courier Part-time"
+      },
+      {
+        "experience_id": "syn-resume-002-exp-003",
+        "title": "Multimodal Demo Lab"
+      }
+    ],
+    "expected_labels": {
+      "syn-resume-002-exp-001": "KEEP_AND_HIGHLIGHT",
+      "syn-resume-002-exp-002": "OMIT",
+      "syn-resume-002-exp-003": "KEEP"
+    },
+    "expected_high_priority_experience_ids": [
+      "syn-resume-002-exp-001"
+    ],
+    "offline_actual_labels": {
+      "syn-resume-002-exp-001": "KEEP_AND_HIGHLIGHT",
+      "syn-resume-002-exp-002": "OMIT",
+      "syn-resume-002-exp-003": "KEEP"
+    }
+  },
+  {
+    "case_id": "syn-match-007",
+    "jd_id": "syn-jd-006",
+    "resume_id": "syn-resume-003",
+    "sample_class": "synthetic",
+    "experiences": [
+      {
+        "experience_id": "syn-resume-003-exp-001",
+        "title": "Search Ranking TPM"
+      },
+      {
+        "experience_id": "syn-resume-003-exp-002",
+        "title": "Coffee Shop Barista"
+      },
+      {
+        "experience_id": "syn-resume-003-exp-003",
+        "title": "Creator Tool Growth PM"
+      }
+    ],
+    "expected_labels": {
+      "syn-resume-003-exp-001": "KEEP_AND_HIGHLIGHT",
+      "syn-resume-003-exp-002": "OMIT",
+      "syn-resume-003-exp-003": "KEEP"
+    },
+    "expected_high_priority_experience_ids": [
+      "syn-resume-003-exp-001"
+    ],
+    "offline_actual_labels": {
+      "syn-resume-003-exp-001": "KEEP_AND_HIGHLIGHT",
+      "syn-resume-003-exp-002": "OMIT",
+      "syn-resume-003-exp-003": "KEEP"
+    }
+  },
+  {
+    "case_id": "syn-match-008",
+    "jd_id": "syn-jd-002",
+    "resume_id": "syn-resume-003",
+    "sample_class": "synthetic",
+    "experiences": [
+      {
+        "experience_id": "syn-resume-003-exp-001",
+        "title": "Search Ranking TPM"
+      },
+      {
+        "experience_id": "syn-resume-003-exp-002",
+        "title": "Coffee Shop Barista"
+      },
+      {
+        "experience_id": "syn-resume-003-exp-003",
+        "title": "Creator Tool Growth PM"
+      }
+    ],
+    "expected_labels": {
+      "syn-resume-003-exp-001": "KEEP",
+      "syn-resume-003-exp-002": "OMIT",
+      "syn-resume-003-exp-003": "KEEP_AND_HIGHLIGHT"
+    },
+    "expected_high_priority_experience_ids": [
+      "syn-resume-003-exp-003"
+    ],
+    "offline_actual_labels": {
+      "syn-resume-003-exp-001": "KEEP",
+      "syn-resume-003-exp-002": "OMIT",
+      "syn-resume-003-exp-003": "KEEP_AND_HIGHLIGHT"
+    }
+  },
+  {
+    "case_id": "syn-match-009",
+    "jd_id": "syn-jd-012",
+    "resume_id": "syn-resume-003",
+    "sample_class": "synthetic",
+    "experiences": [
+      {
+        "experience_id": "syn-resume-003-exp-001",
+        "title": "Search Ranking TPM"
+      },
+      {
+        "experience_id": "syn-resume-003-exp-002",
+        "title": "Coffee Shop Barista"
+      },
+      {
+        "experience_id": "syn-resume-003-exp-003",
+        "title": "Creator Tool Growth PM"
+      }
+    ],
+    "expected_labels": {
+      "syn-resume-003-exp-001": "DEEMPHASIZE",
+      "syn-resume-003-exp-002": "OMIT",
+      "syn-resume-003-exp-003": "KEEP_AND_HIGHLIGHT"
+    },
+    "expected_high_priority_experience_ids": [
+      "syn-resume-003-exp-003"
+    ],
+    "offline_actual_labels": {
+      "syn-resume-003-exp-001": "DEEMPHASIZE",
+      "syn-resume-003-exp-002": "OMIT",
+      "syn-resume-003-exp-003": "KEEP_AND_HIGHLIGHT"
+    }
+  },
+  {
+    "case_id": "syn-match-010",
+    "jd_id": "pub-jd-baidu-003",
+    "resume_id": "syn-resume-004",
+    "sample_class": "synthetic",
+    "experiences": [
+      {
+        "experience_id": "syn-resume-004-exp-001",
+        "title": "Coding Agent Eval Lead"
+      },
+      {
+        "experience_id": "syn-resume-004-exp-002",
+        "title": "Supermarket Cashier Weekend"
+      },
+      {
+        "experience_id": "syn-resume-004-exp-003",
+        "title": "API Developer Portal PM"
+      }
+    ],
+    "expected_labels": {
+      "syn-resume-004-exp-001": "KEEP_AND_HIGHLIGHT",
+      "syn-resume-004-exp-002": "OMIT",
+      "syn-resume-004-exp-003": "KEEP"
+    },
+    "expected_high_priority_experience_ids": [
+      "syn-resume-004-exp-001"
+    ],
+    "offline_actual_labels": {
+      "syn-resume-004-exp-001": "KEEP_AND_HIGHLIGHT",
+      "syn-resume-004-exp-002": "OMIT",
+      "syn-resume-004-exp-003": "KEEP"
+    }
+  },
+  {
+    "case_id": "syn-match-011",
+    "jd_id": "syn-jd-011",
+    "resume_id": "syn-resume-004",
+    "sample_class": "synthetic",
+    "experiences": [
+      {
+        "experience_id": "syn-resume-004-exp-001",
+        "title": "Coding Agent Eval Lead"
+      },
+      {
+        "experience_id": "syn-resume-004-exp-002",
+        "title": "Supermarket Cashier Weekend"
+      },
+      {
+        "experience_id": "syn-resume-004-exp-003",
+        "title": "API Developer Portal PM"
+      }
+    ],
+    "expected_labels": {
+      "syn-resume-004-exp-001": "KEEP",
+      "syn-resume-004-exp-002": "OMIT",
+      "syn-resume-004-exp-003": "KEEP_AND_HIGHLIGHT"
+    },
+    "expected_high_priority_experience_ids": [
+      "syn-resume-004-exp-003"
+    ],
+    "offline_actual_labels": {
+      "syn-resume-004-exp-001": "KEEP",
+      "syn-resume-004-exp-002": "OMIT",
+      "syn-resume-004-exp-003": "KEEP_AND_HIGHLIGHT"
+    }
+  },
+  {
+    "case_id": "syn-match-012",
+    "jd_id": "syn-jd-005",
+    "resume_id": "syn-resume-004",
+    "sample_class": "synthetic",
+    "experiences": [
+      {
+        "experience_id": "syn-resume-004-exp-001",
+        "title": "Coding Agent Eval Lead"
+      },
+      {
+        "experience_id": "syn-resume-004-exp-002",
+        "title": "Supermarket Cashier Weekend"
+      },
+      {
+        "experience_id": "syn-resume-004-exp-003",
+        "title": "API Developer Portal PM"
+      }
+    ],
+    "expected_labels": {
+      "syn-resume-004-exp-001": "KEEP",
+      "syn-resume-004-exp-002": "OMIT",
+      "syn-resume-004-exp-003": "KEEP_AND_HIGHLIGHT"
+    },
+    "expected_high_priority_experience_ids": [
+      "syn-resume-004-exp-003"
+    ],
+    "offline_actual_labels": {
+      "syn-resume-004-exp-001": "KEEP",
+      "syn-resume-004-exp-002": "OMIT",
+      "syn-resume-004-exp-003": "KEEP_AND_HIGHLIGHT"
+    }
+  },
+  {
+    "case_id": "syn-match-013",
+    "jd_id": "syn-jd-009",
+    "resume_id": "syn-resume-005",
+    "sample_class": "synthetic",
+    "experiences": [
+      {
+        "experience_id": "syn-resume-005-exp-001",
+        "title": "In-Car Voice Assistant PM"
+      },
+      {
+        "experience_id": "syn-resume-005-exp-002",
+        "title": "Campus Library Shelving Aide"
+      },
+      {
+        "experience_id": "syn-resume-005-exp-003",
+        "title": "Smartphone Assistant Feature PM"
+      }
+    ],
+    "expected_labels": {
+      "syn-resume-005-exp-001": "KEEP_AND_HIGHLIGHT",
+      "syn-resume-005-exp-002": "OMIT",
+      "syn-resume-005-exp-003": "KEEP"
+    },
+    "expected_high_priority_experience_ids": [
+      "syn-resume-005-exp-001"
+    ],
+    "offline_actual_labels": {
+      "syn-resume-005-exp-001": "KEEP_AND_HIGHLIGHT",
+      "syn-resume-005-exp-002": "OMIT",
+      "syn-resume-005-exp-003": "KEEP"
+    }
+  },
+  {
+    "case_id": "syn-match-014",
+    "jd_id": "syn-jd-008",
+    "resume_id": "syn-resume-005",
+    "sample_class": "synthetic",
+    "experiences": [
+      {
+        "experience_id": "syn-resume-005-exp-001",
+        "title": "In-Car Voice Assistant PM"
+      },
+      {
+        "experience_id": "syn-resume-005-exp-002",
+        "title": "Campus Library Shelving Aide"
+      },
+      {
+        "experience_id": "syn-resume-005-exp-003",
+        "title": "Smartphone Assistant Feature PM"
+      }
+    ],
+    "expected_labels": {
+      "syn-resume-005-exp-001": "KEEP",
+      "syn-resume-005-exp-002": "OMIT",
+      "syn-resume-005-exp-003": "KEEP_AND_HIGHLIGHT"
+    },
+    "expected_high_priority_experience_ids": [
+      "syn-resume-005-exp-003"
+    ],
+    "offline_actual_labels": {
+      "syn-resume-005-exp-001": "KEEP",
+      "syn-resume-005-exp-002": "OMIT",
+      "syn-resume-005-exp-003": "KEEP_AND_HIGHLIGHT"
+    }
+  },
+  {
+    "case_id": "syn-match-015",
+    "jd_id": "syn-jd-010",
+    "resume_id": "syn-resume-006",
+    "sample_class": "synthetic",
+    "experiences": [
+      {
+        "experience_id": "syn-resume-006-exp-001",
+        "title": "Vision Solution PM"
+      },
+      {
+        "experience_id": "syn-resume-006-exp-002",
+        "title": "Wedding Photographer Side Gig"
+      },
+      {
+        "experience_id": "syn-resume-006-exp-003",
+        "title": "Knowledge Base RAG PM"
+      }
+    ],
+    "expected_labels": {
+      "syn-resume-006-exp-001": "KEEP_AND_HIGHLIGHT",
+      "syn-resume-006-exp-002": "OMIT",
+      "syn-resume-006-exp-003": "KEEP"
+    },
+    "expected_high_priority_experience_ids": [
+      "syn-resume-006-exp-001"
+    ],
+    "offline_actual_labels": {
+      "syn-resume-006-exp-001": "KEEP_AND_HIGHLIGHT",
+      "syn-resume-006-exp-002": "OMIT",
+      "syn-resume-006-exp-003": "KEEP"
+    }
+  },
+  {
+    "case_id": "syn-match-016",
+    "jd_id": "syn-jd-004",
+    "resume_id": "syn-resume-006",
+    "sample_class": "synthetic",
+    "experiences": [
+      {
+        "experience_id": "syn-resume-006-exp-001",
+        "title": "Vision Solution PM"
+      },
+      {
+        "experience_id": "syn-resume-006-exp-002",
+        "title": "Wedding Photographer Side Gig"
+      },
+      {
+        "experience_id": "syn-resume-006-exp-003",
+        "title": "Knowledge Base RAG PM"
+      }
+    ],
+    "expected_labels": {
+      "syn-resume-006-exp-001": "KEEP",
+      "syn-resume-006-exp-002": "OMIT",
+      "syn-resume-006-exp-003": "KEEP_AND_HIGHLIGHT"
+    },
+    "expected_high_priority_experience_ids": [
+      "syn-resume-006-exp-003"
+    ],
+    "offline_actual_labels": {
+      "syn-resume-006-exp-001": "KEEP",
+      "syn-resume-006-exp-002": "OMIT",
+      "syn-resume-006-exp-003": "KEEP_AND_HIGHLIGHT"
+    }
+  },
+  {
+    "case_id": "syn-match-017",
+    "jd_id": "syn-jd-013",
+    "resume_id": "syn-resume-006",
+    "sample_class": "synthetic",
+    "experiences": [
+      {
+        "experience_id": "syn-resume-006-exp-001",
+        "title": "Vision Solution PM"
+      },
+      {
+        "experience_id": "syn-resume-006-exp-002",
+        "title": "Wedding Photographer Side Gig"
+      },
+      {
+        "experience_id": "syn-resume-006-exp-003",
+        "title": "Knowledge Base RAG PM"
+      }
+    ],
+    "expected_labels": {
+      "syn-resume-006-exp-001": "KEEP",
+      "syn-resume-006-exp-002": "OMIT",
+      "syn-resume-006-exp-003": "DEEMPHASIZE"
+    },
+    "expected_high_priority_experience_ids": [
+      "syn-resume-006-exp-001"
+    ],
+    "offline_actual_labels": {
+      "syn-resume-006-exp-001": "KEEP",
+      "syn-resume-006-exp-002": "OMIT",
+      "syn-resume-006-exp-003": "DEEMPHASIZE"
     }
   }
 ]

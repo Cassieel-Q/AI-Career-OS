@@ -4,7 +4,10 @@
     "company": "Acme Labs",
     "role_title": "AI Product Manager",
     "role_family": "ai_product",
-    "source_url": null,
+    "source_url": "synthetic://authored/acme-ai-pm",
+    "source_type": "authored_synthetic",
+    "sample_class": "synthetic",
+    "consent_status": "n/a",
     "collected_at": "2026-10-09",
     "raw_text": "Acme Labs is hiring an AI Product Manager in Shanghai. 3+ years product experience required. Bachelor degree preferred. Responsibilities: own LLM evaluation roadmap; define success metrics; partner with engineering on RAG quality. Must-have: shipped an AI feature; experiment design. Preferred: Typst or document tooling familiarity.",
     "annotation_status": "synthetic_gold",
@@ -57,7 +60,10 @@
     "company": "Northstar Media",
     "role_title": "Technical Product Manager",
     "role_family": "technical_product",
-    "source_url": null,
+    "source_url": "synthetic://authored/northstar-tpm",
+    "source_type": "authored_synthetic",
+    "sample_class": "synthetic",
+    "consent_status": "n/a",
     "collected_at": "2026-10-09",
     "raw_text": "Northstar Media seeks a Technical Product Manager (Hangzhou). 5 years experience. Master preferred. Own creator-tool roadmap; run A/B tests; write PRDs. Required: SQL literacy; cross-functional leadership. Nice to have: short-video domain.",
     "annotation_status": "synthetic_gold",
@@ -102,6 +108,879 @@
       ],
       "preferred": [
         "short-video domain"
+      ]
+    }
+  },
+  {
+    "jd_id": "pub-jd-baidu-001",
+    "company": "百度",
+    "role_title": "AI产品经理",
+    "role_family": "ai_product",
+    "source_url": "https://watchjobs.net/zh/explore/job/c262-e07b63f8954b5aad/AI%E4%BA%A7%E5%93%81%E7%BB%8F%E7%90%86-J104842-%E7%99%BE%E5%BA%A6",
+    "source_type": "public_inspired",
+    "sample_class": "public_jd",
+    "consent_status": "n/a",
+    "collected_at": "2026-10-09",
+    "raw_text": "公司：百度\n岗位：AI产品经理\n地点：北京\n年限：2年以上产品经验\n学历：本科\n\n职责：\n1. 负责 AI 工具与工作台能力规划、需求拆解和产品落地，建设平台能力\n2. 研究并对标行业优秀产品，关注 AI 创作工作台的产品形态，提炼可复用的工作流、资产和协作机制\n3. 持续跟踪 AI 发展趋势，重点关注大模型、多模态、Agent、图像/视频/音频生成、自动化工作流、模型路由等方向，输出产品判断和路线图\n4. 协同算法、研发、设计和业务团队，推动从 0 到 1 的能力建设和迭代\n5. 建立产品指标体系，关注效率、稳定性、成本、成功率、复用率等核心指标\n\n任职要求（必须）：\n- 2年以上产品经验\n- 有实际 AI 工具使用或产品化经验，能理解模型效果、时延、成本、稳定性和产品体验之间的取舍\n- 具备较强的抽象和拆解能力，能把复杂生产流程整理成清晰的产品结构\n- 有较强的跨团队协作和推进能力\n\n加分项：\n- 有 AI 工具、AIGC 产品、创作工具、工作流平台或 ToB 工具经验\n- 结果导向，具备数据意识和迭代意识\n",
+    "annotation_status": "synthetic_gold",
+    "expected": {
+      "company": "百度",
+      "role_title": "AI产品经理",
+      "location": "北京",
+      "years_experience": "2+",
+      "education": "本科",
+      "responsibilities": [
+        "负责 AI 工具与工作台能力规划",
+        "跟踪大模型/多模态/Agent 趋势并输出路线图",
+        "协同算法研发推动从0到1",
+        "建立产品指标体系"
+      ],
+      "must_have": [
+        "2年以上产品经验",
+        "AI工具产品化经验",
+        "跨团队协作推进"
+      ],
+      "preferred": [
+        "AIGC/工作流平台经验",
+        "数据意识"
+      ],
+      "requirement_labels": {
+        "2年以上产品经验": "required",
+        "AI工具产品化经验": "required",
+        "跨团队协作推进": "required",
+        "AIGC/工作流平台经验": "preferred",
+        "数据意识": "preferred"
+      }
+    },
+    "offline_actual": {
+      "company": "百度",
+      "role_title": "AI产品经理",
+      "location": "北京",
+      "years_experience": "2+",
+      "education": "本科",
+      "responsibilities": [
+        "负责 AI 工具与工作台能力规划",
+        "跟踪大模型/多模态/Agent 趋势并输出路线图",
+        "协同算法研发推动从0到1",
+        "建立产品指标体系"
+      ],
+      "must_have": [
+        "2年以上产品经验",
+        "AI工具产品化经验",
+        "跨团队协作推进"
+      ],
+      "preferred": [
+        "AIGC/工作流平台经验",
+        "数据意识"
+      ]
+    }
+  },
+  {
+    "jd_id": "pub-jd-baidu-002",
+    "company": "百度",
+    "role_title": "AI产品经理（企业效能方向）",
+    "role_family": "ai_product",
+    "source_url": "https://www.quanzhi.com/job/6a50a62562f6005b2b0f6d55",
+    "source_type": "public_inspired",
+    "sample_class": "public_jd",
+    "consent_status": "n/a",
+    "collected_at": "2026-10-09",
+    "raw_text": "公司：百度\n岗位：AI产品经理（企业效能方向）\n地点：北京海淀\n年限：3-5年\n学历：本科\n\n职责：\n1. 负责企业工作流的识别与分析，洞察组织流程与效率痛点\n2. 负责 AI Agent 方向探索与落地，推动智能体在工作会议、招聘、数字员工等场景落地\n3. 协调技术团队完成智能体设计、开发与沙盒实验，搭建效果指标看板\n4. 牵头智能体产品设计、开发、运营全流程，对产品效果负责\n5. 结合运营数据与用户反馈持续改善 Agent 效果\n\n任职要求（必须）：\n- 良好的产品 Sense 与痛点洞察力\n- 具备大语言模型应用经验，理解模型能力边界与高质量 Prompt\n- 熟悉 Agentic Workflow，有基于 AI 实现至少 1 个提效 Workflow/完整产品的经验\n\n加分项：\n- 主导跨部门协作项目\n- 能独立完成产品 Demo\n",
+    "annotation_status": "synthetic_gold",
+    "expected": {
+      "company": "百度",
+      "role_title": "AI产品经理（企业效能方向）",
+      "location": "北京",
+      "years_experience": "3-5",
+      "education": "本科",
+      "responsibilities": [
+        "企业工作流识别与分析",
+        "AI Agent 场景落地",
+        "搭建效果指标看板",
+        "智能体产品全流程管理"
+      ],
+      "must_have": [
+        "大语言模型应用经验",
+        "Agentic Workflow 经验",
+        "产品痛点洞察"
+      ],
+      "preferred": [
+        "跨部门协作",
+        "独立完成 Demo"
+      ],
+      "requirement_labels": {
+        "大语言模型应用经验": "required",
+        "Agentic Workflow 经验": "required",
+        "产品痛点洞察": "required",
+        "跨部门协作": "preferred",
+        "独立完成 Demo": "preferred"
+      }
+    },
+    "offline_actual": {
+      "company": "百度",
+      "role_title": "AI产品经理（企业效能方向）",
+      "location": "北京",
+      "years_experience": "3-5",
+      "education": "本科",
+      "responsibilities": [
+        "企业工作流识别与分析",
+        "AI Agent 场景落地",
+        "搭建效果指标看板",
+        "智能体产品全流程管理"
+      ],
+      "must_have": [
+        "大语言模型应用经验",
+        "Agentic Workflow 经验",
+        "产品痛点洞察"
+      ],
+      "preferred": [
+        "跨部门协作",
+        "独立完成 Demo"
+      ]
+    }
+  },
+  {
+    "jd_id": "pub-jd-baidu-003",
+    "company": "百度",
+    "role_title": "高级AI产品经理（Coding Agent）",
+    "role_family": "ai_product",
+    "source_url": "https://www.liepin.com/job/1983826771.shtml",
+    "source_type": "public_inspired",
+    "sample_class": "public_jd",
+    "consent_status": "n/a",
+    "collected_at": "2026-10-09",
+    "raw_text": "公司：百度\n岗位：高级 AI 产品经理（Coding Agent 方向）\n地点：北京\n年限：3年以上\n学历：本科及以上\n\n职责：\n1. 定义 Coding Agent 产品方向，包括能力边界、交互范式与自治等级路线图\n2. 设计并维护 Agentic Evals 体系，覆盖准确率、延迟、崩溃恢复等维度\n3. 与策略/算法团队合作，通过用户轨迹与竞品 Benchmark 驱动模型能力提升\n4. 负责 Agent 模型版本发布规划与 readiness criteria\n5. 使用 AI 编程工具亲自搭建原型，在交付工程前验证产品假设\n\n任职要求（必须）：\n- Agentic Evals 实战经验\n- 深度使用 Claude Code / Cursor / Copilot 等 AI 编程工具\n- 能与工程团队对话 Agent orchestration、沙箱、权限模型\n- 系统化思考能力\n\n加分项：\n- 有开发者工具或 IDE 插件产品经验\n",
+    "annotation_status": "synthetic_gold",
+    "expected": {
+      "company": "百度",
+      "role_title": "高级AI产品经理（Coding Agent）",
+      "location": "北京",
+      "years_experience": "3+",
+      "education": "本科",
+      "responsibilities": [
+        "定义 Coding Agent 产品方向",
+        "设计 Agentic Evals",
+        "版本发布与 readiness",
+        "原型验证"
+      ],
+      "must_have": [
+        "Agentic Evals 实战",
+        "AI编程工具深度使用",
+        "系统化思考"
+      ],
+      "preferred": [
+        "开发者工具产品经验"
+      ],
+      "requirement_labels": {
+        "Agentic Evals 实战": "required",
+        "AI编程工具深度使用": "required",
+        "系统化思考": "required",
+        "开发者工具产品经验": "preferred"
+      }
+    },
+    "offline_actual": {
+      "company": "百度",
+      "role_title": "高级AI产品经理（Coding Agent）",
+      "location": "北京",
+      "years_experience": "3+",
+      "education": "本科",
+      "responsibilities": [
+        "定义 Coding Agent 产品方向",
+        "设计 Agentic Evals",
+        "版本发布与 readiness",
+        "原型验证"
+      ],
+      "must_have": [
+        "Agentic Evals 实战",
+        "AI编程工具深度使用",
+        "系统化思考"
+      ],
+      "preferred": [
+        "开发者工具产品经验"
+      ]
+    }
+  },
+  {
+    "jd_id": "syn-jd-003",
+    "company": "字节跳动",
+    "role_title": "大模型应用产品经理",
+    "role_family": "ai_product",
+    "source_url": "synthetic://authored/syn-jd-003",
+    "source_type": "authored_synthetic",
+    "sample_class": "synthetic",
+    "consent_status": "n/a",
+    "collected_at": "2026-10-09",
+    "raw_text": "公司：字节跳动\n岗位：大模型应用产品经理\n地点：北京/上海\n年限：3年以上产品经验\n学历：本科及以上\n\n职责：\n1. 负责面向内容创作者的大模型应用产品规划与落地\n2. 定义 Prompt / RAG / Agent 能力在业务场景中的产品形态\n3. 建立效果评测与灰度发布机制，推动算法与工程协同迭代\n4. 拆解创作者工作流，沉淀可复用的模板与资产\n\n任职要求：\n- 3年以上互联网产品经验\n- 有大模型或 AIGC 产品落地经验\n- 熟悉数据驱动迭代与 A/B 实验\n加分：短视频/内容社区经验；SQL\n",
+    "annotation_status": "synthetic_gold",
+    "expected": {
+      "company": "字节跳动",
+      "role_title": "大模型应用产品经理",
+      "location": "北京/上海",
+      "years_experience": "3+",
+      "education": "本科",
+      "responsibilities": [
+        "大模型应用产品规划",
+        "定义 RAG/Agent 产品形态",
+        "效果评测与灰度",
+        "创作者工作流拆解"
+      ],
+      "must_have": [
+        "3年以上产品经验",
+        "大模型或AIGC落地经验",
+        "A/B实验"
+      ],
+      "preferred": [
+        "短视频经验",
+        "SQL"
+      ],
+      "requirement_labels": {
+        "3年以上产品经验": "required",
+        "大模型或AIGC落地经验": "required",
+        "A/B实验": "required",
+        "短视频经验": "preferred",
+        "SQL": "preferred"
+      }
+    },
+    "offline_actual": {
+      "company": "字节跳动",
+      "role_title": "大模型应用产品经理",
+      "location": "北京/上海",
+      "years_experience": "3+",
+      "education": "本科",
+      "responsibilities": [
+        "大模型应用产品规划",
+        "定义 RAG/Agent 产品形态",
+        "效果评测与灰度",
+        "创作者工作流拆解"
+      ],
+      "must_have": [
+        "3年以上产品经验",
+        "大模型或AIGC落地经验",
+        "A/B实验"
+      ],
+      "preferred": [
+        "短视频经验",
+        "SQL"
+      ]
+    }
+  },
+  {
+    "jd_id": "syn-jd-004",
+    "company": "阿里巴巴",
+    "role_title": "钉钉AI产品经理",
+    "role_family": "ai_product",
+    "source_url": "synthetic://authored/syn-jd-004",
+    "source_type": "authored_synthetic",
+    "sample_class": "synthetic",
+    "consent_status": "n/a",
+    "collected_at": "2026-10-09",
+    "raw_text": "公司：阿里巴巴（钉钉）\n岗位：AI产品经理\n地点：杭州\n年限：3年以上\n学历：本科\n\n职责：负责钉钉智能助理与企业知识问答产品；设计 ToB 场景下的权限、审计与效果看板；协同算法做评测集与拒答策略。\n必须：ToB 产品经验；大模型应用理解；跨团队推进\n加分：企业协同/IM 经验；Python 基础\n",
+    "annotation_status": "synthetic_gold",
+    "expected": {
+      "company": "阿里巴巴",
+      "role_title": "钉钉AI产品经理",
+      "location": "杭州",
+      "years_experience": "3+",
+      "education": "本科",
+      "responsibilities": [
+        "智能助理与企业知识问答",
+        "权限审计与效果看板",
+        "评测集与拒答策略"
+      ],
+      "must_have": [
+        "ToB产品经验",
+        "大模型应用理解",
+        "跨团队推进"
+      ],
+      "preferred": [
+        "企业协同/IM经验",
+        "Python基础"
+      ],
+      "requirement_labels": {
+        "ToB产品经验": "required",
+        "大模型应用理解": "required",
+        "跨团队推进": "required",
+        "企业协同/IM经验": "preferred",
+        "Python基础": "preferred"
+      }
+    },
+    "offline_actual": {
+      "company": "阿里巴巴",
+      "role_title": "钉钉AI产品经理",
+      "location": "杭州",
+      "years_experience": "3+",
+      "education": "本科",
+      "responsibilities": [
+        "智能助理与企业知识问答",
+        "权限审计与效果看板",
+        "评测集与拒答策略"
+      ],
+      "must_have": [
+        "ToB产品经验",
+        "大模型应用理解",
+        "跨团队推进"
+      ],
+      "preferred": [
+        "企业协同/IM经验",
+        "Python基础"
+      ]
+    }
+  },
+  {
+    "jd_id": "syn-jd-005",
+    "company": "腾讯",
+    "role_title": "混元应用产品经理",
+    "role_family": "ai_product",
+    "source_url": "synthetic://authored/syn-jd-005",
+    "source_type": "authored_synthetic",
+    "sample_class": "synthetic",
+    "consent_status": "n/a",
+    "collected_at": "2026-10-09",
+    "raw_text": "公司：腾讯\n岗位：混元应用产品经理\n地点：深圳\n年限：2年以上\n学历：本科及以上\n\n职责：规划混元大模型在办公与创作场景的应用；定义多模态生成质量标准；推动插件生态与第三方接入。\n必须：AI/内容产品经验；指标体系建设；PRD与需求管理\n加分：插件平台经验；多模态生成产品经验\n",
+    "annotation_status": "synthetic_gold",
+    "expected": {
+      "company": "腾讯",
+      "role_title": "混元应用产品经理",
+      "location": "深圳",
+      "years_experience": "2+",
+      "education": "本科",
+      "responsibilities": [
+        "混元应用规划",
+        "多模态质量标准",
+        "插件生态"
+      ],
+      "must_have": [
+        "AI或内容产品经验",
+        "指标体系建设",
+        "PRD与需求管理"
+      ],
+      "preferred": [
+        "插件平台",
+        "多模态生成经验"
+      ],
+      "requirement_labels": {
+        "AI或内容产品经验": "required",
+        "指标体系建设": "required",
+        "PRD与需求管理": "required",
+        "插件平台": "preferred",
+        "多模态生成经验": "preferred"
+      }
+    },
+    "offline_actual": {
+      "company": "腾讯",
+      "role_title": "混元应用产品经理",
+      "location": "深圳",
+      "years_experience": "2+",
+      "education": "本科",
+      "responsibilities": [
+        "混元应用规划",
+        "多模态质量标准",
+        "插件生态"
+      ],
+      "must_have": [
+        "AI或内容产品经验",
+        "指标体系建设",
+        "PRD与需求管理"
+      ],
+      "preferred": [
+        "插件平台",
+        "多模态生成经验"
+      ]
+    }
+  },
+  {
+    "jd_id": "syn-jd-006",
+    "company": "美团",
+    "role_title": "技术产品经理（搜索推荐）",
+    "role_family": "technical_product",
+    "source_url": "synthetic://authored/syn-jd-006",
+    "source_type": "authored_synthetic",
+    "sample_class": "synthetic",
+    "consent_status": "n/a",
+    "collected_at": "2026-10-09",
+    "raw_text": "公司：美团\n岗位：技术产品经理（搜索推荐）\n地点：北京\n年限：4年以上\n学历：本科\n\n职责：负责到店搜索与推荐策略产品；与算法定义排序目标与评估指标；推动实验平台与特征需求。\n必须：搜索或推荐产品经验；SQL；实验设计\n加分：本地生活业务理解；机器学习基础\n",
+    "annotation_status": "synthetic_gold",
+    "expected": {
+      "company": "美团",
+      "role_title": "技术产品经理（搜索推荐）",
+      "location": "北京",
+      "years_experience": "4+",
+      "education": "本科",
+      "responsibilities": [
+        "搜索推荐策略产品",
+        "排序目标与评估指标",
+        "实验平台与特征需求"
+      ],
+      "must_have": [
+        "搜索或推荐产品经验",
+        "SQL",
+        "实验设计"
+      ],
+      "preferred": [
+        "本地生活业务",
+        "机器学习基础"
+      ],
+      "requirement_labels": {
+        "搜索或推荐产品经验": "required",
+        "SQL": "required",
+        "实验设计": "required",
+        "本地生活业务": "preferred",
+        "机器学习基础": "preferred"
+      }
+    },
+    "offline_actual": {
+      "company": "美团",
+      "role_title": "技术产品经理（搜索推荐）",
+      "location": "北京",
+      "years_experience": "4+",
+      "education": "本科",
+      "responsibilities": [
+        "搜索推荐策略产品",
+        "排序目标与评估指标",
+        "实验平台与特征需求"
+      ],
+      "must_have": [
+        "搜索或推荐产品经验",
+        "SQL",
+        "实验设计"
+      ],
+      "preferred": [
+        "本地生活业务",
+        "机器学习基础"
+      ]
+    }
+  },
+  {
+    "jd_id": "syn-jd-007",
+    "company": "MiniMax",
+    "role_title": "AI产品经理",
+    "role_family": "ai_product",
+    "source_url": "synthetic://authored/syn-jd-007",
+    "source_type": "authored_synthetic",
+    "sample_class": "synthetic",
+    "consent_status": "n/a",
+    "collected_at": "2026-10-09",
+    "raw_text": "公司：MiniMax\n岗位：AI产品经理\n地点：上海\n年限：2年以上\n学历：本科\n\n职责：负责对话 Agent 与语音交互产品；设计评测集与人工标注流程；平衡时延、成本与效果。\n必须：对话/Agent 产品经验；评测与标注流程；用户研究基础\n加分：语音交互；开源模型调优经验\n",
+    "annotation_status": "synthetic_gold",
+    "expected": {
+      "company": "MiniMax",
+      "role_title": "AI产品经理",
+      "location": "上海",
+      "years_experience": "2+",
+      "education": "本科",
+      "responsibilities": [
+        "对话Agent与语音交互",
+        "评测集与标注流程",
+        "时延成本效果平衡"
+      ],
+      "must_have": [
+        "对话或Agent产品经验",
+        "评测与标注流程",
+        "用户研究基础"
+      ],
+      "preferred": [
+        "语音交互",
+        "开源模型调优"
+      ],
+      "requirement_labels": {
+        "对话或Agent产品经验": "required",
+        "评测与标注流程": "required",
+        "用户研究基础": "required",
+        "语音交互": "preferred",
+        "开源模型调优": "preferred"
+      }
+    },
+    "offline_actual": {
+      "company": "MiniMax",
+      "role_title": "AI产品经理",
+      "location": "上海",
+      "years_experience": "2+",
+      "education": "本科",
+      "responsibilities": [
+        "对话Agent与语音交互",
+        "评测集与标注流程",
+        "时延成本效果平衡"
+      ],
+      "must_have": [
+        "对话或Agent产品经验",
+        "评测与标注流程",
+        "用户研究基础"
+      ],
+      "preferred": [
+        "语音交互",
+        "开源模型调优"
+      ]
+    }
+  },
+  {
+    "jd_id": "syn-jd-008",
+    "company": "OPPO",
+    "role_title": "AI产品经理（端侧）",
+    "role_family": "ai_product",
+    "source_url": "synthetic://authored/syn-jd-008",
+    "source_type": "authored_synthetic",
+    "sample_class": "synthetic",
+    "consent_status": "n/a",
+    "collected_at": "2026-10-09",
+    "raw_text": "公司：OPPO\n岗位：AI产品经理（端侧智能）\n地点：深圳\n年限：3年以上\n学历：本科\n\n职责：规划手机端侧大模型能力；定义端云协同策略；推动影像/助手场景落地与功耗体验权衡。\n必须：消费电子或 OS 产品经验；AI 功能落地经验；跨硬件软件协作\n加分：端侧推理；影像算法产品经验\n",
+    "annotation_status": "synthetic_gold",
+    "expected": {
+      "company": "OPPO",
+      "role_title": "AI产品经理（端侧）",
+      "location": "深圳",
+      "years_experience": "3+",
+      "education": "本科",
+      "responsibilities": [
+        "端侧大模型能力规划",
+        "端云协同策略",
+        "影像/助手场景落地"
+      ],
+      "must_have": [
+        "消费电子或OS产品经验",
+        "AI功能落地",
+        "软硬件协作"
+      ],
+      "preferred": [
+        "端侧推理",
+        "影像算法产品"
+      ],
+      "requirement_labels": {
+        "消费电子或OS产品经验": "required",
+        "AI功能落地": "required",
+        "软硬件协作": "required",
+        "端侧推理": "preferred",
+        "影像算法产品": "preferred"
+      }
+    },
+    "offline_actual": {
+      "company": "OPPO",
+      "role_title": "AI产品经理（端侧）",
+      "location": "深圳",
+      "years_experience": "3+",
+      "education": "本科",
+      "responsibilities": [
+        "端侧大模型能力规划",
+        "端云协同策略",
+        "影像/助手场景落地"
+      ],
+      "must_have": [
+        "消费电子或OS产品经验",
+        "AI功能落地",
+        "软硬件协作"
+      ],
+      "preferred": [
+        "端侧推理",
+        "影像算法产品"
+      ]
+    }
+  },
+  {
+    "jd_id": "syn-jd-009",
+    "company": "小米",
+    "role_title": "产品经理（车载智能助手）",
+    "role_family": "product_manager",
+    "source_url": "synthetic://authored/syn-jd-009",
+    "source_type": "authored_synthetic",
+    "sample_class": "synthetic",
+    "consent_status": "n/a",
+    "collected_at": "2026-10-09",
+    "raw_text": "公司：小米\n岗位：产品经理（车载智能助手）\n地点：北京\n年限：3年以上\n学历：本科\n\n职责：负责车载语音助手与多模态交互；定义车内场景话术与安全策略；协同座舱软件与云端大模型。\n必须：智能硬件或车载产品经验；语音交互；需求分析与原型\n加分：座舱 HMI；大模型 Prompt 设计\n",
+    "annotation_status": "synthetic_gold",
+    "expected": {
+      "company": "小米",
+      "role_title": "产品经理（车载智能助手）",
+      "location": "北京",
+      "years_experience": "3+",
+      "education": "本科",
+      "responsibilities": [
+        "车载语音助手与多模态交互",
+        "场景话术与安全策略",
+        "协同座舱与云端大模型"
+      ],
+      "must_have": [
+        "智能硬件或车载产品经验",
+        "语音交互",
+        "需求分析与原型"
+      ],
+      "preferred": [
+        "座舱HMI",
+        "Prompt设计"
+      ],
+      "requirement_labels": {
+        "智能硬件或车载产品经验": "required",
+        "语音交互": "required",
+        "需求分析与原型": "required",
+        "座舱HMI": "preferred",
+        "Prompt设计": "preferred"
+      }
+    },
+    "offline_actual": {
+      "company": "小米",
+      "role_title": "产品经理（车载智能助手）",
+      "location": "北京",
+      "years_experience": "3+",
+      "education": "本科",
+      "responsibilities": [
+        "车载语音助手与多模态交互",
+        "场景话术与安全策略",
+        "协同座舱与云端大模型"
+      ],
+      "must_have": [
+        "智能硬件或车载产品经验",
+        "语音交互",
+        "需求分析与原型"
+      ],
+      "preferred": [
+        "座舱HMI",
+        "Prompt设计"
+      ]
+    }
+  },
+  {
+    "jd_id": "syn-jd-010",
+    "company": "商汤科技",
+    "role_title": "AI产品经理（视觉）",
+    "role_family": "ai_product",
+    "source_url": "synthetic://authored/syn-jd-010",
+    "source_type": "authored_synthetic",
+    "sample_class": "synthetic",
+    "consent_status": "n/a",
+    "collected_at": "2026-10-09",
+    "raw_text": "公司：商汤科技\n岗位：AI产品经理（计算机视觉）\n地点：上海\n年限：3年以上\n学历：硕士优先\n\n职责：负责视觉大模型行业解决方案产品化；定义交付指标与验收标准；支持售前与标杆客户落地。\n必须：CV 或视觉产品经验；ToB 交付；客户需求转化\n加分：智慧城市/制造场景；英文沟通\n",
+    "annotation_status": "synthetic_gold",
+    "expected": {
+      "company": "商汤科技",
+      "role_title": "AI产品经理（视觉）",
+      "location": "上海",
+      "years_experience": "3+",
+      "education": "硕士",
+      "responsibilities": [
+        "视觉大模型方案产品化",
+        "交付指标与验收",
+        "售前与标杆客户"
+      ],
+      "must_have": [
+        "CV或视觉产品经验",
+        "ToB交付",
+        "客户需求转化"
+      ],
+      "preferred": [
+        "智慧城市或制造",
+        "英文沟通"
+      ],
+      "requirement_labels": {
+        "CV或视觉产品经验": "required",
+        "ToB交付": "required",
+        "客户需求转化": "required",
+        "智慧城市或制造": "preferred",
+        "英文沟通": "preferred"
+      }
+    },
+    "offline_actual": {
+      "company": "商汤科技",
+      "role_title": "AI产品经理（视觉）",
+      "location": "上海",
+      "years_experience": "3+",
+      "education": "硕士",
+      "responsibilities": [
+        "视觉大模型方案产品化",
+        "交付指标与验收",
+        "售前与标杆客户"
+      ],
+      "must_have": [
+        "CV或视觉产品经验",
+        "ToB交付",
+        "客户需求转化"
+      ],
+      "preferred": [
+        "智慧城市或制造",
+        "英文沟通"
+      ]
+    }
+  },
+  {
+    "jd_id": "syn-jd-011",
+    "company": "智谱AI",
+    "role_title": "大模型产品经理",
+    "role_family": "ai_product",
+    "source_url": "synthetic://authored/syn-jd-011",
+    "source_type": "authored_synthetic",
+    "sample_class": "synthetic",
+    "consent_status": "n/a",
+    "collected_at": "2026-10-09",
+    "raw_text": "公司：智谱AI\n岗位：大模型产品经理\n地点：北京\n年限：2年以上\n学历：本科及以上\n\n职责：负责 GLM 应用与 API 产品体验；设计开发者文档与配额策略；建设模型能力评测与案例库。\n必须：开发者产品或 API 产品经验；大模型理解；文档与社区运营意识\n加分：开源社区；Python\n",
+    "annotation_status": "synthetic_gold",
+    "expected": {
+      "company": "智谱AI",
+      "role_title": "大模型产品经理",
+      "location": "北京",
+      "years_experience": "2+",
+      "education": "本科",
+      "responsibilities": [
+        "GLM应用与API产品体验",
+        "开发者文档与配额",
+        "能力评测与案例库"
+      ],
+      "must_have": [
+        "开发者或API产品经验",
+        "大模型理解",
+        "文档与社区意识"
+      ],
+      "preferred": [
+        "开源社区",
+        "Python"
+      ],
+      "requirement_labels": {
+        "开发者或API产品经验": "required",
+        "大模型理解": "required",
+        "文档与社区意识": "required",
+        "开源社区": "preferred",
+        "Python": "preferred"
+      }
+    },
+    "offline_actual": {
+      "company": "智谱AI",
+      "role_title": "大模型产品经理",
+      "location": "北京",
+      "years_experience": "2+",
+      "education": "本科",
+      "responsibilities": [
+        "GLM应用与API产品体验",
+        "开发者文档与配额",
+        "能力评测与案例库"
+      ],
+      "must_have": [
+        "开发者或API产品经验",
+        "大模型理解",
+        "文档与社区意识"
+      ],
+      "preferred": [
+        "开源社区",
+        "Python"
+      ]
+    }
+  },
+  {
+    "jd_id": "syn-jd-012",
+    "company": "快手",
+    "role_title": "产品经理（创作者工具）",
+    "role_family": "product_manager",
+    "source_url": "synthetic://authored/syn-jd-012",
+    "source_type": "authored_synthetic",
+    "sample_class": "synthetic",
+    "consent_status": "n/a",
+    "collected_at": "2026-10-09",
+    "raw_text": "公司：快手\n岗位：产品经理（创作者工具）\n地点：北京\n年限：3年以上\n学历：本科\n\n职责：负责短视频创作与剪辑工具；用 A/B 实验优化转化；沉淀模板与素材市场。\n必须：内容/创作者产品经验；A/B 实验；数据分析\n加分：剪辑工具；增长经验\n",
+    "annotation_status": "synthetic_gold",
+    "expected": {
+      "company": "快手",
+      "role_title": "产品经理（创作者工具）",
+      "location": "北京",
+      "years_experience": "3+",
+      "education": "本科",
+      "responsibilities": [
+        "短视频创作剪辑工具",
+        "A/B实验优化转化",
+        "模板与素材市场"
+      ],
+      "must_have": [
+        "创作者产品经验",
+        "A/B实验",
+        "数据分析"
+      ],
+      "preferred": [
+        "剪辑工具",
+        "增长经验"
+      ],
+      "requirement_labels": {
+        "创作者产品经验": "required",
+        "A/B实验": "required",
+        "数据分析": "required",
+        "剪辑工具": "preferred",
+        "增长经验": "preferred"
+      }
+    },
+    "offline_actual": {
+      "company": "快手",
+      "role_title": "产品经理（创作者工具）",
+      "location": "北京",
+      "years_experience": "3+",
+      "education": "本科",
+      "responsibilities": [
+        "短视频创作剪辑工具",
+        "A/B实验优化转化",
+        "模板与素材市场"
+      ],
+      "must_have": [
+        "创作者产品经验",
+        "A/B实验",
+        "数据分析"
+      ],
+      "preferred": [
+        "剪辑工具",
+        "增长经验"
+      ]
+    }
+  },
+  {
+    "jd_id": "syn-jd-013",
+    "company": "网易",
+    "role_title": "技术产品经理（游戏AI）",
+    "role_family": "technical_product",
+    "source_url": "synthetic://authored/syn-jd-013",
+    "source_type": "authored_synthetic",
+    "sample_class": "synthetic",
+    "consent_status": "n/a",
+    "collected_at": "2026-10-09",
+    "raw_text": "公司：网易\n岗位：技术产品经理（游戏AI）\n地点：杭州\n年限：4年以上\n学历：本科\n\n职责：负责游戏内 NPC / 剧情生成 AI 能力产品化；定义安全与合规策略；协同引擎与算法团队。\n必须：游戏或互动娱乐产品经验；AI 功能落地；跨团队项目管理\n加分：剧情系统；LLM 安全\n",
+    "annotation_status": "synthetic_gold",
+    "expected": {
+      "company": "网易",
+      "role_title": "技术产品经理（游戏AI）",
+      "location": "杭州",
+      "years_experience": "4+",
+      "education": "本科",
+      "responsibilities": [
+        "NPC/剧情生成AI产品化",
+        "安全与合规策略",
+        "协同引擎与算法"
+      ],
+      "must_have": [
+        "游戏或互动娱乐产品经验",
+        "AI功能落地",
+        "跨团队项目管理"
+      ],
+      "preferred": [
+        "剧情系统",
+        "LLM安全"
+      ],
+      "requirement_labels": {
+        "游戏或互动娱乐产品经验": "required",
+        "AI功能落地": "required",
+        "跨团队项目管理": "required",
+        "剧情系统": "preferred",
+        "LLM安全": "preferred"
+      }
+    },
+    "offline_actual": {
+      "company": "网易",
+      "role_title": "技术产品经理（游戏AI）",
+      "location": "杭州",
+      "years_experience": "4+",
+      "education": "本科",
+      "responsibilities": [
+        "NPC/剧情生成AI产品化",
+        "安全与合规策略",
+        "协同引擎与算法"
+      ],
+      "must_have": [
+        "游戏或互动娱乐产品经验",
+        "AI功能落地",
+        "跨团队项目管理"
+      ],
+      "preferred": [
+        "剧情系统",
+        "LLM安全"
       ]
     }
   }

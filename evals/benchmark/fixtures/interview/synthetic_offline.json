@@ -2,8 +2,10 @@
   {
     "case_id": "syn-interview-001",
     "jd_id": "syn-jd-001",
+    "resume_id": "syn-resume-001",
     "question_id": "syn-interview-001-q1",
     "question": "How did you design the LLM evaluation set for Acme-like AI PM work?",
+    "sample_class": "synthetic",
     "expected": {
       "jd_grounded": true,
       "resume_grounded": true,
@@ -17,16 +19,16 @@
       "uses_target_company_intel_only": true,
       "synthetic_demo_forbidden": true,
       "duplicate": false,
-      "cited_skill_ids": [
-        "CURATED_ACME_SYNTHETIC_PLACEHOLDER"
-      ]
+      "cited_skill_ids": []
     }
   },
   {
     "case_id": "syn-interview-001",
     "jd_id": "syn-jd-001",
+    "resume_id": "syn-resume-001",
     "question_id": "syn-interview-001-q2",
     "question": "Tell me about a time you interviewed 50 creators for content analysis.",
+    "sample_class": "synthetic",
     "expected": {
       "jd_grounded": true,
       "resume_grounded": false,
@@ -35,14 +37,321 @@
       "duplicate": false,
       "reference_answer_fact_error": true
     },
-    "notes": "Synthetic negative inspired by known QA issue: reference answer invents interviews.",
     "offline_actual": {
       "jd_grounded": true,
       "resume_grounded": false,
       "uses_target_company_intel_only": true,
       "synthetic_demo_forbidden": true,
       "duplicate": false,
+      "reference_answer_fact_error": true,
+      "cited_skill_ids": []
+    }
+  },
+  {
+    "case_id": "syn-interview-001",
+    "jd_id": "syn-jd-001",
+    "resume_id": "syn-resume-001",
+    "question_id": "syn-interview-001-q3",
+    "question": "How would you partner with engineering on RAG quality metrics?",
+    "sample_class": "synthetic",
+    "expected": {
+      "jd_grounded": true,
+      "resume_grounded": true,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false
+    },
+    "offline_actual": {
+      "jd_grounded": true,
+      "resume_grounded": true,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false,
+      "cited_skill_ids": []
+    }
+  },
+  {
+    "case_id": "syn-interview-002",
+    "jd_id": "pub-jd-baidu-002",
+    "resume_id": "syn-resume-002",
+    "question_id": "syn-interview-002-q1",
+    "question": "Describe an Agent workflow you shipped and how you measured effect.",
+    "sample_class": "synthetic",
+    "expected": {
+      "jd_grounded": true,
+      "resume_grounded": true,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false
+    },
+    "offline_actual": {
+      "jd_grounded": true,
+      "resume_grounded": true,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false,
+      "cited_skill_ids": []
+    }
+  },
+  {
+    "case_id": "syn-interview-002",
+    "jd_id": "pub-jd-baidu-002",
+    "resume_id": "syn-resume-002",
+    "question_id": "syn-interview-002-q2",
+    "question": "How do you design sandbox experiments for enterprise agents?",
+    "sample_class": "synthetic",
+    "expected": {
+      "jd_grounded": true,
+      "resume_grounded": true,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false
+    },
+    "offline_actual": {
+      "jd_grounded": true,
+      "resume_grounded": true,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false,
+      "cited_skill_ids": []
+    }
+  },
+  {
+    "case_id": "syn-interview-002",
+    "jd_id": "pub-jd-baidu-002",
+    "resume_id": "syn-resume-002",
+    "question_id": "syn-interview-002-q3",
+    "question": "Walk through a courier logistics optimization you led at Baidu.",
+    "sample_class": "synthetic",
+    "expected": {
+      "jd_grounded": false,
+      "resume_grounded": false,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false,
       "reference_answer_fact_error": true
+    },
+    "offline_actual": {
+      "jd_grounded": false,
+      "resume_grounded": false,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false,
+      "reference_answer_fact_error": true,
+      "cited_skill_ids": []
+    }
+  },
+  {
+    "case_id": "syn-interview-003",
+    "jd_id": "pub-jd-baidu-003",
+    "resume_id": "syn-resume-004",
+    "question_id": "syn-interview-003-q1",
+    "question": "How did you build Agentic Evals for coding agents?",
+    "sample_class": "synthetic",
+    "expected": {
+      "jd_grounded": true,
+      "resume_grounded": true,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false
+    },
+    "offline_actual": {
+      "jd_grounded": true,
+      "resume_grounded": true,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false,
+      "cited_skill_ids": []
+    }
+  },
+  {
+    "case_id": "syn-interview-003",
+    "jd_id": "pub-jd-baidu-003",
+    "resume_id": "syn-resume-004",
+    "question_id": "syn-interview-003-q2",
+    "question": "What readiness criteria do you use before releasing an agent model?",
+    "sample_class": "synthetic",
+    "expected": {
+      "jd_grounded": true,
+      "resume_grounded": true,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false
+    },
+    "offline_actual": {
+      "jd_grounded": true,
+      "resume_grounded": true,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false,
+      "cited_skill_ids": []
+    }
+  },
+  {
+    "case_id": "syn-interview-003",
+    "jd_id": "pub-jd-baidu-003",
+    "resume_id": "syn-resume-004",
+    "question_id": "syn-interview-003-q3",
+    "question": "Explain how you optimized supermarket POS conversion with LLMs.",
+    "sample_class": "synthetic",
+    "expected": {
+      "jd_grounded": false,
+      "resume_grounded": false,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false,
+      "reference_answer_fact_error": true
+    },
+    "offline_actual": {
+      "jd_grounded": false,
+      "resume_grounded": false,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false,
+      "reference_answer_fact_error": true,
+      "cited_skill_ids": []
+    }
+  },
+  {
+    "case_id": "syn-interview-004",
+    "jd_id": "syn-jd-009",
+    "resume_id": "syn-resume-005",
+    "question_id": "syn-interview-004-q1",
+    "question": "How did you define safety refusal for in-car voice?",
+    "sample_class": "synthetic",
+    "expected": {
+      "jd_grounded": true,
+      "resume_grounded": true,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false
+    },
+    "offline_actual": {
+      "jd_grounded": true,
+      "resume_grounded": true,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false,
+      "cited_skill_ids": []
+    }
+  },
+  {
+    "case_id": "syn-interview-004",
+    "jd_id": "syn-jd-009",
+    "resume_id": "syn-resume-005",
+    "question_id": "syn-interview-004-q2",
+    "question": "How do you balance latency and wake-word accuracy with vendors?",
+    "sample_class": "synthetic",
+    "expected": {
+      "jd_grounded": true,
+      "resume_grounded": true,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false
+    },
+    "offline_actual": {
+      "jd_grounded": true,
+      "resume_grounded": true,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false,
+      "cited_skill_ids": []
+    }
+  },
+  {
+    "case_id": "syn-interview-004",
+    "jd_id": "syn-jd-009",
+    "resume_id": "syn-resume-005",
+    "question_id": "syn-interview-004-q3",
+    "question": "Describe library shelving automation you productized.",
+    "sample_class": "synthetic",
+    "expected": {
+      "jd_grounded": false,
+      "resume_grounded": false,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false,
+      "reference_answer_fact_error": true
+    },
+    "offline_actual": {
+      "jd_grounded": false,
+      "resume_grounded": false,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false,
+      "reference_answer_fact_error": true,
+      "cited_skill_ids": []
+    }
+  },
+  {
+    "case_id": "syn-interview-005",
+    "jd_id": "syn-jd-010",
+    "resume_id": "syn-resume-006",
+    "question_id": "syn-interview-005-q1",
+    "question": "How did you set acceptance metrics for manufacturing CV QA?",
+    "sample_class": "synthetic",
+    "expected": {
+      "jd_grounded": true,
+      "resume_grounded": true,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false
+    },
+    "offline_actual": {
+      "jd_grounded": true,
+      "resume_grounded": true,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false,
+      "cited_skill_ids": []
+    }
+  },
+  {
+    "case_id": "syn-interview-005",
+    "jd_id": "syn-jd-010",
+    "resume_id": "syn-resume-006",
+    "question_id": "syn-interview-005-q2",
+    "question": "How do you run ToB lighthouse customer discovery?",
+    "sample_class": "synthetic",
+    "expected": {
+      "jd_grounded": true,
+      "resume_grounded": true,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false
+    },
+    "offline_actual": {
+      "jd_grounded": true,
+      "resume_grounded": true,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false,
+      "cited_skill_ids": []
+    }
+  },
+  {
+    "case_id": "syn-interview-005",
+    "jd_id": "syn-jd-010",
+    "resume_id": "syn-resume-006",
+    "question_id": "syn-interview-005-q3",
+    "question": "Tell me about wedding photo RAG search product you shipped for SenseTime.",
+    "sample_class": "synthetic",
+    "expected": {
+      "jd_grounded": false,
+      "resume_grounded": false,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false,
+      "reference_answer_fact_error": true
+    },
+    "offline_actual": {
+      "jd_grounded": false,
+      "resume_grounded": false,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false,
+      "reference_answer_fact_error": true,
+      "cited_skill_ids": []
     }
   }
 ]
