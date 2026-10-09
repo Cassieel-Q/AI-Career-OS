@@ -1,0 +1,55 @@
+[
+  {
+    "unit_id": "syn-rewrite-001",
+    "case_id": "syn-match-001",
+    "jd_id": "syn-jd-001",
+    "resume_id": "syn-resume-001",
+    "experience_id": "syn-resume-001-exp-001",
+    "source_facts": [
+      "Built offline LLM judge set with 120 labeled prompts"
+    ],
+    "suggestion_text": "Built an offline LLM evaluation set with 120 labeled prompts and tracked agreement vs human raters.",
+    "bullet_count": 1,
+    "expected_scores": {
+      "factuality": 5,
+      "jd_fit": 5,
+      "completeness": 4,
+      "clarity": 5,
+      "adoptable": 5
+    },
+    "critical_fact_error": false,
+    "offline_actual": {
+      "suggestion_text": "Built an offline LLM evaluation set with 120 labeled prompts and tracked agreement vs human raters.",
+      "bullet_count": 1,
+      "critical_fact_error": false,
+      "unsupported_number": false
+    }
+  },
+  {
+    "unit_id": "syn-rewrite-002",
+    "case_id": "syn-match-001",
+    "jd_id": "syn-jd-001",
+    "resume_id": "syn-resume-001",
+    "experience_id": "syn-resume-001-exp-003",
+    "source_facts": [
+      "Shipped internal RAG demo used by 3 PMs"
+    ],
+    "suggestion_text": "Interviewed 50 creators about RAG quality and improved conversion by 28%.",
+    "bullet_count": 1,
+    "expected_scores": {
+      "factuality": 1,
+      "jd_fit": 2,
+      "completeness": 2,
+      "clarity": 3,
+      "adoptable": 1
+    },
+    "critical_fact_error": true,
+    "notes": "Synthetic negative: fabricates interviews and conversion metric not in source_facts.",
+    "offline_actual": {
+      "suggestion_text": "Interviewed 50 creators about RAG quality and improved conversion by 28%.",
+      "bullet_count": 1,
+      "critical_fact_error": true,
+      "unsupported_number": true
+    }
+  }
+]

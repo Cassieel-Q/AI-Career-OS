@@ -1,0 +1,108 @@
+[
+  {
+    "jd_id": "syn-jd-001",
+    "company": "Acme Labs",
+    "role_title": "AI Product Manager",
+    "role_family": "ai_product",
+    "source_url": null,
+    "collected_at": "2026-10-09",
+    "raw_text": "Acme Labs is hiring an AI Product Manager in Shanghai. 3+ years product experience required. Bachelor degree preferred. Responsibilities: own LLM evaluation roadmap; define success metrics; partner with engineering on RAG quality. Must-have: shipped an AI feature; experiment design. Preferred: Typst or document tooling familiarity.",
+    "annotation_status": "synthetic_gold",
+    "expected": {
+      "company": "Acme Labs",
+      "role_title": "AI Product Manager",
+      "location": "Shanghai",
+      "years_experience": "3+",
+      "education": "Bachelor",
+      "responsibilities": [
+        "own LLM evaluation roadmap",
+        "define success metrics",
+        "partner with engineering on RAG quality"
+      ],
+      "must_have": [
+        "shipped an AI feature",
+        "experiment design"
+      ],
+      "preferred": [
+        "Typst or document tooling familiarity"
+      ],
+      "requirement_labels": {
+        "shipped an AI feature": "required",
+        "experiment design": "required",
+        "Typst or document tooling familiarity": "preferred"
+      }
+    },
+    "offline_actual": {
+      "company": "Acme Labs",
+      "role_title": "AI Product Manager",
+      "location": "Shanghai",
+      "years_experience": "3+",
+      "education": "Bachelor",
+      "responsibilities": [
+        "own LLM evaluation roadmap",
+        "define success metrics",
+        "partner with engineering on RAG quality"
+      ],
+      "must_have": [
+        "shipped an AI feature",
+        "experiment design"
+      ],
+      "preferred": [
+        "Typst or document tooling familiarity"
+      ]
+    }
+  },
+  {
+    "jd_id": "syn-jd-002",
+    "company": "Northstar Media",
+    "role_title": "Technical Product Manager",
+    "role_family": "technical_product",
+    "source_url": null,
+    "collected_at": "2026-10-09",
+    "raw_text": "Northstar Media seeks a Technical Product Manager (Hangzhou). 5 years experience. Master preferred. Own creator-tool roadmap; run A/B tests; write PRDs. Required: SQL literacy; cross-functional leadership. Nice to have: short-video domain.",
+    "annotation_status": "synthetic_gold",
+    "expected": {
+      "company": "Northstar Media",
+      "role_title": "Technical Product Manager",
+      "location": "Hangzhou",
+      "years_experience": "5",
+      "education": "Master",
+      "responsibilities": [
+        "Own creator-tool roadmap",
+        "run A/B tests",
+        "write PRDs"
+      ],
+      "must_have": [
+        "SQL literacy",
+        "cross-functional leadership"
+      ],
+      "preferred": [
+        "short-video domain"
+      ],
+      "requirement_labels": {
+        "SQL literacy": "required",
+        "cross-functional leadership": "required",
+        "short-video domain": "preferred"
+      }
+    },
+    "offline_actual": {
+      "company": "Northstar Media",
+      "role_title": "Technical Product Manager",
+      "location": "Hangzhou",
+      "years_experience": "5",
+      "education": "Master",
+      "responsibilities": [
+        "Own creator-tool roadmap",
+        "run A/B tests",
+        "write PRDs"
+      ],
+      "must_have": [
+        "SQL literacy",
+        "cross-functional leadership"
+      ],
+      "preferred": [
+        "short-video domain"
+      ]
+    }
+  }
+]

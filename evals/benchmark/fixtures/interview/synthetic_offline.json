@@ -1,0 +1,48 @@
+[
+  {
+    "case_id": "syn-interview-001",
+    "jd_id": "syn-jd-001",
+    "question_id": "syn-interview-001-q1",
+    "question": "How did you design the LLM evaluation set for Acme-like AI PM work?",
+    "expected": {
+      "jd_grounded": true,
+      "resume_grounded": true,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false
+    },
+    "offline_actual": {
+      "jd_grounded": true,
+      "resume_grounded": true,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false,
+      "cited_skill_ids": [
+        "CURATED_ACME_SYNTHETIC_PLACEHOLDER"
+      ]
+    }
+  },
+  {
+    "case_id": "syn-interview-001",
+    "jd_id": "syn-jd-001",
+    "question_id": "syn-interview-001-q2",
+    "question": "Tell me about a time you interviewed 50 creators for content analysis.",
+    "expected": {
+      "jd_grounded": true,
+      "resume_grounded": false,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false,
+      "reference_answer_fact_error": true
+    },
+    "notes": "Synthetic negative inspired by known QA issue: reference answer invents interviews.",
+    "offline_actual": {
+      "jd_grounded": true,
+      "resume_grounded": false,
+      "uses_target_company_intel_only": true,
+      "synthetic_demo_forbidden": true,
+      "duplicate": false,
+      "reference_answer_fact_error": true
+    }
+  }
+]

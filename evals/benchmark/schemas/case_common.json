@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AICareerOSEvalCaseCommon",
+  "type": "object",
+  "required": [
+    "id_field_note"
+  ],
+  "properties": {
+    "id_field_note": {
+      "type": "string",
+      "description": "JD uses jd_id; match uses case_id; rewrite uses unit_id; interview uses question_id."
+    },
+    "decision_enum": {
+      "type": "string",
+      "enum": [
+        "KEEP_AND_HIGHLIGHT",
+        "KEEP",
+        "DEEMPHASIZE",
+        "OMIT"
+      ]
+    },
+    "run_status_enum": {
+      "type": "string",
+      "enum": [
+        "PASSED",
+        "FAILED",
+        "NOT_RUN",
+        "UNRATED",
+        "NOT_EVALUABLE"
+      ]
+    }
+  }
+}
