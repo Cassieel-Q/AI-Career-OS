@@ -115,12 +115,14 @@ export function ResumeUpload() {
       </header>
       <section className="start-content" aria-labelledby="start-title">
         <p className="eyebrow">简历驱动的岗位准备</p>
-        <h1 id="start-title">先上传简历，再按公司优化</h1>
-        <p className="summary">上传后会进入「我的岗位准备」。你可以先为百度改一版，再另建小红书或字节的准备，互不影响。</p>
+        <h1 id="start-title">上传简历，开始岗位准备</h1>
+        <p className="summary">一份简历可以用于多个岗位。先核对提取的事实，再针对不同公司分别优化。</p>
+        <div className="start-panels">
         <form className="upload-panel" onSubmit={(event) => void upload(event)}>
-          <label htmlFor="resume">简历 PDF</label>
+          <div className="start-card-heading"><span className="start-card-icon" aria-hidden="true">↑</span><div><h2>上传新简历</h2><p>支持 PDF，上传后进入事实核对</p></div></div>
           <input
             id="resume"
+            className="resume-file-input"
             type="file"
             accept="application/pdf,.pdf"
             disabled={loading}
@@ -129,7 +131,7 @@ export function ResumeUpload() {
               setError("");
             }}
           />
-          {file && <p className="file-name">已选择：{file.name}</p>}
+          <label className="resume-file-picker" htmlFor="resume"><span className="resume-file-picker-icon" aria-hidden="true">PDF</span><span><strong>{file ? file.name : "选择 PDF 简历"}</strong><small>{file ? "点击更换文件" : "从本机选择文件"}</small></span><span className="resume-file-picker-action">浏览文件</span></label>
           {error && (
             <p className="message error" role="alert">
               {error}
@@ -145,8 +147,7 @@ export function ResumeUpload() {
           )}
         </form>
         <div className="existing-profile-panel">
-          <p className="section-kicker">已有档案？</p>
-          <p className="profile-note">从本机已保存的档案中选择。上传「个人简历.pdf」后会显示为「个人简历」，无需粘贴 ID。</p>
+          <div className="start-card-heading"><span className="start-card-icon start-card-icon-alt" aria-hidden="true">⌂</span><div><h2>继续已有档案</h2><p>从本机记住的档案继续准备</p></div></div>
           <div className="existing-profile-row">
             <select
               className="text-input"
@@ -171,7 +172,7 @@ export function ResumeUpload() {
                 router.push(`/missions?profile_id=${encodeURIComponent(id)}`);
               }}
             >
-              进入我的岗位准备
+              进入岗位准备
             </button>
             <button
               type="button"
@@ -179,16 +180,15 @@ export function ResumeUpload() {
               disabled={!selectedProfileId.trim() || Boolean(deletingProfileId)}
               onClick={() => void deleteSelectedProfile()}
             >
-              {deletingProfileId ? "删除中…" : "删除简历"}
+              {deletingProfileId ? "删除中…" : "删除档案"}
             </button>
           </div>
           {!profiles.length && (
             <p className="profile-note">本机还没有记住的档案。服务器上的档案不会因此消失，可在下方输入档案 ID 恢复，或先上传一份简历 PDF。</p>
           )}
-          <div className="existing-profile-recover" style={{ marginTop: "1rem" }}>
-            <label className="field-label" htmlFor="recover-profile-id">
-              恢复已有档案 / 输入档案 ID
-            </label>
+          <details className="existing-profile-recover">
+            <summary>用档案 ID 恢复</summary>
+            <label className="field-label" htmlFor="recover-profile-id">档案 ID</label>
             <div className="existing-profile-row">
               <input
                 id="recover-profile-id"
@@ -207,7 +207,8 @@ export function ResumeUpload() {
                 {recovering ? "恢复中…" : "恢复已有档案"}
               </button>
             </div>
-          </div>
+          </details>
+        </div>
         </div>
       </section>
     </main>

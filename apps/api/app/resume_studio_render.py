@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections import OrderedDict
+from copy import deepcopy
 from dataclasses import dataclass
 from hashlib import sha256
 import json
@@ -22,6 +23,30 @@ _TEMPLATE_VERSION = "1.0.0"
 _CACHE: OrderedDict[str, "RenderResult"] = OrderedDict()
 _CACHE_GUARD = Lock()
 _KEY_LOCKS: dict[str, Lock] = {}
+
+_SKILL_CATEGORIES = (
+    ("language", "语言能力", ("英语", "english", "cet", "雅思", "托福", "ielts", "toefl", "六级", "四级")),
+    ("ai", "AI 产品能力", ("llm", "prompt", "agent", "rag", "skill", "模型", "人机协同", "ai 工作流", "ai产品", "ai 产品")),
+    ("product", "产品能力", ("需求", "竞品", "prd", "原型", "figma", "axure", "流程", "验收", "迭代", "交互", "用户")),
+    ("tools", "技术与工具", ("codex", "cursor", "git", "python", "typescript", "javascript", "sql", "api", "react", "expo", "fastapi", "next.js")),
+)
+
+
+def skill_category(name: str) -> str:
+    lowered = name.casefold()
+    for key, _, terms in _SKILL_CATEGORIES:
+        if any(term in lowered for term in terms):
+            return key
+    return "other"
+
+
+def _prepare_render_document(document: dict) -> dict:
+    prepared = deepcopy(document)
+    for section in prepared.get("sections") or []:
+        if section.get("kind") == "skills":
+            for entry in section.get("entries") or []:
+                entry["skill_category"] = skill_category(entry.get("title", {}).get("text", ""))
+    return prepared
 
 
 class ResumeRenderError(RuntimeError):
@@ -109,7 +134,7 @@ def _render_uncached(document: dict, template: dict, binary: Path) -> RenderResu
     with tempfile.TemporaryDirectory(prefix="ai-career-resume-") as directory:
         cwd = Path(directory)
         shutil.copy2(_SOURCE, cwd / "main.typ")
-        (cwd / "resume.json").write_text(json.dumps(document, ensure_ascii=False), encoding="utf-8")
+        (cwd / "resume.json").write_text(json.dumps(_prepare_render_document(document), ensure_ascii=False), encoding="utf-8")
         (cwd / "template.json").write_text(json.dumps(template, ensure_ascii=False), encoding="utf-8")
         _run(binary, ["compile", "--root", str(cwd), "main.typ", "resume.pdf"], cwd)
         _run(binary, ["compile", "--root", str(cwd), "main.typ", "page-{0p}.svg"], cwd)

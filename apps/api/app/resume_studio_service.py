@@ -86,16 +86,18 @@ def _import_document(profile: models.UserProfile, resume: models.TargetResume, m
         bullets = []
         for bullet in sorted(by_experience[item.id], key=lambda row: (row.sort_order, str(row.id))):
             flags = {str(flag).upper() for flag in bullet.risk_flags or []}
-            needs_confirmation = "GROUNDING:NEEDS_CONFIRMATION" in flags or "SYNTHETIC_PROJECT" in flags
-            bullets.append(_node(
-                bullet.final_text or bullet.suggested_text,
-                source_kind="target_bullet",
-                source_id=bullet.id,
-                node_id=bullet.id,
-                evidence_refs=[str(ref) for ref in bullet.evidence_refs or []],
-                risk_level="HIGH" if needs_confirmation else "LOW",
-                claim_status="NEEDS_CONFIRMATION" if needs_confirmation and "FACT_CONFIRMED" not in flags else "CONFIRMED",
-            ))
+            needs_confirmation = bool(flags & {"GROUNDING:NEEDS_CONFIRMATION", "GROUNDING:UNSUPPORTED", "SYNTHETIC_PROJECT"})
+            lines = [line.strip().removeprefix("• ").removeprefix("- ") for line in (bullet.final_text or bullet.suggested_text).splitlines() if line.strip()]
+            for index, line in enumerate(lines):
+                bullets.append(_node(
+                    line,
+                    source_kind="target_bullet",
+                    source_id=bullet.id,
+                    node_id=bullet.id if index == 0 else None,
+                    evidence_refs=[str(ref) for ref in bullet.evidence_refs or []],
+                    risk_level="HIGH" if needs_confirmation else "LOW",
+                    claim_status="NEEDS_CONFIRMATION" if needs_confirmation and "FACT_CONFIRMED" not in flags else "CONFIRMED",
+                ))
         experiences.append(_entry(
             item.id,
             title=_node(item.title, source_kind="experience", source_id=item.id, evidence_refs=[str(item.id)], risk_level="HIGH"),
@@ -103,6 +105,28 @@ def _import_document(profile: models.UserProfile, resume: models.TargetResume, m
             date=_node(item.dates, source_kind="experience", source_id=item.id, evidence_refs=[str(item.id)], risk_level="HIGH"),
             location=_node("", source_kind="experience", source_id=item.id),
             bullets=bullets,
+        ))
+    generation = (resume.strategy or {}).get("_generation") or {}
+    project_titles = generation.get("bullet_project_titles") or []
+    for bullet in sorted(accepted, key=lambda row: (row.sort_order, str(row.id))):
+        if bullet.source_experience_id is not None:
+            continue
+        flags = {str(flag).upper() for flag in bullet.risk_flags or []}
+        if "SYNTHETIC_PROJECT" not in flags or "FACT_CONFIRMED" not in flags:
+            continue
+        raw_title = project_titles[bullet.sort_order] if 0 <= bullet.sort_order < len(project_titles) else None
+        raw_title = str(raw_title or bullet.original_text or "")
+        title = re.sub(r"^项目草案\s*[:：—-]?\s*", "", raw_title).strip()
+        if not title or title.startswith("建议补做"):
+            title = "作品集项目"
+        points = [line.strip().removeprefix("• ").removeprefix("- ") for line in (bullet.final_text or bullet.suggested_text).splitlines() if line.strip()]
+        experiences.append(_entry(
+            uuid4(),
+            title=_node(title, source_kind="target_bullet", source_id=bullet.id, evidence_refs=[str(ref) for ref in bullet.evidence_refs or []], risk_level="HIGH"),
+            subtitle=_node("", source_kind="system"),
+            date=_node("", source_kind="system"),
+            location=_node("", source_kind="system"),
+            bullets=[_node(point, source_kind="target_bullet", source_id=bullet.id, node_id=bullet.id if index == 0 else None, evidence_refs=[str(ref) for ref in bullet.evidence_refs or []]) for index, point in enumerate(points)],
         ))
     skills = [
         _entry(

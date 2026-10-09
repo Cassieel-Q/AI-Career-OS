@@ -184,9 +184,10 @@ class ResumeStrategyPayload(_Strict):
 
 class ResumeBulletProposal(_Strict):
     source_experience_id: UUID | None = None
-    original_text: str = Field(min_length=1, max_length=2_000)
-    suggested_text: str = Field(min_length=1, max_length=2_000)
-    final_text: str | None = Field(default=None, max_length=2_000)
+    project_title: str | None = Field(default=None, max_length=255)
+    original_text: str = Field(min_length=1, max_length=50_000)
+    suggested_text: str = Field(min_length=1, max_length=50_000)
+    final_text: str | None = Field(default=None, max_length=50_000)
     reason: str = Field(min_length=1, max_length=1_000)
     jd_refs: list[str] = Field(default_factory=list, max_length=30)
     evidence_refs: list[UUID] = Field(default_factory=list, max_length=30)
@@ -323,7 +324,7 @@ class MissionOutcomeCreate(_Strict):
 
 class TargetResumeBulletUpdate(_Strict):
     status: ResumeBulletStatus | None = None
-    final_text: str | None = Field(default=None, max_length=2_000)
+    final_text: str | None = Field(default=None, max_length=50_000)
     # Explicitly separates accepting the wording from confirming that a newly
     # introduced fact is true. Persisted in risk_flags to avoid a schema migration.
     fact_confirmed: bool | None = None

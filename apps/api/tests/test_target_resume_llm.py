@@ -39,6 +39,39 @@ class _FakeClient:
         self.chat = SimpleNamespace(completions=_FakeCompletions(content))
 
 
+def test_project_bullets_become_one_structured_proposal():
+    from app.mission_schemas import TargetResumeGenerationResult
+
+    experience_id = str(uuid4())
+    result = TargetResumeGenerationResult.model_validate({
+        "positioning_summary": "产品岗位",
+        "experiences": [{"source_experience_id": experience_id, "display_name": "Puff", "include": True,
+                         "bullets": [
+                             {"original_text": "设计玩法", "suggested_text": "产品设计：设计点击爆泡和滑动反馈。", "why_changed": "突出交互设计", "evidence_refs": [experience_id], "grounding_status": "SUPPORTED"},
+                             {"original_text": "上线小游戏", "suggested_text": "开发上线：完成原型并上线。", "why_changed": "突出落地", "evidence_refs": [experience_id], "grounding_status": "SUPPORTED"},
+                         ]}],
+    })
+    strategy = ResumeStrategyPayload.model_validate({"positioning_statement": "产品岗位", "recommended_experience_order": [experience_id], "experience_guidance": []})
+    payload = OpenAIMissionProvider._generation_to_target_payload(result, strategy=strategy)
+    assert len(payload.bullets) == 1
+    assert payload.bullets[0].suggested_text == "产品设计：设计点击爆泡和滑动反馈。\n开发上线：完成原型并上线。"
+
+
+def test_project_merge_preserves_long_points_and_synthetic_project():
+    from app.mission_schemas import TargetResumeGenerationResult
+
+    paragraphs = ["产品设计：" + "甲" * 1200, "开发上线：" + "乙" * 1200]
+    result = TargetResumeGenerationResult.model_validate({
+        "experiences": [{"source_experience_id": None, "display_name": "项目草案：小游戏", "include": True,
+                         "bullets": [{"original_text": "待完成项目", "suggested_text": point, "why_changed": "项目方案", "grounding_status": "NEEDS_CONFIRMATION"} for point in paragraphs]}],
+    })
+    strategy = ResumeStrategyPayload.model_validate({"positioning_statement": "产品岗位", "recommended_experience_order": [], "experience_guidance": []})
+    payload = OpenAIMissionProvider._generation_to_target_payload(result, strategy=strategy)
+    assert len(payload.bullets) == 1
+    assert payload.bullets[0].suggested_text == "\n".join(paragraphs)
+    assert "SYNTHETIC_PROJECT" in payload.bullets[0].risk_flags
+
+
 def test_select_applicable_resume_skills_includes_core_set():
     skills = select_applicable_resume_skills(
         role="AI Product Manager Intern",

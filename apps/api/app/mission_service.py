@@ -1560,6 +1560,7 @@ def generate_target_resume(db: Session, mission_id: UUID, provider=None, *, sour
             for b in payload.bullets
         ],
         "bullet_target_capabilities": [list(getattr(b, "target_capabilities", None) or []) for b in payload.bullets],
+        "bullet_project_titles": [getattr(b, "project_title", None) for b in payload.bullets],
         "provider": "llm",
     }
     resume = models.TargetResume(
@@ -1626,6 +1627,7 @@ def _resume_read(row: models.TargetResume) -> dict[str, object]:
     gen = strategy.get("_generation") if isinstance(strategy.get("_generation"), dict) else {}
     grounding_list = list(gen.get("bullet_grounding") or [])
     caps_list = list(gen.get("bullet_target_capabilities") or [])
+    titles_list = list(gen.get("bullet_project_titles") or [])
     bullets_out = []
     for bullet in row.bullets:
         gstat = None
@@ -1658,6 +1660,7 @@ def _resume_read(row: models.TargetResume) -> dict[str, object]:
             "sort_order": bullet.sort_order,
             "grounding_status": gstat or "SUPPORTED",
             "target_capabilities": caps,
+            "project_title": titles_list[bullet.sort_order] if isinstance(bullet.sort_order, int) and 0 <= bullet.sort_order < len(titles_list) else None,
         })
     return {
         "id": row.id,
@@ -1714,7 +1717,7 @@ def update_resume_bullet(db: Session, bullet_id: UUID, payload: TargetResumeBull
             bullet.status = "ACCEPTED"
     elif payload.fact_confirmed is False:
         bullet.risk_flags = [str(value) for value in (bullet.risk_flags or []) if str(value).upper() != "FACT_CONFIRMED"]
-        if bullet.status == "ACCEPTED" and any(str(value).upper() in {"SYNTHETIC_PROJECT", "GROUNDING:NEEDS_CONFIRMATION"} for value in (bullet.risk_flags or [])):
+        if bullet.status == "ACCEPTED" and any(str(value).upper() in {"SYNTHETIC_PROJECT", "GROUNDING:NEEDS_CONFIRMATION", "GROUNDING:UNSUPPORTED"} for value in (bullet.risk_flags or [])):
             bullet.status = "SUGGESTED"
     # Editing a rewrite is also a user choice. Enforce the same invariant for
     # PATCH calls that omit an explicit status (for example final_text-only or
@@ -2463,7 +2466,7 @@ def confirm_target_resume(db: Session, mission_id: UUID) -> dict[str, object]:
     for bullet in resume.bullets:
         flags = {str(value).upper() for value in (bullet.risk_flags or [])}
         fact_confirmed = "FACT_CONFIRMED" in flags
-        needs_fact_confirmation = "SYNTHETIC_PROJECT" in flags or "GROUNDING:NEEDS_CONFIRMATION" in flags
+        needs_fact_confirmation = bool(flags & {"SYNTHETIC_PROJECT", "GROUNDING:NEEDS_CONFIRMATION", "GROUNDING:UNSUPPORTED"})
         if bullet.status == "SUGGESTED" and bullet.source_experience_id in chosen_sources:
             # Another rewrite for this experience is already selected.
             bullet.status = "REJECTED"
@@ -2486,7 +2489,7 @@ def confirm_target_resume(db: Session, mission_id: UUID) -> dict[str, object]:
     unresolved = []
     for bullet in resume.bullets:
         flags = {str(value).upper() for value in (bullet.risk_flags or [])}
-        needs_fact = "SYNTHETIC_PROJECT" in flags or "GROUNDING:NEEDS_CONFIRMATION" in flags
+        needs_fact = bool(flags & {"SYNTHETIC_PROJECT", "GROUNDING:NEEDS_CONFIRMATION", "GROUNDING:UNSUPPORTED"})
         # Synthetic projects are proposals, not facts. They must never block the
         # confirmed resume/PDF hand-off: leave them visible as rejected
         # suggestions so the user can complete the real resume without claiming

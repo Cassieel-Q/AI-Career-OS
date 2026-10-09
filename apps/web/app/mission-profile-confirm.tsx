@@ -11,6 +11,7 @@ import {
 } from "./profile-flow.ts";
 import type { Experience, Profile } from "./profile-flow.ts";
 import { MISSION_API_BASE_URL } from "./missions.ts";
+import { groupSkillNames } from "./skill-groups.ts";
 
 type MissionProfileConfirmCardProps = {
   boundProfileId: string;
@@ -202,14 +203,22 @@ export function MissionProfileConfirmCard({
             ))}
           </ProfileFactBlock>
 
-          <ProfileFactBlock title="技能" empty="暂无技能" count={profile.skills.length}>
-            {profile.skills.map((item, index) => (
-              <article className="profile-item" key={item.id ?? `skill-${index}`}>
-                <strong>{item.name || "（未填技能）"}</strong>
-                <span>{item.proficiency || "未评估"}</span>
-                <EvidenceText value={item.evidence_text} />
-              </article>
-            ))}
+          <ProfileFactBlock title="专业技能" empty="暂无技能" count={profile.skills.length}>
+            <div className="profile-skill-summary">
+              {groupSkillNames(profile.skills.map((item) => [item.name, item.proficiency ? `（${item.proficiency}）` : ""].join(""))).map((group) => (
+                <span key={group.label}><strong>{group.label}：</strong>{group.items.join("、")}</span>
+              ))}
+            </div>
+            <details className="profile-skill-evidence">
+              <summary>逐项查看技能与简历证据</summary>
+              {profile.skills.map((item, index) => (
+                <article className="profile-item" key={item.id ?? `skill-${index}`}>
+                  <strong>{item.name || "（未填技能）"}</strong>
+                  <span>{item.proficiency || "未评估"}</span>
+                  <EvidenceText value={item.evidence_text} />
+                </article>
+              ))}
+            </details>
           </ProfileFactBlock>
 
           <ProfileFactBlock title="经历（工作 / 项目 / 校园）" empty="暂无经历" count={profile.experiences.length}>

@@ -174,7 +174,7 @@ class OpenAIMissionProvider:
         if "target resume" in op_l or "resume optimization" in op_l:
             return (
                 "You are CareerOS Resume Optimization. Output JSON only. "
-                "Write an evidence-grounded Chinese one-page AI PM / intern Target Resume for ONE Job Mission. "
+                "Write an evidence-grounded, concise Chinese AI PM / intern Target Resume for ONE Job Mission. "
                 "Never invent metrics, users, tools, headcount, or leadership claims. When a requested JD capability is not covered by the source resume, add one or two concrete JD-specific synthetic project drafts; for an intelligent-hardware role prefer product definition, prototype integration, test metrics, and a PRD/demo deliverable. These are project ideas for the candidate to complete and edit, not claims about prior employment. "
                 "Priority: JD relevance > Evidence strength > Strategy > Resume Skills > wording. "
                 "Master Resume must not be modified—only propose grounded rewrites. "
@@ -474,13 +474,38 @@ class OpenAIMissionProvider:
                     continue
             if exp_id and exp_id not in order:
                 order.append(exp_id)
-            for bullet in block.bullets:
+            block_bullets = list(block.bullets)
+            if len(block_bullets) > 1:
+                # One review decision represents a complete project entry. The
+                # individual points remain separate lines for Studio/PDF layout.
+                statuses = [b.grounding_status.value if hasattr(b.grounding_status, "value") else str(b.grounding_status) for b in block_bullets]
+                merged_status = "NEEDS_CONFIRMATION" if exp_id is None else "UNSUPPORTED" if "UNSUPPORTED" in statuses else "NEEDS_CONFIRMATION" if "NEEDS_CONFIRMATION" in statuses else "SUPPORTED"
+                merged_flags = list(dict.fromkeys(flag for b in block_bullets for flag in b.risk_flags))
+                if exp_id is None and "SYNTHETIC_PROJECT" not in merged_flags:
+                    merged_flags.insert(0, "SYNTHETIC_PROJECT")
+                bullets.append({
+                    "source_experience_id": exp_id,
+                    "project_title": block.display_name if exp_id is None else None,
+                    "original_text": "\n".join(dict.fromkeys(b.original_text.strip() for b in block_bullets if b.original_text.strip())),
+                    "suggested_text": "\n".join(b.suggested_text.strip() for b in block_bullets if b.suggested_text.strip()),
+                    "final_text": None,
+                    "reason": "；".join(dict.fromkeys(b.why_changed.strip() for b in block_bullets if b.why_changed.strip()))[:1000],
+                    "jd_refs": list(dict.fromkeys(ref for b in block_bullets for ref in b.jd_evidence_refs))[:30],
+                    "evidence_refs": list(dict.fromkeys(str(ref) for b in block_bullets for ref in b.evidence_refs))[:30],
+                    "resume_skill_refs": list(dict.fromkeys(ref for b in block_bullets for ref in b.resume_skill_refs))[:20],
+                    "risk_flags": merged_flags[:20],
+                    "target_capabilities": list(dict.fromkeys(cap for b in block_bullets for cap in b.target_capabilities))[:20],
+                    "grounding_status": merged_status,
+                })
+                continue
+            for bullet in block_bullets:
                 status = bullet.grounding_status.value if hasattr(bullet.grounding_status, "value") else str(bullet.grounding_status)
                 risk_flags = list(bullet.risk_flags)[:20]
                 if exp_id is None and "SYNTHETIC_PROJECT" not in risk_flags:
                     risk_flags = ["SYNTHETIC_PROJECT", *risk_flags][:20]
                 bullets.append({
                     "source_experience_id": exp_id,
+                    "project_title": block.display_name if exp_id is None else None,
                     "original_text": bullet.original_text[:2000],
                     "suggested_text": bullet.suggested_text[:2000],
                     "final_text": None,
@@ -1560,7 +1585,10 @@ class OpenAIMissionProvider:
             "draft a versioned target resume via Resume Optimization. "
             "Use TARGET_JOB, PARSED_ROLE, WHAT_MATTERS, COMPANY_INTERVIEW_CONTEXT, SOURCE_RESUME, "
             "CONFIRMED_EXPERIENCE_DECISIONS, RESUME_STRATEGY, GLOBAL_EVIDENCE, APPLICABLE_RESUME_SKILLS. "
-            "For every included experience, preserve the source resume's concrete facts: project or role name, dates, "
+            "For every included experience, write 2-4 distinct, evidence-grounded points under one project: "
+            "use concise Chinese labels such as 问题分析、产品设计、模型设计、开发上线、效果验证 as appropriate to the actual evidence. "
+            "Each suggested_text must contain ONE point with its label; do not write alternative versions of the same point. "
+            "Preserve the source resume's concrete facts: project or role name, dates, "
             "the candidate's actual actions, methods/tools, measurable result, and awards when present. Rewrite for the "
             "target JD with detailed Chinese bullets; do not collapse a fact-rich project into a generic one-line claim, "
             "do not invent numbers, tools, ownership, or outcomes, and do not add self-evaluation phrases such as 体现/展现/可准备. "
@@ -1596,6 +1624,7 @@ class OpenAIMissionProvider:
             if is_hardware_product and not has_synthetic:
                 draft = {
                     "source_experience_id": None,
+                    "project_title": "项目草案：智能硬件 AI 产品验证闭环",
                     "original_text": "建议补做项目（尚未完成）",
                     "suggested_text": "项目草案：智能硬件 AI 产品验证闭环——完成目标用户与竞品调研，输出端侧/云侧方案和传感器、算力选型对比；制作可交互原型或 Demo，设计测试指标与数据记录表，形成 PRD、技术选型表和测试报告。",
                     "final_text": None,
