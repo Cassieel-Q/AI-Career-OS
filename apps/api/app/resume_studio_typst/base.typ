@@ -70,7 +70,37 @@
 #let section(sec) = {
   let entries = sec.entries.filter(e => e.status != "OMITTED")
   if entries.len() == 0 { [] } else {
-    [#section-heading(sec) #for e in entries { entry(e) }]
+    if sec.kind == "skills" {
+      let groups = (
+        (key: "product", label: "产品能力"),
+        (key: "ai", label: "AI 产品能力"),
+        (key: "tools", label: "技术与工具"),
+        (key: "language", label: "语言能力"),
+        (key: "other", label: "其他技能"),
+      )
+      [#section-heading(sec)
+        #block(above: 2pt, below: gap)[
+          #for group in groups {
+            let members = entries.filter(e => e.skill_category == group.key)
+            if members.len() > 0 {
+              [#text(weight: "bold")[#group.label：]
+                #for (i, member) in members.enumerate() {
+                  field(member.title)
+                  if visible(member.subtitle) { [（#field(member.subtitle)）] }
+                  for bullet in member.bullets {
+                    if visible(bullet) { [（#field(bullet)）] }
+                  }
+                  if i < members.len() - 1 { [、] }
+                }
+                #if group.key != "other" { [；] }
+              ]
+            }
+          }
+        ]
+      ]
+    } else {
+      [#section-heading(sec) #for e in entries { entry(e) }]
+    }
   }
 }
 

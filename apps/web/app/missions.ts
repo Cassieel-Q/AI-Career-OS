@@ -104,6 +104,7 @@ export type MissionRequester = (input: RequestInfo | URL, init?: RequestInit) =>
 export type TargetResumeBullet = {
   id: string;
   source_experience_id: string | null;
+  project_title?: string | null;
   original_text: string;
   suggested_text: string;
   final_text: string | null;

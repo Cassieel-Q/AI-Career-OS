@@ -800,34 +800,46 @@ button:disabled {
 
 .start-content {
   display: grid;
-  align-content: center;
+  align-content: start;
   justify-self: center;
-  gap: 1rem;
-  width: min(100% - 2rem, 44rem);
-  padding: 3rem 0;
+  gap: 1.15rem;
+  width: min(100% - 3rem, 68rem);
+  padding: clamp(2rem, 5vw, 4rem) 0 5rem;
 }
 
 .start-content h1 {
-  max-width: 40rem;
+  max-width: 60rem;
   margin: 0;
-  font-size: clamp(2.2rem, 6vw, 3.8rem);
+  font-size: clamp(2.1rem, 4.2vw, 3.2rem);
   line-height: 1.05;
   letter-spacing: -0.04em;
 }
 
 .start-content .summary {
   font-size: 1.05rem;
+  max-width: 42rem;
 }
 
 .start-content .upload-panel {
-  margin-top: 0.5rem;
-  padding: clamp(1.25rem, 4vw, 2rem);
-  border-radius: 0.8rem;
+  margin: 0;
+  padding: 1.6rem;
+  border-radius: 1rem;
 }
 
-.start-content input[type="file"] {
-  width: 100%;
-}
+.start-panels { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 1.25rem; align-items: stretch; margin-top: .75rem; }
+.start-card-heading { display: flex; align-items: center; gap: .85rem; margin-bottom: 1.5rem; }
+.start-card-heading h2 { margin: 0; font-size: 1.15rem; }
+.start-card-heading p { margin: .2rem 0 0; color: #69756e; font-size: .9rem; }
+.start-card-icon { display: grid; place-items: center; flex: none; width: 2.7rem; height: 2.7rem; border-radius: .8rem; background: #e6efe6; color: #2c6644; font-size: 1.4rem; font-weight: 700; }
+.start-card-icon-alt { background: #edf0fa; color: #3656a0; }
+.resume-file-input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+.resume-file-picker { display: flex; align-items: center; gap: .8rem; min-height: 5rem; padding: .9rem; border: 1px dashed #a7b9aa; border-radius: .75rem; background: #f8fbf8; cursor: pointer; }
+.resume-file-input:focus-visible + .resume-file-picker { outline: 3px solid #385cc3; outline-offset: 3px; }
+.resume-file-picker-icon { display: grid; place-items: center; flex: none; width: 2.8rem; height: 3.3rem; border-radius: .4rem; background: #e9f1eb; color: #316346; font-size: .8rem; font-weight: 800; }
+.resume-file-picker strong, .resume-file-picker small { display: block; overflow-wrap: anywhere; }
+.resume-file-picker small { margin-top: .2rem; color: #69756e; font-size: .78rem; }
+.resume-file-picker-action { margin-left: auto; flex: none; color: #294f40; font-size: .82rem; font-weight: 700; }
+.start-content .upload-panel > button[type="submit"] { width: 100%; margin-top: 1.3rem; }
 
 .preference-step {
   padding: 1.25rem;
@@ -1029,10 +1041,28 @@ button:disabled {
   background: #fbfdfb;
 }
 
-.existing-profile-panel { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid #dce6dc; }
+.start-panels .existing-profile-panel { min-width: 0; margin: 0; padding: 1.6rem; border: 1px solid #dce6dc; border-radius: 1rem; background: #fff; }
 .existing-profile-panel p { margin: 0.25rem 0; }
-.existing-profile-row { display: flex; gap: 0.65rem; align-items: center; margin-top: 0.75rem; }
-.existing-profile-row .text-input { flex: 1; }
+.start-panels .existing-profile-row { display: flex; flex-wrap: wrap; gap: .65rem; align-items: stretch; margin-top: .75rem; }
+.start-panels .existing-profile-row .text-input { flex: 1 1 100%; min-width: 0; }
+.start-panels .existing-profile-row button { flex: 1 1 9rem; min-width: 0; white-space: normal; }
+.existing-profile-recover { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e3e9e2; }
+.existing-profile-recover summary { color: #395d87; font-size: .86rem; font-weight: 650; cursor: pointer; }
+.existing-profile-recover .field-label { display: block; margin-top: .9rem; }
+.profile-skill-summary { line-height: 1.7; }
+.profile-skill-summary span { display: inline; margin-right: .6em; }
+.profile-skill-summary strong { color: #314a65; }
+.profile-skill-evidence { margin-top: .7rem; border-top: 1px solid #e1e8e0; padding-top: .6rem; }
+.profile-skill-evidence summary { cursor: pointer; color: #365c80; font-size: .86rem; font-weight: 650; }
+.resume-final-preview-list article p { white-space: pre-line; }
+.resume-structured-points { margin: .4rem 0 0; padding-left: 1.3rem; white-space: normal; }
+.resume-structured-points li { margin: .3rem 0; }
+.resume-project-meta { margin: -.25rem 0 .65rem; color: #63736b; font-size: .84rem; }
+@media (max-width: 780px) {
+  .start-content { width: min(100% - 2rem, 38rem); padding-top: 2rem; }
+  .start-panels { grid-template-columns: 1fr; }
+  .start-content .upload-panel, .start-panels .existing-profile-panel { padding: 1.2rem; }
+}
 
 .proof-entry-card {
   grid-template-columns: 1fr auto;

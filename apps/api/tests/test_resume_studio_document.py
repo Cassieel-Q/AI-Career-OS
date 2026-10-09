@@ -86,3 +86,32 @@ def test_studio_requires_a_confirmed_target_resume(db_session):
     with pytest.raises(HTTPException) as caught:
         get_or_create_document(db_session, mission.id)
     assert caught.value.status_code == 409
+
+
+def test_studio_splits_structured_project_points_into_pdf_bullets(db_session):
+    mission, _, accepted_id = _mission_with_resume(db_session)
+    bullet = db_session.get(models.TargetResumeBullet, accepted_id)
+    bullet.final_text = "产品设计：设计点击爆泡反馈。\n开发上线：完成小游戏上线。"
+    db_session.commit()
+    entry = next(section for section in get_or_create_document(db_session, mission.id).document_json["sections"] if section["kind"] == "experience")["entries"][0]
+    assert [node["text"] for node in entry["bullets"]] == ["产品设计：设计点击爆泡反馈。", "开发上线：完成小游戏上线。"]
+    assert entry["bullets"][0]["id"] == str(accepted_id)
+
+
+def test_studio_includes_only_fact_confirmed_synthetic_project(db_session):
+    mission, _, _ = _mission_with_resume(db_session)
+    resume = db_session.query(models.TargetResume).filter_by(mission_id=mission.id).one()
+    resume.strategy = {"_generation": {"bullet_project_titles": [None, None, "项目草案：AI Career OS"]}}
+    synthetic = models.TargetResumeBullet(
+        target_resume_id=resume.id, source_experience_id=None, original_text="项目草案",
+        suggested_text="产品设计：设计岗位解析流程。\n开发验证：完成原型测试。",
+        reason="作品集项目", risk_flags=["SYNTHETIC_PROJECT", "FACT_CONFIRMED"],
+        status="ACCEPTED", sort_order=2,
+    )
+    db_session.add(synthetic)
+    db_session.commit()
+    document = get_or_create_document(db_session, mission.id).document_json
+    entries = next(section for section in document["sections"] if section["kind"] == "experience")["entries"]
+    project = next(entry for entry in entries if entry["title"]["text"] == "AI Career OS")
+    assert project["title"]["text"] == "AI Career OS"
+    assert [item["text"] for item in project["bullets"]] == ["产品设计：设计岗位解析流程。", "开发验证：完成原型测试。"]

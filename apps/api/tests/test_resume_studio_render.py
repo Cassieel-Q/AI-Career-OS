@@ -4,7 +4,7 @@ from pathlib import Path
 import fitz
 import pytest
 
-from app.resume_studio_render import render_document, typst_binary
+from app.resume_studio_render import render_document, skill_category, typst_binary
 from app.resume_studio_templates import list_templates
 from app.resume_studio_service import get_or_create_document
 from test_resume_studio_document import _mission_with_resume
@@ -26,6 +26,10 @@ def test_catalog_has_nine_real_templates_per_language():
     assert sum(item["language"] == "zh" for item in templates) == 9
     assert sum(item["language"] == "en" for item in templates) == 9
     assert all(item["spdx"] == "LicenseRef-AICareerOS-Original" for item in templates)
+
+
+def test_ai_skill_takes_precedence_over_product_wording():
+    assert skill_category("LLM 需求分析") == "ai"
 
 
 def test_every_template_renders_all_pages_as_real_pdf_and_svg(db_session):
@@ -56,3 +60,23 @@ def test_two_resumes_render_different_selectable_text(db_session):
     b = render_document(second, "zh-classic")
     assert a.pdf != b.pdf
     assert "Grace Lin" in fitz.open(stream=b.pdf, filetype="pdf")[0].get_text()
+
+
+def test_skills_render_as_compact_categorized_paragraph(db_session):
+    from app.resume_studio_service import _entry, _node, _section
+    from uuid import uuid4
+
+    mission, _, _ = _mission_with_resume(db_session)
+    document = deepcopy(get_or_create_document(db_session, mission.id).document_json)
+    names = ["需求分析", "PRD 撰写", "LLM", "Prompt Engineering", "Codex", "Python", "CET-6"]
+    document["sections"][2] = _section("skills", "专业技能", [
+        _entry(uuid4(), title=_node(name, source_kind="profile"), subtitle=_node("", source_kind="system"),
+               date=_node("", source_kind="system"), location=_node("", source_kind="system"), bullets=[])
+        for name in names
+    ])
+    pdf = fitz.open(stream=render_document(document, "zh-classic").pdf, filetype="pdf")
+    text = "".join(page.get_text() for page in pdf)
+    compact_text = "".join(text.split())
+    assert all("".join(label.split()) in compact_text for label in ("产品能力", "AI 产品能力", "技术与工具", "语言能力"))
+    assert all(name in text for name in names)
+    assert len(pdf) == 1
