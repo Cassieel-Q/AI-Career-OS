@@ -1,0 +1,5 @@
+{
+  "status": 422,
+  "body_excerpt": "{\"detail\":[{\"type\":\"string_too_short\",\"loc\":[\"body\",\"raw_text\"],\"msg\":\"String should have at least 20 characters\",\"input\":\"short\",\"ctx\":{\"min_length\":20}}]}",
+  "ok": true
+}

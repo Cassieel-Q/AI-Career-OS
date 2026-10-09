@@ -1,0 +1,117 @@
+{
+  "run_id": "e2e-2026-10-09-api",
+  "tree": "aioscareer-combine",
+  "api_base": "http://127.0.0.1:8000",
+  "web_base": "http://127.0.0.1:3000",
+  "db": ".runtime/combine-e2e.db",
+  "profile_id": "7bad2ae2-87ee-4e4c-a9e4-2f4001229132",
+  "mission_id": "bb71e19d-9cd4-43cc-89e6-fc33a276d0b6",
+  "label": "E2E EVAL — synthetic Acme Labs mission",
+  "openai_key_in_api_process": true,
+  "model_hint": "deepseek-chat",
+  "services": {
+    "api": "aioscareer-combine .venv uvicorn :8000 (OpenAI env inherited)",
+    "web": "next dev :3000"
+  },
+  "steps": [
+    {
+      "step_name": "web_missions_http",
+      "status": "PASS",
+      "duration_ms": 126,
+      "error_type": null,
+      "retry_count": 0,
+      "evidence_reference": "web-missions-meta.json",
+      "browser_url": "http://127.0.0.1:3000/missions"
+    },
+    {
+      "step_name": "api_health",
+      "status": "PASS",
+      "duration_ms": 62,
+      "error_type": null,
+      "retry_count": 0,
+      "evidence_reference": "health.json",
+      "browser_url": "/health"
+    },
+    {
+      "step_name": "create_draft_profile",
+      "status": "PASS",
+      "duration_ms": 196,
+      "error_type": null,
+      "retry_count": 0,
+      "evidence_reference": "profile-draft.json",
+      "browser_url": "/api/v1/profiles/draft"
+    },
+    {
+      "step_name": "exception_empty_or_short_jd",
+      "status": "PASS",
+      "duration_ms": 4,
+      "error_type": null,
+      "retry_count": 0,
+      "evidence_reference": "empty-jd.json",
+      "browser_url": "/api/v1/profiles/{profile_id}/job-missions"
+    },
+    {
+      "step_name": "create_mission_with_jd",
+      "status": "PASS",
+      "duration_ms": 13438,
+      "error_type": null,
+      "retry_count": 0,
+      "evidence_reference": "mission-create.json",
+      "browser_url": "/api/v1/profiles/{profile_id}/job-missions"
+    },
+    {
+      "step_name": "get_mission",
+      "status": "PASS",
+      "duration_ms": 4,
+      "error_type": null,
+      "retry_count": 0,
+      "evidence_reference": "mission-get.json",
+      "browser_url": "/api/v1/job-missions/{id}"
+    },
+    {
+      "step_name": "exception_missing_resume_gate",
+      "status": "PASS",
+      "duration_ms": 35,
+      "error_type": null,
+      "retry_count": 0,
+      "evidence_reference": "resume-gate.json",
+      "browser_url": "/api/v1/job-missions/{id}/experience-selection/generate"
+    },
+    {
+      "step_name": "patch_identity",
+      "status": "PASS",
+      "duration_ms": 12,
+      "error_type": null,
+      "retry_count": 0,
+      "evidence_reference": "identity-patch.json",
+      "browser_url": "/api/v1/job-missions/{id}/identity"
+    },
+    {
+      "step_name": "ui_interactive_missions_flow",
+      "status": "NOT_RUN",
+      "duration_ms": 0,
+      "error_type": "PARENT_COMPUTERUSE",
+      "retry_count": 0,
+      "evidence_reference": null,
+      "browser_url": "http://127.0.0.1:3000/missions"
+    },
+    {
+      "step_name": "ui_studio_vs_archive_preview",
+      "status": "NOT_RUN",
+      "duration_ms": 0,
+      "error_type": "PARENT_COMPUTERUSE",
+      "retry_count": 0,
+      "evidence_reference": null,
+      "browser_url": "http://127.0.0.1:3000/missions"
+    },
+    {
+      "step_name": "ui_interview_pack_browser",
+      "status": "NOT_RUN",
+      "duration_ms": 0,
+      "error_type": "PARENT_COMPUTERUSE",
+      "retry_count": 0,
+      "evidence_reference": null,
+      "browser_url": "http://127.0.0.1:3000/missions"
+    }
+  ]
+}

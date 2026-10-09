@@ -1,0 +1,14 @@
+{
+  "status": 201,
+  "ok": true,
+  "mission_id": "bb71e19d-9cd4-43cc-89e6-fc33a276d0b6",
+  "workflow_state": "ROLE_UNDERSTOOD",
+  "company": "Acme Labs",
+  "role": "AI Product Manager",
+  "seniority": "MID",
+  "warnings": [
+    "company_intel_unavailable"
+  ],
+  "error": null,
+  "body_excerpt": "{\"id\":\"bb71e19d-9cd4-43cc-89e6-fc33a276d0b6\",\"profile_id\":\"7bad2ae2-87ee-4e4c-a9e4-2f4001229132\",\"target_job_id\":\"2466c04b-91f7-4df7-b4fd-9b509e25be65\",\"display_name\":\"Acme Labs · AI Product Manager\",\"company\":\"Acme Labs\",\"role\":\"AI Product Manager\",\"role_family\":\"Product Management\",\"seniority\":\"MID\",\"location\":\"Beijing\",\"status\":\"DRAFT\",\"workflow_state\":\"ROLE_UNDERSTOOD\",\"resume_source\":null,\"warnings\":[\"company_intel_unavailable\"],\"parsed_jd\":{\"company\":\"Acme Labs\",\"role\":\"AI Product Manager\",\"role_family\":\"Product Management\",\"seniority\":\"MID\",\"location\":\"Beijing\",\"responsibilities\":[\"RAG product roadmap\",\"define evaluation metrics with ML and design\",\"improve creator-side tooling\"],\"requirements\":[{\"id\":\"req_1\",\"text\":\"3+ years internet product experience\",\"category\":\"experience\",\"evidence_text\":\"3+ years internet product experience\"},{\"id\":\"req_2\",\"text\":\"familiar with LLM apps\",\"category\":\"skill\",\"evidence_text\":\"familiar with LLM apps\"}],\"preferred_requirements\":[{\"id\":\"pref_1\",\"text\":\"B-side or tooling product experience preferred\",\"category\":\"experience\",\"evidence_text\":\"B-side or tooling product experience preferred\"}],\"capabilities\":[\"RAG product roadmap\",\"evaluation metrics definition\",\"cross-functional collaboration with ML and design\",\"creator-side tooling improvement\"],\"keywords\":[\"AI Product Manager\",\"RAG\",\"LLM apps\",\"evaluation metrics\",\"creator tooling\",\"B-side\",\"Beijing\",\"Mid-level\"]},\"what_matters\":{\"core_capabilities\":[{\"name\":\"RAG 产品路线图规划\",\"why\":\"JD 明确要求负责 RAG 产品路线图，这是该岗位的核心产品职责。\",\"evidence_refs\":[]},{\"name\":\"与 ML 和设计协作定义评估指标\",\"why\":\"JD 要求与 ML 和设计一起定义评估指标，体现跨职能协作与评测体系设计能力。\",\"evidence_refs\":[]},{\"name\":\"创作者侧工具改进\",\"why\":\"JD 明确要求改进创作者侧工具，属于该岗位的关键落地职责。\",\"evidence_refs\":[]},{\"name\":\"LLM 应用熟悉度\",\"why\":\"JD 要求熟悉 LLM 应用，是支撑 RAG 与评估指标工作的基础能力。\",\"evidence_refs\":[\"req_2\"]}],\"high_importance_requirements\":[{\"text\":\"3 年以上互联网产品经验\",\"importance\":\"HIGH\",\"evidence_refs\":[\"req_1\"]},{\"text\":\"熟悉 LLM 应用\",\"importance\":\"HIGH\",\"evidence_refs\":[\"req_2\"]},{\"text\":\"有 B 端或工具"
+}
