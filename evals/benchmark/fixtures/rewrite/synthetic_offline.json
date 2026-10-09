@@ -51,5 +51,410 @@
       "critical_fact_error": true,
       "unsupported_number": true
     }
+  },
+  {
+    "unit_id": "syn-rewrite-003",
+    "case_id": "syn-match-004",
+    "jd_id": "pub-jd-baidu-002",
+    "resume_id": "syn-resume-002",
+    "experience_id": "syn-resume-002-exp-001",
+    "source_facts": [
+      "Shipped Agent workflow builder used by 40 ops specialists"
+    ],
+    "suggestion_text": "Shipped Agent workflow builder used by 40 ops specialists",
+    "bullet_count": 1,
+    "expected_scores": {
+      "factuality": 4,
+      "jd_fit": 4,
+      "completeness": 4,
+      "clarity": 4,
+      "adoptable": 4
+    },
+    "critical_fact_error": false,
+    "human_scores_status": "UNRATED",
+    "offline_actual": {
+      "suggestion_text": "Shipped Agent workflow builder used by 40 ops specialists",
+      "bullet_count": 1,
+      "critical_fact_error": false,
+      "unsupported_number": false
+    }
+  },
+  {
+    "unit_id": "syn-rewrite-004",
+    "case_id": "syn-match-004",
+    "jd_id": "pub-jd-baidu-002",
+    "resume_id": "syn-resume-002",
+    "experience_id": "syn-resume-002-exp-002",
+    "source_facts": [
+      "Delivered meals across three districts"
+    ],
+    "suggestion_text": "Delivered meals across three districts",
+    "bullet_count": 1,
+    "expected_scores": {
+      "factuality": 4,
+      "jd_fit": 4,
+      "completeness": 4,
+      "clarity": 4,
+      "adoptable": 4
+    },
+    "critical_fact_error": false,
+    "human_scores_status": "UNRATED",
+    "offline_actual": {
+      "suggestion_text": "Delivered meals across three districts",
+      "bullet_count": 1,
+      "critical_fact_error": false,
+      "unsupported_number": false
+    }
+  },
+  {
+    "unit_id": "syn-rewrite-005",
+    "case_id": "syn-match-007",
+    "jd_id": "syn-jd-006",
+    "resume_id": "syn-resume-003",
+    "experience_id": "syn-resume-003-exp-001",
+    "source_facts": [
+      "Owned search ranking requirements; NDCG with ML team"
+    ],
+    "suggestion_text": "Owned search ranking requirements; NDCG with ML team",
+    "bullet_count": 1,
+    "expected_scores": {
+      "factuality": 4,
+      "jd_fit": 4,
+      "completeness": 4,
+      "clarity": 4,
+      "adoptable": 4
+    },
+    "critical_fact_error": false,
+    "human_scores_status": "UNRATED",
+    "offline_actual": {
+      "suggestion_text": "Owned search ranking requirements; NDCG with ML team",
+      "bullet_count": 1,
+      "critical_fact_error": false,
+      "unsupported_number": false
+    }
+  },
+  {
+    "unit_id": "syn-rewrite-006",
+    "case_id": "syn-match-007",
+    "jd_id": "syn-jd-006",
+    "resume_id": "syn-resume-003",
+    "experience_id": "syn-resume-003-exp-002",
+    "source_facts": [
+      "Prepared drinks and managed inventory"
+    ],
+    "suggestion_text": "Prepared drinks and managed inventory",
+    "bullet_count": 1,
+    "expected_scores": {
+      "factuality": 4,
+      "jd_fit": 4,
+      "completeness": 4,
+      "clarity": 4,
+      "adoptable": 4
+    },
+    "critical_fact_error": false,
+    "human_scores_status": "UNRATED",
+    "offline_actual": {
+      "suggestion_text": "Prepared drinks and managed inventory",
+      "bullet_count": 1,
+      "critical_fact_error": false,
+      "unsupported_number": false
+    }
+  },
+  {
+    "unit_id": "syn-rewrite-007",
+    "case_id": "syn-match-010",
+    "jd_id": "pub-jd-baidu-003",
+    "resume_id": "syn-resume-004",
+    "experience_id": "syn-resume-004-exp-001",
+    "source_facts": [
+      "Built Agentic Evals for IDE coding agent"
+    ],
+    "suggestion_text": "Built Agentic Evals for IDE coding agent",
+    "bullet_count": 1,
+    "expected_scores": {
+      "factuality": 4,
+      "jd_fit": 4,
+      "completeness": 4,
+      "clarity": 4,
+      "adoptable": 4
+    },
+    "critical_fact_error": false,
+    "human_scores_status": "UNRATED",
+    "offline_actual": {
+      "suggestion_text": "Built Agentic Evals for IDE coding agent",
+      "bullet_count": 1,
+      "critical_fact_error": false,
+      "unsupported_number": false
+    }
+  },
+  {
+    "unit_id": "syn-rewrite-008",
+    "case_id": "syn-match-010",
+    "jd_id": "pub-jd-baidu-003",
+    "resume_id": "syn-resume-004",
+    "experience_id": "syn-resume-004-exp-002",
+    "source_facts": [
+      "Weekend cashier shifts"
+    ],
+    "suggestion_text": "Weekend cashier shifts",
+    "bullet_count": 1,
+    "expected_scores": {
+      "factuality": 4,
+      "jd_fit": 4,
+      "completeness": 4,
+      "clarity": 4,
+      "adoptable": 4
+    },
+    "critical_fact_error": false,
+    "human_scores_status": "UNRATED",
+    "offline_actual": {
+      "suggestion_text": "Weekend cashier shifts",
+      "bullet_count": 1,
+      "critical_fact_error": false,
+      "unsupported_number": false
+    }
+  },
+  {
+    "unit_id": "syn-rewrite-009",
+    "case_id": "syn-match-011",
+    "jd_id": "syn-jd-011",
+    "resume_id": "syn-resume-004",
+    "experience_id": "syn-resume-004-exp-003",
+    "source_facts": [
+      "Owned developer docs and quota UX for LLM API"
+    ],
+    "suggestion_text": "Owned developer docs and quota UX for LLM API",
+    "bullet_count": 1,
+    "expected_scores": {
+      "factuality": 4,
+      "jd_fit": 4,
+      "completeness": 4,
+      "clarity": 4,
+      "adoptable": 4
+    },
+    "critical_fact_error": false,
+    "human_scores_status": "UNRATED",
+    "offline_actual": {
+      "suggestion_text": "Owned developer docs and quota UX for LLM API",
+      "bullet_count": 1,
+      "critical_fact_error": false,
+      "unsupported_number": false
+    }
+  },
+  {
+    "unit_id": "syn-rewrite-010",
+    "case_id": "syn-match-013",
+    "jd_id": "syn-jd-009",
+    "resume_id": "syn-resume-005",
+    "experience_id": "syn-resume-005-exp-001",
+    "source_facts": [
+      "Defined car voice scenes and safety refusal policy"
+    ],
+    "suggestion_text": "Defined car voice scenes and safety refusal policy",
+    "bullet_count": 1,
+    "expected_scores": {
+      "factuality": 4,
+      "jd_fit": 4,
+      "completeness": 4,
+      "clarity": 4,
+      "adoptable": 4
+    },
+    "critical_fact_error": false,
+    "human_scores_status": "UNRATED",
+    "offline_actual": {
+      "suggestion_text": "Defined car voice scenes and safety refusal policy",
+      "bullet_count": 1,
+      "critical_fact_error": false,
+      "unsupported_number": false
+    }
+  },
+  {
+    "unit_id": "syn-rewrite-011",
+    "case_id": "syn-match-014",
+    "jd_id": "syn-jd-008",
+    "resume_id": "syn-resume-005",
+    "experience_id": "syn-resume-005-exp-003",
+    "source_facts": [
+      "Shipped on-device assistant features"
+    ],
+    "suggestion_text": "Shipped on-device assistant features",
+    "bullet_count": 1,
+    "expected_scores": {
+      "factuality": 4,
+      "jd_fit": 4,
+      "completeness": 4,
+      "clarity": 4,
+      "adoptable": 4
+    },
+    "critical_fact_error": false,
+    "human_scores_status": "UNRATED",
+    "offline_actual": {
+      "suggestion_text": "Shipped on-device assistant features",
+      "bullet_count": 1,
+      "critical_fact_error": false,
+      "unsupported_number": false
+    }
+  },
+  {
+    "unit_id": "syn-rewrite-012",
+    "case_id": "syn-match-015",
+    "jd_id": "syn-jd-010",
+    "resume_id": "syn-resume-006",
+    "experience_id": "syn-resume-006-exp-001",
+    "source_facts": [
+      "Productized CV solutions for manufacturing QA"
+    ],
+    "suggestion_text": "Productized CV solutions for manufacturing QA",
+    "bullet_count": 1,
+    "expected_scores": {
+      "factuality": 4,
+      "jd_fit": 4,
+      "completeness": 4,
+      "clarity": 4,
+      "adoptable": 4
+    },
+    "critical_fact_error": false,
+    "human_scores_status": "UNRATED",
+    "offline_actual": {
+      "suggestion_text": "Productized CV solutions for manufacturing QA",
+      "bullet_count": 1,
+      "critical_fact_error": false,
+      "unsupported_number": false
+    }
+  },
+  {
+    "unit_id": "syn-rewrite-013",
+    "case_id": "syn-match-016",
+    "jd_id": "syn-jd-004",
+    "resume_id": "syn-resume-006",
+    "experience_id": "syn-resume-006-exp-003",
+    "source_facts": [
+      "Shipped enterprise knowledge QA with permissions"
+    ],
+    "suggestion_text": "Shipped enterprise knowledge QA with permissions",
+    "bullet_count": 1,
+    "expected_scores": {
+      "factuality": 4,
+      "jd_fit": 4,
+      "completeness": 4,
+      "clarity": 4,
+      "adoptable": 4
+    },
+    "critical_fact_error": false,
+    "human_scores_status": "UNRATED",
+    "offline_actual": {
+      "suggestion_text": "Shipped enterprise knowledge QA with permissions",
+      "bullet_count": 1,
+      "critical_fact_error": false,
+      "unsupported_number": false
+    }
+  },
+  {
+    "unit_id": "syn-rewrite-014",
+    "case_id": "syn-match-005",
+    "jd_id": "syn-jd-003",
+    "resume_id": "syn-resume-002",
+    "experience_id": "syn-resume-002-exp-003",
+    "source_facts": [
+      "Prototyped image+text generation demo"
+    ],
+    "suggestion_text": "Prototyped image+text generation demo",
+    "bullet_count": 1,
+    "expected_scores": {
+      "factuality": 4,
+      "jd_fit": 4,
+      "completeness": 4,
+      "clarity": 4,
+      "adoptable": 4
+    },
+    "critical_fact_error": false,
+    "human_scores_status": "UNRATED",
+    "offline_actual": {
+      "suggestion_text": "Prototyped image+text generation demo",
+      "bullet_count": 1,
+      "critical_fact_error": false,
+      "unsupported_number": false
+    }
+  },
+  {
+    "unit_id": "syn-rewrite-015",
+    "case_id": "syn-match-003",
+    "jd_id": "pub-jd-baidu-001",
+    "resume_id": "syn-resume-001",
+    "experience_id": "syn-resume-001-exp-001",
+    "source_facts": [
+      "Built offline LLM judge set with 120 labeled prompts"
+    ],
+    "suggestion_text": "Built offline LLM judge set with 120 labeled prompts",
+    "bullet_count": 1,
+    "expected_scores": {
+      "factuality": 4,
+      "jd_fit": 4,
+      "completeness": 4,
+      "clarity": 4,
+      "adoptable": 4
+    },
+    "critical_fact_error": false,
+    "human_scores_status": "UNRATED",
+    "offline_actual": {
+      "suggestion_text": "Built offline LLM judge set with 120 labeled prompts",
+      "bullet_count": 1,
+      "critical_fact_error": false,
+      "unsupported_number": false
+    }
+  },
+  {
+    "unit_id": "syn-rewrite-016",
+    "case_id": "syn-match-008",
+    "jd_id": "syn-jd-002",
+    "resume_id": "syn-resume-003",
+    "experience_id": "syn-resume-003-exp-003",
+    "source_facts": [
+      "Launched template marketplace; measured creator retention"
+    ],
+    "suggestion_text": "Launched template marketplace; measured creator retention",
+    "bullet_count": 1,
+    "expected_scores": {
+      "factuality": 4,
+      "jd_fit": 4,
+      "completeness": 4,
+      "clarity": 4,
+      "adoptable": 4
+    },
+    "critical_fact_error": false,
+    "human_scores_status": "UNRATED",
+    "offline_actual": {
+      "suggestion_text": "Launched template marketplace; measured creator retention",
+      "bullet_count": 1,
+      "critical_fact_error": false,
+      "unsupported_number": false
+    }
+  },
+  {
+    "unit_id": "syn-rewrite-017",
+    "case_id": "syn-match-012",
+    "jd_id": "syn-jd-005",
+    "resume_id": "syn-resume-004",
+    "experience_id": "syn-resume-004-exp-003",
+    "source_facts": [
+      "Example galleries for LLM API product"
+    ],
+    "suggestion_text": "Example galleries for LLM API product",
+    "bullet_count": 1,
+    "expected_scores": {
+      "factuality": 4,
+      "jd_fit": 4,
+      "completeness": 4,
+      "clarity": 4,
+      "adoptable": 4
+    },
+    "critical_fact_error": false,
+    "human_scores_status": "UNRATED",
+    "offline_actual": {
+      "suggestion_text": "Example galleries for LLM API product",
+      "bullet_count": 1,
+      "critical_fact_error": false,
+      "unsupported_number": false
+    }
   }
 ]

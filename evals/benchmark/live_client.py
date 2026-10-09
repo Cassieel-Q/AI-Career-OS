@@ -19,31 +19,42 @@ from evals.benchmark.paths import FIXTURES_DIR
 
 DEFAULT_API_BASE = os.environ.get("CAREEROS_API_BASE", "http://127.0.0.1:8000").rstrip("/")
 
-SYN_RESUME_TEXT = """Syn Candidate — AI / Technical Product Manager
-Email: syn.candidate@example.com | Shanghai
 
-EXPERIENCE
+def _load_resumes() -> dict[str, dict]:
+    path = FIXTURES_DIR / "resume" / "synthetic_expanded.json"
+    if not path.exists():
+        return {}
+    rows = list(read_json(path))
+    return {str(r["resume_id"]): r for r in rows if r.get("resume_id")}
 
-LLM Evaluation Internship | University Lab | 2024.01 - 2024.06
-- Built an offline LLM judge set with 120 labeled prompts and tracked agreement versus human raters.
-- Partnered with two engineers on RAG quality metrics for an internal demo.
 
-Campus Bookstore Cashier | University Store | 2023.01 - 2023.12
-- Operated the cash register and restocked shelves during peak campus hours.
+def _resume_text(resume_id: str | None) -> str:
+    resumes = _load_resumes()
+    if resume_id and resume_id in resumes:
+        return str(resumes[resume_id].get("raw_text") or "")
+    if resumes:
+        return str(next(iter(resumes.values())).get("raw_text") or "")
+    raise RuntimeError("No resume fixtures")
 
-RAG Prototype Project | Personal / Lab | 2024.07 - 2024.09
-- Shipped an internal RAG demo used by 3 product managers for evidence lookup.
-- Documented failure modes and evaluation criteria for retrieval quality.
 
-Creator A/B Test Lead | Campus Media Club | 2023.06 - 2023.12
-- Ran A/B tests on creator-tool onboarding copy and wrote short PRDs for the club product.
+def _all_experience_titles() -> list[str]:
+    titles: list[str] = []
+    for row in _load_resumes().values():
+        for exp in row.get("experiences") or []:
+            t = str(exp.get("title") or "").strip()
+            if t and t not in titles:
+                titles.append(t)
+    match_path = FIXTURES_DIR / "match" / "synthetic_offline.json"
+    if match_path.exists():
+        for case in read_json(match_path):
+            for exp in case.get("experiences") or []:
+                t = str(exp.get("title") or "").strip()
+                if t and t not in titles:
+                    titles.append(t)
+    return titles
 
-EDUCATION
-B.S. Computer Science, Example University, 2024
 
-SKILLS
-LLM evaluation, experiment design, RAG, SQL literacy, product metrics, PRD writing, cross-functional leadership
-"""
+SYN_RESUME_TEXT = ""
 
 
 def _http_json(method: str, url: str, body: dict[str, Any] | None = None, timeout: float = 180.0) -> tuple[int, Any, float]:
@@ -91,7 +102,7 @@ def _years_from_text(text: str) -> str | None:
     m = re.search(r"(\d+\+?)\s*years?", text, re.I)
     if m:
         return m.group(1)
-    m = re.search(r"(\d+)\s*年", text)
+    m = re.search(r"(\d+)\s*" + "年", text)
     return m.group(1) if m else None
 
 
@@ -132,11 +143,8 @@ def _map_must_have(expected: list[str], actual: list[str]) -> bool:
 
 
 _TITLE_ALIASES = {
-    "llm evaluation internship": "llm eval internship",
-    "llm eval internship": "llm eval internship",
-    "campus bookstore cashier": "campus bookstore cashier",
-    "rag prototype project": "rag prototype project",
-    "creator a/b test lead": "creator a/b test lead",
+    "llm eval internship": "llm evaluation internship",
+    "llm evaluation internship": "llm evaluation internship",
 }
 
 
@@ -145,19 +153,12 @@ def _canon_title(title: str) -> str:
     return _TITLE_ALIASES.get(n, n)
 
 
-def _title_from_why(why: str) -> str:
-    # Chinese/English titles often appear early in why strings.
-    for marker in (
-        "LLM Evaluation Internship",
-        "LLM eval internship",
-        "Campus Bookstore Cashier",
-        "Campus bookstore cashier",
-        "RAG Prototype Project",
-        "RAG prototype project",
-        "Creator A/B Test Lead",
-        "Creator A/B test lead",
-    ):
-        if marker.casefold() in (why or "").casefold():
+def _title_from_why(why: str, candidates: list[str] | None = None) -> str:
+    blob = why or ""
+    pool = candidates if candidates is not None else _all_experience_titles()
+    ranked = sorted({t for t in pool if t}, key=lambda t: len(t), reverse=True)
+    for marker in ranked:
+        if marker.casefold() in blob.casefold():
             return marker
     return ""
 
@@ -378,11 +379,13 @@ def run_live_match(base: str = DEFAULT_API_BASE) -> dict[str, Any]:
             profile_id = _create_profile(base)
             mission, _ = _create_mission(base, profile_id, str(jd["raw_text"]))
             mission_id = str(mission["id"])
-            _bind_resume(base, mission_id, SYN_RESUME_TEXT)
+            resume_id = str(row.get("resume_id") or "syn-resume-001")
+            cand_titles = [str(e.get("title") or "") for e in (row.get("experiences") or [])]
+            _bind_resume(base, mission_id, _resume_text(resume_id))
             selection, latency_ms = _generate_selection(base, mission_id)
             pred_by_title: dict[str, str] = {}
             for sel in selection.get("selections") or []:
-                title = _title_from_why(str(sel.get("why") or ""))
+                title = _title_from_why(str(sel.get("why") or ""), cand_titles)
                 if title:
                     pred_by_title[_canon_title(title)] = str(sel.get("decision"))
             item_results = []
@@ -432,7 +435,7 @@ def run_live_match(base: str = DEFAULT_API_BASE) -> dict[str, Any]:
         "status": "COMPLETED",
         "provider_called": True,
         "sample_class": "synthetic",
-        "planned_note": "PLAN=30; ACTUAL=synthetic fixtures only",
+        "planned_note": "PLAN=30; ACTUAL=expanded synthetic/public_inspired fixtures (not consented_real)",
         "fixture_count": len(rows),
         "compared_items": compared_items,
         "metrics": {
@@ -457,11 +460,13 @@ def run_live_rewrite(base: str = DEFAULT_API_BASE) -> dict[str, Any]:
     bullet_total = 0
     for jd_id in jd_ids:
         jd = jd_rows[jd_id]
+        related_units_pre = [u for u in rewrite_rows if u.get("jd_id") == jd_id]
+        resume_id = str((related_units_pre[0].get("resume_id") if related_units_pre else None) or "syn-resume-001")
         try:
             profile_id = _create_profile(base)
             mission, _ = _create_mission(base, profile_id, str(jd["raw_text"]))
             mission_id = str(mission["id"])
-            _bind_resume(base, mission_id, SYN_RESUME_TEXT)
+            _bind_resume(base, mission_id, _resume_text(resume_id))
             selection, _ = _generate_selection(base, mission_id)
             _confirm_selection(base, mission_id, selection)
             target, latency_ms = _strategy_and_target(base, mission_id)
@@ -503,7 +508,7 @@ def run_live_rewrite(base: str = DEFAULT_API_BASE) -> dict[str, Any]:
         "status": "COMPLETED" if not failures else "COMPLETED_WITH_FAILURES",
         "provider_called": True,
         "sample_class": "synthetic",
-        "planned_note": "PLAN=90 rewrite units; ACTUAL=synthetic fixtures only; human dims UNRATED",
+        "planned_note": "PLAN=90 rewrite units; ACTUAL=expanded synthetic fixtures; human dims UNRATED",
         "fixture_count": len(rewrite_rows),
         "live_pipelines": len(jd_ids),
         "live_bullet_total": bullet_total,
@@ -530,11 +535,13 @@ def run_live_interview(base: str = DEFAULT_API_BASE) -> dict[str, Any]:
     demo_leak_topics = 0
     for jd_id in jd_ids:
         jd = jd_rows[jd_id]
+        related_pre = [q for q in rows if q.get("jd_id") == jd_id]
+        resume_id = str((related_pre[0].get("resume_id") if related_pre else None) or "syn-resume-001")
         try:
             profile_id = _create_profile(base)
             mission, _ = _create_mission(base, profile_id, str(jd["raw_text"]))
             mission_id = str(mission["id"])
-            _bind_resume(base, mission_id, SYN_RESUME_TEXT)
+            _bind_resume(base, mission_id, _resume_text(resume_id))
             selection, _ = _generate_selection(base, mission_id)
             _confirm_selection(base, mission_id, selection)
             _strategy_and_target(base, mission_id)
@@ -581,7 +588,7 @@ def run_live_interview(base: str = DEFAULT_API_BASE) -> dict[str, Any]:
         "status": "COMPLETED" if not failures else "COMPLETED_WITH_FAILURES",
         "provider_called": True,
         "sample_class": "synthetic",
-        "planned_note": "PLAN=10 cases / 50 questions; ACTUAL=synthetic fixtures only",
+        "planned_note": "PLAN=10 cases / 50 questions; ACTUAL=expanded synthetic fixtures",
         "fixture_count": len(rows),
         "live_pipelines": len(jd_ids),
         "live_topic_total": topic_total,

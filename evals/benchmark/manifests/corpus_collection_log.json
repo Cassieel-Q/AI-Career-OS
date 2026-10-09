@@ -1,0 +1,36 @@
+{
+  "collected_at": "2026-10-09",
+  "public_inspired_jds": [
+    {
+      "jd_id": "pub-jd-baidu-001",
+      "source_url": "https://watchjobs.net/zh/explore/job/c262-e07b63f8954b5aad/AI%E4%BA%A7%E5%93%81%E7%BB%8F%E7%90%86-J104842-%E7%99%BE%E5%BA%A6",
+      "company": "百度"
+    },
+    {
+      "jd_id": "pub-jd-baidu-002",
+      "source_url": "https://www.quanzhi.com/job/6a50a62562f6005b2b0f6d55",
+      "company": "百度"
+    },
+    {
+      "jd_id": "pub-jd-baidu-003",
+      "source_url": "https://www.liepin.com/job/1983826771.shtml",
+      "company": "百度"
+    }
+  ],
+  "authored_jds": [
+    "syn-jd-001",
+    "syn-jd-002",
+    "syn-jd-003",
+    "syn-jd-004",
+    "syn-jd-005",
+    "syn-jd-006",
+    "syn-jd-007",
+    "syn-jd-008",
+    "syn-jd-009",
+    "syn-jd-010",
+    "syn-jd-011",
+    "syn-jd-012",
+    "syn-jd-013"
+  ],
+  "note": "Public pages used as inspiration; cleaned Chinese text stored. Resumes are fictional."
+}

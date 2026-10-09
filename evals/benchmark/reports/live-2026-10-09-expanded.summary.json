@@ -1,0 +1,64 @@
+{
+  "run_id": "live-2026-10-09-expanded",
+  "created_at": "2026-10-09T06:04:21+00:00",
+  "git_head": "5bf41677a19ba5126a185761c5656cf71cece983",
+  "mode": "live",
+  "suites": [
+    {
+      "suite": "jd",
+      "status": "COMPLETED",
+      "fixture_count": 16,
+      "reason": null,
+      "metrics": {
+        "company": 1.0,
+        "role_title": 0.8125,
+        "location": 1.0,
+        "years_experience": 1.0,
+        "education": 0.125,
+        "must_have_soft_recall": 0.25
+      }
+    },
+    {
+      "suite": "match",
+      "status": "COMPLETED",
+      "fixture_count": 17,
+      "reason": null,
+      "metrics": {
+        "decision_accuracy": 0.3584905660377358,
+        "critical_omit_errors": 2,
+        "human_macro_f1": "NOT_EVALUABLE"
+      }
+    },
+    {
+      "suite": "rewrite",
+      "status": "COMPLETED",
+      "fixture_count": 17,
+      "reason": null,
+      "metrics": {
+        "human_factuality_mean": "UNRATED",
+        "human_jd_fit_mean": "UNRATED",
+        "adoption_rate": "NOT_EVALUABLE",
+        "critical_fact_error_rate": "NOT_EVALUABLE",
+        "live_bullet_total": 41
+      }
+    },
+    {
+      "suite": "interview",
+      "status": "COMPLETED",
+      "fixture_count": 15,
+      "reason": null,
+      "metrics": {
+        "live_topic_total": 32,
+        "synthetic_demo_leak_pipelines": 2,
+        "jd_grounding_human": "UNRATED",
+        "resume_grounding_human": "UNRATED"
+      }
+    }
+  ],
+  "raw_run_path": "evals\\benchmark\\runs\\live-2026-10-09-expanded.json",
+  "notes": [
+    "Offline scores use synthetic fixtures only.",
+    "Live mode may call the product API with synthetic fixtures; sample_class must be read from the run.",
+    "Do not report synthetic live numbers as consented-real product quality or as the full 30/90 plan sizes."
+  ]
+}

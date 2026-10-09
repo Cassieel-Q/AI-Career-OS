@@ -1,66 +1,95 @@
 {
-  "manifest_id": "offline-synthetic-v1",
+  "manifest_id": "expanded-synthetic-public-v1",
   "created_at": "2026-10-09",
-  "git_baseline_note": "Local worktree feat/aioscareer-combine @ dea66f0572b2ac3b19885e2b2d3eff0ec5a5144b; not pushed to GitHub at handoff time.",
+  "git_baseline_note": "Local feature/eval-benchmark-v1; integration still not pushed.",
+  "disclaimer": "Corpus is public_inspired JD + authored synthetic JD + fully synthetic resumes. NOT consented_real. Live metrics != real-user study.",
+  "collection": {
+    "jd_total": 16,
+    "jd_public_inspired": 3,
+    "jd_authored_synthetic": 13,
+    "resume_total": 6,
+    "resume_all_synthetic": true,
+    "match_cases": 17,
+    "rewrite_units": 17,
+    "interview_questions": 15,
+    "interview_packs": 5,
+    "companies": [
+      "Acme Labs",
+      "MiniMax",
+      "Northstar Media",
+      "OPPO",
+      "商汤科技",
+      "字节跳动",
+      "小米",
+      "快手",
+      "智谱AI",
+      "百度",
+      "网易",
+      "美团",
+      "腾讯",
+      "阿里巴巴"
+    ],
+    "role_families": [
+      "ai_product",
+      "product_manager",
+      "technical_product"
+    ]
+  },
   "plan_vs_actual": {
     "EVAL-JD": {
       "planned": 30,
-      "actual_fixtures": 2,
-      "note": "Synthetic harness only; full corpus NOT_RUN"
+      "actual_fixtures": 16,
+      "note": "synthetic/public_inspired; not consented_real"
     },
     "EVAL-MATCH": {
       "planned": 30,
-      "actual_fixtures": 2,
-      "note": "Synthetic harness only"
+      "actual_fixtures": 17,
+      "note": "synthetic resume x JD pairs"
     },
     "EVAL-REWRITE": {
       "planned": 90,
-      "actual_fixtures": 2,
-      "note": "Synthetic harness only; includes 1 intentional fact-error negative"
+      "actual_fixtures": 17,
+      "note": "human 1-5 UNRATED on live"
     },
     "EVAL-INTERVIEW": {
       "planned_cases": 10,
       "planned_questions": 50,
-      "actual_fixtures": 2,
-      "note": "Synthetic harness only"
-    },
-    "EVAL-E2E": {
-      "planned": "browser paths",
-      "actual_fixtures": 0,
-      "note": "NOT_RUN in phase 1"
-    },
-    "human_raters": {
-      "planned": "dual rater + 20% overlap",
-      "actual": 0,
-      "note": "NOT_RUN"
+      "actual_packs": 5,
+      "actual_fixtures": 15,
+      "note": "structural live checks; grounding UNRATED"
     },
     "consented_real_resumes": {
       "planned": 10,
       "actual": 0,
-      "note": "NOT_RUN"
+      "note": "still NOT_RUN"
     }
   },
   "suites": {
     "jd": {
       "fixture": "fixtures/jd/synthetic_offline.json",
-      "count": 2
+      "count": 16
     },
     "match": {
       "fixture": "fixtures/match/synthetic_offline.json",
-      "count": 2
+      "count": 17
     },
     "rewrite": {
       "fixture": "fixtures/rewrite/synthetic_offline.json",
-      "count": 2
+      "count": 17
     },
     "interview": {
       "fixture": "fixtures/interview/synthetic_offline.json",
-      "count": 2
+      "count": 15
+    },
+    "resume": {
+      "fixture": "fixtures/resume/synthetic_expanded.json",
+      "count": 6
     }
   },
   "privacy": {
-    "synthetic_only": true,
-    "private_dir": "evals/benchmark/private/ (gitignored)",
-    "runs_dir": "evals/benchmark/runs/ (gitignored)"
+    "synthetic_only_resumes": true,
+    "no_consented_real": true,
+    "private_dir": "evals/benchmark/private/",
+    "runs_dir": "evals/benchmark/runs/"
   }
 }

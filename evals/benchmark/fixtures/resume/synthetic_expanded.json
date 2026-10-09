@@ -1,0 +1,138 @@
+[
+  {
+    "resume_id": "syn-resume-001",
+    "sample_class": "synthetic",
+    "consent_status": "n/a",
+    "source_type": "synthetic",
+    "display_name": "Syn Candidate A",
+    "raw_text": "Syn Candidate A — AI / Technical Product Manager\nEmail: syn.candidate.a@example.com | Shanghai\n\nEXPERIENCE\n\nLLM Evaluation Internship | University Lab | 2024.01 - 2024.06\n- Built an offline LLM judge set with 120 labeled prompts and tracked agreement versus human raters.\n- Partnered with two engineers on RAG quality metrics for an internal demo.\n\nCampus Bookstore Cashier | University Store | 2023.01 - 2023.12\n- Operated the cash register and restocked shelves during peak campus hours.\n\nRAG Prototype Project | Personal / Lab | 2024.07 - 2024.09\n- Shipped an internal RAG demo used by 3 product managers for evidence lookup.\n- Documented failure modes and evaluation criteria for retrieval quality.\n\nCreator A/B Test Lead | Campus Media Club | 2023.06 - 2023.12\n- Ran A/B tests on creator-tool onboarding copy and wrote short PRDs for the club product.\n\nEDUCATION\nB.S. Computer Science, Example University, 2024\n\nSKILLS\nLLM evaluation, experiment design, RAG, SQL literacy, product metrics, PRD writing, cross-functional leadership\n",
+    "experiences": [
+      {
+        "experience_id": "syn-resume-001-exp-001",
+        "title": "LLM Evaluation Internship"
+      },
+      {
+        "experience_id": "syn-resume-001-exp-002",
+        "title": "Campus Bookstore Cashier"
+      },
+      {
+        "experience_id": "syn-resume-001-exp-003",
+        "title": "RAG Prototype Project"
+      },
+      {
+        "experience_id": "syn-resume-001-exp-004",
+        "title": "Creator A/B Test Lead"
+      }
+    ]
+  },
+  {
+    "resume_id": "syn-resume-002",
+    "sample_class": "synthetic",
+    "consent_status": "n/a",
+    "source_type": "synthetic",
+    "display_name": "Syn Candidate B",
+    "raw_text": "Syn Candidate B — AI Product Manager\nEmail: syn.candidate.b@example.com | Beijing\n\nEXPERIENCE\n\nAgent Workflow Platform PM | Orion SaaS | 2022.03 - 2025.08\n- Shipped an internal Agent workflow builder used by 40 ops specialists; cut ticket handling time 18%.\n- Designed prompt templates, human-in-the-loop review, and weekly quality dashboards with engineering.\n\nFood Delivery Courier Part-time | City Express | 2019.06 - 2019.09\n- Delivered meals across three districts during summer peak; no product ownership.\n\nMultimodal Demo Lab | Open Source Weekend | 2024.01 - 2024.04\n- Prototyped image+text generation demo and wrote eval checklist for latency and refusal cases.\n\nEDUCATION\nM.S. HCI, Northern Institute, 2022\n\nSKILLS\nAgent workflows, Prompt design, product metrics, ToB collaboration, A/B tests, PRD\n",
+    "experiences": [
+      {
+        "experience_id": "syn-resume-002-exp-001",
+        "title": "Agent Workflow Platform PM"
+      },
+      {
+        "experience_id": "syn-resume-002-exp-002",
+        "title": "Food Delivery Courier Part-time"
+      },
+      {
+        "experience_id": "syn-resume-002-exp-003",
+        "title": "Multimodal Demo Lab"
+      }
+    ]
+  },
+  {
+    "resume_id": "syn-resume-003",
+    "sample_class": "synthetic",
+    "consent_status": "n/a",
+    "source_type": "synthetic",
+    "display_name": "Syn Candidate C",
+    "raw_text": "Syn Candidate C — Technical Product Manager\nEmail: syn.candidate.c@example.com | Hangzhou\n\nEXPERIENCE\n\nSearch Ranking TPM | River Retail | 2020.01 - 2025.06\n- Owned search ranking product requirements; defined NDCG and offline/online evaluation with ML team.\n- Ran 30+ A/B experiments on recall and ranking features using SQL-heavy analysis.\n\nCoffee Shop Barista | Neighborhood Cafe | 2018.01 - 2018.12\n- Prepared drinks and managed inventory; unrelated to product work.\n\nCreator Tool Growth PM | ShortClip Studio | 2018.06 - 2019.12\n- Launched template marketplace and measured creator retention with cohort dashboards.\n\nEDUCATION\nB.S. Statistics, East Lake University, 2018\n\nSKILLS\nSQL, A/B experiments, search/recommendation product, PRD, cross-functional leadership\n",
+    "experiences": [
+      {
+        "experience_id": "syn-resume-003-exp-001",
+        "title": "Search Ranking TPM"
+      },
+      {
+        "experience_id": "syn-resume-003-exp-002",
+        "title": "Coffee Shop Barista"
+      },
+      {
+        "experience_id": "syn-resume-003-exp-003",
+        "title": "Creator Tool Growth PM"
+      }
+    ]
+  },
+  {
+    "resume_id": "syn-resume-004",
+    "sample_class": "synthetic",
+    "consent_status": "n/a",
+    "source_type": "synthetic",
+    "display_name": "Syn Candidate D",
+    "raw_text": "Syn Candidate D — AI Product (Developer Tools)\nEmail: syn.candidate.d@example.com | Shenzhen\n\nEXPERIENCE\n\nCoding Agent Eval Lead | DevForge | 2023.02 - 2025.09\n- Built Agentic Evals covering task success, latency, and crash recovery for an IDE coding agent.\n- Daily user of Cursor and Copilot; wrote readiness criteria before model releases.\n\nSupermarket Cashier Weekend | FreshMart | 2017.03 - 2017.10\n- Weekend cashier shifts; no software product relevance.\n\nAPI Developer Portal PM | CloudNode | 2021.01 - 2023.01\n- Owned developer docs, quota UX, and example galleries for an LLM API product.\n\nEDUCATION\nB.Eng. Software Engineering, South Harbor University, 2017\n\nSKILLS\nAgentic Evals, developer products, API UX, documentation, release readiness\n",
+    "experiences": [
+      {
+        "experience_id": "syn-resume-004-exp-001",
+        "title": "Coding Agent Eval Lead"
+      },
+      {
+        "experience_id": "syn-resume-004-exp-002",
+        "title": "Supermarket Cashier Weekend"
+      },
+      {
+        "experience_id": "syn-resume-004-exp-003",
+        "title": "API Developer Portal PM"
+      }
+    ]
+  },
+  {
+    "resume_id": "syn-resume-005",
+    "sample_class": "synthetic",
+    "consent_status": "n/a",
+    "source_type": "synthetic",
+    "display_name": "Syn Candidate E",
+    "raw_text": "Syn Candidate E — Hardware / Voice Product\nEmail: syn.candidate.e@example.com | Beijing\n\nEXPERIENCE\n\nIn-Car Voice Assistant PM | AutoNova | 2021.05 - 2025.07\n- Defined car voice scenes, safety refusal policy, and multi-turn dialog metrics with cockpit software.\n- Partnered with cloud LLM vendors on latency and wake-word tradeoffs.\n\nCampus Library Shelving Aide | Uni Library | 2016.09 - 2017.06\n- Shelved books; no PM ownership.\n\nSmartphone Assistant Feature PM | Handset Co | 2018.07 - 2021.04\n- Shipped on-device assistant features balancing power, privacy, and accuracy.\n\nEDUCATION\nB.S. Industrial Design, Capital Design College, 2016\n\nSKILLS\nvoice interaction, smart hardware, HMI, on-device AI tradeoffs, requirements & prototypes\n",
+    "experiences": [
+      {
+        "experience_id": "syn-resume-005-exp-001",
+        "title": "In-Car Voice Assistant PM"
+      },
+      {
+        "experience_id": "syn-resume-005-exp-002",
+        "title": "Campus Library Shelving Aide"
+      },
+      {
+        "experience_id": "syn-resume-005-exp-003",
+        "title": "Smartphone Assistant Feature PM"
+      }
+    ]
+  },
+  {
+    "resume_id": "syn-resume-006",
+    "sample_class": "synthetic",
+    "consent_status": "n/a",
+    "source_type": "synthetic",
+    "display_name": "Syn Candidate F",
+    "raw_text": "Syn Candidate F — Vision / ToB AI Product\nEmail: syn.candidate.f@example.com | Shanghai\n\nEXPERIENCE\n\nVision Solution PM | SightWorks | 2019.04 - 2025.05\n- Productized computer-vision solutions for manufacturing QA; defined acceptance metrics with customers.\n- Led pre-sales workshops and converted three lighthouse accounts.\n\nWedding Photographer Side Gig | Freelance | 2018.01 - 2018.12\n- Weekend photography gigs; not AI product work.\n\nKnowledge Base RAG PM | Enterprise Wiki | 2025.06 - 2025.09\n- Shipped enterprise knowledge QA with permissions, audit logs, and refusal evaluation set.\n\nEDUCATION\nM.S. Computer Vision, East China Tech, 2019\n\nSKILLS\nCV products, ToB delivery, customer discovery, RAG permissions, acceptance metrics\n",
+    "experiences": [
+      {
+        "experience_id": "syn-resume-006-exp-001",
+        "title": "Vision Solution PM"
+      },
+      {
+        "experience_id": "syn-resume-006-exp-002",
+        "title": "Wedding Photographer Side Gig"
+      },
+      {
+        "experience_id": "syn-resume-006-exp-003",
+        "title": "Knowledge Base RAG PM"
+      }
+    ]
+  }
+]

@@ -121,3 +121,50 @@ PLAN vs ACTUAL:
 
 Harness notes fixed during live: must-have scoring must use evidence_text (localized Chinese 	ext); match title alignment uses canonical titles. Do not treat offline fixture scores as product quality.
 
+
+## Expanded synthetic/public live (2026-10-09) — `live-2026-10-09-expanded`
+
+**Disclaimer**: Corpus is `public_inspired` JD + authored synthetic JD + fully synthetic resumes. **Not** `consented_real`. Numbers are product-API smoke on expanded fixtures, **not** a real-user study and **not** the handoff 30/90/10 target sizes.
+
+### Corpus (ACTUAL)
+
+| Asset | Count | Notes |
+|---|---:|---|
+| JD | 16 | 3 public_inspired (Baidu pages) + 13 authored/synthetic; ≥6 companies; families ai_product / product_manager / technical_product |
+| Resume | 6 | all synthetic; multi-experience with deliberate OMIT rows |
+| Match cases | 17 | resume × JD pairs |
+| Rewrite units | 17 | human 1–5 left UNRATED |
+| Interview | 5 packs / 15 questions | structural live checks |
+
+Evidence: `evals/benchmark/manifests/offline_fixture_manifest.json`, `corpus_collection_log.json`, fixtures under `evals/benchmark/fixtures/`.
+
+### Live metrics
+
+| Suite | n | Key metrics | Top failures |
+|---|---:|---|---|
+| EVAL-JD | 16 | company 1.0; location 1.0; years 1.0; role_title 0.8125; education 0.125; must_have_soft_recall 0.25 | edu often null on 本科; must_have gold phrases soft-miss product evidence; title paren/spacing (e.g. Coding Agent) |
+| EVAL-MATCH | 17 | decision_accuracy ≈0.358; critical_omit_errors 2 | Cashier/Courier/Barista gold=OMIT frequently predicted KEEP_AND_HIGHLIGHT; 2 cases high-signal KEEP_AND_HIGHLIGHT→OMIT |
+| EVAL-REWRITE | 17 | live_bullet_total 41; human dims UNRATED | No pipeline hard-fail; quality UNRATED |
+| EVAL-INTERVIEW | 15 Q / 5 packs | live_topic_total 32; synthetic_demo_leak_pipelines 2 | Demo/CURATED leak still present on 2 packs; grounding UNRATED |
+
+Raw: `evals/benchmark/runs/live-2026-10-09-expanded.json`  
+Summary: `evals/benchmark/reports/live-2026-10-09-expanded.summary.json`
+
+### Honest limits vs handoff plan
+
+| Plan | Actual | Gap |
+|---|---:|---|
+| JD 30 | 16 | Partial — practical one-pass live cost |
+| Match 30 | 17 | Partial |
+| Rewrite 90 | 17 | Far below; human scores still UNRATED |
+| Interview 10/50 | 5/15 | Partial |
+| consented_real resumes 10 | 0 | Still NOT_RUN |
+
+### Product signals reinforced
+
+1. **OMIT pollution** — irrelevant jobs (cashier/courier/barista) still KEEP_AND_HIGHLIGHT on many JDs (RISK-ACC-004 adjacency).
+2. **Critical omit** — at least 2 high-priority experiences omitted by model.
+3. **Education extraction** — Chinese 本科/硕士 often missing in live actual (RISK-ACC-005 / JD parse chain).
+4. **must_have alignment** — gold phrases vs product evidence_text soft-recall only 0.25 on this corpus.
+5. **Interview demo leak** — 2/5 packs still trip SYNTHETIC_DEMO / CURATED header detector (RISK-ACC-003).
+
