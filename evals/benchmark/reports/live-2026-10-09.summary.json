@@ -1,0 +1,86 @@
+{
+  "run_id": "live-2026-10-09",
+  "created_at": "2026-10-09T05:32:49+00:00",
+  "git_head": "abe876fa6581f6148c2273b39f1eb52614a59454",
+  "mode": "live",
+  "suites": [
+    {
+      "suite": "jd",
+      "status": "COMPLETED",
+      "fixture_count": 2,
+      "reason": null,
+      "metrics": {
+        "company": 1.0,
+        "role_title": 1.0,
+        "location": 1.0,
+        "years_experience": 1.0,
+        "education": 1.0,
+        "must_have_soft_recall": 1.0
+      },
+      "sample_class": "synthetic",
+      "failures": [],
+      "planned_note": "PLAN=30 independent JDs; ACTUAL=synthetic fixtures only"
+    },
+    {
+      "suite": "match",
+      "status": "COMPLETED",
+      "fixture_count": 2,
+      "reason": null,
+      "metrics": {
+        "decision_accuracy": 0.14285714285714285,
+        "critical_omit_errors": 1,
+        "human_macro_f1": "NOT_EVALUABLE"
+      },
+      "sample_class": "synthetic",
+      "failures": [
+        "syn-match-001",
+        "syn-match-002"
+      ],
+      "planned_note": "PLAN=30; ACTUAL=synthetic fixtures only"
+    },
+    {
+      "suite": "rewrite",
+      "status": "COMPLETED",
+      "fixture_count": 2,
+      "reason": null,
+      "metrics": {
+        "human_factuality_mean": "UNRATED",
+        "human_jd_fit_mean": "UNRATED",
+        "adoption_rate": "NOT_EVALUABLE",
+        "critical_fact_error_rate": "NOT_EVALUABLE",
+        "live_bullet_total": 3
+      },
+      "sample_class": "synthetic",
+      "failures": [],
+      "planned_note": "PLAN=90 rewrite units; ACTUAL=synthetic fixtures only; human dims UNRATED"
+    },
+    {
+      "suite": "interview",
+      "status": "COMPLETED",
+      "fixture_count": 2,
+      "reason": null,
+      "metrics": {
+        "live_topic_total": 6,
+        "synthetic_demo_leak_pipelines": 0,
+        "jd_grounding_human": "UNRATED",
+        "resume_grounding_human": "UNRATED"
+      },
+      "sample_class": "synthetic",
+      "failures": [],
+      "planned_note": "PLAN=10 cases / 50 questions; ACTUAL=synthetic fixtures only"
+    }
+  ],
+  "raw_run_path": "evals\\benchmark\\runs\\live-2026-10-09.json",
+  "notes": [
+    "Offline scores use synthetic fixtures only.",
+    "Live mode may call the product API with synthetic fixtures; sample_class must be read from the run.",
+    "Do not report synthetic live numbers as consented-real product quality or as the full 30/90 plan sizes."
+  ],
+  "corpus": {
+    "consented_real": 0,
+    "synthetic_fixtures_per_suite": 2,
+    "private_dir_empty": true
+  },
+  "provider_key_present": true,
+  "provider_called": true
+}

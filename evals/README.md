@@ -28,6 +28,7 @@ From repo root with the worktree venv:
 python -m evals.benchmark.validate
 python -m evals.benchmark.run --suite all --mode offline
 python -m evals.benchmark.run --suite jd --mode live
+python -m evals.benchmark.run --suite all --mode live --run-id live-2026-10-09
 python -m evals.benchmark.run --suite rewrite --mode baseline
 python -m evals.benchmark.report --run-id <RUN_ID>
 ```
