@@ -1,0 +1,7 @@
+{
+  "readiness_status": 200,
+  "readiness_excerpt": "{\"mission_id\":\"bb71e19d-9cd4-43cc-89e6-fc33a276d0b6\",\"status\":\"INSUFFICIENT_EVIDENCE\",\"why\":\"The Mission has not completed its preparation chain.\",\"blocks\":[\"Create a Target Resume\",\"Build the company-specific Interview Pack\"],\"what_would_change\":[\"Complete the missing preparation steps before applying.\"],\"advice_only\":true}",
+  "generate_status": 409,
+  "generate_excerpt": "{\"detail\":\"请先选择这份岗位要用的简历，再继续。\"}",
+  "gate_observed": true
+}

@@ -1,0 +1,7 @@
+{
+  "status": 200,
+  "workflow_state": "ROLE_UNDERSTOOD",
+  "company": "Acme Labs",
+  "role": "AI Product Manager",
+  "display_name": "Acme Labs · AI Product Manager"
+}
