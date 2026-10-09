@@ -21,10 +21,10 @@ Baseline is **local-only**; integration tip was not on GitHub at handoff.
 
 | Item | Reason |
 |---|---|
-| EVAL-JD live on 30 real JDs | No authorized 30-JD corpus checked in; only 2 synthetic fixtures |
-| EVAL-MATCH live × 30 | No consented resume×JD gold labels |
-| EVAL-REWRITE live × 90 + human 1–5 | No raters; no consented rewrite units |
-| EVAL-INTERVIEW live × 50 Q | No live session capture pack; citation wiring still pending product patch |
+| EVAL-JD live on 30 real/consented JDs | Consented corpus still 0. Synthetic live (n=2) ran as sample_class=synthetic; see Live run section |
+| EVAL-MATCH live x30 consented | Consented gold still 0. Synthetic live n=2 COMPLETED with decision_accuracy=0.143; see Live run |
+| EVAL-REWRITE live x90 + human 1-5 | Synthetic live n=2 COMPLETED (3 bullets); human dims UNRATED; consented units 0 |
+| EVAL-INTERVIEW live x50 Q | Synthetic live pack COMPLETED (6 topics, no demo leak); human grounding UNRATED; consented 0 |
 | EVAL-E2E browser matrix | Phase-2 API path + /missions HTTP done; interactive UI NOT_RUN (parent computerUse). Evidence: docs/evaluation/e2e-2026-10-09/ |
 | Direct LLM baseline A/B | No frozen `direct_llm_prompt.md` pack + blind raters |
 | Real users (n=5) usability | Not recruited |
@@ -90,3 +90,34 @@ Fresh mission b71e19d-… labeled E2E Acme Labs; workflow_state=ROLE_UNDERSTOOD
 | exception_missing_resume_gate | PASS |
 | patch_identity | PASS |
 | ui_interactive / studio / interview pack browser | NOT_RUN (PARENT_COMPUTERUSE) |
+
+## Live run live-2026-10-09 (synthetic fixtures only)
+
+Auth: user asked to run live per handoff using authorized/existing samples. **No consented_real resumes** in repo (private/ empty). Ran product API against **synthetic** offline fixtures with explicit sample_class=synthetic.
+
+Environment:
+- Worktree API :8000 on sqlite .runtime/combine-e2e.db (User-level Postgres DATABASE_URL was unreachable / tenant missing; E2E DB reused)
+- Provider key present: OPENAI_API_KEY yes (len only); OPENAI_BASE_URL / OPENAI_MODEL set (DeepSeek chat)
+- Branch tip at run: be876f (pre-commit); live client added in this commit
+
+PLAN vs ACTUAL:
+
+| Suite | Planned | Actual samples | Live status | Metrics / notes | Evidence |
+|---|---:|---:|---|---|---|
+| EVAL-JD | 30 | 2 synthetic | COMPLETED | company/role/location/years/education=1.0; must_have_soft_recall=1.0 (via evidence_text) | evals/benchmark/reports/live-2026-10-09.summary.json |
+| EVAL-MATCH | 30 | 2 synthetic | COMPLETED | decision_accuracy=0.143 (1/7); critical_omit_errors=1; human Macro-F1 NOT_EVALUABLE | same + raw run (gitignored) |
+| EVAL-REWRITE | 90 | 2 units / 1 pipeline | COMPLETED | live_bullet_total=3; human dims UNRATED; adoption/critical NOT_EVALUABLE | same |
+| EVAL-INTERVIEW | 10 cases / 50 Q | 2 fixture Q / 1 pack | COMPLETED | live_topic_total=6; synthetic_demo_leak_pipelines=0; grounding human UNRATED | same |
+| Direct LLM baseline | pack | 0 | NOT_RUN | Frozen prompt pack missing | — |
+| Consented real corpus | 10 resumes | 0 | NOT_RUN | evals/benchmark/private/ empty | — |
+
+### Top live failures (synthetic; not consented-real quality claims)
+
+1. **syn-match-001 / Campus bookstore cashier**: gold OMIT, live pred KEEP_AND_HIGHLIGHT — unrelated campus cashier over-selected.
+2. **syn-match-001 / RAG prototype project**: gold KEEP, live pred KEEP_AND_HIGHLIGHT — over-emphasis vs gold.
+3. **syn-match-002 / Creator A/B test lead**: gold KEEP_AND_HIGHLIGHT, live pred OMIT — **critical omit** of JD-aligned creator/A-B experience for Technical PM fixture.
+4. **syn-match-002 / Campus bookstore cashier**: gold OMIT, live pred KEEP_AND_HIGHLIGHT — same over-keep pattern.
+5. **syn-match-002 / LLM eval internship** & **RAG prototype**: gold KEEP/DEEMPHASIZE vs pred KEEP_AND_HIGHLIGHT — ranking too flat (everything highlight except cashier wrongly kept / creator wrongly omitted).
+
+Harness notes fixed during live: must-have scoring must use evidence_text (localized Chinese 	ext); match title alignment uses canonical titles. Do not treat offline fixture scores as product quality.
+

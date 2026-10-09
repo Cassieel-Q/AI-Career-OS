@@ -298,19 +298,40 @@ def run_suite(suite: str, mode: str) -> dict[str, Any]:
         result["provider_called"] = False
         return result
 
-    if mode in {"live", "baseline"}:
+    if mode == "baseline":
+        if not _provider_configured():
+            return _not_run_payload(
+                suite,
+                mode,
+                "OPENAI_API_KEY missing or placeholder; refusing to invent baseline results",
+            )
+        return _not_run_payload(
+            suite,
+            mode,
+            "Frozen direct-LLM baseline prompt pack not present; NOT_RUN",
+        )
+
+    if mode == "live":
         if not _provider_configured():
             return _not_run_payload(
                 suite,
                 mode,
                 "OPENAI_API_KEY missing or placeholder; refusing to invent live results",
             )
-        # Consented live corpora are not checked in yet.
-        return _not_run_payload(
-            suite,
-            mode,
-            "No consented live sample corpus / frozen baseline prompt pack in repo yet",
-        )
+        from evals.benchmark.live_client import LIVE_RUNNERS, api_healthy
+
+        if not api_healthy():
+            return _not_run_payload(
+                suite,
+                mode,
+                "Product API http://127.0.0.1:8000/health not ok; start combine API before live",
+            )
+        # Consented real corpus count is still 0. Parent authorized running live
+        # against existing synthetic fixtures with explicit sample_class=synthetic.
+        runner = LIVE_RUNNERS.get(suite)
+        if runner is None:
+            return _not_run_payload(suite, mode, f"No live runner for suite {suite}")
+        return runner()
     return _not_run_payload(suite, mode, f"unknown mode {mode}")
 
 
@@ -359,7 +380,8 @@ def main(argv: list[str] | None = None) -> int:
         "raw_run_path": str(run_path.relative_to(REPO_ROOT)) if run_path.is_relative_to(REPO_ROOT) else str(run_path),
         "notes": [
             "Offline scores use synthetic fixtures only.",
-            "Do not report these numbers as product quality on real JDs/resumes.",
+            "Live mode may call the product API with synthetic fixtures; sample_class must be read from the run.",
+            "Do not report synthetic live numbers as consented-real product quality or as the full 30/90 plan sizes.",
         ],
     }
     write_json(report_path, summary)
@@ -380,3 +402,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
