@@ -1,0 +1,121 @@
+{
+  "run_id": "e2e-2026-10-09-browser",
+  "started_at": "2026-10-09T05:10:34.807Z",
+  "synthetic_jd": true,
+  "steps": [
+    {
+      "step_name": "ui_open_missions",
+      "status": "PASS",
+      "duration_ms": 3033,
+      "error_type": null,
+      "retry_count": 0,
+      "evidence_reference": "browser/01-missions-home.png",
+      "browser_url": "http://127.0.0.1:3000/missions",
+      "notes": "h1=岗位档案"
+    },
+    {
+      "step_name": "ui_click_create_mission",
+      "status": "PASS",
+      "duration_ms": 2632,
+      "error_type": null,
+      "retry_count": 0,
+      "evidence_reference": "browser/02-missions-new.png",
+      "browser_url": "http://127.0.0.1:3000/missions/new",
+      "notes": "h1=添加目标岗位"
+    },
+    {
+      "step_name": "ui_empty_or_short_jd_chinese_error",
+      "status": "PASS",
+      "duration_ms": 702,
+      "error_type": null,
+      "retry_count": 0,
+      "evidence_reference": "browser/03a-empty-jd-disabled.png;browser/03b-short-jd-chinese-error.png",
+      "browser_url": "http://127.0.0.1:3000/missions/new",
+      "notes": "disabled_when_empty=true; alert=请粘贴完整一些的岗位描述。"
+    },
+    {
+      "step_name": "ui_identify_role_to_role_page",
+      "status": "PASS",
+      "duration_ms": 23769,
+      "error_type": null,
+      "retry_count": 0,
+      "evidence_reference": "browser/04a-jd-pasted.png;browser/04b-after-identify.png",
+      "browser_url": "http://127.0.0.1:3000/missions/e3ebf3f0-2ea2-4e46-979f-969950d3a46e/role",
+      "notes": "mission_id=e3ebf3f0-2ea2-4e46-979f-969950d3a46e; err="
+    },
+    {
+      "step_name": "ui_resume_source_modes",
+      "status": "PASS",
+      "duration_ms": 3777,
+      "error_type": null,
+      "retry_count": 0,
+      "evidence_reference": "browser/05-resume-source-ui.png",
+      "browser_url": "http://127.0.0.1:3000/missions/e3ebf3f0-2ea2-4e46-979f-969950d3a46e/resume",
+      "notes": "saw 已有简历 / 上传 PDF / 粘贴文本"
+    },
+    {
+      "step_name": "ui_missing_resume_gate",
+      "status": "PASS",
+      "duration_ms": 525,
+      "error_type": null,
+      "retry_count": 0,
+      "evidence_reference": "browser/05b-missing-resume-gate.png",
+      "browser_url": "http://127.0.0.1:3000/missions/e3ebf3f0-2ea2-4e46-979f-969950d3a46e/resume",
+      "notes": "(primary CTA disabled until resume mode selected — UI gate)"
+    },
+    {
+      "step_name": "ui_studio_interview_entry_visibility",
+      "status": "PASS",
+      "duration_ms": 3540,
+      "error_type": null,
+      "retry_count": 0,
+      "evidence_reference": "browser/06-overview-nav.png",
+      "browser_url": "http://127.0.0.1:3000/missions/e3ebf3f0-2ea2-4e46-979f-969950d3a46e/role",
+      "notes": "interview_visible=true; studio_visible=false; interview_links=0; studio_links=0"
+    },
+    {
+      "step_name": "ui_interactive_missions_flow",
+      "status": "PASS",
+      "duration_ms": 0,
+      "error_type": null,
+      "retry_count": 0,
+      "evidence_reference": "browser/04b-after-identify.png",
+      "browser_url": "http://127.0.0.1:3000/missions/e3ebf3f0-2ea2-4e46-979f-969950d3a46e/role",
+      "notes": "composite: home→new→JD→role"
+    },
+    {
+      "step_name": "ui_studio_vs_archive_preview",
+      "status": "NOT_RUN",
+      "duration_ms": 0,
+      "error_type": "STUDIO_NOT_VISIBLE_YET",
+      "retry_count": 0,
+      "evidence_reference": "browser/06-overview-nav.png",
+      "browser_url": "http://127.0.0.1:3000/missions/e3ebf3f0-2ea2-4e46-979f-969950d3a46e/role",
+      "notes": "No Studio entry visible at this early resume-prep stage (may be expected)"
+    },
+    {
+      "step_name": "ui_interview_pack_browser",
+      "status": "PASS",
+      "duration_ms": 0,
+      "error_type": null,
+      "retry_count": 0,
+      "evidence_reference": "browser/06-overview-nav.png",
+      "browser_url": "http://127.0.0.1:3000/missions/e3ebf3f0-2ea2-4e46-979f-969950d3a46e/role",
+      "notes": "Interview/模拟面试 entry visible (may still be gated until resume confirmed)"
+    }
+  ],
+  "screenshots": [
+    "01-missions-home.png",
+    "02-missions-new.png",
+    "03a-empty-jd-disabled.png",
+    "03b-short-jd-chinese-error.png",
+    "04a-jd-pasted.png",
+    "04b-after-identify.png",
+    "05-resume-source-ui.png",
+    "05b-missing-resume-gate.png",
+    "06-overview-nav.png"
+  ],
+  "mission_id": "e3ebf3f0-2ea2-4e46-979f-969950d3a46e",
+  "blockers": [],
+  "finished_at": "2026-10-09T05:11:14.580Z"
+}

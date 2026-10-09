@@ -22,3 +22,7 @@ esume-gate.json — 409 missing-resume gate
 - Profile / mission IDs in step-log.json
 - Label: synthetic Acme Labs E2E EVAL — do not treat as production seed
 - No protected missions deleted
+
+## Browser E2E
+
+See `BROWSER.md` and `browser/` screenshots from Playwright on the laptop loopback.
