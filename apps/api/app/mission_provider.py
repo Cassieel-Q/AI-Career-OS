@@ -16,6 +16,7 @@ import time
 from .mission_schemas import (
     ExperienceSelectionPayload,
     InterviewPackPayload,
+    JDRequirement,
     JobExtractionPayload,
     RedTeamPayload,
     ResumeStrategyPayload,
@@ -817,6 +818,11 @@ class OpenAIMissionProvider:
             location = text[:255] if text else None
         location = normalize_location(location)
 
+        education_raw = data.get("education_requirements") or data.get("education") or data.get("degree_requirements") or []
+        if isinstance(education_raw, str):
+            education_raw = [education_raw]
+        education_requirements = [str(item).strip()[:120] for item in education_raw if str(item).strip()] if isinstance(education_raw, list) else []
+
         requirements_raw = data.get("requirements") or data.get("must_have") or data.get("required") or []
         preferred_raw = data.get("preferred_requirements") or data.get("preferred") or data.get("nice_to_have") or []
         if isinstance(requirements_raw, dict):
@@ -842,6 +848,7 @@ class OpenAIMissionProvider:
             "role_family": role_family[:64],
             "seniority": seniority[:64],
             "location": location,
+            "education_requirements": list(dict.fromkeys(education_requirements))[:10],
             "responsibilities": OpenAIMissionProvider._string_list(data.get("responsibilities") or data.get("duties"), max_items=60),
             "requirements": requirements,
             "preferred_requirements": preferred,
@@ -1108,6 +1115,40 @@ class OpenAIMissionProvider:
     def _enrich_job_extraction(raw_text: str, extraction: JobExtractionPayload) -> JobExtractionPayload:
         """Fill company/role/seniority/location from JD text when the model left them UNKNOWN."""
         updates: dict[str, object] = {}
+        import re as _re
+
+        body = (raw_text or "").strip()
+        education_phrases: list[str] = []
+        for match in _re.finditer(
+            r"本科(?:及以上|以上)?|学士(?:及以上|以上)?|硕士(?:及以上|以上)?|研究生(?:及以上|以上)?|博士(?:及以上|以上)?|Bachelor(?:'s)?(?:\s+degree)?(?:\s+or\s+above)?|Master(?:'s)?(?:\s+degree)?(?:\s+or\s+above)?|Ph\.?D\.?",
+            body,
+            flags=_re.IGNORECASE,
+        ):
+            phrase = match.group(0).strip()
+            if phrase.casefold() not in {item.casefold() for item in education_phrases}:
+                education_phrases.append(phrase)
+        existing_education = list(extraction.education_requirements or [])
+        for phrase in education_phrases:
+            if not any(phrase.casefold() in str(item).casefold() or str(item).casefold() in phrase.casefold() for item in existing_education):
+                existing_education.append(phrase)
+        if existing_education != list(extraction.education_requirements or []):
+            updates["education_requirements"] = existing_education[:10]
+
+        requirements = list(extraction.requirements or [])
+        preferred = list(extraction.preferred_requirements or [])
+        existing_requirement_text = " ".join(item.text for item in [*requirements, *preferred])
+        for idx, phrase in enumerate(existing_education):
+            if phrase.casefold() in existing_requirement_text.casefold():
+                continue
+            line = next((line for line in body.splitlines() if phrase.casefold() in line.casefold()), "")
+            row = JDRequirement(id=f"education-{idx + 1}", text=phrase, category="education", evidence_text=phrase)
+            target = preferred if _re.search(r"优先|加分|preferred|nice to have", line, flags=_re.IGNORECASE) else requirements
+            target.append(row)
+        if requirements != list(extraction.requirements or []):
+            updates["requirements"] = requirements[:80]
+        if preferred != list(extraction.preferred_requirements or []):
+            updates["preferred_requirements"] = preferred[:50]
+
         company = (extraction.company or "").strip()
         if not company or company.upper() == "UNKNOWN":
             inferred_company = OpenAIMissionProvider._infer_company_from_jd(raw_text)
@@ -1284,7 +1325,7 @@ class OpenAIMissionProvider:
 
     def parse_jd(self, raw_text: str) -> JobExtractionPayload:
         extraction = self._call(
-            "extract company, role, role_family, seniority, and JD requirements. Output ONLY company, role, role_family, seniority, location, responsibilities, requirements, preferred_requirements, capabilities, keywords. Each requirement must be an object with id, text, category, evidence_text (evidence_text must be a verbatim substring of the JD). Always infer a concrete role/title from responsibilities when the JD has no explicit title — do NOT set role to UNKNOWN if duties describe the job. Only company, role_family, seniority, or location may be UNKNOWN when truly absent.",
+            "extract company, role, role_family, seniority, education requirements, and JD requirements. Output ONLY company, role, role_family, seniority, location, education_requirements, responsibilities, requirements, preferred_requirements, capabilities, keywords. education_requirements must copy exact degree phrases from the JD when present (本科/本科及以上/硕士/博士/Bachelor/Master/PhD). Each requirement must be an object with id, text, category, evidence_text (evidence_text must be a verbatim substring of the JD). Always infer a concrete role/title from responsibilities when the JD has no explicit title — do NOT set role to UNKNOWN if duties describe the job. Only company, role_family, seniority, or location may be UNKNOWN when truly absent.",
             {"raw_text": raw_text},
             JobExtractionPayload,
         )
@@ -1400,6 +1441,9 @@ class OpenAIMissionProvider:
                 if heuristic_decision == "OMIT":
                     decision = heuristic_decision
                     why = heuristic_why
+                elif heuristic_decision == "KEEP_AND_HIGHLIGHT" and decision == "OMIT" and heuristic_confidence >= 0.9:
+                    decision = heuristic_decision
+                    why = heuristic_why
                 elif heuristic_decision == "DEEMPHASIZE" and decision in {"KEEP", "KEEP_AND_HIGHLIGHT"} and heuristic_confidence >= 0.8:
                     decision = heuristic_decision
                     why = heuristic_why
@@ -1432,21 +1476,27 @@ class OpenAIMissionProvider:
         # Awards and generic competition words are not technical evidence by
         # themselves; campus roles must show an actual product/engineering
         # action before they can outrank a project or research experience.
-        technical_terms = ("项目", "研究", "实验", "模型", "风机", "算法", "数据", "评测", "产品", "结构", "工程", "系统", "量产", "python", "matlab", "autocad", "supermap", "效率", "设计", "优化", "测试", "发电", "波能", "系泊", "方案")
+        technical_terms = ("项目", "研究", "实验", "模型", "风机", "算法", "数据", "评测", "产品", "结构", "工程", "系统", "量产", "python", "matlab", "autocad", "supermap", "效率", "设计", "优化", "测试", "发电", "波能", "系泊", "方案", "原型", "需求", "指标", "rag", "agent", "prompt", "编程")
+        product_terms = ("创作", "内容", "用户", "增长", "运营", "a/b", "ab测试", "ab test", "实验", "产品", "需求", "原型", "指标", "评测", "工作流", "交互")
+        service_terms = ("收银", "咖啡师", "咖啡", "酒吧", "外卖", "配送", "快递", "服务员", "餐饮", "店员", "导购", "收银员", "barista", "courier", "waiter", "retail")
         admin_terms = ("助理", "运行保障", "行政", "资料整理", "事务")
         is_campus = any(term in blob for term in campus_terms) or experience_type in {"CAMPUS", "STUDENT", "LEADERSHIP", "VOLUNTEER"}
         technical_text = description.casefold() if is_campus else work_content
-        has_technical = any(term in technical_text for term in technical_terms) or (bool(cap_hits) and not is_campus)
+        has_technical = any(term.casefold() in technical_text for term in technical_terms) or any(term.casefold() in technical_text for term in product_terms) or (bool(cap_hits) and not is_campus)
         is_admin = any(term in blob for term in admin_terms)
         label = title or organization or "这段经历"
         role = extraction.role if extraction.role and extraction.role != "UNKNOWN" else "目标岗位"
+        is_product_target = any(term in role.casefold() for term in ("产品", "product", "pm", "ai", "技术", "工程", "technical"))
+        is_service_role = any(term.casefold() in blob for term in service_terms)
         if is_campus and not has_technical:
             return "OMIT", f"「{label}」主要是校园事务，与{role}的核心产品/技术职责关联弱，暂不放入本份岗位简历。", [], 0.92
+        if is_product_target and is_service_role and not has_technical:
+            return "OMIT", f"「{label}」主要是基础服务工作，未体现{role}需要的产品或技术证据，暂不放入本份岗位简历。", [], 0.94
         if is_admin and not has_technical:
             return "DEEMPHASIZE", f"「{label}」可保留为背景，但与{role}的核心能力关联有限，建议弱化篇幅，不作为重点经历。", cap_hits, 0.82
         highlights = cap_hits or ["项目中的个人负责部分", "使用的方法与决策", "可核对的结果或奖项"]
         detail = description[:180] if description else "；".join(highlights)
-        return "KEEP_AND_HIGHLIGHT", f"「{label}」包含与{role}相关的可验证内容：{detail}。建议围绕个人动作、方法和结果展开。", highlights, 0.86 if has_technical else 0.62
+        return "KEEP_AND_HIGHLIGHT", f"「{label}」包含与{role}相关的可验证内容：{detail}。建议围绕个人动作、方法和结果展开。", highlights, 0.93 if has_technical else 0.62
 
     def build_resume_strategy(self, *, profile_facts: list[dict[str, object]], extraction: JobExtractionPayload, what_matters: WhatMattersPayload, selections: ExperienceSelectionPayload) -> ResumeStrategyPayload:
         eligible = [row for row in selections.selections if str(getattr(row.decision, "value", row.decision)) != "OMIT"]
@@ -2166,7 +2216,9 @@ class OpenAIMissionProvider:
                 "question_patterns": patterns[:20],
                 "evidence_expected": evidence[:20],
             })
-        return enriched
+        from .interview_pack_intel import annotate_topics
+
+        return annotate_topics(enriched, interview_intel, company=company)
 
     def build_interview_pack(
         self,

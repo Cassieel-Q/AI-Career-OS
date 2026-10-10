@@ -1,0 +1,92 @@
+{
+  "web": "http://127.0.0.1:3001",
+  "missionId": "48b6772e-17c7-42c4-a18f-a0dda61a1508",
+  "profileId": "45995c1bdbe84c5991fa9782fff16cde",
+  "captured_at": "2026-10-10T14:23:22.835Z",
+  "routes": [
+    {
+      "file": "01-missions.png",
+      "route": "/missions?profile_id=45995c1bdbe84c5991fa9782fff16cde",
+      "url": "http://127.0.0.1:3001/missions?profile_id=45995c1bdbe84c5991fa9782fff16cde",
+      "status": 200,
+      "title": "AI Career OS",
+      "headings": [
+        "岗位档案",
+        "AI 产品经理实习生",
+        "评论互动产品实习生"
+      ],
+      "body_excerpt": "A\nAI Career OS\n\nAI CAREER OS\n\n岗位档案\n\n集中管理目标岗位、简历版本与面试记录。\n\n新建岗位\n面试记录库\n上传简历\n选择已有档案（可选）\n暂不选择（可直接准备新岗位）\n档案 · 已有简历 · 更新 2026-10-10 22:22\n删除选中的简历档案删除简历\n恢复已有档案\n恢复已有档案\n\n已保存的简历可用于多个岗位。\n\nACME LABS\n\nAI 产品经理实习生\n\n实习\n\n简历：已选择\n面试：待开始\n更新于 2026/10/8\n面试准备中\n删除\n\n小红书\n\n评论互动产品实习生\n\n实习\n\n简历：已选择\n面试：待开始\n更新于 2026/10/9\n面试准备中\n删除"
+    },
+    {
+      "file": "02-role.png",
+      "route": "/missions/48b6772e-17c7-42c4-a18f-a0dda61a1508/role",
+      "url": "http://127.0.0.1:3001/missions/48b6772e-17c7-42c4-a18f-a0dda61a1508/role",
+      "status": 200,
+      "title": "AI Career OS",
+      "headings": [
+        "确认岗位信息",
+        "已识别：Acme Labs / AI 产品经理实习生",
+        "公司 / 岗位",
+        "简历来源"
+      ],
+      "body_excerpt": "← 岗位档案\nAcme Labs · AI 产品经理实习生\n面试准备中\n01\n岗位\n✓\n简历\n已完成，可返回\n03\n模拟面试\n可进入\n04\n面试记录\n先完成模拟面试。\n\n岗位已识别\n\n岗位档案\n\n确认岗位信息\n\n核对识别结果，再选择简历来源。\n\n岗位已识别\n\n已识别：Acme Labs / AI 产品经理实习生\n\n这个岗位主要关注：大模型评测工作流设计、质量与延迟指标构建、跨职能协作、Python 数据分析。\n\n原始岗位描述\n\nAcme Labs 招聘 AI 产品经理实习生，地点上海。职责：设计大模型评测工作流、构建质量与延迟指标、与研发协作优化产品。要求：有 Python 和 SQL 数据分析经验，能够解释评测方案并复盘项目决策。\n\n需要更正时再编辑\n\n公司 / 岗位\n公司\n岗位\n级别\n地点\n保存岗位\n\n下一步\n\n简历来源\n\n选择已有简历，或为当前岗位上传新版本。\n\n选择简历来源"
+    },
+    {
+      "file": "03-resume-source.png",
+      "route": "/missions/48b6772e-17c7-42c4-a18f-a0dda61a1508/resume",
+      "url": "http://127.0.0.1:3001/missions/48b6772e-17c7-42c4-a18f-a0dda61a1508/resume",
+      "status": 200,
+      "title": "AI Career OS",
+      "headings": [
+        "最终简历",
+        "当前：上传 PDF · combine-resume-b（仅本岗位）",
+        "原始简历 / 岗位定向版本",
+        "保留原文与原有结构",
+        "岗位版本 v1",
+        "岗位定向文案",
+        "简历已确认，可以投递或开始模拟面试"
+      ],
+      "body_excerpt": "← 岗位档案\nAcme Labs · AI 产品经理实习生\n面试准备中\n✓\n岗位\n已完成，可返回\n02\n简历\n03\n模拟面试\n可进入\n04\n面试记录\n先完成模拟面试。\n\n岗位已识别\n\n简历\n\n最终简历\n\n对照原始简历审阅岗位版本，确认后再进入模拟面试。\n\n简历来源\n\n当前：上传 PDF · combine-resume-b（仅本岗位）\n\n若要改用上传 PDF 或粘贴文本，可在此更换；更换后会重新筛选经历。\n\n换简历来源\n\n岗位定向版本\n\n原始简历 / 岗位定向版本\n\n对照原文审阅改写，并逐条决定是否采用。\n\n重新生成岗位版本\n\n已处理 7 / 7 项\n\n原始简历\n\n保留原文与原有结构\n教育背景\nExample University\nBA · Communication · 2023-2027\n实习与工作经历\nCommunity Operations Intern\nNorthstar Media · 2025\n\n原简历未填写具体描述。\n\n查看对应改写\n个人技能\n\nResearch interviews、spreadsheets、content operations\n\n经历筛选\nConte"
+    },
+    {
+      "file": "04-resume-studio.png",
+      "route": "/missions/48b6772e-17c7-42c4-a18f-a0dda61a1508/resume/studio",
+      "url": "http://127.0.0.1:3001/missions/48b6772e-17c7-42c4-a18f-a0dda61a1508/resume/studio",
+      "status": 200,
+      "title": "AI Career OS",
+      "headings": [
+        "把确认过的经历，排成一份可投递的简历。",
+        "简历内容",
+        "实际页面预览",
+        "事实与导出",
+        "事实状态",
+        "生成投递版"
+      ],
+      "body_excerpt": "A\n•\nAI CAREER OS\nRESUME STUDIO / 简历工作台\n修订版 10 · 编辑中\n返回简历优化 ↗\n01 内容\n02 模板\n03 事实核对\n04 投递版\n\nFINAL RESUME / 排版与精修\n\n把确认过的经历，排成一份可投递的简历。\n\n点击页面文字直接修改。每次保存会生成新的修订版，预览和 PDF 始终使用同一份内容。\n\n选择模板 现代横线\n撤销\n重做\n01 / CONTENT\n简历内容\n拖动或使用箭头调整同一板块内的顺序\n基本信息\n姓名\nKai Chen\n电话\n000-0000-0000\n邮箱\nkai@example.invalid\n地点\n待填写\n教育经历\n＋\nExample University\n↑\n↓\nBA · Communication\n2023-2027\n省略\n＋ 添加要点\n工作与项目经历\n＋\nContent feedback study\n↑\n↓\n添加单位/说明\n2024\n省略\n• 2024年开展内容反馈研究，访谈12位创作者，整理产品痛点并形成总结。\n×\n＋ 添加要点\nCommunity Operations Intern\n↑\n↓\nNorthst"
+    },
+    {
+      "file": "05-interview.png",
+      "route": "/missions/48b6772e-17c7-42c4-a18f-a0dda61a1508/interview",
+      "url": "http://127.0.0.1:3001/missions/48b6772e-17c7-42c4-a18f-a0dda61a1508/interview",
+      "status": 200,
+      "title": "AI Career OS",
+      "headings": [
+        "模拟面试",
+        "问题预览已生成"
+      ],
+      "body_excerpt": "← 岗位档案\nAcme Labs · AI 产品经理实习生\n面试准备中\n✓\n岗位\n已完成，可返回\n✓\n简历\n已完成，可返回\n03\n模拟面试\n04\n面试记录\n先完成模拟面试。\n\n岗位已识别\n\n模拟面试\n\n模拟面试\n\n先看问题预览，再逐题回答。每题完成后会记录评分、优点和待改进点。\n\n最近一次练习\n\n建议继续练习：请保留项目证据\n\n查看本轮记录\n\n面试准备\n\n问题预览已生成\n\n先查看考察主题，再按题作答。\n\n重新生成问题预览\n\n问题预览\n\n01能力证明：大模型评测工作流设计请讲一次你设计或推动「大模型评测工作流设计」的完整闭环：指标如何选、样本怎么建、结论如何落地。\n考察点\n\nJD 职责明确要求设计大模型评测工作流，是岗位核心交付物，直接决定评测能否系统化落地。\n\n当「大模型评测工作流设计」结果不及预期时，你如何拆问题并推动算法/工程/业务一起改？\n\n02能力证明：质量与延迟指标构建请讲一次你设计或推动「质量与延迟指标构建」的完整闭环：指标如何选、样本怎么建、结论如何落地。\n03能力证明：跨职能协作举一次「跨职能协作」里多方目标冲突的经历：你如何对齐Acme Labs式交付节奏并拿到结果？"
+    },
+    {
+      "file": "06-interview-records.png",
+      "route": "/interview-records?profile_id=45995c1bdbe84c5991fa9782fff16cde",
+      "url": "http://127.0.0.1:3001/interview-records?profile_id=45995c1bdbe84c5991fa9782fff16cde",
+      "status": 200,
+      "title": "AI Career OS",
+      "headings": [
+        "按公司归档的真实面试",
+        "Acme Labs（测试）"
+      ],
+      "body_excerpt": "A\nAI Career OS\n\n面试记录库\n\n按公司归档的真实面试\n\n把一面 / 二面 / 三面的题目和回答留下来，录入后可走评分、复盘和补强建议。\n\n新建录入\n返回岗位准备\n选择档案\n请选择档案\n档案 · 已有简历 · 更新 2026-10-10 22:22\n\n文件夹\n\nAcme Labs（测试）\n\n1 场 · 最近 2026-10-08 · 一面\n\n打开"
+    }
+  ]
+}

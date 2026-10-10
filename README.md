@@ -25,7 +25,35 @@ The product is designed for AI product, technical product, and intelligent-hardw
 
 ## Product tour
 
-The tour below follows one real preparation loop from a pasted JD to an interview coaching plan. Each mission keeps its own resume decisions, final resume, interview questions, answers, scores, and memory.
+The current verified tour below was captured from the local application on 2026-10-10 using the isolated synthetic profile documented in [`docs/evaluation/e2e-2026-10-10/README.md`](docs/evaluation/e2e-2026-10-10/README.md). It covers the live routes that are safe to share: mission list, role confirmation, resume review, Resume Studio, mock-interview preview, and Interview Memory. The screenshots are fresh browser captures from the current branch; no static mock HTML is used.
+
+### Current verified route / 当前真实测试截图（2026-10-10）
+
+1. **Mission list / 岗位档案** — restored synthetic profile and two saved missions.
+
+   ![2026-10-10 岗位档案](docs/screenshots/project-tour-2026-10-10/01-missions.png)
+
+2. **Role confirmation / 岗位识别** — the Acme Labs JD, identified focus, and editable identity fields.
+
+   ![2026-10-10 岗位确认](docs/screenshots/project-tour-2026-10-10/02-role.png)
+
+3. **Resume review / 岗位定向简历** — source resume, accepted rewrites, and the final confirmation gate.
+
+   ![2026-10-10 简历审阅](docs/screenshots/project-tour-2026-10-10/03-resume-source.png)
+
+4. **Resume Studio / 简历工作台** — editable delivery document, live preview, fact status, and PDF action.
+
+   ![2026-10-10 简历工作台](docs/screenshots/project-tour-2026-10-10/04-resume-studio.png)
+
+5. **Mock interview / 模拟面试** — JD-grounded question preview with follow-up directions.
+
+   ![2026-10-10 模拟面试](docs/screenshots/project-tour-2026-10-10/05-interview.png)
+
+6. **Interview Memory / 面试记录库** — company-grouped real interview records and the next review entry point.
+
+   ![2026-10-10 面试记录库](docs/screenshots/project-tour-2026-10-10/06-interview-records.png)
+
+The detailed 17-image walkthrough below remains as a product behavior reference. Its older captures are retained for historical comparison; the dated set above is the evidence for the current branch.
 
 ### 1. Start from the target job / 从目标岗位开始
 

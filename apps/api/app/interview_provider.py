@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from typing import Any, Protocol
 from urllib.parse import urlparse
 from uuid import UUID
@@ -254,6 +255,37 @@ class OpenAIInterviewProvider:
             "evaluation": cls._normalize_evaluation(evaluation),
         }
 
+    @staticmethod
+    def _gate_reference_answer(evaluation: dict[str, object], *, target_job: dict[str, object], claim: dict[str, object], evidence: list[dict[str, object]]) -> dict[str, object]:
+        """Fail closed when a reference answer adds candidate facts absent from supplied evidence."""
+        reference = str(evaluation.get("reference_answer") or "").strip()
+        grounding = " ".join(
+            [
+                json.dumps(target_job.get("final_resume") or {}, ensure_ascii=False),
+                str(claim.get("claim") or ""),
+                json.dumps(evidence or [], ensure_ascii=False),
+            ]
+        )
+        if not reference or not grounding.strip(" {}[]\"'"):
+            return evaluation
+
+        answer_numbers = re.findall(r"(?<!\w)\d+(?:\.\d+)?\s*[%％]?", reference)
+        missing_numbers = [token.strip() for token in answer_numbers if token.strip() not in grounding]
+        high_risk_actions = re.findall(r"(?:访谈|采访|访问)[^。；，,。\n]{0,16}(?:用户|创作者|客户|专家)", reference)
+        unsupported_action = bool(high_risk_actions) and not any(action in grounding for action in high_risk_actions)
+        if not missing_numbers and not unsupported_action:
+            return evaluation
+
+        weak_points = list(evaluation.get("weak_points") or [])
+        if "参考回答含有未确认事实，已拦截。" not in weak_points:
+            weak_points.append("参考回答含有未确认事实，已拦截。")
+        return {
+            **evaluation,
+            "reference_answer": "证据不足，不能把这项动作或数字写入候选人的回答。请先补充可核对事实。",
+            "weak_points": weak_points[:8],
+            "recommended_next_action": evaluation.get("recommended_next_action") or "补充对应项目的原始记录、过程或结果证据。",
+        }
+
     def ask(self, *, target_job: dict[str, object], claim: dict[str, object], evidence: list[dict[str, object]], skills: list[dict[str, object]], turns: list[dict[str, object]], answer: str | None) -> InterviewResponsePayload:
         request: dict[str, object] = {
             "model": self.model,
@@ -287,6 +319,9 @@ class OpenAIInterviewProvider:
             raise InterviewProviderInvalidResponseError(reason="json_decode") from exc
         try:
             normalized = self._normalize_interview_payload(data)
+            normalized["evaluation"] = self._gate_reference_answer(
+                normalized["evaluation"], target_job=target_job, claim=claim, evidence=evidence
+            )
             return InterviewResponsePayload.model_validate(normalized)
         except InterviewProviderInvalidResponseError:
             raise

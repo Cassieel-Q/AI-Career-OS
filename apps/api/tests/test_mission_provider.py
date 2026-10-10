@@ -178,3 +178,55 @@ def test_strategy_fallback_only_carries_non_omitted_experiences():
     assert [str(row.experience_id) for row in strategy.experience_guidance] == ["22222222-2222-4222-8222-222222222222"]
     assert any("模型组装" in item for item in strategy.experience_guidance[0].what_to_highlight)
 
+
+def test_heuristic_omits_unrelated_service_role_for_product_jd():
+    from app.mission_schemas import JobExtractionPayload, WhatMattersPayload
+
+    extraction = JobExtractionPayload.model_validate({
+        "company": "示例公司", "role": "AI产品经理", "role_family": "AI_PRODUCT", "seniority": "INTERN",
+        "requirements": [], "preferred_requirements": [], "capabilities": ["产品定义", "用户研究"], "keywords": [],
+    })
+    matters = WhatMattersPayload.model_validate({
+        "core_capabilities": [{"name": "产品定义", "why": "JD", "evidence_refs": []}],
+        "high_importance_requirements": [], "confidence": 0.7,
+    })
+    decision, _, _, _ = OpenAIMissionProvider._heuristic_experience_decision(
+        {"title": "校园书店收银员", "organization": "校园书店", "description": "负责收银、补货和顾客咨询"},
+        extraction=extraction, what_matters=matters,
+    )
+    assert decision == "OMIT"
+
+
+def test_selection_recovers_high_signal_creator_ab_project_from_model_omit():
+    from app.mission_schemas import JobExtractionPayload, WhatMattersPayload
+
+    provider = OpenAIMissionProvider(client=_Client(json.dumps({"selections": [{
+        "experience_id": "44444444-4444-4444-8444-444444444444",
+        "decision": "OMIT", "why": "与岗位无关", "confidence": 0.9,
+    }]})))
+    extraction = JobExtractionPayload.model_validate({
+        "company": "示例公司", "role": "技术产品经理", "role_family": "TECHNICAL_PRODUCT", "seniority": "MID",
+        "requirements": [], "preferred_requirements": [], "capabilities": ["实验设计", "内容产品"], "keywords": [],
+    })
+    matters = WhatMattersPayload.model_validate({
+        "core_capabilities": [{"name": "实验设计", "why": "JD", "evidence_refs": []}],
+        "high_importance_requirements": [], "confidence": 0.7,
+    })
+    result = provider.select_experiences(profile_facts=[{
+        "id": "44444444-4444-4444-8444-444444444444", "kind": "experience", "title": "内容创作 A/B 测试负责人",
+        "description": "设计内容产品实验，负责创作者 A/B 测试与结果分析", "experience_type": "PROJECT",
+    }], extraction=extraction, what_matters=matters)
+    assert result.selections[0].decision.value == "KEEP_AND_HIGHLIGHT"
+
+
+def test_enrich_job_extraction_recovers_chinese_education_evidence():
+    from app.mission_schemas import JobExtractionPayload
+
+    extraction = JobExtractionPayload.model_validate({
+        "company": "示例公司", "role": "AI产品经理", "role_family": "AI_PRODUCT", "seniority": "MID",
+        "requirements": [], "preferred_requirements": [], "capabilities": [], "keywords": [],
+    })
+    result = OpenAIMissionProvider._enrich_job_extraction("岗位要求：本科及以上学历，3年以上产品经验", extraction)
+    assert result.education_requirements == ["本科及以上"]
+    assert any(item.category == "education" and "本科及以上" in item.evidence_text for item in result.requirements)
+

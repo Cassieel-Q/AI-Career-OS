@@ -154,3 +154,17 @@ def test_ai_product_manager_skill_pack_has_ten_structured_skills() -> None:
         "EXPERIMENTATION", "COMPETITIVE_REASONING",
     }
     assert all(record["followup_dimensions"] for record in records)
+
+
+def test_interview_provider_gates_reference_answer_invented_actions_and_numbers() -> None:
+    content = json.dumps({
+        "question": "请介绍这段经历？", "skill_id": "PROJECT_DEEP_DIVE",
+        "evaluation": {"score": 6, "reference_answer": "我访谈了50位创作者，并据此完成方案。", "strong_points": [], "weak_points": []},
+    }, ensure_ascii=False)
+    result = OpenAIInterviewProvider(client=SimpleNamespace(chat=SimpleNamespace(completions=FakeCompletions(content)))).ask(
+        target_job={"final_resume": {"bullets": [{"text": "分析 50 篇内容并完成方案"}]}},
+        claim={"claim": "内容分析项目"}, evidence=[{"value": "分析 50 篇内容"}],
+        skills=[], turns=[], answer="我分析了内容。",
+    )
+    assert "证据不足" in (result.evaluation.reference_answer or "")
+    assert any("未确认" in item for item in result.evaluation.weak_points)
