@@ -363,6 +363,16 @@ const realSelections = [
 // 5. buildExportFileName
 // ---------------------------------------------------------------------------
 {
+  const archive = buildPreExportChecklist({
+    profile: { full_name: "Candidate", phone: "", email: "" },
+    experiences: [{ id: "e1", title: "项目", description: "完成产品实验", experience_type: "PROJECT" }],
+    bullets: [{ id: "b1", source_experience_id: "e1", status: "ACCEPTED", suggested_text: "完成产品实验" }],
+    includeContactWarnings: false,
+  });
+  assert.equal(archive.some(item => item.code === "missing_phone" || item.code === "missing_email"), false);
+}
+
+{
   assert.equal(buildExportFileName({ name: "张三", company: "百度", role: "AI 产品经理实习生" }), "张三-百度-AI 产品经理实习生");
   assert.equal(buildExportFileName({ name: null, company: "百度", role: "产品经理" }), "简历-百度-产品经理");
   assert.equal(buildExportFileName({ name: "张三", company: "UNKNOWN", role: "产品经理" }), "张三-产品经理");

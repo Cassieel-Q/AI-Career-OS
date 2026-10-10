@@ -105,6 +105,7 @@ class JobExtractionPayload(_Strict):
     role_family: str = Field(min_length=1, max_length=64)
     seniority: str = Field(min_length=1, max_length=64)
     location: str | None = Field(default=None, max_length=255)
+    education_requirements: list[str] = Field(default_factory=list, max_length=10)
     responsibilities: list[str] = Field(default_factory=list, max_length=60)
     requirements: list[JDRequirement] = Field(default_factory=list, max_length=80)
     preferred_requirements: list[JDRequirement] = Field(default_factory=list, max_length=50)

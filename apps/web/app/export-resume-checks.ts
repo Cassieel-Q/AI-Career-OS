@@ -446,6 +446,8 @@ export type PreExportChecklistInput = {
   experiences?: ExportExperience[] | null;
   bullets?: ExportBullet[] | null;
   selections?: ExportSelection[] | null;
+  /** 来源档案预览可关闭联系人提示；最终 Studio 导出仍默认检查。 */
+  includeContactWarnings?: boolean;
 };
 
 export function resolveProfileName(profile: ExportChecksProfile | null | undefined): string {
@@ -493,14 +495,16 @@ export function buildPreExportChecklist(input: PreExportChecklistInput): PreExpo
   const blocks: PreExportCheckItem[] = [];
   const warns: PreExportCheckItem[] = [];
 
-  if (!resolveProfileName(profile)) {
-    warns.push({ level: "warn", code: "missing_name", message: "缺少姓名，投递前请补充。" });
-  }
-  if (!clean(profile?.phone)) {
-    warns.push({ level: "warn", code: "missing_phone", message: "缺少联系电话，投递前请补充。" });
-  }
-  if (!clean(profile?.email)) {
-    warns.push({ level: "warn", code: "missing_email", message: "缺少邮箱，投递前请补充。" });
+  if (input.includeContactWarnings !== false) {
+    if (!resolveProfileName(profile)) {
+      warns.push({ level: "warn", code: "missing_name", message: "缺少姓名，投递前请补充。" });
+    }
+    if (!clean(profile?.phone)) {
+      warns.push({ level: "warn", code: "missing_phone", message: "缺少联系电话，投递前请补充。" });
+    }
+    if (!clean(profile?.email)) {
+      warns.push({ level: "warn", code: "missing_email", message: "缺少邮箱，投递前请补充。" });
+    }
   }
 
   const known: Record<string, true> = {};

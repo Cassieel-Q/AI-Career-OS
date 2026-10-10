@@ -168,3 +168,15 @@ Summary: `evals/benchmark/reports/live-2026-10-09-expanded.summary.json`
 4. **must_have alignment** — gold phrases vs product evidence_text soft-recall only 0.25 on this corpus.
 5. **Interview demo leak** — 2/5 packs still trip SYNTHETIC_DEMO / CURATED header detector (RISK-ACC-003).
 
+
+## Phase 3 product fixes and fresh browser evidence (2026-10-10)
+
+The following changes address the highest-confidence product findings from the expanded synthetic live run:
+
+1. **JD education evidence** — `JobExtractionPayload.education_requirements` is now normalized from model output or exact degree phrases in the raw JD, and grounded requirements are added with evidence text.
+2. **Experience selection guardrails** — product/technical roles no longer auto-highlight unqualified cashier/barista/courier service work; high-confidence product or technical projects can recover from an erroneous model `OMIT`.
+3. **Interview fact gate** — reference answers containing unsupported numbers or interview/creator actions are replaced with an evidence-needed response.
+4. **Interview intel wiring** — enrichment now applies `annotate_topics`, which removes demo/CURATED leakage and preserves source references.
+5. **Archive preview copy** — source-archive checks explicitly defer delivery contacts to Resume Studio and no longer warn on missing source phone/email in that preview.
+
+Focused regression results and limitations are recorded in [`product-risk-acceptance.md`](product-risk-acceptance.md). Fresh local browser evidence is in [`e2e-2026-10-10/`](e2e-2026-10-10/) and the current README Project Tour. The corpus remains synthetic/public-inspired; real-user, consented-real, blind baseline, and production PostgreSQL gates remain `NOT_RUN`.

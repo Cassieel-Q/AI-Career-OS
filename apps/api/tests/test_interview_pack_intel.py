@@ -248,3 +248,24 @@ def test_real_knowledge_packs_baidu_role_family_items_keep_their_own_company():
     assert noisy[0]["intel_refs"] == []
     assert noisy[0]["evidence_expected"][0] == NO_REAL_INTEL_NOTE
     assert all("百度" not in line for line in noisy[0]["evidence_expected"][1:])
+
+
+def test_mission_provider_enrichment_excludes_demo_questions():
+    from app.mission_provider import OpenAIMissionProvider
+    from app.mission_schemas import JobExtractionPayload, WhatMattersPayload
+
+    extraction = JobExtractionPayload.model_validate({
+        "company": "百度", "role": "AI产品经理", "role_family": "AI_PRODUCT", "seniority": "MID",
+        "requirements": [], "preferred_requirements": [], "capabilities": ["RAG"], "keywords": [],
+    })
+    matters = WhatMattersPayload.model_validate({
+        "core_capabilities": [{"name": "RAG", "why": "JD", "evidence_refs": []}],
+        "high_importance_requirements": [], "confidence": 0.7,
+    })
+    out = OpenAIMissionProvider._enrich_interview_topics([
+        {"topic": "RAG 质量", "why": "JD", "question_patterns": [], "evidence_expected": []}
+    ], extraction=extraction, what_matters=matters, interview_intel=[{
+        "skill_id": "DEMO_ONLY_RAG", "provenance": "SYNTHETIC_DEMO", "company_relevance": "SYNTHETIC_DEMO",
+        "question_patterns": ["演示问题"], "body": "演示问题？",
+    }])
+    assert "演示问题" not in " ".join(out[0]["question_patterns"])
