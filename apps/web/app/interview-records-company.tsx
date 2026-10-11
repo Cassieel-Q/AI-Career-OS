@@ -55,12 +55,10 @@ export function InterviewRecordsCompany({ companyKey }: { companyKey: string }) 
 
   return (
     <main className="mission-home">
-      <header className="workflow-header">
-        <Link className="button-secondary mission-back" href={"/interview-records" as Route}>
-          ← 面试记录库
-        </Link>
-      </header>
       <section className="mission-home-content">
+        <p style={{ margin: 0 }}>
+          <Link className="button-secondary" href={"/interview-records" as Route}>← 返回面试</Link>
+        </p>
         <p className="eyebrow">公司文件夹</p>
         <h1>{company || "未命名公司"}</h1>
         <p className="summary">同公司不同面次放在一起。可用下拉筛选一面 / 二面 / 三面。</p>

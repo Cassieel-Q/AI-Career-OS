@@ -52,12 +52,10 @@ export function InterviewRecordsDetail({ recordId }: { recordId: string }) {
 
   return (
     <main className="mission-home">
-      <header className="workflow-header">
-        <Link className="button-secondary mission-back" href={companyHref}>
-          ← {record?.company || "返回公司文件夹"}
-        </Link>
-      </header>
       <section className="mission-home-content">
+        <p style={{ margin: 0 }}>
+          <Link className="button-secondary" href={companyHref}>← 返回</Link>
+        </p>
         {loading ? <p className="profile-note">读取中…</p> : null}
         {error ? (
           <p className="message error" role="alert">
