@@ -1,6 +1,6 @@
 # E2E evidence — 2026-10-10
 
-This is a fresh browser capture of the current `feature/eval-benchmark-v1` worktree after the 2026-10-09 dogfood fixes.
+This is the browser evidence set captured on 2026-10-10 from the `feature/eval-benchmark-v1` worktree after the 2026-10-09 dogfood fixes. The 2026-10-11 Resume Studio visual alignment pass was verified against the same local route and is represented by the updated Studio screenshot in the tour.
 
 ## Services and data
 
@@ -23,7 +23,7 @@ No private or consented-real resume was copied into the repository. The screensh
 | `05-interview.png` | `/missions/{mission}/interview` | 200; JD-grounded question preview visible |
 | `06-interview-records.png` | `/interview-records?profile_id=...` | 200; company-grouped record visible |
 
-Machine-readable route evidence is in `../../screenshots/project-tour-2026-10-10/report.json`. The capture script is `browser/capture-tour.cjs`; it uses Playwright against the running local app and saves full-page PNGs. A video was not captured in this run, so the tour links to these fresh screenshots instead.
+Machine-readable route evidence is in `../../screenshots/project-tour-2026-10-10/report.json`. The capture script is `browser/capture-tour.cjs`; it uses Playwright against the running local app and saves full-page PNGs. The Studio screenshot specifically verifies the unified mission-page visual system: green primary actions, warm off-white background, rounded cards, and the same reading width as the surrounding workflow. A video was not captured in this run, so the tour links to these fresh screenshots instead.
 
 ## Scope limits
 

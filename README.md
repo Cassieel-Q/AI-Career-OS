@@ -23,11 +23,58 @@ The product is designed for AI product, technical product, and intelligent-hardw
 - Resume-writing guardrails in `knowledge/resume_skills/`
 - Permanent profile deletion with dependent workflow cleanup
 
+## Product structure
+
+| Layer | Main entry | Responsibility |
+|---|---|---|
+|岗位档案|`/missions`|管理多个目标岗位、绑定简历来源并恢复历史任务|
+|岗位识别|`/missions/{missionId}/role`|解析 JD、确认公司/岗位/地点和核心要求|
+|简历优化|`/missions/{missionId}/resume`|保留原始经历，筛选优先级并逐条确认岗位定向改写|
+|简历工作台|`/missions/{missionId}/resume/studio`|编辑排版、核对事实、选择模板并生成 PDF|
+|模拟面试|`/missions/{missionId}/interview`|根据 JD、确认版简历和面经生成问题、评分与追问|
+|面试记录库|`/interview-records`|按公司保存真实面试题目、回答和复盘结果|
+
+Studio 与岗位页共用同一套界面语言：米白页面背景、深绿色主色、细绿色边框、圆角白色卡片、短标签和明确的主次按钮。Studio 只扩展了三栏编辑工作台，不改变岗位流程或事实状态模型。
+
+## Local development
+
+```powershell
+# API
+cd apps/api
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+
+# Web（另开终端）
+cd apps/web
+npm install
+$env:NEXT_PUBLIC_API_BASE_URL = "http://127.0.0.1:8000"
+npm run dev -- --port 3000
+```
+
+打开 `http://127.0.0.1:3000/missions`。生产环境需要在 API 服务端配置 `DATABASE_URL`、`FRONTEND_ORIGINS` 和模型 provider 参数；密钥、真实简历、生产数据库和 Typst 二进制不进入 Git。
+
+## Verification commands
+
+```powershell
+cd apps/web
+npm test
+npm run type-check
+npm run build
+
+cd ../api
+python -m pytest -q
+python -m compileall -q app
+```
+
+评测与浏览器证据见 [`docs/evaluation/`](docs/evaluation/)。当前 Project Tour 的真实截图和运行报告在 [`docs/screenshots/project-tour-2026-10-10/`](docs/screenshots/project-tour-2026-10-10/) 与 [`docs/evaluation/e2e-2026-10-10/`](docs/evaluation/e2e-2026-10-10/)。
+
 ## Product tour
 
-The current verified tour below was captured from the local application on 2026-10-10 using the isolated synthetic profile documented in [`docs/evaluation/e2e-2026-10-10/README.md`](docs/evaluation/e2e-2026-10-10/README.md). It covers the live routes that are safe to share: mission list, role confirmation, resume review, Resume Studio, mock-interview preview, and Interview Memory. The screenshots are fresh browser captures from the current branch; no static mock HTML is used.
+The current verified tour below uses browser captures from the local application on 2026-10-10 with the isolated synthetic profile documented in [`docs/evaluation/e2e-2026-10-10/README.md`](docs/evaluation/e2e-2026-10-10/README.md). The Resume Studio visual alignment was updated and locally verified on 2026-10-11. It covers the live routes that are safe to share: mission list, role confirmation, resume review, Resume Studio, mock-interview preview, and Interview Memory. The screenshots are browser captures from the current product flow; no static mock HTML is used.
 
-### Current verified route / 当前真实测试截图（2026-10-10）
+### Current verified route / 当前真实测试截图（截图 2026-10-10，Studio 视觉更新 2026-10-11）
 
 1. **Mission list / 岗位档案** — restored synthetic profile and two saved missions.
 
