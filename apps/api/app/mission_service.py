@@ -31,6 +31,7 @@ from .mission_schemas import (
     ConfirmResumeSource,
     ResumeSourceMode,
     ExperienceSelectionPayload,
+    GroundingStatus,
     InterviewPackPayload,
     JobExtractionPayload,
     MissionCreate,
@@ -40,6 +41,7 @@ from .mission_schemas import (
     MissionStatus,
     RecoverEvidenceCreate,
     RedTeamPayload,
+    ResumeBulletProposal,
     ResumeStrategyPayload,
     TargetResumeBulletUpdate,
     TargetResumePayload,
@@ -1437,6 +1439,11 @@ def generate_target_resume(db: Session, mission_id: UUID, provider=None, *, sour
     # (Master vs upload/paste each have their own profile ids). Stale selections
     # from a prior bind must not leak into generation.
     experience_ids = _experience_ids_for_profile(profile)
+    selection_rows = [
+        row
+        for row in db.scalars(select(models.MissionExperienceSelection).where(models.MissionExperienceSelection.mission_id == mission.id)).all()
+        if row.experience_id in experience_ids
+    ]
     selections = ExperienceSelectionPayload(selections=[
         {
             "experience_id": row.experience_id,
@@ -1446,10 +1453,9 @@ def generate_target_resume(db: Session, mission_id: UUID, provider=None, *, sour
             "supporting_evidence_refs": row.supporting_evidence_refs or [],
             "confidence": row.confidence,
         }
-        for row in db.scalars(select(models.MissionExperienceSelection).where(models.MissionExperienceSelection.mission_id == mission.id)).all()
-        if row.experience_id in experience_ids
+        for row in selection_rows
     ])
-  
+
     strategy_payload = _ensure_strategy_grounded(
         strategy_payload,
         profile=profile,
@@ -1496,6 +1502,51 @@ def generate_target_resume(db: Session, mission_id: UUID, provider=None, *, sour
         for item in payload.bullets
         if item.source_experience_id is None or item.source_experience_id in experience_ids
     ]
+    # Deterministic guarantee: experiences decided KEEP_AND_HIGHLIGHT / KEEP must
+    # have rewrite bullets. If the LLM skipped one, synthesize a placeholder from
+    # the original experience text so the user always gets a card to review.
+    _kept_decisions = {"KEEP_AND_HIGHLIGHT", "KEEP"}
+    _covered_ids = {item.source_experience_id for item in grounded_bullets if item.source_experience_id}
+    _missing_kept = [
+        row.experience_id
+        for row in selection_rows
+        if str(row.decision) in _kept_decisions and row.experience_id not in _covered_ids
+    ]
+    if _missing_kept:
+        _profile_experiences = {
+            exp.id: exp
+            for exp in db.scalars(select(models.Experience).where(models.Experience.profile_id == profile.id)).all()
+        }
+        _highlight_order: list[UUID] = []
+        for _exp_id in _missing_kept:
+            _exp = _profile_experiences.get(_exp_id)
+            if _exp is None:
+                continue
+            _lines = [line.strip() for line in str(_exp.description or "").splitlines() if line.strip()]
+            _original = "\n".join(_lines) or " ".join(
+                part for part in (str(_exp.title or ""), str(_exp.organization or ""), str(_exp.dates or "")) if part
+            )
+            if not _original.strip():
+                continue
+            _suggested = "\n".join(f"{line}" for line in _lines[:3]) or _original
+            _decision_row = next((row for row in selection_rows if row.experience_id == _exp_id), None)
+            _decision_label = "重点展示" if str(_decision_row.decision if _decision_row else "") == "KEEP_AND_HIGHLIGHT" else "保留"
+            grounded_bullets.append(ResumeBulletProposal(
+                source_experience_id=_exp_id,
+                original_text=_original[:50_000],
+                suggested_text=_suggested[:50_000],
+                reason=f"该经历已确认「{_decision_label}」，但 AI 未生成改写要点；以下先展示原文要点，请审阅并编辑确认。"[:1_000],
+                grounding_status=GroundingStatus.NEEDS_CONFIRMATION,
+                risk_flags=["PENDING_REWRITE"],
+            ))
+            _highlight_order.append(_exp_id)
+        if _highlight_order:
+            payload = payload.model_copy(update={
+                "recommended_experience_order": [
+                    *_highlight_order,
+                    *[value for value in (payload.recommended_experience_order or []) if value not in _highlight_order],
+                ],
+            })
     if not grounded_bullets:
         # Never leave TARGET_RESUME_DRAFT with target_resume=null (blank FE page).
         if current == WorkflowState.TARGET_RESUME_DRAFT.value and existing_resume is None:

@@ -44,6 +44,7 @@ from app.mission_routes import router as mission_router
 from app.resume_studio_routes import router as resume_studio_router
 from app.interview_record_routes import router as interview_record_router
 from app.career_hub import router as career_hub_router
+from app.application_routes import router as application_router
 from app.profile_schemas import CareerPreferencesInput, CareerPreferencesRead, ProfileRead, ProfileUpdate
 from app.profile_service import (
     confirm_profile,
@@ -124,7 +125,10 @@ _EDUCATION_JSON_OBJECT_CONTRACT = (
     '{"items":[{"institution":"...","degree":null,"field_of_study":null,"dates":null,'
     '"relevant_courses":[],"honors":[]}]}. '
     "Education items must use exactly institution, degree, field_of_study, dates, relevant_courses, and honors; "
-    "use null for missing optional scalar values and [] for no courses or no honors. honors lists explicit "
+    "use null for missing optional scalar values and [] for no courses or no honors. Return EVERY education stage "
+    "found in the section — bachelor's (本科/学士), master's (硕士/研究生), doctoral (博士), exchange, and associate "
+    "degrees are SEPARATE items even when they share the same institution; never merge or drop one stage. "
+    "honors lists explicit "
     "scholarships, awards, and honors printed under education (e.g. 国家奖学金、优秀研究生), one string per item, "
     "copied verbatim; never invent honors. "
     "Do not include evidence, provenance, raw, canonical, or any other fields."
@@ -1268,7 +1272,12 @@ def _recover_explicit_language_skills(source_text: str) -> list[Skill]:
 _CONTACT_LABEL_CITY_PATTERN = re.compile(
     r"(?:意向地|意向城市|期望城市|现居|现居地|所在城市|当前城市|居住地|城市)[：:]\s*([\u4e00-\u9fa5]{2,12})"
 )
-_CONTACT_NAME_KEYWORDS = ("简历", "电话", "邮箱", "手机", "地址", "个人", "求职", "意向")
+_CONTACT_NAME_KEYWORDS = ("简历", "电话", "邮箱", "手机", "地址", "个人", "求职", "意向", "性别", "年龄", "民族", "籍贯", "政治", "姓名", "名字")
+_CONTACT_NAME_TITLE_WORDS = (
+    "教育背景", "教育经历", "工作经历", "实习经历", "项目经历", "专业技能", "个人技能",
+    "基本信息", "联系方式", "求职意向", "个人简介", "校园经历", "实践经历", "荣誉奖项",
+    "获奖情况", "证书资格", "自我评价", "技能特长", "工作技能", "科研经历", "竞赛经历",
+)
 
 
 def _recover_contact_facts(result: ResumeExtractionResult, source_text: str) -> ResumeExtractionResult:
@@ -1304,24 +1313,46 @@ def _recover_contact_facts(result: ResumeExtractionResult, source_text: str) -> 
         if labeled_name is not None:
             updates["full_name"] = labeled_name.group(1)
         else:
-            # 姓名几乎总在联系信息之前；把候选行限制在 phone/email 首次出现之前，
-            # 避免 PDF 文本流把「教育背景」这类标题误判成姓名。
-            contact_match = re.search(r"1[3-9]\d{9}|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+", source_text)
-            head = source_text[:contact_match.start()] if contact_match else "\n".join(source_text.splitlines()[:6])
-            for line in head.splitlines():
-                candidate = line.strip()
-                if not 2 <= len(candidate) <= 4:
-                    continue
-                if not re.fullmatch(r"[\u4e00-\u9fa5]{2,4}", candidate):
-                    continue
-                if any(keyword in candidate for keyword in _CONTACT_NAME_KEYWORDS):
-                    continue
-                updates["full_name"] = candidate
-                break
+            updates["full_name"] = _guess_name_from_head(source_text)
 
     if not updates:
         return result
     return result.model_copy(update=updates)
+
+
+def _guess_name_from_head(source_text: str) -> str | None:
+    """Heuristic name guess from the text before phone/email.
+
+    PDF text extraction often squeezes the name onto a line with other tokens
+    (e.g. 「潘佳琪 女 25岁」or「潘佳琪 求职意向：产品经理」), so accept both a
+    standalone 2-4 char Chinese line and the first such token of a line.
+    """
+    contact_match = re.search(r"1[3-9]\d{9}|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+", source_text)
+    head = source_text[:contact_match.start()] if contact_match else "\n".join(source_text.splitlines()[:6])
+
+    def _is_name_candidate(token: str) -> bool:
+        token = token.strip().strip("|·,，;；.")
+        if not 2 <= len(token) <= 4:
+            return False
+        if not re.fullmatch(r"[\u4e00-\u9fa5]{2,4}", token):
+            return False
+        if any(keyword in token for keyword in _CONTACT_NAME_KEYWORDS):
+            return False
+        if token in _CONTACT_NAME_TITLE_WORDS:
+            return False
+        return True
+
+    for line in head.splitlines():
+        candidate = line.strip()
+        if not candidate:
+            continue
+        if _is_name_candidate(candidate):
+            return candidate
+        # Name squeezed with other tokens on the same line.
+        for token in re.split(r"[\s|·,，;；/]+", candidate):
+            if _is_name_candidate(token):
+                return token
+    return None
 
 
 def recover_explicit_facts(result: ResumeExtractionResult, source_text: str) -> ResumeExtractionResult:
@@ -1560,8 +1591,12 @@ def ground_resume_extraction(
                 }
             )
             accepted[collection_for_category[category]].append(grounded_fact)
+    contact_fields = {
+        name: getattr(result, name)
+        for name in ("full_name", "phone", "email", "city")
+    }
     return GroundingResult(
-        result=ResumeExtractionResult.model_validate(accepted),
+        result=ResumeExtractionResult.model_validate(accepted).model_copy(update=contact_fields),
         warnings=warnings,
         total_items=total_items,
         accepted_items=sum(len(items) for items in accepted.values()),
@@ -1900,11 +1935,17 @@ def _dedupe_education(
     *,
     source_text: str | None = None,
 ) -> list[Education]:
-    by_institution: dict[str, Education] = {}
+    by_institution: dict[tuple[str, str], Education] = {}
     for item in items:
-        key = item.institution.casefold()
+        # 同一所学校的本科/硕士/博士是不同教育阶段，不能按校名合并，
+        # 否则第二段（常见为本科）会被静默吞掉。
+        institution_key = item.institution.casefold()
+        degree_key = (item.degree or "").strip().casefold()
+        key = (institution_key, degree_key) if degree_key else (institution_key, "")
         existing = by_institution.get(key)
         if existing is None:
+            # degree 为空的条目不与已有同校条目合并，避免模糊归属；
+            # 只在完全相同的空-degree key 下聚合。
             by_institution[key] = item
         else:
             updates: dict[str, object] = {}
@@ -2657,6 +2698,7 @@ app.include_router(mission_router)
 app.include_router(resume_studio_router)
 app.include_router(interview_record_router)
 app.include_router(career_hub_router)
+app.include_router(application_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_allowed_frontend_origins(),

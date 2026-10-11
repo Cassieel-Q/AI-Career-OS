@@ -10,7 +10,7 @@ import {
 import { emptyHistory, findNode, inverseOperation, recordHistory, redoHistory, replayOperation, undoHistory } from "./history.ts";
 import type { StudioHistory } from "./history.ts";
 import type { StudioNode, StudioOperation, StudioPreview, StudioSourceDiff, StudioState, StudioTemplate } from "./types.ts";
-import { bindMissionResumePdf } from "../missions.ts";
+import { bindMissionResumePdf, writeResumeBound } from "../missions.ts";
 import "./studio.css";
 
 type FactFilter = "ALL" | StudioNode["claim_status"];
@@ -204,13 +204,18 @@ export function StudioPage({ missionId }: { missionId: string }) {
   };
   const overwriteResume = async () => {
     if (!state) return;
-    if (!window.confirm("将用这份投递版 PDF 覆盖当前岗位简历，系统会重新识别其中的内容。确定继续？")) return;
+    if (!window.confirm("将用这份投递版 PDF 覆盖当前岗位简历，覆盖后直接进入模拟面试。确定继续？")) return;
     setBusy(true); setError("");
     try {
       const { blob, filename } = await downloadStudioPdf(missionId);
       const file = new File([blob], filename, { type: "application/pdf" });
-      await bindMissionResumePdf(missionId, file);
-      setMessage("已用投递版覆盖岗位简历，可以开始模拟面试。");
+      const bound = await bindMissionResumePdf(missionId, file);
+      try {
+        writeResumeBound(missionId, "upload");
+      } catch { /* localStorage unavailable — non-blocking */ }
+      // One step: overwrite done → go straight into the mock interview session.
+      const pid = bound.bound_profile_id || bound.profile_id;
+      window.location.assign(`/proof/${encodeURIComponent(pid)}/interview?mission_id=${encodeURIComponent(missionId)}&fresh=1`);
     } catch (caught) { setError(describeError(caught)); }
     finally { setBusy(false); }
   };

@@ -52,14 +52,16 @@ export function MissionCreate({ profileId: initialProfileId }: { profileId?: str
   }
 
   return (
-    <main className="mission-home">
-      <header className="workflow-header">
-        <Link className="button-secondary" href="/missions">← 岗位档案</Link>
-      </header>
+    <main className="app-page">
       <section className="mission-home-content">
-        <p className="eyebrow">岗位档案</p>
-        <h1>{MISSION_COPY.addRoleTitle}</h1>
-        <p className="summary">{MISSION_COPY.addRoleDescription}</p>
+        <header className="app-page-header">
+          <div>
+            <p className="app-eyebrow">Jobs</p>
+            <h1 className="app-page-title">{MISSION_COPY.addRoleTitle}</h1>
+            <p className="app-page-subtitle">{MISSION_COPY.addRoleDescription}</p>
+          </div>
+          <Link className="button-secondary" href="/missions">← 岗位档案</Link>
+        </header>
         <form className="mission-card mission-form" onSubmit={submit}>
           <label className="field-label">
             粘贴岗位描述（JD）

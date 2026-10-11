@@ -1329,7 +1329,7 @@ button:disabled {
 .mission-inline-field select { min-height:2.2rem; }
 .mission-identity-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:.75rem; }
 .risk-text { color:#d70015 !important; }
-.mission-form { max-width:48rem; }
+.mission-form { max-width:48rem; width:100%; margin-inline:auto; }
 .mission-form .field-label { display:grid; gap:.35rem; }
 .mission-form input, .mission-form textarea, .mission-form select { width:100%; padding:.65rem .7rem; border:1px solid #e5e5ea; border-radius:.35rem; background:#ffffff; color:#111111; font:inherit; }
 .mission-form textarea { resize:vertical; }
@@ -2492,4 +2492,114 @@ a.mission-progress-node:hover { transform:translate(-1px, -1px); background:var(
   word-break: break-all;
   max-height: 16rem;
   overflow: auto;
+}
+
+/* 岗位广场 */
+.plaza-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: 0.875rem;
+}
+
+.plaza-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.15rem 1.25rem;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.plaza-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.plaza-card-title {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.plaza-card-company {
+  margin: 0;
+  color: var(--text-tertiary);
+  font-size: 0.8rem;
+}
+
+.plaza-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.plaza-progress-label {
+  color: var(--text-tertiary);
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.plaza-progress {
+  flex: 1;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+  overflow: hidden;
+}
+
+.plaza-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--text-primary);
+}
+
+.plaza-progress-value {
+  font-size: 0.75rem;
+  font-weight: 700;
+  min-width: 1.5rem;
+  text-align: right;
+}
+
+.plaza-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.plaza-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.4rem;
+  padding: 0.05rem 0.5rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+}
+
+.plaza-tag.muted {
+  color: var(--text-tertiary);
+  border-color: var(--border-weak);
+}
+
+.plaza-tag.status {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+}
+
+.plaza-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.25rem;
+}
+
+.tracker-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.75rem;
 }
