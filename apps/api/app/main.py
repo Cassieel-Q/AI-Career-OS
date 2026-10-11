@@ -1,5 +1,16 @@
 from __future__ import annotations
 
+from pathlib import Path
+
+try:
+    from dotenv import load_dotenv
+
+    # 加载项目根目录的 .env（本地密钥文件，已被 .gitignore 忽略，绝不入库）。
+    # 默认不覆盖已存在的环境变量，因此启动脚本里 set 的 DATABASE_URL 仍优先。
+    load_dotenv(Path(__file__).resolve().parents[3] / ".env")
+except ImportError:  # python-dotenv 未安装时降级为仅依赖外部环境变量
+    load_dotenv = None
+
 import json
 import logging
 import math
