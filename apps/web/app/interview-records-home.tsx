@@ -10,10 +10,11 @@ import {
   type InterviewRecordCompanyGroup,
   PROFILE_STORAGE_KEY,
 } from "./interview-records.ts";
-import { listProfileLabelOptions } from "./profile-label.ts";
+import { listProfileLabelOptions, type ProfileOptionView } from "./profile-label.ts";
 
 export function InterviewRecordsHome() {
   const [profileId, setProfileId] = useState("");
+  const [profiles, setProfiles] = useState<ProfileOptionView[]>([]);
   const [companies, setCompanies] = useState<InterviewRecordCompanyGroup[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -39,103 +40,83 @@ export function InterviewRecordsHome() {
   }, []);
 
   useEffect(() => {
-    const initial = readStoredProfileId();
     const options = listProfileLabelOptions();
+    setProfiles(options);
+    const initial = readStoredProfileId();
     const fallback = initial || options[0]?.profileId || "";
     setProfileId(fallback);
     if (fallback) void load(fallback);
   }, [load]);
 
-  const profiles = listProfileLabelOptions();
-
   return (
-    <main className="mission-home">
-      <header className="workflow-header">
-        <Link className="workflow-brand" href="/missions">
-          <span className="workflow-brand-mark" aria-hidden="true">
-            A
-          </span>
-          <span>AI Career OS</span>
+    <main className="app-page">
+      <header className="app-page-header">
+        <div>
+          <p className="app-eyebrow">Interviews</p>
+          <h1 className="app-page-title">面试</h1>
+          <p className="app-page-subtitle">把一面 / 二面 / 三面的题目和回答留下来，录入后可走评分、复盘和补强建议。</p>
+        </div>
+        <Link className="app-btn primary" href={"/interview-records/new" as Route}>
+          新建录入
         </Link>
       </header>
-      <section className="mission-home-content">
-        <p className="eyebrow">面试记录库</p>
-        <h1>按公司归档的真实面试</h1>
-        <p className="summary">把一面 / 二面 / 三面的题目和回答留下来，录入后可走评分、复盘和补强建议。</p>
 
-        <div className="mission-home-actions">
-          <Link className="mission-primary-cta link-cta" href={"/interview-records/new" as Route}>
-            新建录入
-          </Link>
-          <Link className="button-secondary" href={"/missions" as Route}>
-            返回岗位准备
-          </Link>
-        </div>
-
-        <div className="mission-profile-form">
-          <label className="field-label">
-            选择档案
-            <select
-              value={profileId}
-              disabled={loading}
-              aria-label="选择档案"
-              onChange={(event) => {
-                const next = event.target.value;
-                setProfileId(next);
-                void load(next);
-              }}
-            >
-              <option value="">请选择档案</option>
-              {profiles.map((profile) => (
-                <option key={profile.profileId} value={profile.profileId}>
-                  {profile.displayLabel || profile.label || "未命名档案"}
-                </option>
-              ))}
-            </select>
-          </label>
-          {!profiles.length ? (
-            <p className="profile-note">
-              本机还没有档案。请先回首页上传简历，或从岗位准备页恢复档案 ID。
-            </p>
-          ) : null}
-        </div>
-
-        {error ? (
-          <p className="message error" role="alert">
-            {error}
+      <div className="app-filter-row" aria-label="选择档案">
+        <label className="field-label" style={{ display: "grid", gap: "0.35rem", minWidth: "16rem" }}>
+          选择档案
+          <select
+            value={profileId}
+            disabled={loading}
+            aria-label="选择档案"
+            onChange={(event) => {
+              const next = event.target.value;
+              setProfileId(next);
+              void load(next);
+            }}
+          >
+            <option value="">请选择档案</option>
+            {profiles.map((profile) => (
+              <option key={profile.profileId} value={profile.profileId}>
+                {profile.displayLabel || profile.label || "未命名档案"}
+              </option>
+            ))}
+          </select>
+        </label>
+        {!profiles.length ? (
+          <p className="app-card-meta" style={{ alignSelf: "end", paddingBottom: "0.4rem" }}>
+            本机还没有档案。请先回首页上传简历。
           </p>
         ) : null}
+      </div>
+
+      {error ? <p className="message error" role="alert">{error}</p> : null}
+
+      <section className="mission-list" aria-label="按公司分组的面试记录" style={{ marginTop: "1rem" }}>
         {loading ? (
-          <p className="profile-note" role="status">
-            读取中…
-          </p>
-        ) : null}
-
-        <section className="mission-list" aria-label="按公司分组的面试记录">
-          {companies.length ? (
-            companies.map((group) => (
-              <article className="mission-list-card" key={group.company_key}>
-                <Link
-                  className="mission-list-card-main"
-                  href={`/interview-records/company/${group.company_key}` as Route}
-                >
-                  <div>
-                    <p className="section-kicker">文件夹</p>
-                    <h2>{group.company}</h2>
-                    <p>
-                      {group.record_count} 场
-                      {group.latest_interviewed_on ? ` · 最近 ${group.latest_interviewed_on}` : ""}
-                      {group.rounds.length ? ` · ${group.rounds.join(" / ")}` : ""}
-                    </p>
-                  </div>
-                  <span className="mission-status-badge">打开</span>
-                </Link>
-              </article>
-            ))
-          ) : (
-            <div className="mission-empty">还没有面试记录。点击「新建录入」开始第一场。</div>
-          )}
-        </section>
+          <div className="app-empty">读取中…</div>
+        ) : companies.length ? (
+          companies.map((group) => (
+            <article className="mission-list-card" key={group.company_key}>
+              <Link
+                className="mission-list-card-main"
+                href={`/interview-records/company/${group.company_key}` as Route}
+              >
+                <div>
+                  <p className="section-kicker">文件夹</p>
+                  <h2>{group.company}</h2>
+                  <p>
+                    {group.record_count} 场
+                    {group.latest_interviewed_on ? ` · 最近 ${group.latest_interviewed_on}` : ""}
+                    {group.rounds.length ? ` · ${group.rounds.join(" / ")}` : ""}
+                  </p>
+                </div>
+                <span className="mission-status-badge">打开</span>
+              </Link>
+            </article>
+          ))
+        ) : (
+          <div className="app-empty">还没有面试记录。点击「新建录入」开始第一场。</div>
+        )}
       </section>
     </main>
   );

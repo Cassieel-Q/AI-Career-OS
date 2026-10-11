@@ -106,12 +106,10 @@ export function InterviewRecordsNew({ initialCompany = "" }: { initialCompany?: 
 
   return (
     <main className="mission-home">
-      <header className="workflow-header">
-        <Link className="button-secondary mission-back" href={"/interview-records" as Route}>
-          ← 面试记录库
-        </Link>
-      </header>
       <section className="mission-home-content">
+        <p style={{ margin: 0 }}>
+          <Link className="button-secondary" href={"/interview-records" as Route}>← 返回面试</Link>
+        </p>
         <p className="eyebrow">新建录入</p>
         <h1>记录一场真实面试</h1>
         <p className="summary">填写公司、轮次和问答。保存后会自动评分并生成复盘 / 补强建议。</p>
