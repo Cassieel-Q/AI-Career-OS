@@ -80,10 +80,17 @@ export default function EvidenceOsPage() {
         <div>
           <p className="app-eyebrow">工具</p>
           <h1 className="app-page-title">证据库</h1>
-          <p className="app-page-subtitle">证据 → 主张 → 定位 → 成稿。只有确认过的事实才会进入定稿，不做任何数据估算。</p>
+          <p className="app-page-subtitle">把你的每一段经历拆成「可引用的证据」，让简历和面试回答都有据可查。</p>
         </div>
         <span className="app-badge muted">进阶模式</span>
       </header>
+
+      <section className="app-card app-guide-card" aria-label="使用说明">
+        <strong>这一页解决什么问题？</strong>
+        <p>面试官追问「这件事真是你做的吗」时，你需要拿出经得起追问的细节。证据库把经历原文拆成一条条不可变的证据事实，简历主张、面试回答都能引用它们。</p>
+        <strong>和「事实核对」什么关系？</strong>
+        <p>日常使用不必手动维护本页——上传简历、确认事实时会自动沉淀证据。本页是进阶模式：想手动补充证据（如项目数据、聊天记录摘录）或审计某条主张时才需要用到，按顶部 8 步从左到右操作即可，通常只用前 3 步（录入证据 → 建立主张 → 解析岗位）。</p>
+      </section>
 
       <section className="app-card">
         <div className="start-card-head">

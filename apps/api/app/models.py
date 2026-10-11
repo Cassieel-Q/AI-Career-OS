@@ -82,6 +82,7 @@ class Education(ProfileChild, Base):
     field_of_study: Mapped[str | None] = mapped_column(String(255), nullable=True)
     dates: Mapped[str | None] = mapped_column(String(255), nullable=True)
     relevant_courses: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
+    honors: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
     profile: Mapped[UserProfile] = relationship(back_populates="education")
 
 

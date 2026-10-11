@@ -240,9 +240,24 @@ function TextButton({ children, onClick, disabled = false }: { children: ReactNo
 }
 
 function StructuredRewrite({ text }: { text: string }) {
-  const points = text.split(/\r?\n/).map((point) => point.trim().replace(/^[•-]\s*/, "")).filter(Boolean);
+  let points = text.split(/\r?\n/).map((point) => point.trim().replace(/^[•\-–]\s*/, "")).filter(Boolean);
+  if (points.length < 2 && text.length > 60) {
+    const segments = text.split("；").map((segment) => segment.trim()).filter(Boolean);
+    if (segments.length >= 2) {
+      points = segments.map((segment, index) => (index < segments.length - 1 && !/[；.;。]$/.test(segment) ? segment + "；" : segment));
+    }
+  }
   if (points.length < 2) return <>{text}</>;
   return <ul className="resume-structured-points">{points.map((point, index) => <li key={`${index}-${point}`}>{point}</li>)}</ul>;
+}
+
+function WhyPoints({ text }: { text: string }) {
+  const cleaned = (text || "").trim();
+  if (!cleaned) return null;
+  // 在句号/分号后紧跟「中文标签：」的位置断行，把 AI 建议拆成要点列表
+  const parts = cleaned.split(/(?<=[。；])\s*(?=[\u4e00-\u9fa5]{2,8}：)/).filter(Boolean);
+  if (parts.length < 2) return <p>{cleaned}</p>;
+  return <ul className="resume-structured-points">{parts.map((part, index) => <li key={`${index}-${part.slice(0, 12)}`}>{part}</li>)}</ul>;
 }
 
 function confirmedProjectTitle(title?: string | null) {
@@ -1183,7 +1198,7 @@ useEffect(() => {
             {renderSourceResumeColumn()}
             {experienceSelection.length ? <div className="resume-source-section"><strong>经历筛选</strong>{dedupeExperienceSelections(experienceSelection, experienceMap).map((selection) => {
               const label = experienceLabel(selection.experience_id);
-              return <div className="resume-source-item" key={selection.id}><strong>{label.title}</strong><span className="resume-decision-note">AI 建议：{selection.decision === "KEEP_AND_HIGHLIGHT" ? "重点优化" : selection.decision === "KEEP" ? "保留" : selection.decision === "DEEMPHASIZE" ? "弱化" : "暂不放入"}</span><p>{stripEvidenceDump(selection.why)}</p><div className="decision-chip-row">{EXPERIENCE_DECISION_OPTIONS.map((option) => <button key={option.value} type="button" className={selection.decision === option.value ? "decision-chip active" : "decision-chip"} disabled={savingDecision || busy} onClick={() => void updateDecision(selection.id, option.value)}>{option.label}</button>)}</div></div>;
+              return <div className="resume-source-item" key={selection.id}><strong>{label.title}</strong><span className="resume-decision-note">AI 建议：{selection.decision === "KEEP_AND_HIGHLIGHT" ? "重点优化" : selection.decision === "KEEP" ? "保留" : selection.decision === "DEEMPHASIZE" ? "弱化" : "暂不放入"}</span><WhyPoints text={stripEvidenceDump(selection.why)} /><div className="decision-chip-row">{EXPERIENCE_DECISION_OPTIONS.map((option) => <button key={option.value} type="button" className={selection.decision === option.value ? "decision-chip active" : "decision-chip"} disabled={savingDecision || busy} onClick={() => void updateDecision(selection.id, option.value)}>{option.label}</button>)}</div></div>;
             })}</div> : null}
           </div>
           <div className="resume-optimization-column">
@@ -1223,7 +1238,18 @@ useEffect(() => {
               requestAnimationFrame(() => { if (finalPreviewRef.current) finalPreviewRef.current.scrollTop = previousScroll; });
             }}>{mode === "original" ? "原始版本" : "岗位版本"}</button>)}
           </div>
-          <div className="resume-final-preview-list" ref={finalPreviewRef}>{finalPreviewMode === "original" ? renderSourceResumeColumn() : latestResume.bullets.filter((bullet) => isChosenRewrite(bullet.status)).map((bullet) => <article key={bullet.id}><strong>{bullet.source_experience_id ? experienceLabel(bullet.source_experience_id).title : confirmedProjectTitle(bullet.project_title)}</strong><p>{targetResumeBulletDisplayText(bullet)}</p></article>)}</div>
+          <div className="resume-final-preview-list" ref={finalPreviewRef}>{finalPreviewMode === "original" ? renderSourceResumeColumn() : (() => {
+            const chosen = latestResume.bullets.filter((bullet) => isChosenRewrite(bullet.status));
+            const highlightedIds = experienceSelection.filter((selection) => selection.decision === "KEEP_AND_HIGHLIGHT").map((selection) => selection.experience_id);
+            const coveredIds = new Set(chosen.map((bullet) => bullet.source_experience_id).filter(Boolean));
+            const missingHighlighted = highlightedIds.filter((id) => !coveredIds.has(id));
+            const skills = latestResume.skills ?? [];
+            return <>
+              {chosen.map((bullet) => <article key={bullet.id}><strong>{bullet.source_experience_id ? experienceLabel(bullet.source_experience_id).title : confirmedProjectTitle(bullet.project_title)}</strong><p>{targetResumeBulletDisplayText(bullet)}</p></article>)}
+              {missingHighlighted.map((id) => <article key={`missing-${id}`}><strong>{experienceLabel(id).title}</strong><p className="muted">这条经历已标记「重点展示」，但当前版本尚未包含它的改写要点——请在上方改写列表中采纳一条，或重新生成岗位版本。</p></article>)}
+              {skills.length ? <article key="skills"><strong>个人技能</strong><p>{skills.join(" · ")}</p></article> : null}
+            </>;
+          })()}</div>
           <div className="resume-export-checks"><strong>来源档案检查（Studio 投递版为准）</strong><p className="summary">这里仅检查岗位内容；姓名、电话和邮箱以简历工作台中的投递版为准。</p>{buildPreExportChecklist({ profile: sourceProfile, experiences, bullets: latestResume.bullets, selections: experienceSelection, includeContactWarnings: false }).length ? <ul>{buildPreExportChecklist({ profile: sourceProfile, experiences, bullets: latestResume.bullets, selections: experienceSelection, includeContactWarnings: false }).map((item, index) => <li key={`${item.code}-${index}`}>{item.level === "block" ? "需处理" : "请留意"}：{item.message}</li>)}</ul> : <p>已完成内容检查。</p>}</div>
           {exportNotice ? <p className="summary" role="status">{exportNotice}</p> : null}
         </section> : null}
