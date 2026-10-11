@@ -4,7 +4,7 @@
 > 接收方：WorkBuddy  
 > 项目根目录：`G:\myself\ai-career`  
 > 当前产品主线：`main`  
-> 当前提交：`2ca4359 feat: align resume studio with mission UI`
+> 当前主线提交：`624de19 docs: add WorkBuddy project handoff`；产品代码基线：`2ca4359 feat: align resume studio with mission UI`
 
 ## 1. 先读这些文件
 
@@ -35,7 +35,7 @@
 ### Git 与工作区
 
 - `main` 已经包含 `feature/eval-benchmark-v1` 的全部提交。
-- 本地 `main`、`origin/main`、`origin/feature/eval-benchmark-v1` 当前都指向 `2ca4359`。
+- 本地 `main` 与 `origin/main` 当前都指向 `624de19`；`feature/eval-benchmark-v1` 与 `origin/feature/eval-benchmark-v1` 保持在产品代码提交 `2ca4359`。
 - GitHub 主线已推送成功：<https://github.com/Cassieel-Q/AI-Career-OS/tree/main>
 - 当前主检出只有两类未跟踪内容：
   - `apps/api/alembic/versions/014_interview_records.py`
@@ -194,7 +194,7 @@ docs/evaluation/2026-10-09-问题汇总.md、
 docs/evaluation/findings-and-backlog.md、
 docs/evaluation/product-risk-acceptance.md。
 
-当前基线是 main / 2ca4359，GitHub origin/main 已同步。不要直接在 main 开发，
+当前基线是 main / 624de19（产品代码基线为 2ca4359），GitHub origin/main 已同步。不要直接在 main 开发，
 从 main 创建 feature/workbuddy-next worktree。不要删除或提交主检出中的
 apps/api/alembic/versions/014_interview_records.py 和 image/，也不要把旧 014
 迁移混入当前 013 → 014_resume_studio → 015_interview_records 链。
