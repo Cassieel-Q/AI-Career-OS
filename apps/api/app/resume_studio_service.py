@@ -308,36 +308,50 @@ def _list_containing(document: dict, node_id: str) -> list[dict] | None:
 
 _METRIC = re.compile(r"\d|[%％]|(?:主导|负责|led|increased|reduced|grew)", re.IGNORECASE)
 
+# 与 ResumeForge 对齐：正文残留这类未完成标记时应拦截导出（宁可少拦、不可误拦，只认确定性的占位符）。
+_PLACEHOLDER_RESIDUE = re.compile(r"【[^】]*(?:待补|待确认|待补充|待核实|待完善)[^】]*】|待补充|待核实|待完善|待补全")
+
+
+def _placeholder_residue(text: str | None) -> str | None:
+    match = _PLACEHOLDER_RESIDUE.search(text or "")
+    return match.group(0) if match else None
+
 
 def _risk_for_text(text: str, previous: str = "LOW") -> str:
     return "HIGH" if previous == "HIGH" or _METRIC.search(text) else "LOW"
 
 
 def export_checks(document: dict) -> list[dict]:
-    """Only rendered high-risk unresolved claims block a formal PDF."""
+    """Only rendered high-risk unresolved claims or residual placeholders block a formal PDF."""
     checks: list[dict] = []
     rendered_bullets = 0
 
-    def inspect(node: dict) -> None:
+    def inspect(node: dict, location: str = "") -> None:
         if node.get("claim_status") == "OMITTED":
             return
         status = node.get("claim_status")
         if status in {"NEEDS_CONFIRMATION", "BLOCKED_MISSING"}:
             level = "block" if node.get("risk_level") == "HIGH" else "warn"
             checks.append({"level": level, "code": "unconfirmed_fact", "node_id": node["id"], "message": "这项内容需要核对事实。"})
+        residue = _placeholder_residue(node.get("text"))
+        if residue:
+            where = f"（{location}）" if location else ""
+            checks.append({"level": "block", "code": "placeholder_residue", "node_id": node["id"], "message": f"正文还残留未完成标记「{residue}」，请先补全或删除再导出。{where}".strip()})
 
     for node in (document.get("basics") or {}).values():
         if isinstance(node, dict):
-            inspect(node)
+            inspect(node, "基本信息")
     for section in document.get("sections") or []:
-        inspect(section["title"])
+        section_label = str((section.get("title") or {}).get("text") or section.get("kind") or "")
+        inspect(section["title"], section_label)
         for entry in section.get("entries") or []:
             if entry.get("status") == "OMITTED":
                 continue
+            entry_label = str((entry.get("title") or {}).get("text") or "经历")
             for field in ("title", "subtitle", "date", "location"):
-                inspect(entry[field])
+                inspect(entry[field], f"{section_label} / {entry_label}")
             for bullet in entry.get("bullets") or []:
-                inspect(bullet)
+                inspect(bullet, f"{section_label} / {entry_label}")
                 if bullet.get("claim_status") != "OMITTED" and bullet.get("text"):
                     rendered_bullets += 1
     if rendered_bullets == 0:
