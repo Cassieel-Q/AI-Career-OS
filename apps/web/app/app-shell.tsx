@@ -21,6 +21,7 @@ const SIDEBAR_COLLAPSED_KEY = "career-os.sidebar.collapsed";
  */
 const JOURNEY_ITEMS: NavItem[] = [
   { key: "home", label: "总览", href: "/", icon: "overview", match: (p) => p === "/" },
+  { key: "plaza", label: "广场", href: "/plaza", icon: "plaza", match: (p) => p === "/plaza" },
   { key: "missions", label: "岗位", href: "/missions", icon: "jobs", match: (p) => p === "/missions" },
   { key: "resumes", label: "简历", href: "/resumes", icon: "resume", match: (p) => p === "/resumes" || p.startsWith("/resumes/") },
   { key: "tracker", label: "投递", href: "/tracker", icon: "tracker", match: (p) => p === "/tracker" },
@@ -48,6 +49,14 @@ const ICON_PATHS: Record<string, ReactNode> = {
       <rect x="4" y="6" width="16" height="13" rx="2.4" />
       <path d="M8 6V5a1.8 1.8 0 0 1 1.8-1.8h4.4A1.8 1.8 0 0 1 16 5v1" />
       <path d="M4 12h16" />
+    </>
+  ),
+  plaza: (
+    <>
+      <rect x="4" y="4" width="6.5" height="6.5" rx="1.6" />
+      <rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6" />
+      <rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6" />
+      <path d="M16.5 13.5h3.5v3.5h-3.5z" />
     </>
   ),
   resume: (

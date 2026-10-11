@@ -61,6 +61,13 @@ class UserProfile(Base):
         passive_deletes=True,
         order_by=lambda: (JobMission.created_at, JobMission.id),
     )
+    applications: Mapped[list["JobApplication"]] = relationship(
+        "JobApplication",
+        back_populates="profile",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by=lambda: (JobApplication.created_at, JobApplication.id),
+    )
 
 
 class ProfileChild:
@@ -852,3 +859,35 @@ class InterviewRecordItem(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
     record: Mapped[InterviewRecord] = relationship("InterviewRecord", back_populates="items")
+
+
+class JobApplication(Base):
+    """投递记录：一家公司一个岗位一条投递动作记录，状态可单向推进。
+
+    与 InterviewOutcome（面试结果沉淀）分开：本表记录「投递动作 + 状态流转」，
+    是「自动投递台 / 求职进度」的单一事实来源。
+    """
+
+    __tablename__ = "job_applications"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    profile_id: Mapped[UUID] = mapped_column(
+        ForeignKey("user_profiles.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    mission_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("job_missions.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    company: Mapped[str] = mapped_column(String(255), nullable=False)
+    role: Mapped[str] = mapped_column(String(255), nullable=False)
+    location: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    channel: Mapped[str] = mapped_column(String(64), nullable=False, default="官网", server_default="官网")
+    # PENDING / APPLIED / SCREENING / ASSESSMENT / INTERVIEW / OFFER / CLOSED
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="PENDING", server_default="PENDING")
+    applied_at: Mapped[date | None] = mapped_column(Date, nullable=True)
+    next_action: Mapped[str | None] = mapped_column(Text, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    profile: Mapped[UserProfile] = relationship("UserProfile", back_populates="applications")
+    mission: Mapped[JobMission | None] = relationship("JobMission")

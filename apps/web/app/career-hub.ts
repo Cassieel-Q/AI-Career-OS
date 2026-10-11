@@ -110,3 +110,139 @@ export async function fetchResumesOverview(
   const response = await request(`${apiUrl}/api/v1/profiles/${encodeURIComponent(profileId)}/resumes`);
   return readApiPayload<ResumesOverviewRead>(response);
 }
+
+// ---------------------------------------------------------------------------
+// 岗位广场 + 投递记录
+// ---------------------------------------------------------------------------
+
+export type ApplicationStatus = "PENDING" | "APPLIED" | "SCREENING" | "ASSESSMENT" | "INTERVIEW" | "OFFER" | "CLOSED";
+
+export const APPLICATION_STATUS_LABEL: Record<ApplicationStatus, string> = {
+  PENDING: "待投递",
+  APPLIED: "已投递",
+  SCREENING: "筛选中",
+  ASSESSMENT: "测评/笔试",
+  INTERVIEW: "面试",
+  OFFER: "Offer",
+  CLOSED: "已结束",
+};
+
+export const APPLICATION_STATUS_ORDER: ApplicationStatus[] = [
+  "PENDING", "APPLIED", "SCREENING", "ASSESSMENT", "INTERVIEW", "OFFER", "CLOSED",
+];
+
+export const APPLICATION_CHANNELS = ["官网", "招聘网站", "内推", "邮箱", "校园招聘", "其他"] as const;
+
+export type ApplicationRead = {
+  id: string;
+  profile_id: string;
+  mission_id: string | null;
+  company: string;
+  role: string;
+  location: string | null;
+  channel: string;
+  status: ApplicationStatus;
+  stage: string;
+  applied_at: string | null;
+  next_action: string | null;
+  notes: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+};
+
+export type ApplicationsRead = {
+  total: number;
+  pending: number;
+  applied: number;
+  interviewing: number;
+  offer: number;
+  applications: ApplicationRead[];
+};
+
+export type PlazaItem = {
+  mission_id: string;
+  profile_id: string;
+  company: string;
+  role: string;
+  location: string | null;
+  seniority: string;
+  workflow_state: string;
+  prep_score: number;
+  resume_ready: boolean;
+  target_resume_confirmed: boolean;
+  application_id: string | null;
+  application_status: string | null;
+  updated_at: string | null;
+};
+
+export type PlazaRead = {
+  total: number;
+  applied: number;
+  ready: number;
+  items: PlazaItem[];
+};
+
+export async function fetchPlaza(
+  apiUrl = MISSION_API_BASE_URL,
+  request: MissionRequester = fetch,
+): Promise<PlazaRead> {
+  const response = await request(`${apiUrl}/api/v1/plaza`);
+  return readApiPayload<PlazaRead>(response);
+}
+
+export async function fetchApplications(
+  profileId: string,
+  apiUrl = MISSION_API_BASE_URL,
+  request: MissionRequester = fetch,
+): Promise<ApplicationsRead> {
+  const response = await request(`${apiUrl}/api/v1/profiles/${encodeURIComponent(profileId)}/applications`);
+  return readApiPayload<ApplicationsRead>(response);
+}
+
+export type ApplicationInput = {
+  mission_id?: string | null;
+  company: string;
+  role: string;
+  location?: string | null;
+  channel?: string;
+  status?: ApplicationStatus;
+  applied_at?: string | null;
+  next_action?: string | null;
+  notes?: string | null;
+};
+
+export async function createApplication(
+  profileId: string,
+  input: ApplicationInput,
+  apiUrl = MISSION_API_BASE_URL,
+  request: MissionRequester = fetch,
+): Promise<ApplicationRead> {
+  const response = await request(`${apiUrl}/api/v1/profiles/${encodeURIComponent(profileId)}/applications`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  return readApiPayload<ApplicationRead>(response);
+}
+
+export async function updateApplication(
+  applicationId: string,
+  patch: Partial<ApplicationInput>,
+  apiUrl = MISSION_API_BASE_URL,
+  request: MissionRequester = fetch,
+): Promise<ApplicationRead> {
+  const response = await request(`${apiUrl}/api/v1/applications/${encodeURIComponent(applicationId)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(patch),
+  });
+  return readApiPayload<ApplicationRead>(response);
+}
+
+export async function deleteApplication(
+  applicationId: string,
+  apiUrl = MISSION_API_BASE_URL,
+  request: MissionRequester = fetch,
+): Promise<void> {
+  await request(`${apiUrl}/api/v1/applications/${encodeURIComponent(applicationId)}`, { method: "DELETE" });
+}
