@@ -1807,15 +1807,10 @@ a.mission-progress-node:hover { transform:translate(-1px, -1px); background:var(
 }
 
 .app-brand-mark {
-  display: grid;
-  width: 1.9rem;
-  height: 1.9rem;
-  place-items: center;
-  border-radius: 0.55rem;
-  background: var(--fill-selected);
-  color: var(--text-inverse);
-  font-weight: 800;
-  font-size: 0.9rem;
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  color: var(--text-primary);
 }
 
 .app-brand-name {
@@ -1831,14 +1826,14 @@ a.mission-progress-node:hover { transform:translate(-1px, -1px); background:var(
   display: flex;
   align-items: center;
   gap: 0.65rem;
-  min-height: 2.5rem;
-  padding: 0.45rem 0.65rem;
-  border-radius: var(--radius-sm);
+  min-height: 2.4rem;
+  padding: 0.4rem 0.65rem 0.4rem 0.75rem;
+  border-radius: var(--radius-xs);
   color: var(--text-tertiary);
   font-size: 0.875rem;
   font-weight: 500;
   text-decoration: none;
-  transition: background 0.12s ease, color 0.12s ease;
+  transition: background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
 }
 
 .app-nav-item:hover {
@@ -1847,9 +1842,10 @@ a.mission-progress-node:hover { transform:translate(-1px, -1px); background:var(
 }
 
 .app-nav-item.active {
-  background: var(--fill-selected);
-  color: var(--text-inverse);
+  background: var(--surface-hover);
+  color: var(--text-primary);
   font-weight: 600;
+  box-shadow: inset 2px 0 0 var(--fill-selected);
 }
 
 .app-nav-icon {
@@ -1864,19 +1860,20 @@ a.mission-progress-node:hover { transform:translate(-1px, -1px); background:var(
   text-overflow: ellipsis;
 }
 
-.app-space {
-  margin-top: auto;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-weak);
+.app-nav-columns {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  flex: 1;
+  overflow-y: auto;
 }
 
-.app-space-title {
-  margin: 0 0 0.5rem 0.65rem;
+.app-nav-group-title {
+  margin: 0 0 0.35rem 0.75rem;
   color: var(--text-quaternary);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0.07em;
 }
 
 .app-main {
@@ -2068,20 +2065,18 @@ a.mission-progress-node:hover { transform:translate(-1px, -1px); background:var(
     border-right: none;
     border-bottom: 1px solid var(--border-medium);
   }
+  .app-nav-columns {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
   .app-nav {
     display: flex;
     gap: 0.25rem;
   }
+  .app-nav-group-title,
   .app-nav-label,
-  .app-space-title,
   .app-brand-name {
     display: none;
-  }
-  .app-space {
-    margin-top: 0;
-    padding-top: 0;
-    border-top: none;
-    margin-left: auto;
   }
   .app-page {
     width: min(100% - 1.5rem, 40rem);
@@ -2183,4 +2178,60 @@ a.mission-progress-node:hover { transform:translate(-1px, -1px); background:var(
 .resume-version {
   color: var(--text-quaternary);
   font-weight: 600;
+}
+
+/* ==========================================================================
+   首页「求职路径」横向流程条（自研视觉：序号圆点 + 连接线，非入口网格堆叠）
+   ========================================================================== */
+.app-flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.app-flow-step {
+  position: relative;
+  display: grid;
+  gap: 0.4rem;
+  padding: 1.1rem 1.15rem;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: border-color 0.12s ease, transform 0.12s ease;
+}
+
+.app-flow-step:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.app-flow-index {
+  display: grid;
+  width: 1.5rem;
+  height: 1.5rem;
+  place-items: center;
+  margin-bottom: 0.35rem;
+  border-radius: 50%;
+  background: var(--fill-selected);
+  color: var(--text-inverse);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.app-flow-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.app-flow-desc {
+  color: var(--text-tertiary);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 860px) {
+  .app-flow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

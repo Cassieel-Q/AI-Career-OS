@@ -169,7 +169,7 @@ export function MissionsHome() {
         <header className="app-page-header">
           <div>
             <p className="app-eyebrow">Jobs</p>
-            <h1 className="app-page-title">岗位广场</h1>
+            <h1 className="app-page-title">岗位</h1>
             <p className="app-page-subtitle">集中管理目标岗位、简历版本与面试准备。</p>
           </div>
         </header>
@@ -180,8 +180,7 @@ export function MissionsHome() {
           </Link>
           <Link className="button-secondary" href={"/interview-records" as Route}>
             面试记录库
-          </Link>
-          <Link className="button-secondary" href="/workflow/start">
+          </Link>          <Link className="button-secondary" href="/workflow/start">
             上传简历
           </Link>
         </div>

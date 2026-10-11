@@ -7,7 +7,7 @@ import { AppShell } from "./app-shell";
 
 /**
  * 决定当前路由是否套用全局侧栏外壳。
- * - 顶层模块页（首页/岗位广场/简历中心/求职进度/事实台账/面试记录）→ 套侧栏
+ * - 顶层模块页（总览/岗位/简历/投递/事实核对/面试）→ 套侧栏
  * - 单岗位 Mission 向导详情、上传简历、证据 OS、简历工作台 → 保留各自专注外壳
  */
 export function ShellController({ children }: { children: ReactNode }) {

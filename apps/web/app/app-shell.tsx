@@ -13,88 +13,129 @@ type NavItem = {
   match: (pathname: string) => boolean;
 };
 
-/** 侧栏主入口：按「找岗位 → 做简历 → 投递跟进 → 面试复盘」的使用顺序排列。 */
-const PRIMARY_ITEMS: NavItem[] = [
-  { key: "home", label: "首页", href: "/", icon: "home", match: (p) => p === "/" },
-  { key: "missions", label: "岗位广场", href: "/missions", icon: "jobs", match: (p) => p === "/missions" },
-  { key: "resumes", label: "简历中心", href: "/resumes", icon: "resume", match: (p) => p === "/resumes" || p.startsWith("/resumes/") },
-  { key: "tracker", label: "求职进度", href: "/tracker", icon: "tracker", match: (p) => p === "/tracker" },
-  { key: "claims", label: "事实台账", href: "/claims", icon: "claims", match: (p) => p === "/claims" },
-  { key: "interview", label: "面试记录", href: "/interview-records", icon: "interview", match: (p) => p.startsWith("/interview-records") },
+/**
+ * 侧栏信息架构（自研，避免与同类产品雷同）：
+ * 顶部「求职」组按使用流程排列，底部「工具」组收纳辅助模块，两级平铺、不做下拉。
+ */
+const JOURNEY_ITEMS: NavItem[] = [
+  { key: "home", label: "总览", href: "/", icon: "overview", match: (p) => p === "/" },
+  { key: "missions", label: "岗位", href: "/missions", icon: "jobs", match: (p) => p === "/missions" },
+  { key: "resumes", label: "简历", href: "/resumes", icon: "resume", match: (p) => p === "/resumes" || p.startsWith("/resumes/") },
+  { key: "tracker", label: "投递", href: "/tracker", icon: "tracker", match: (p) => p === "/tracker" },
+  { key: "interview", label: "面试", href: "/interview-records", icon: "interview", match: (p) => p.startsWith("/interview-records") },
 ];
 
-/** 「我的空间」：次要但常用的模块。 */
-const SPACE_ITEMS: NavItem[] = [
+const TOOL_ITEMS: NavItem[] = [
+  { key: "claims", label: "事实核对", href: "/claims", icon: "claims", match: (p) => p === "/claims" },
+  { key: "evidence", label: "证据库", href: "/evidence-os", icon: "evidence", match: (p) => p.startsWith("/evidence-os") },
   { key: "upload", label: "上传简历", href: "/workflow/start", icon: "upload", match: (p) => p.startsWith("/workflow") },
-  { key: "evidence", label: "证据 OS", href: "/evidence-os", icon: "evidence", match: (p) => p.startsWith("/evidence-os") },
 ];
 
+/** 线形图标（1.5 描边、圆角端点），统一几何语言。 */
 const ICON_PATHS: Record<string, ReactNode> = {
-  home: (
+  overview: (
     <>
-      <path d="M3 10.5 12 3l9 7.5" />
-      <path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5" />
+      <rect x="4" y="4" width="6.5" height="6.5" rx="1.6" />
+      <rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6" />
+      <rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6" />
+      <rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6" />
     </>
   ),
   jobs: (
     <>
-      <rect x="4" y="4" width="16" height="16" rx="2.5" />
-      <path d="M8 8h8M8 12h5" />
+      <rect x="4" y="6" width="16" height="13" rx="2.4" />
+      <path d="M8 6V5a1.8 1.8 0 0 1 1.8-1.8h4.4A1.8 1.8 0 0 1 16 5v1" />
+      <path d="M4 12h16" />
     </>
   ),
   resume: (
     <>
-      <path d="M6 3h8l4 4v14H6z" />
-      <path d="M14 3v4h4M9 12h6M9 16h6" />
+      <path d="M7 3h7.2L18 6.8V19a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+      <path d="M14 3v4h4M9 12h6M9 16h4" />
     </>
   ),
   tracker: (
     <>
-      <path d="M4 4v16h16" />
-      <path d="m7 13 3-3 3 3 5-6" />
-    </>
-  ),
-  claims: (
-    <>
-      <circle cx="12" cy="12" r="8" />
-      <path d="m8.5 12 2.5 2.5 4.5-5" />
+      <path d="M5 5v14h14" />
+      <path d="M8.5 13.5l2.5-2.5 2.5 2.5 3-3.5" />
     </>
   ),
   interview: (
     <>
-      <path d="M4 5h16v10H9l-5 4z" />
-      <path d="M8 9h8M8 12h5" />
+      <path d="M4 6h16v9.5H10l-5 4z" />
+      <path d="M8 9.5h8M8 12.5h5" />
+    </>
+  ),
+  claims: (
+    <>
+      <path d="M12 3.5l6.5 3v5c0 3.5-2.5 6-6.5 7.5-4-1.5-6.5-4-6.5-7.5v-5z" />
+      <path d="m9 12 2.2 2.2 3.8-4.2" />
+    </>
+  ),
+  evidence: (
+    <>
+      <path d="M6 3.5h9L18 6.5V20a.8.8 0 0 1-.8.8H6.8A.8.8 0 0 1 6 20z" />
+      <path d="M15 3.5v3h3M9 12h6M9 15.5h6" />
     </>
   ),
   upload: (
     <>
       <path d="M12 15V4" />
-      <path d="m7 8 5-5 5 5" />
+      <path d="m7.5 8 4.5-4.5L16.5 8" />
       <path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" />
-    </>
-  ),
-  evidence: (
-    <>
-      <rect x="5" y="4" width="14" height="16" rx="2" />
-      <path d="M9 9h6M9 13h6" />
     </>
   ),
 };
 
 function NavIcon({ name }: { name: string }) {
   return (
-    <svg className="app-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      {ICON_PATHS[name] ?? ICON_PATHS.home}
+    <svg
+      className="app-nav-icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {ICON_PATHS[name] ?? ICON_PATHS.overview}
+    </svg>
+  );
+}
+
+function BrandMark() {
+  return (
+    <svg className="app-brand-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M5 18.5V11a2 2 0 0 1 2-2h3v9.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M14 6.5V18.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <circle cx="14" cy="4.5" r="1.6" fill="currentColor" />
+      <path d="M10 18.5h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 }
 
 function NavLink({ item, active }: { item: NavItem; active: boolean }) {
   return (
-    <Link className={`app-nav-item${active ? " active" : ""}`} href={item.href} aria-current={active ? "page" : undefined}>
+    <Link
+      className={`app-nav-item${active ? " active" : ""}`}
+      href={item.href}
+      aria-current={active ? "page" : undefined}
+    >
       <NavIcon name={item.icon} />
       <span className="app-nav-label">{item.label}</span>
     </Link>
+  );
+}
+
+function NavGroup({ title, items, pathname }: { title: string; items: NavItem[]; pathname: string }) {
+  return (
+    <nav className="app-nav" aria-label={title}>
+      <p className="app-nav-group-title">{title}</p>
+      {items.map((item) => (
+        <NavLink key={item.key} item={item} active={item.match(pathname)} />
+      ))}
+    </nav>
   );
 }
 
@@ -105,23 +146,13 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="app-shell">
       <aside className="app-sidebar">
         <Link className="app-brand" href="/">
-          <span className="app-brand-mark" aria-hidden="true">A</span>
+          <BrandMark />
           <span className="app-brand-name">AI Career OS</span>
         </Link>
 
-        <nav className="app-nav" aria-label="主导航">
-          {PRIMARY_ITEMS.map((item) => (
-            <NavLink key={item.key} item={item} active={item.match(pathname)} />
-          ))}
-        </nav>
-
-        <div className="app-space">
-          <p className="app-space-title">我的空间</p>
-          <nav className="app-nav" aria-label="我的空间">
-            {SPACE_ITEMS.map((item) => (
-              <NavLink key={item.key} item={item} active={item.match(pathname)} />
-            ))}
-          </nav>
+        <div className="app-nav-columns">
+          <NavGroup title="求职" items={JOURNEY_ITEMS} pathname={pathname} />
+          <NavGroup title="工具" items={TOOL_ITEMS} pathname={pathname} />
         </div>
       </aside>
 
