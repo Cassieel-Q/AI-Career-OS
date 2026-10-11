@@ -194,7 +194,7 @@ docs/evaluation/2026-10-09-问题汇总.md、
 docs/evaluation/findings-and-backlog.md、
 docs/evaluation/product-risk-acceptance.md。
 
-当前基线是 main / 624de19（产品代码基线为 2ca4359），GitHub origin/main 已同步。不要直接在 main 开发，
+当前基线是 main（产品代码基线为 2ca4359），GitHub origin/main 已同步；开始工作前请执行 git rev-parse HEAD。不要直接在 main 开发，
 从 main 创建 feature/workbuddy-next worktree。不要删除或提交主检出中的
 apps/api/alembic/versions/014_interview_records.py 和 image/，也不要把旧 014
 迁移混入当前 013 → 014_resume_studio → 015_interview_records 链。
