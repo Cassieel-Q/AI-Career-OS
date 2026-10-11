@@ -1,8 +1,8 @@
 ﻿"use client";
 
 /**
- * Evidence OS — 8-step Multi-JD workflow skeleton.
- * Wires to /evidence-os/* FastAPI routes. Additive; does not replace existing proof flow.
+ * 证据库（Evidence OS）— 8 步证据 → 主张 → 定位 → 成稿工作流。
+ * 对接 /evidence-os/* 后端路由；作为主岗位流程之外的进阶工具保留。
  */
 
 import { useMemo, useState } from "react";
@@ -10,14 +10,14 @@ import { useMemo, useState } from "react";
 const API = process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000";
 
 const STEPS = [
-  "Intake / Evidence",
-  "Claims",
-  "Ingest JD",
-  "Match & Gap",
-  "Position & Draft",
-  "Claim Audit",
-  "Approve",
-  "Render & Eval",
+  { key: "evidence", label: "录入证据" },
+  { key: "claims", label: "建立主张" },
+  { key: "jd", label: "解析岗位" },
+  { key: "match", label: "匹配差距" },
+  { key: "draft", label: "定位成稿" },
+  { key: "audit", label: "主张审计" },
+  { key: "approve", label: "确认定稿" },
+  { key: "render", label: "渲染评估" },
 ] as const;
 
 type Json = Record<string, unknown>;
@@ -30,6 +30,15 @@ async function api<T = Json>(path: string, init?: RequestInit): Promise<T> {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(JSON.stringify(data?.detail || data || res.statusText));
   return data as T;
+}
+
+function StepIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M6 3.5h9L18 6.5V20a.8.8 0 0 1-.8.8H6.8A.8.8 0 0 1 6 20z" />
+      <path d="M15 3.5v3h3M9 12h6M9 15.5h6" />
+    </svg>
+  );
 }
 
 export default function EvidenceOsPage() {
@@ -48,7 +57,7 @@ export default function EvidenceOsPage() {
   const [draftText, setDraftText] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const title = useMemo(() => STEPS[step], [step]);
+  const title = useMemo(() => STEPS[step].label, [step]);
 
   function note(msg: string) {
     setLog((prev) => `${new Date().toLocaleTimeString()}  ${msg}\n${prev}`);
@@ -59,63 +68,73 @@ export default function EvidenceOsPage() {
     try {
       await fn();
     } catch (e) {
-      note(`ERROR: ${(e as Error).message}`);
+      note(`错误：${(e as Error).message}`);
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <main style={{ maxWidth: 920, margin: "40px auto", padding: 16, fontFamily: "system-ui" }}>
-      <h1>Evidence OS (Advanced / Debug)</h1><p style={{color:'#a00'}}>Not the primary Job Mission path. Use Missions for dogfood.</p>
-      <p style={{ color: "#555" }}>
-        Evidence → Claim → Positioning → Writing. Confirmed-only finals. No metric estimates. Heuristic evals only.
-      </p>
+    <main className="app-page">
+      <header className="app-page-header">
+        <div>
+          <p className="app-eyebrow">工具</p>
+          <h1 className="app-page-title">证据库</h1>
+          <p className="app-page-subtitle">证据 → 主张 → 定位 → 成稿。只有确认过的事实才会进入定稿，不做任何数据估算。</p>
+        </div>
+        <span className="app-badge muted">进阶模式</span>
+      </header>
 
-      <label>
-        Profile ID{" "}
-        <input
-          value={profileId}
-          onChange={(e) => setProfileId(e.target.value)}
-          style={{ width: "100%", marginBottom: 12 }}
-          placeholder="user_profiles.id UUID"
-        />
-      </label>
+      <section className="app-card">
+        <div className="start-card-head">
+          <span className="start-card-icon" aria-hidden="true"><StepIcon /></span>
+          <div>
+            <h2>工作档案</h2>
+            <p>本页操作都围绕一个档案进行，先填入档案 ID</p>
+          </div>
+        </div>
+        <div className="evidence-profile-row">
+          <input
+            className="start-select"
+            value={profileId}
+            onChange={(e) => setProfileId(e.target.value)}
+            placeholder="档案 ID（user_profiles.id）"
+            aria-label="档案 ID"
+          />
+        </div>
+      </section>
 
-      <nav style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+      <nav className="app-filter-row" aria-label="工作流步骤">
         {STEPS.map((s, i) => (
           <button
-            key={s}
+            key={s.key}
             type="button"
+            className={`app-filter${i === step ? " active" : ""}`}
             onClick={() => setStep(i)}
-            style={{
-              padding: "6px 10px",
-              borderRadius: 6,
-              border: i === step ? "2px solid #111" : "1px solid #ccc",
-              background: i === step ? "#111" : "#fff",
-              color: i === step ? "#fff" : "#111",
-            }}
           >
-            {i + 1}. {s}
+            {i + 1}. {s.label}
           </button>
         ))}
       </nav>
 
-      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 16, marginBottom: 16 }}>
-        <h2>
-          Step {step + 1}: {title}
-        </h2>
+      <section className="app-card">
+        <div className="start-card-head">
+          <div>
+            <h2>第 {step + 1} 步 · {title}</h2>
+          </div>
+        </div>
 
         {step === 0 && (
-          <div>
+          <div className="evidence-body">
             <textarea
+              className="start-select evidence-area"
               rows={4}
               value={evidenceFact}
               onChange={(e) => setEvidenceFact(e.target.value)}
-              placeholder="Immutable fact text (no estimated metrics)"
-              style={{ width: "100%" }}
+              placeholder="填写不可变的事实原文（不做任何数据估算）"
             />
             <button
+              className="app-btn primary"
               disabled={busy || !profileId}
               type="button"
               onClick={() =>
@@ -129,33 +148,34 @@ export default function EvidenceOsPage() {
                     }),
                   });
                   setEvidenceId(String(ev.id));
-                  note(`Evidence created: ${ev.id}`);
+                  note(`证据已录入：${ev.id}`);
                   setStep(1);
                 })
               }
             >
-              Save evidence
+              保存证据
             </button>
           </div>
         )}
 
         {step === 1 && (
-          <div>
+          <div className="evidence-body">
             <input
+              className="start-select"
               value={claimFact}
               onChange={(e) => setClaimFact(e.target.value)}
-              placeholder="source_fact"
-              style={{ width: "100%", marginBottom: 8 }}
+              placeholder="来源事实（source_fact）"
             />
             <textarea
+              className="start-select evidence-area"
               rows={3}
               value={claimWording}
               onChange={(e) => setClaimWording(e.target.value)}
-              placeholder="candidate_wording"
-              style={{ width: "100%" }}
+              placeholder="简历表述（candidate_wording）"
             />
-            <p style={{ fontSize: 13 }}>Evidence ID: {evidenceId || "(paste/create first)"}</p>
+            <p className="start-note">证据 ID：{evidenceId || "（请先在第 1 步录入或粘贴）"}</p>
             <button
+              className="app-btn primary"
               disabled={busy || !profileId || !evidenceId}
               type="button"
               onClick={() =>
@@ -167,54 +187,56 @@ export default function EvidenceOsPage() {
                       candidate_wording: claimWording,
                       verification_status: "confirmed",
                       responsibility_level: "owned_module",
-                      boundary: "Owned module delivery; not company-wide P&L.",
+                      boundary: "仅限本人负责的模块交付，不代表公司整体业绩。",
                       evidence_ids: [evidenceId],
                       competency_ids: ["rag", "model_evaluation"],
                     }),
                   });
-                  note(`Claim created: ${c.id}`);
+                  note(`主张已建立：${c.id}`);
                   setStep(2);
                 })
               }
             >
-              Create confirmed claim
+              建立已确认主张
             </button>
           </div>
         )}
 
         {step === 2 && (
-          <div>
+          <div className="evidence-body">
             <textarea
+              className="start-select evidence-area"
               rows={8}
               value={jdText}
               onChange={(e) => setJdText(e.target.value)}
-              placeholder="Paste JD text..."
-              style={{ width: "100%" }}
+              placeholder="粘贴完整岗位描述（JD）…"
             />
             <button
+              className="app-btn primary"
               disabled={busy || !profileId || !jdText}
               type="button"
               onClick={() =>
                 run(async () => {
                   const jd = await api(`/evidence-os/profiles/${profileId}/jds`, {
                     method: "POST",
-                    body: JSON.stringify({ title: "Target role", raw_text: jdText, language: "en" }),
+                    body: JSON.stringify({ title: "目标岗位", raw_text: jdText, language: "en" }),
                   });
                   setJdId(String(jd.id));
-                  note(`JD ingested: ${jd.id} with ${(jd.requirements as unknown[])?.length || 0} requirements`);
+                  note(`岗位已解析：${jd.id}，共 ${(jd.requirements as unknown[])?.length || 0} 条要求`);
                   setStep(3);
                 })
               }
             >
-              Ingest JD
+              解析岗位
             </button>
           </div>
         )}
 
         {step === 3 && (
-          <div>
-            <p>JD: {jdId || "—"}</p>
+          <div className="evidence-body">
+            <p className="start-note">岗位 ID：{jdId || "—"}</p>
             <button
+              className="app-btn primary"
               disabled={busy || !profileId || !jdId}
               type="button"
               onClick={() =>
@@ -223,22 +245,23 @@ export default function EvidenceOsPage() {
                     method: "POST",
                   });
                   setMatchSummary(
-                    `covered=${m.covered} weak=${m.weak} missing=${m.missing} needs_excavation=${m.needs_excavation}`
+                    `已覆盖 ${m.covered} · 偏弱 ${m.weak} · 缺失 ${m.missing} · 需深挖 ${m.needs_excavation}`
                   );
-                  note(`Match: ${JSON.stringify(m)}`);
+                  note(`匹配结果：${JSON.stringify(m)}`);
                   setStep(4);
                 })
               }
             >
-              Run match & gap
+              运行匹配与差距分析
             </button>
-            {matchSummary && <pre>{matchSummary}</pre>}
+            {matchSummary && <pre className="evidence-log">{matchSummary}</pre>}
           </div>
         )}
 
         {step === 4 && (
-          <div>
+          <div className="evidence-body">
             <button
+              className="app-btn primary"
               disabled={busy || !profileId || !jdId}
               type="button"
               onClick={() =>
@@ -250,26 +273,27 @@ export default function EvidenceOsPage() {
                   setVersionId(String(v.id));
                   setVersionHash(String(v.full_text_hash || ""));
                   setDraftText(String(v.full_text || ""));
-                  note(`Draft version: ${v.id}`);
+                  note(`定位稿已生成：${v.id}`);
                   setStep(5);
                 })
               }
             >
-              Position & draft (confirmed only)
+              生成定位稿（仅含已确认主张）
             </button>
-            {draftText && <pre style={{ whiteSpace: "pre-wrap" }}>{draftText}</pre>}
+            {draftText && <pre className="evidence-log">{draftText}</pre>}
           </div>
         )}
 
         {step === 5 && (
-          <div>
+          <div className="evidence-body">
             <button
+              className="app-btn primary"
               disabled={busy || !versionId}
               type="button"
               onClick={() =>
                 run(async () => {
                   const a = await api(`/evidence-os/versions/${versionId}/audit`, { method: "POST" });
-                  note(`Audit: ${JSON.stringify(a)}`);
+                  note(`审计结果：${JSON.stringify(a)}`);
                   const v = await api(`/evidence-os/versions/${versionId}`);
                   setVersionHash(String(v.full_text_hash || ""));
                   setDraftText(String(v.full_text || ""));
@@ -277,15 +301,16 @@ export default function EvidenceOsPage() {
                 })
               }
             >
-              Run claim audit
+              运行主张审计
             </button>
           </div>
         )}
 
         {step === 6 && (
-          <div>
-            <p style={{ fontSize: 13 }}>Hash: {versionHash}</p>
+          <div className="evidence-body">
+            <p className="start-note">内容指纹：{versionHash || "—"}</p>
             <button
+              className="app-btn primary"
               disabled={busy || !versionId || !versionHash}
               type="button"
               onClick={() =>
@@ -294,49 +319,46 @@ export default function EvidenceOsPage() {
                     method: "POST",
                     body: JSON.stringify({ full_text_hash: versionHash }),
                   });
-                  note(`Approved: ${a.id}`);
+                  note(`已确认：${a.id}`);
                   setStep(7);
                 })
               }
             >
-              Approve (hash-bound)
+              确认定稿（指纹绑定）
             </button>
           </div>
         )}
 
         {step === 7 && (
-          <div>
+          <div className="evidence-body">
             <button
+              className="app-btn primary"
               disabled={busy || !versionId}
               type="button"
               onClick={() =>
                 run(async () => {
                   const r = await api(`/evidence-os/versions/${versionId}/render`, { method: "POST" });
-                  note(`Render: ${r.message}`);
+                  note(`渲染完成：${r.message}`);
                   const e = await api(`/evidence-os/versions/${versionId}/evals`, { method: "POST" });
-                  note(`Heuristic evals: ${JSON.stringify(e)}`);
+                  note(`启发式评估：${JSON.stringify(e)}`);
                 })
               }
             >
-              Render + heuristic evals
+              渲染并运行启发式评估
             </button>
           </div>
         )}
       </section>
 
-      <pre
-        style={{
-          background: "#f6f6f6",
-          padding: 12,
-          borderRadius: 8,
-          maxHeight: 240,
-          overflow: "auto",
-          fontSize: 12,
-        }}
-      >
-        {log || "Activity log…"}
-      </pre>
+      <section className="app-card">
+        <div className="start-card-head">
+          <div>
+            <h2>操作日志</h2>
+            <p>每一步的结果与错误都会记录在这里</p>
+          </div>
+        </div>
+        <pre className="evidence-log">{log || "暂无操作记录…"}</pre>
+      </section>
     </main>
   );
 }
-
