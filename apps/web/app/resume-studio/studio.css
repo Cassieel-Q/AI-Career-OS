@@ -99,6 +99,9 @@
 .rs-export p { color: #7a8799; font-size: 11px; line-height: 1.6; }
 .rs-export button { width: 100%; border-radius: 5px; padding: 10px; font-size: 12px; margin-top: 7px; }
 .rs-export .rs-download { background: #36563d; }
+.rs-export-text { margin-top: 14px; padding-top: 12px; border-top: 1px dashed #d5dce5; }
+.rs-export-text p { margin: 0 0 4px; }
+.rs-export-text button { margin-top: 5px; padding: 7px; }
 .rs-mobile-tabs { display: none; }
 .rs-gallery-backdrop, .rs-sample-backdrop { position: fixed; inset: 0; z-index: 100; background: #111e38b8; display: grid; place-items: center; padding: 24px; }
 .rs-gallery { width: min(1280px, 100%); max-height: 94vh; overflow: auto; background: #fbfcfa; box-shadow: 0 22px 90px #101b30aa; }
