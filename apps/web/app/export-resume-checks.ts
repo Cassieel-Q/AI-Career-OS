@@ -433,7 +433,8 @@ export type PreExportCheckItem = {
     | "missing_email"
     | "non_resume_phrase"
     | "unclassified_experience"
-    | "no_exportable_bullets";
+    | "no_exportable_bullets"
+    | "placeholder_residue";
   message: string;
   bulletId?: string;
   experienceId?: string;
@@ -478,6 +479,15 @@ export function findNonResumePhrase(value: string): { phrase: string; snippet: s
   }
   if (!best) return null;
   return { phrase: best.phrase, snippet: phraseSnippet(value, best.index) };
+}
+
+// 与 apps/api resume_studio_service.py 的 _PLACEHOLDER_RESIDUE 对齐：正文残留未完成标记应拦截导出。
+const PLACEHOLDER_RESIDUE_RE = /【[^】]*(?:待补|待确认|待补充|待核实|待完善)[^】]*】|待补充|待核实|待完善|待补全/;
+
+/** 返回正文里残留的未完成占位标记（如【待补：…】），未命中返回 null。 */
+export function findPlaceholderResidue(value: string): string | null {
+  const match = PLACEHOLDER_RESIDUE_RE.exec(value);
+  return match ? match[0] : null;
 }
 
 /**
@@ -529,6 +539,16 @@ export function buildPreExportChecklist(input: PreExportChecklistInput): PreExpo
         message: `要点含自评/面试话术「${hit.snippet}」，不适合直接写进简历，建议删改后再投递。`,
         bulletId: bullet.id,
         snippet: hit.snippet,
+      });
+    }
+    const residue = findPlaceholderResidue(value);
+    if (residue) {
+      blocks.push({
+        level: "block",
+        code: "placeholder_residue",
+        message: `要点含未完成标记「${residue}」，请先补全或删除后再导出。`,
+        bulletId: bullet.id,
+        snippet: residue,
       });
     }
   }

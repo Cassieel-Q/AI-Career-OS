@@ -49,3 +49,20 @@ export async function downloadStudioPdf(missionId: string): Promise<{ blob: Blob
   const filename = encoded ? decodeURIComponent(encoded) : "resume.pdf";
   return { blob: await response.blob(), filename };
 }
+
+export type StudioExportFormat = "markdown" | "txt" | "json";
+
+/** 下载 Markdown / 纯文本 / JSON 导出（draft=true 允许导出草稿自检）。 */
+export async function downloadStudioExport(missionId: string, format: StudioExportFormat, draft = false): Promise<{ blob: Blob; filename: string }> {
+  const suffix = draft ? "&draft=1" : "";
+  const response = await fetch(`${root(missionId)}/export?format=${format}${suffix}`);
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new StudioApiError(response.status, body.detail ?? body);
+  }
+  const disposition = response.headers.get("Content-Disposition") || "";
+  const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+  const ext = format === "markdown" ? "md" : format;
+  const filename = encoded ? decodeURIComponent(encoded) : `resume.${ext}`;
+  return { blob: await response.blob(), filename };
+}
