@@ -49,9 +49,20 @@ export default function ClaimsPage() {
         <div>
           <p className="app-eyebrow">Claims</p>
           <h1 className="app-page-title">事实核对</h1>
-          <p className="app-page-subtitle">只有确认过的事实才会写进简历，未确认的显式避开。</p>
+          <p className="app-page-subtitle">AI 写进简历的每一句话都来自这里确认过的事实——先核对，再进简历。</p>
         </div>
       </header>
+
+      <section className="app-card app-guide-card" aria-label="使用说明">
+        <strong>这一页解决什么问题？</strong>
+        <p>AI 生成简历建议时，会为每句话登记一条「主张」并标注可信来源。你在岗位分析里看到的每条改写建议，都能在这里找到对应的事实与风险提示。</p>
+        <strong>怎么用？三步：</strong>
+        <ol>
+          <li>AI 分析岗位后，主张自动沉淀到这里（无需手动录入）；</li>
+          <li>逐条查看「风险提示」——写了原始简历里没有内容的条目标记为「待核对」；</li>
+          <li>在岗位档案的改写列表点「确认事实」完成核对，确认后才会写入投递版简历和面试追问。</li>
+        </ol>
+      </section>
 
       {error ? <p className="message error" role="alert">{error}</p> : null}
 

@@ -99,6 +99,8 @@
 .rs-export p { color:#8e8e93; font-size:11px; line-height:1.6; }
 .rs-export button { width:100%; border-radius:5px; padding:10px; font-size:12px; margin-top:7px; }
 .rs-export .rs-download { background:#111111; }
+.rs-next-interview { display:block; margin-top:9px; padding:10px; border-radius:5px; border:1px dashed #8e8e93; color:#111111; font-size:12px; text-align:center; text-decoration:none; }
+.rs-next-interview:hover { border-color:#111111; }
 .rs-export-text { margin-top:14px; padding-top:12px; border-top:1px dashed #e5e5ea; }
 .rs-export-text p { margin:0 0 4px; }
 .rs-export-text button { margin-top:5px; padding:7px; }

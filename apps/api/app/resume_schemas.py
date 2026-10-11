@@ -27,6 +27,7 @@ class Education(ExtractedFact):
     field_of_study: str | None = None
     dates: str | None = None
     relevant_courses: list[str] = Field(default_factory=list)
+    honors: list[str] = Field(default_factory=list)
 
 
 class Skill(ExtractedFact):
@@ -59,6 +60,7 @@ class LeanEducation(BaseModel):
     field_of_study: str | None = None
     dates: str | None = None
     relevant_courses: list[str] = Field(default_factory=list)
+    honors: list[str] = Field(default_factory=list)
 
 
 class LeanSkill(BaseModel):

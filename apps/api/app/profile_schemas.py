@@ -105,6 +105,7 @@ class EducationInput(ProfileItemInput):
     field_of_study: str | None = None
     dates: str | None = None
     relevant_courses: list[str] = Field(default_factory=list)
+    honors: list[str] = Field(default_factory=list)
 
     @field_validator("institution", mode="before")
     @classmethod

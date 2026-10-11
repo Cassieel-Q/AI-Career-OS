@@ -61,6 +61,16 @@ def _import_document(profile: models.UserProfile, resume: models.TargetResume, m
         "email": _node(profile.email, source_kind="profile", source_id=profile.id, risk_level="HIGH"),
         "location": _node(profile.city, source_kind="profile", source_id=profile.id),
     }
+    def _education_sort_key(item: models.Education) -> int:
+        degree = (item.degree or "")
+        if any(keyword in degree for keyword in ("博士", "PhD", "Doctor")):
+            return 0
+        if any(keyword in degree for keyword in ("硕士", "研究生", "Master", "MBA")):
+            return 1
+        if any(keyword in degree for keyword in ("本科", "学士", "Bachelor")):
+            return 2
+        return 3
+
     education = [
         _entry(
             item.id,
@@ -68,9 +78,9 @@ def _import_document(profile: models.UserProfile, resume: models.TargetResume, m
             subtitle=_node(" · ".join(filter(None, [item.degree, item.field_of_study])), source_kind="profile", source_id=item.id, evidence_refs=[str(item.id)], risk_level="HIGH"),
             date=_node(item.dates, source_kind="profile", source_id=item.id, evidence_refs=[str(item.id)], risk_level="HIGH"),
             location=_node("", source_kind="profile", source_id=item.id),
-            bullets=[_node(course, source_kind="profile", source_id=item.id, evidence_refs=[str(item.id)]) for course in item.relevant_courses or []],
+            bullets=[_node(line, source_kind="profile", source_id=item.id, evidence_refs=[str(item.id)]) for line in [*(f"奖项：{honor}" for honor in item.honors or []), *item.relevant_courses]],
         )
-        for item in profile.education
+        for item in sorted(profile.education, key=_education_sort_key)
     ]
     accepted = [bullet for bullet in resume.bullets if bullet.status in {"ACCEPTED", "EDITED"}]
     by_experience: dict[UUID, list[models.TargetResumeBullet]] = defaultdict(list)

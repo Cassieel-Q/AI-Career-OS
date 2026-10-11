@@ -91,6 +91,7 @@ def create_draft_profile(db: Session, extraction: ResumeExtractionResult) -> mod
             field_of_study=item.field_of_study,
             dates=item.dates,
             relevant_courses=item.relevant_courses,
+            honors=item.honors,
             evidence_text=item.evidence_text,
             source_type=SourceType.AI_EXTRACTED.value,
             raw_value=item.raw_value,
@@ -262,7 +263,7 @@ def update_draft_profile(db: Session, profile_id: UUID, payload: ProfileUpdate) 
         profile,
         "education",
         payload.education,
-        ("institution", "degree", "field_of_study", "dates", "relevant_courses"),
+        ("institution", "degree", "field_of_study", "dates", "relevant_courses", "honors"),
         models.Education,
     )
     _replace_collection(profile, "skills", payload.skills, ("name", "proficiency"), models.ProfileSkill)
@@ -384,6 +385,7 @@ def replace_profile_from_extraction(db: Session, profile_id: UUID, extraction: R
                 field_of_study=item.field_of_study,
                 dates=item.dates,
                 relevant_courses=item.relevant_courses,
+                honors=item.honors,
                 evidence_text=item.evidence_text,
                 source_type=SourceType.AI_EXTRACTED.value,
                 raw_value=item.raw_value,

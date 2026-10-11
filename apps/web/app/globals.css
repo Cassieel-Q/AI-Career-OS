@@ -642,6 +642,7 @@ button:disabled {
 .workflow-content-panel {
   width:100%;
   max-width:1000px;
+  margin-inline:auto;
   min-height:28rem;
   padding:clamp(1.1rem, 3vw, 2rem);
   border:1px solid #e5e5ea;
@@ -658,6 +659,7 @@ button:disabled {
   gap:1rem;
   width:100%;
   max-width:1000px;
+  margin-inline:auto;
   padding:1rem 0.25rem;
 }
 
@@ -800,9 +802,9 @@ button:disabled {
 .step-heading h1 {
   max-width:48rem;
   margin:0;
-  font-size:clamp(1.85rem, 4vw, 2.6rem);
-  line-height:1.12;
-  letter-spacing:-0.03em;
+  font-size:clamp(1.45rem, 2.4vw, 1.9rem);
+  line-height:1.2;
+  letter-spacing:-0.02em;
 }
 
 .step-heading .summary {
@@ -1683,6 +1685,12 @@ body { background:var(--canvas); color:var(--ink); }
 .mission-shell .decision-chip:active:not(:disabled) { transform:translate(2px, 2px); box-shadow:none; }
 .mission-shell .decision-chip.active { background:var(--primary); color:#ffffff !important; border-color:var(--pixel-border); }
 .mission-text-btn, .text-button { color:var(--primary-hover); background:transparent; }
+/* 表单控件占满内容列，避免 textarea/输入框缩成默认窄条 */
+.workflow-shell .step-body :is(input:not([type="radio"]):not([type="checkbox"]), textarea),
+.mission-form :is(input, textarea, select) {
+  width:100%;
+  box-sizing:border-box;
+}
 .mission-shell:is(input, textarea, select), .mission-home :is(input, textarea, select),
 .workflow-shell :is(input, textarea, select) {
   border:1px solid #8e8e93;
@@ -1987,6 +1995,11 @@ a.mission-progress-node:hover { transform:translate(-1px, -1px); background:var(
   font-weight: 800;
   letter-spacing: -0.02em;
 }
+
+.app-guide-card { display:grid; gap:0.5rem; margin-bottom:1.25rem; padding:1.1rem 1.25rem; background:#fafafa; }
+.app-guide-card strong { font-size:0.95rem; }
+.app-guide-card p { margin:0; color:#3a3a3c; font-size:0.9rem; line-height:1.6; }
+.app-guide-card ol { margin:0; padding-left:1.4rem; color:#3a3a3c; font-size:0.9rem; line-height:1.7; }
 
 .app-page-subtitle {
   margin: 0.4rem 0 0;

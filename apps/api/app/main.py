@@ -114,7 +114,7 @@ _MODEL_T = TypeVar("_MODEL_T", bound=BaseModel)
 _FULL_JSON_OBJECT_CONTRACT = (
     " Return only a JSON object (no Markdown or commentary) with these top-level arrays: education, skills, "
     "experiences, and certifications; use [] when a section has no supported facts. Education items require "
-    "institution and may include degree, field_of_study, dates, and relevant_courses (an array of strings); "
+    "institution and may include degree, field_of_study, dates, relevant_courses (an array of strings), and honors (an array of scholarship/award strings); "
     "skill items require name; experience items require title and may include organization, dates, description, "
     "experience_type, and source_section; certification items require name and may include issuer, date, score, "
     "and status. Use null only for optional scalar fields and do not add unsupported fields."
@@ -122,9 +122,11 @@ _FULL_JSON_OBJECT_CONTRACT = (
 _EDUCATION_JSON_OBJECT_CONTRACT = (
     " Return only a JSON object (JSON only; no Markdown or commentary) with exactly this object shape: "
     '{"items":[{"institution":"...","degree":null,"field_of_study":null,"dates":null,'
-    '"relevant_courses":[]}]}. '
-    "Education items must use exactly institution, degree, field_of_study, dates, and relevant_courses; "
-    "use null for missing optional scalar values and [] for no courses. "
+    '"relevant_courses":[],"honors":[]}]}. '
+    "Education items must use exactly institution, degree, field_of_study, dates, relevant_courses, and honors; "
+    "use null for missing optional scalar values and [] for no courses or no honors. honors lists explicit "
+    "scholarships, awards, and honors printed under education (e.g. 国家奖学金、优秀研究生), one string per item, "
+    "copied verbatim; never invent honors. "
     "Do not include evidence, provenance, raw, canonical, or any other fields."
 )
 _EXPERIENCE_JSON_OBJECT_CONTRACT = (
@@ -1064,6 +1066,7 @@ def _lean_result_to_section_result(
                 field_of_study=item.field_of_study,
                 dates=item.dates,
                 relevant_courses=item.relevant_courses,
+                honors=item.honors,
                 evidence_text=section.content,
             )
             for item in lean_result.education
@@ -1260,6 +1263,65 @@ def _recover_explicit_language_skills(source_text: str) -> list[Skill]:
         )
         for start, end, canonical, raw_value in candidates
     ]
+
+
+_CONTACT_LABEL_CITY_PATTERN = re.compile(
+    r"(?:意向地|意向城市|期望城市|现居|现居地|所在城市|当前城市|居住地|城市)[：:]\s*([\u4e00-\u9fa5]{2,12})"
+)
+_CONTACT_NAME_KEYWORDS = ("简历", "电话", "邮箱", "手机", "地址", "个人", "求职", "意向")
+
+
+def _recover_contact_facts(result: ResumeExtractionResult, source_text: str) -> ResumeExtractionResult:
+    """Deterministically recover contact fields the LLM missed.
+
+    Section-first extraction never emits full_name/phone/email/city, so Chinese
+    resumes with standard headings (教育背景/工作经历…) lose contact info. This
+    regex pass fills only empty/None fields — it never overwrites LLM output.
+    """
+
+    updates: dict[str, object] = {}
+
+    if not (result.phone or "").strip():
+        phone_match = re.search(r"(?<!\d)1[3-9]\d{9}(?!\d)", source_text)
+        if phone_match is None:
+            phone_match = re.search(r"(?<!\d)0\d{2,3}-?\d{7,8}(?!\d)", source_text)
+        if phone_match is not None:
+            labeled = re.search(r"(?:电话|手机|联系电话|联系方式)[：:]\s*((?<!\d)1[3-9]\d{9}(?!\d))", source_text)
+            updates["phone"] = labeled.group(1) if labeled else phone_match.group(0)
+
+    if not (result.email or "").strip():
+        email_match = re.search(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", source_text)
+        if email_match is not None:
+            updates["email"] = email_match.group(0)
+
+    if not (result.city or "").strip():
+        city_match = _CONTACT_LABEL_CITY_PATTERN.search(source_text)
+        if city_match is not None:
+            updates["city"] = city_match.group(1)
+
+    if not (result.full_name or "").strip():
+        labeled_name = re.search(r"姓\s*名[：:]\s*([\u4e00-\u9fa5]{2,4})", source_text)
+        if labeled_name is not None:
+            updates["full_name"] = labeled_name.group(1)
+        else:
+            # 姓名几乎总在联系信息之前；把候选行限制在 phone/email 首次出现之前，
+            # 避免 PDF 文本流把「教育背景」这类标题误判成姓名。
+            contact_match = re.search(r"1[3-9]\d{9}|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+", source_text)
+            head = source_text[:contact_match.start()] if contact_match else "\n".join(source_text.splitlines()[:6])
+            for line in head.splitlines():
+                candidate = line.strip()
+                if not 2 <= len(candidate) <= 4:
+                    continue
+                if not re.fullmatch(r"[\u4e00-\u9fa5]{2,4}", candidate):
+                    continue
+                if any(keyword in candidate for keyword in _CONTACT_NAME_KEYWORDS):
+                    continue
+                updates["full_name"] = candidate
+                break
+
+    if not updates:
+        return result
+    return result.model_copy(update=updates)
 
 
 def recover_explicit_facts(result: ResumeExtractionResult, source_text: str) -> ResumeExtractionResult:
@@ -2346,7 +2408,7 @@ def _run_full_resume_fallback(
             provider_call=True,
         )
     return process_resume_extraction(
-        result,
+        _recover_contact_facts(result, source_text),
         source_text,
         allow_repair=False,
         initial_llm_calls=1,
@@ -2537,6 +2599,7 @@ def extract_section_first_resume(
         )
 
     merged = _attach_course_section_to_education(merged, source_text)
+    merged = _recover_contact_facts(merged, source_text)
 
     processed = process_resume_extraction(
         merged,
