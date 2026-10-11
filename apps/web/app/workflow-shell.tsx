@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import type { ReactNode } from "react";
 
 import {
@@ -48,17 +47,6 @@ export function WorkflowShell({
 
   return (
     <main className="workflow-shell">
-      <header className="workflow-header">
-        <Link className="workflow-brand" href="/missions" aria-label="AI Career OS — 我的岗位准备">
-          <span className="workflow-brand-mark" aria-hidden="true">A</span>
-          <span>AI Career OS</span>
-        </Link>
-        <div className="workflow-profile-context">
-          <span>当前 Profile</span>
-          <code>{profileId}</code>
-        </div>
-      </header>
-
       <div className="workflow-layout">
         <aside className="workflow-sidebar">
           <p className="workflow-sidebar-title">职业规划流程</p>
