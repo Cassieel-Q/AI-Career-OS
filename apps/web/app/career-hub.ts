@@ -246,3 +246,49 @@ export async function deleteApplication(
 ): Promise<void> {
   await request(`${apiUrl}/api/v1/applications/${encodeURIComponent(applicationId)}`, { method: "DELETE" });
 }
+
+// ---------------------------------------------------------------------------
+// 岗位批量导入
+// ---------------------------------------------------------------------------
+
+export type JobDraft = {
+  title: string;
+  company: string;
+  role: string;
+  location: string;
+  description: string;
+};
+
+export type BulkCreateResult = {
+  created: Array<{ mission_id: string; company: string; role: string }>;
+  errors: Array<{ index: number; error: string }>;
+  total: number;
+};
+
+export async function parseJobBatch(
+  profileId: string,
+  rawText: string,
+  apiUrl = MISSION_API_BASE_URL,
+  request: MissionRequester = fetch,
+): Promise<JobDraft[]> {
+  const response = await request(`${apiUrl}/api/v1/profiles/${encodeURIComponent(profileId)}/job-missions/parse-batch`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ raw_text: rawText }),
+  });
+  return readApiPayload<JobDraft[]>(response);
+}
+
+export async function bulkCreateMissions(
+  profileId: string,
+  drafts: JobDraft[],
+  apiUrl = MISSION_API_BASE_URL,
+  request: MissionRequester = fetch,
+): Promise<BulkCreateResult> {
+  const response = await request(`${apiUrl}/api/v1/profiles/${encodeURIComponent(profileId)}/job-missions/bulk-create`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ drafts }),
+  });
+  return readApiPayload<BulkCreateResult>(response);
+}
