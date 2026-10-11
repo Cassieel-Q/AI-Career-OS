@@ -4,7 +4,7 @@
 > 接收方：WorkBuddy  
 > 项目根目录：`G:\myself\ai-career`  
 > 当前产品主线：`main`  
-> 当前主线提交：`624de19 docs: add WorkBuddy project handoff`；产品代码基线：`2ca4359 feat: align resume studio with mission UI`
+> 当前主线：`main`；产品代码基线：`2ca4359 feat: align resume studio with mission UI`。开始工作前请执行 `git rev-parse HEAD` 核对主线 tip。
 
 ## 1. 先读这些文件
 
@@ -35,7 +35,7 @@
 ### Git 与工作区
 
 - `main` 已经包含 `feature/eval-benchmark-v1` 的全部提交。
-- 本地 `main` 与 `origin/main` 当前都指向 `624de19`；`feature/eval-benchmark-v1` 与 `origin/feature/eval-benchmark-v1` 保持在产品代码提交 `2ca4359`。
+- 本地 `main` 与 `origin/main` 已同步；`feature/eval-benchmark-v1` 与 `origin/feature/eval-benchmark-v1` 保持在产品代码提交 `2ca4359`。
 - GitHub 主线已推送成功：<https://github.com/Cassieel-Q/AI-Career-OS/tree/main>
 - 当前主检出只有两类未跟踪内容：
   - `apps/api/alembic/versions/014_interview_records.py`
@@ -67,7 +67,7 @@
 - Web：`npm run type-check` 通过。
 - Web：`npm run build` 通过；仅有已有 ESLint/自定义字体 warning。
 - `git diff --check` 通过。
-- `origin/main` 与本地 `main` 均为 `f4b77b1`；产品代码提交为 `2ca4359`。
+- `origin/main` 与本地 `main` 已核对同步；产品代码提交为 `2ca4359`。
 - Project Tour 浏览器报告和截图来自本地实际运行，不是静态 mock HTML。
 
 ### 当前可以推断的结论
