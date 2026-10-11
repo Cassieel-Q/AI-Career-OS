@@ -3,7 +3,7 @@
 .rs-root button { cursor:pointer; }
 .rs-root button:disabled { opacity:.48; cursor:not-allowed; }
 .rs-root .rs-secondary { background:#ffffff; color:#111111; border:1px solid #e5e5ea; }
-.rs-topbar { height:64px; display:flex; align-items:center; justify-content:space-between; padding:0 max(24px, calc((100vw - 1050px)/2)); background:var(--rs-surface); border-bottom:1px solid var(--rs-border); }
+.rs-topbar { height:64px; display:flex; align-items:center; justify-content:space-between; padding:0 max(24px, calc((100% - 1050px)/2)); background:var(--rs-surface); border-bottom:1px solid var(--rs-border); }
 .rs-brand { display:flex; align-items:center; gap:13px; }
 .rs-logo { width:38px; height:38px; display:grid; place-items:center; background:var(--rs-primary); color:white; border-radius:8px; font-weight:900; letter-spacing:-.1em; font-size:19px; }
 .rs-logo span { color:#f5f5f7; }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Route } from "next";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 type NavItem = {
   key: string;
@@ -12,6 +12,8 @@ type NavItem = {
   icon: string;
   match: (pathname: string) => boolean;
 };
+
+const SIDEBAR_COLLAPSED_KEY = "career-os.sidebar.collapsed";
 
 /**
  * 侧栏信息架构（自研，避免与同类产品雷同）：
@@ -85,6 +87,20 @@ const ICON_PATHS: Record<string, ReactNode> = {
       <path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" />
     </>
   ),
+  panelCollapse: (
+    <>
+      <rect x="4" y="5" width="16" height="14" rx="2" />
+      <path d="M9.5 5v14" />
+      <path d="m14.5 10-2 2 2 2" />
+    </>
+  ),
+  panelExpand: (
+    <>
+      <rect x="4" y="5" width="16" height="14" rx="2" />
+      <path d="M9.5 5v14" />
+      <path d="m12.5 10 2 2-2 2" />
+    </>
+  ),
 };
 
 function NavIcon({ name }: { name: string }) {
@@ -141,11 +157,33 @@ function NavGroup({ title, items, pathname }: { title: string; items: NavItem[];
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  // 收起状态初始为展开（与 SSR 一致），挂载后再读取本地记忆，避免 hydration 不匹配。
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    try {
+      setCollapsed(window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1");
+    } catch {
+      /* 隐私模式等场景下忽略 */
+    }
+  }, []);
+
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? "1" : "0");
+      } catch {
+        /* 忽略写入失败 */
+      }
+      return next;
+    });
+  };
 
   return (
-    <div className="app-shell">
-      <aside className="app-sidebar">
-        <Link className="app-brand" href="/">
+    <div className={`app-shell${collapsed ? " sidebar-collapsed" : ""}`}>
+      <aside className="app-sidebar" aria-hidden={collapsed}>
+        <Link className="app-brand" href="/" tabIndex={collapsed ? -1 : undefined}>
           <BrandMark />
           <span className="app-brand-name">AI Career OS</span>
         </Link>
@@ -154,7 +192,31 @@ export function AppShell({ children }: { children: ReactNode }) {
           <NavGroup title="求职" items={JOURNEY_ITEMS} pathname={pathname} />
           <NavGroup title="工具" items={TOOL_ITEMS} pathname={pathname} />
         </div>
+
+        <button
+          type="button"
+          className="app-sidebar-collapse"
+          onClick={toggleCollapsed}
+          title="收起侧栏"
+          aria-label="收起侧栏"
+          tabIndex={collapsed ? -1 : undefined}
+        >
+          <NavIcon name="panelCollapse" />
+          <span className="app-nav-label">收起侧栏</span>
+        </button>
       </aside>
+
+      {collapsed ? (
+        <button
+          type="button"
+          className="app-sidebar-expand"
+          onClick={toggleCollapsed}
+          title="展开侧栏"
+          aria-label="展开侧栏"
+        >
+          <NavIcon name="panelExpand" />
+        </button>
+      ) : null}
 
       <main className="app-main">{children}</main>
     </div>

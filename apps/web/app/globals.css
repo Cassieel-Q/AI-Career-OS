@@ -1779,6 +1779,7 @@ a.mission-progress-node:hover { transform:translate(-1px, -1px); background:var(
   min-height: 100vh;
   background: var(--bg);
   color: var(--text-primary);
+  transition: grid-template-columns 0.22s ease;
 }
 
 .app-sidebar {
@@ -1792,6 +1793,70 @@ a.mission-progress-node:hover { transform:translate(-1px, -1px); background:var(
   border-right: 1px solid var(--border-medium);
   background: var(--surface);
   overflow-y: auto;
+  overflow-x: hidden;
+  transition: opacity 0.18s ease, padding 0.22s ease;
+}
+
+/* —— 侧栏收起态：列宽收为 0，内容淡出，右上角保留悬浮展开按钮 —— */
+.app-shell.sidebar-collapsed {
+  grid-template-columns: 0rem minmax(0, 1fr);
+}
+.app-shell.sidebar-collapsed .app-sidebar {
+  min-width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  border-right-color: transparent;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.app-sidebar-collapse {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 2.4rem;
+  padding: 0.4rem 0.65rem 0.4rem 0.75rem;
+  border: none;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--text-quaternary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.app-sidebar-collapse:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.app-sidebar-expand {
+  position: fixed;
+  top: 0.85rem;
+  left: 0.85rem;
+  z-index: 80;
+  display: grid;
+  place-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  transition: background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
+}
+.app-sidebar-expand:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+.app-sidebar-expand .app-nav-icon {
+  width: 1.2rem;
+  height: 1.2rem;
 }
 
 .app-brand {
@@ -2053,6 +2118,12 @@ a.mission-progress-node:hover { transform:translate(-1px, -1px); background:var(
 @media (max-width: 860px) {
   .app-shell {
     grid-template-columns: 1fr;
+  }
+  .app-shell.sidebar-collapsed {
+    grid-template-columns: 1fr;
+  }
+  .app-shell.sidebar-collapsed .app-sidebar {
+    display: none;
   }
   .app-sidebar {
     position: static;
