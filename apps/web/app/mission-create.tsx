@@ -54,10 +54,6 @@ export function MissionCreate({ profileId: initialProfileId }: { profileId?: str
   return (
     <main className="mission-home">
       <header className="workflow-header">
-        <Link className="workflow-brand" href="/missions">
-          <span className="workflow-brand-mark" aria-hidden="true">A</span>
-          <span>AI Career OS</span>
-        </Link>
         <Link className="button-secondary" href="/missions">← 岗位档案</Link>
       </header>
       <section className="mission-home-content">

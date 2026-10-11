@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 import { deleteProfileRequest, readApiPayload } from "./profile-flow.ts";
 import type { Profile } from "./profile-flow.ts";
@@ -107,12 +106,6 @@ export function ResumeUpload() {
 
   return (
     <main className="start-page">
-      <header className="workflow-header start-header">
-        <Link className="workflow-brand" href="/missions" aria-label="AI Career OS">
-          <span className="workflow-brand-mark" aria-hidden="true">A</span>
-          <span>AI Career OS</span>
-        </Link>
-      </header>
       <section className="start-content" aria-labelledby="start-title">
         <p className="eyebrow">简历驱动的岗位准备</p>
         <h1 id="start-title">上传简历，开始岗位准备</h1>

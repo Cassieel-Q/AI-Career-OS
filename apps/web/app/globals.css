@@ -2235,3 +2235,21 @@ a.mission-progress-node:hover { transform:translate(-1px, -1px); background:var(
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* ==========================================================================
+   AppShell 套壳后各专注外壳的归一化
+   （全站统一「左侧工作台 + 右侧内容」，外壳不再各自占满 100vh、不再用 100vw 居中）
+   ========================================================================== */
+.app-main .mission-shell,
+.app-main .mission-home,
+.app-main .workflow-shell,
+.app-main .start-page {
+  min-height: 0;
+}
+
+/* 残留的 workflow-header 顶栏（岗位详情面包屑、新建岗位返回条）改用固定内边距，
+   不再按 100vw 计算，避免与侧栏宽度错位 */
+.app-main .workflow-header {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}

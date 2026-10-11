@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
@@ -52,13 +51,6 @@ export function ProofShell({ profileId, missionId, currentStep, snapshot, childr
 
   return (
     <main className="workflow-shell">
-      <header className="workflow-header">
-        <Link className="workflow-brand" href="/missions" aria-label="AI Career OS — 我的岗位准备">
-          <span className="workflow-brand-mark" aria-hidden="true">A</span>
-          <span>AI Career OS</span>
-        </Link>
-        <div className="workflow-profile-context"><span>{missionInterview ? "模拟面试" : "简历工作区"}</span>{missionInterview ? null : <code>{profileId}</code>}</div>
-      </header>
       {missionId && mission && <MissionProgress steps={deriveMissionProgress({
         missionId,
         workflowState: mission.workflow_state,
