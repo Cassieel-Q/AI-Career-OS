@@ -85,7 +85,7 @@ export function RoleExplorationStep({ snapshot, controls }: { snapshot: Workflow
   return (
     <div className="workflow-step-content">
       <div className="step-heading">
-        <p className="section-kicker">Step 3 · Role Selection</p>
+        <p className="section-kicker">第 3 步 · 角色选择</p>
         <h1 id="workflow-step-title">探索并选择目标岗位</h1>
         <p className="summary">AI 先根据已确认的 Profile 和职业偏好提供六个方向，再由你选择唯一的当前目标岗位。推荐等级只提供参考，任何方向都可以选择。</p>
       </div>

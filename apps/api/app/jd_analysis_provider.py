@@ -100,7 +100,9 @@ class OpenAIJDAnalysisProvider:
             "array, one object per supplied JD: {jd_id, items:[{name, category, evidence_text}]}. Categories are "
             "SKILL, RESPONSIBILITY, EXPERIENCE, EDUCATION, DOMAIN, COLLABORATION, OTHER. Every evidence_text must "
             "be one contiguous verbatim excerpt from that exact JD. Do not infer salary, hidden preferences, seniority, "
-            "frequency, or facts absent from the text. Never merge evidence from different JDs."
+            "frequency, or facts absent from the text. Never merge evidence from different JDs. "
+            "Write every `name` value in Simplified Chinese (keep widely-known technical terms like Python, SQL, RAG "
+            "in their original form); evidence_text must stay verbatim and unmodified."
         )
 
     def _request(self, content: str) -> object:

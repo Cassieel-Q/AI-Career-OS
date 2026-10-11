@@ -259,7 +259,9 @@ class OpenAIRoleExplorationProvider:
             "Return evidence_refs as supplied UUIDs and preference_refs as supplied preference values. "
             "Output no role names, display names, new roles, raw evidence text, profile fields, or mutations. "
             "Do not invent facts, proficiency, credentials, percentages, probabilities, salary, hiring, demand, "
-            "company counts, live-market claims, or other market predictions. Output JSON only; no markdown."
+            "company counts, live-market claims, or other market predictions. Output JSON only; no markdown. "
+            "Write every value of `reasons` and `concerns` in Simplified Chinese (keep widely-known technical "
+            "terms in original form)."
         )
 
     @staticmethod

@@ -53,7 +53,7 @@ export function MarketProfileStep({ snapshot, controls }: StepProps) {
     return () => controls.setNextAction(null);
   }, [controls, generateGap, record, snapshot.gapAnalysis]);
   return <div className="workflow-step-content">
-    <Heading step="Step 5 · Market Profile" title="看见真实岗位市场要求" summary="系统会从当前目标岗位的真实 JD 中提取并聚合显性要求；每一条要求都保留来源证据。" />
+    <Heading step="第 5 步 · 市场画像" title="看见真实岗位市场要求" summary="系统会从当前目标岗位的真实 JD 中提取并聚合显性要求；每一条要求都保留来源证据。" />
     <ErrorBox error={error} retry={() => void (record ? generateGap() : generate())} />
     {!record && <div className="workflow-callout"><p>已有 {snapshot.jobDescriptions.length} 条 JD。至少 3 条才能生成市场画像。</p><button type="button" disabled={loading} onClick={() => void generate()}>{loading ? "正在分析…" : "生成市场画像"}</button></div>}
     {record && <div className="p0-card-grid"><div className="p0-summary-card"><strong>{record.sample_count}</strong><span>条 JD 样本</span></div><div className="p0-summary-card"><strong>{record.capabilities.length}</strong><span>项能力维度</span></div><div className="p0-summary-card"><strong>{record.requirements.length}</strong><span>项原子要求（可展开）</span></div></div>}
@@ -74,12 +74,34 @@ export function GapAnalysisStep({ snapshot, controls }: StepProps) {
   }), [controls, snapshot.profile?.profile_id]);
   useEffect(() => { controls.setNextReady(Boolean(record)); controls.setNextAction(() => record ? Promise.resolve(true) : generate()); return () => controls.setNextAction(null); }, [controls, generate, record]);
   return <div className="workflow-step-content">
-    <Heading step="Step 6 · Gap Analysis" title="把市场要求和你的 Profile 对照" summary="差距状态只基于已确认 Profile 的事实；系统不会用简历草稿或推测的熟练度替代用户确认。" />
+    <Heading step="第 6 步 · 差距分析" title="把市场要求和你的求职档案对照" summary="差距状态只基于已确认档案的事实；系统不会用简历草稿或推测的熟练度替代你确认。" />
     <ErrorBox error={error} retry={() => void generate()} />
     {!record && <div className="workflow-callout"><p>市场画像已准备好，可以生成已匹配、部分具备、明显缺口和证据不足的结果。</p><button type="button" disabled={loading} onClick={() => void generate()}>{loading ? "正在比较…" : "生成差距分析"}</button></div>}
     {record && (record.gaps.length === 0
-      ? <div className="workflow-callout"><p>当前市场要求都已在已确认 Profile 中找到匹配证据，暂无待处理差距。</p></div>
-      : <div className="p0-list">{record.gaps.map((gap) => <article className={`p0-card gap-${gap.state.toLowerCase()}`} key={gap.id}><div className="p0-card-title"><h2>{gap.capability_name}</h2><span>{priorityStateLabel(gap.state)}</span></div><p>{Math.round(gap.frequency_ratio * 100)}% JD 提及 · 影响程度 {gapSeverityLabel(gap.severity)}</p><p>{gap.capability_summary}</p><p>{gap.rationale}</p><details><summary>查看底层要求与 JD 证据（{gap.atomic_requirement_names.length} 项，{gap.market_evidence.length} 条）</summary><ul>{gap.atomic_requirement_names.map((name) => <li key={name}>{name}</li>)}{gap.market_evidence.map((evidence) => <li key={evidence.id}><blockquote>“{evidence.evidence_text}”</blockquote><small>JD {evidence.job_description_id.slice(0, 8)}{evidence.source_url ? ` · ${evidence.source_url}` : ""}</small></li>)}</ul></details>{gap.evidence_refs.length > 0 && <small>已绑定 Profile 证据 {gap.evidence_refs.length} 条</small>}</article>)}</div>)}
+      ? <div className="workflow-callout"><p>当前市场要求都已在已确认档案中找到匹配证据，暂无待处理差距。</p></div>
+      : (() => {
+          const stateOrder: Record<string, number> = { MISSING: 0, UNCERTAIN: 1, PARTIAL: 2, MATCHED: 3 };
+          const sorted = [...record.gaps].sort((a, b) => (stateOrder[a.state] ?? 9) - (stateOrder[b.state] ?? 9) || b.frequency_ratio - a.frequency_ratio);
+          const countBy = (state: string) => sorted.filter((gap) => gap.state === state).length;
+          return <>
+            <div className="gap-summary-bar">
+              <span><strong>{countBy("MATCHED")}</strong> 项已匹配</span>
+              <span><strong>{countBy("PARTIAL")}</strong> 项部分具备</span>
+              <span><strong>{countBy("MISSING")}</strong> 项明显缺口</span>
+              <span><strong>{countBy("UNCERTAIN")}</strong> 项证据不足</span>
+              <small>缺口与存疑项排在最前，逐项展开可查看 JD 证据。</small>
+            </div>
+            <div className="p0-list gap-grid">{sorted.map((gap) => <article className={`p0-card gap-card gap-${gap.state.toLowerCase()}`} key={gap.id}>
+              <div className="p0-card-title"><h2>{gap.capability_name}</h2><span className="gap-state-chip">{priorityStateLabel(gap.state)}</span></div>
+              <p className="gap-meta">{Math.round(gap.frequency_ratio * 100)}% JD 提及 · 影响程度 {gapSeverityLabel(gap.severity)}</p>
+              <p className="gap-rationale">{gap.rationale}</p>
+              <details>
+                <summary>底层要求与 JD 证据（{gap.atomic_requirement_names.length} 项 · {gap.market_evidence.length} 条{gap.evidence_refs.length > 0 ? ` · 档案证据 ${gap.evidence_refs.length} 条` : ""}）</summary>
+                <ul>{gap.atomic_requirement_names.map((name) => <li key={name}>{name}</li>)}{gap.market_evidence.map((evidence) => <li key={evidence.id}><blockquote>“{evidence.evidence_text}”</blockquote><small>JD {evidence.job_description_id.slice(0, 8)}{evidence.source_url ? ` · ${evidence.source_url}` : ""}</small></li>)}</ul>
+              </details>
+            </article>)}</div>
+          </>;
+        })())}
   </div>;
 }
 
@@ -193,7 +215,7 @@ export function ProgressStep({ snapshot, controls }: StepProps) {
 export function DashboardStep({ snapshot, controls }: StepProps) {
   useEffect(() => { controls.setNextReady(false); controls.setNextAction(null); return () => controls.setNextAction(null); }, [controls]);
   const dashboard = snapshot.dashboard;
-  return <div className="workflow-step-content"><Heading step="Step 10 · Dashboard" title="知道现在发生了什么，下一步做什么" summary="Dashboard 只聚合已经保存的目标岗位、市场证据、差距、优先级、计划和进度。" />{!dashboard ? <div className="workflow-callout"><p>Dashboard 数据尚未准备好，请从前面的步骤继续。</p></div> : <div className="p0-dashboard-grid"><section className="p0-card"><h2>当前目标岗位</h2><p>{dashboard.target_role?.role_name ?? "未选择"}</p><p>{dashboard.jd_sample_count} 条 JD · {dashboard.market_ready ? "市场画像已准备" : "尚未达到分析条件"}</p></section><section className="p0-card"><h2>当前进度</h2><p>第 {dashboard.current_week ?? "—"} 周 · {Math.round(dashboard.progress_ratio * 100)}%</p></section><section className="p0-card"><h2>Top Market Requirements</h2><ul>{dashboard.top_requirements.map((item) => <li key={item.name}>{item.name} · {Math.round(item.frequency_ratio * 100)}%</li>)}</ul></section><section className="p0-card"><h2>Top Gaps</h2><ul>{dashboard.top_gaps.map((gap) => <li key={gap.id}>{gap.requirement_name} · {gap.state}</li>)}</ul></section><section className="p0-card"><h2>Upcoming Tasks</h2><ul>{dashboard.upcoming_tasks.map((task) => <li key={task.id}>{task.title}</li>)}</ul></section></div>}</div>;
+  return <div className="workflow-step-content"><Heading step="第 10 步 · 求职仪表盘" title="知道现在发生了什么，下一步做什么" summary="仪表盘只聚合已经保存的目标岗位、市场证据、差距、优先级、计划和进度。" />{!dashboard ? <div className="workflow-callout"><p>仪表盘数据尚未准备好，请从前面的步骤继续。</p></div> : <div className="p0-dashboard-grid"><section className="p0-card"><h2>当前目标岗位</h2><p>{dashboard.target_role?.role_name ?? "未选择"}</p><p>{dashboard.jd_sample_count} 条 JD · {dashboard.market_ready ? "市场画像已准备" : "尚未达到分析条件"}</p></section><section className="p0-card"><h2>当前进度</h2><p>第 {dashboard.current_week ?? "—"} 周 · {Math.round(dashboard.progress_ratio * 100)}%</p></section><section className="p0-card"><h2>高频市场要求</h2><ul>{dashboard.top_requirements.map((item) => <li key={item.name}>{item.name} · {Math.round(item.frequency_ratio * 100)}%</li>)}</ul></section><section className="p0-card"><h2>主要差距</h2><ul>{dashboard.top_gaps.map((gap) => <li key={gap.id}>{gap.requirement_name} · {priorityStateLabel(gap.state)}</li>)}</ul></section><section className="p0-card"><h2>近期任务</h2><ul>{dashboard.upcoming_tasks.map((task) => <li key={task.id}>{task.title}</li>)}</ul></section></div>}</div>;
 }
 
 export type P0Step = WorkflowStep;

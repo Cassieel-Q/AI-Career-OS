@@ -113,7 +113,9 @@ class OpenAIRoadmapProvider:
                         "Copy related_gap_id and focus_gap_ids exactly from the supplied confirmed priority gap_id values; "
                         "do not invent gap IDs. Use only supplied capability names, atomic requirements, and Profile evidence. "
                         "Respect weekly_hours. Do not include a status field; the application assigns the uppercase TODO status after persistence. "
-                        "Do not add markdown, commentary, extra keys, or vague tasks such as Learn Python."
+                        "Do not add markdown, commentary, extra keys, or vague tasks such as Learn Python. "
+                        "Write objective, measurable_outcome, title, objective (task), and completion_criteria in "
+                        "Simplified Chinese (keep widely-known technical terms in original form)."
                     ),
                 },
                 {"role": "user", "content": json.dumps({"target_role": target_role, "weekly_hours": weekly_hours, "priorities": priorities, "remaining_context": remaining_context}, ensure_ascii=False, separators=(",", ":"))},

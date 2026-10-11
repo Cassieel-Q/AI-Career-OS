@@ -152,7 +152,7 @@ export function ProfileStep({ profile: serverProfile, controls }: { profile: Pro
   return (
     <div className="workflow-step-content">
       <div className="step-heading">
-        <p className="section-kicker">Step 1 · Profile confirmation</p>
+        <p className="section-kicker">第 1 步 · 档案确认</p>
         <h1 id="workflow-step-title">确认你的 Profile</h1>
         <p className="summary">AI 提取的内容仍是待确认事实。请核对基础信息、教育、经历和技能，并查看每条事实的简历证据。</p>
       </div>

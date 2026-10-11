@@ -96,7 +96,7 @@ def aggregate_requirements(extractions: list[JdExtraction], rows_by_id: dict[UUI
 
 _CAPABILITY_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
     (
-        "Technical capability",
+        "技术能力",
         (
             "ai",
             "llm",
@@ -115,7 +115,7 @@ _CAPABILITY_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
         ),
     ),
     (
-        "Product execution",
+        "产品落地",
         (
             "product",
             "roadmap",
@@ -130,7 +130,7 @@ _CAPABILITY_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
         ),
     ),
     (
-        "Research and decision-making",
+        "调研与决策",
         (
             "user",
             "customer",
@@ -147,7 +147,7 @@ _CAPABILITY_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
         ),
     ),
     (
-        "Cross-functional collaboration",
+        "跨团队协作",
         (
             "stakeholder",
             "cross-functional",
@@ -179,12 +179,12 @@ def capability_group(name: str, category: str) -> str:
         if any(_matches_capability_token(value, words, token) for token in tokens):
             return label
     return {
-        RequirementCategory.RESPONSIBILITY.value: "Product execution",
-        RequirementCategory.COLLABORATION.value: "Cross-functional collaboration",
-        RequirementCategory.EXPERIENCE.value: "Relevant experience",
-        RequirementCategory.EDUCATION.value: "Education baseline",
-        RequirementCategory.DOMAIN.value: "Domain context",
-    }.get(category, "Other role capability")
+        RequirementCategory.RESPONSIBILITY.value: "产品落地",
+        RequirementCategory.COLLABORATION.value: "跨团队协作",
+        RequirementCategory.EXPERIENCE.value: "相关经验",
+        RequirementCategory.EDUCATION.value: "学历背景",
+        RequirementCategory.DOMAIN.value: "领域背景",
+    }.get(category, "其他岗位能力")
 
 
 def synthesize_capabilities(requirements: list[MarketRequirementRead], sample_count: int) -> list[MarketCapabilityRead]:

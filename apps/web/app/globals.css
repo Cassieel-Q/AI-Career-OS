@@ -716,6 +716,26 @@ button:disabled {
 .priority-actions { display:flex; width:9rem; min-height:100%; align-items:center; justify-content:flex-end; gap:0.5rem; flex-wrap:wrap; }
 .p0-card ul { padding-left:1.2rem; }
 
+/* 差距分析页：紧凑双列卡片布局 */
+.gap-summary-bar { display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem; margin:1.25rem 0 0; }
+.gap-summary-bar span { display:inline-flex; align-items:baseline; gap:0.3rem; border:1px solid var(--border, #e5e5ea); border-radius:999px; padding:0.3rem 0.85rem; background:var(--surface, #ffffff); font-size:0.86rem; color:#3a3a3c; white-space:nowrap; }
+.gap-summary-bar strong { font-size:1rem; color:var(--accent, #111111); }
+.gap-summary-bar small { color:#8e8e93; margin-left:0.25rem; }
+.gap-grid { grid-template-columns:repeat(auto-fill, minmax(min(420px, 100%), 1fr)); align-items:start; }
+.gap-card { display:flex; flex-direction:column; gap:0.35rem; }
+.gap-state-chip { padding:0.15rem 0.6rem; border-radius:999px; background:#f5f5f7; font-size:0.8rem; }
+.gap-missing .gap-state-chip, .gap-uncertain .gap-state-chip { background:#111111; color:#ffffff; }
+.gap-meta { margin:0; color:#8e8e93; font-size:0.84rem; }
+.gap-rationale { margin:0; line-height:1.55; }
+.gap-card details { margin-top:0.35rem; }
+.gap-card details summary { cursor:pointer; color:#6e6e73; font-size:0.84rem; user-select:none; }
+.gap-card details ul { margin:0.5rem 0 0; display:grid; gap:0.4rem; }
+.gap-card blockquote { margin:0; }
+
+@media (max-width:700px) {
+  .gap-grid { grid-template-columns:1fr; }
+}
+
 @media (max-width:700px) {
   .priority-card { grid-template-columns:1fr; }
   .priority-card-heading { grid-template-columns:2rem minmax(0, 1fr); align-items:start; }

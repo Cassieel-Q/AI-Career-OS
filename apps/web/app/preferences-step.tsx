@@ -66,7 +66,7 @@ export function PreferencesStep({ profile, controls }: { profile: Profile; contr
   return (
     <div className="workflow-step-content">
       <div className="step-heading">
-        <p className="section-kicker">Step 2 · Career Preferences</p>
+        <p className="section-kicker">第 2 步 · 求职偏好</p>
         <h1 id="workflow-step-title">你现在更看重什么？</h1>
         <p className="summary">选择两项并排出先后顺序，再告诉我们你每周可投入多少时间。</p>
       </div>

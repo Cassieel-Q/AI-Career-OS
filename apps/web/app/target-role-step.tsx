@@ -49,7 +49,7 @@ export function TargetRoleStep({ snapshot, controls }: { snapshot: WorkflowSnaps
   return (
     <div className="workflow-step-content">
       <div className="step-heading">
-        <p className="section-kicker">Step 4 · Target Role</p>
+        <p className="section-kicker">第 4 步 · 目标角色</p>
         <h1 id="workflow-step-title">选择你的目标岗位</h1>
         <p className="summary">系统探索结果是参考；最终目标由你决定。你可以选择任一推荐等级中的岗位。</p>
       </div>

@@ -95,7 +95,8 @@ class OpenAIGapAnalysisProvider:
                         "Allowed states are MATCHED, PARTIAL, MISSING, UNCERTAIN. "
                         "severity, proximity, and feasibility must each be exactly LOW, MEDIUM, or HIGH in uppercase. "
                         "Do not infer proficiency or add facts. "
-                        "evidence_refs must contain only supplied Profile fact UUIDs."
+                        "evidence_refs must contain only supplied Profile fact UUIDs. "
+                        "Write `rationale` in Simplified Chinese (keep widely-known technical terms in original form)."
                     ),
                 },
                 {"role": "user", "content": json.dumps({"requirements": requirements, "profile_facts": profile_facts}, ensure_ascii=False, separators=(",", ":"))},
