@@ -891,3 +891,75 @@ class JobApplication(Base):
 
     profile: Mapped[UserProfile] = relationship("UserProfile", back_populates="applications")
     mission: Mapped[JobMission | None] = relationship("JobMission")
+
+
+class AssistantConversation(Base):
+    """AI 求职助手会话。surface 区分「侧栏页(page)」与「投投浮窗(orb)」两套独立记录。"""
+
+    __tablename__ = "assistant_conversations"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    surface: Mapped[str] = mapped_column(String(16), nullable=False, default="page", server_default="page", index=True)
+    title: Mapped[str] = mapped_column(String(255), nullable=False, default="新对话", server_default="新对话")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    messages: Mapped[list["AssistantMessage"]] = relationship(
+        "AssistantMessage",
+        back_populates="conversation",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by=lambda: (AssistantMessage.created_at, AssistantMessage.id),
+    )
+
+
+class AssistantMessage(Base):
+    """助手会话里的一条消息（用户提问 / 助手回答）。"""
+
+    __tablename__ = "assistant_messages"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    conversation_id: Mapped[UUID] = mapped_column(
+        ForeignKey("assistant_conversations.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    role: Mapped[str] = mapped_column(String(16), nullable=False)  # user | assistant
+    content: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
+    tool_calls: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    sources: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    conversation: Mapped[AssistantConversation] = relationship("AssistantConversation", back_populates="messages")
+
+
+class Referral(Base):
+    """内推记录：一次人脉带来的推荐机会。"""
+
+    __tablename__ = "referrals"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    profile_id: Mapped[UUID] = mapped_column(
+        ForeignKey("user_profiles.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    company: Mapped[str] = mapped_column(String(255), nullable=False)
+    contact: Mapped[str | None] = mapped_column(String(255), nullable=True)   # 内推人
+    channel: Mapped[str | None] = mapped_column(String(128), nullable=True)   # 渠道/关系
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="进行中", server_default="进行中")
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
+class Reminder(Base):
+    """求职提醒：什么时候该做什么（面试/测评截止/跟进 HR）。"""
+
+    __tablename__ = "reminders"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    profile_id: Mapped[UUID] = mapped_column(
+        ForeignKey("user_profiles.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="PENDING", server_default="PENDING")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())

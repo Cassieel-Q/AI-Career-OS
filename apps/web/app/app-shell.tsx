@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Route } from "next";
 import { useEffect, useState, type ReactNode } from "react";
+import { TouTouOrb } from "./tou-tou.tsx";
 
 type NavItem = {
   key: string;
@@ -21,11 +22,11 @@ const SIDEBAR_COLLAPSED_KEY = "career-os.sidebar.collapsed";
  */
 const JOURNEY_ITEMS: NavItem[] = [
   { key: "home", label: "总览", href: "/", icon: "overview", match: (p) => p === "/" },
-  { key: "plaza", label: "广场", href: "/plaza", icon: "plaza", match: (p) => p === "/plaza" },
-  { key: "missions", label: "岗位", href: "/missions", icon: "jobs", match: (p) => p === "/missions" },
+  { key: "missions", label: "岗位", href: "/missions", icon: "jobs", match: (p) => p === "/missions" || p.startsWith("/missions/") },
   { key: "resumes", label: "简历", href: "/resumes", icon: "resume", match: (p) => p === "/resumes" || p.startsWith("/resumes/") },
   { key: "tracker", label: "投递", href: "/tracker", icon: "tracker", match: (p) => p === "/tracker" },
   { key: "interview", label: "面试", href: "/interview-records", icon: "interview", match: (p) => p.startsWith("/interview-records") },
+  { key: "assistant", label: "AI 助手", href: "/assistant", icon: "assistant", match: (p) => p === "/assistant" },
 ];
 
 const TOOL_ITEMS: NavItem[] = [
@@ -75,6 +76,14 @@ const ICON_PATHS: Record<string, ReactNode> = {
     <>
       <path d="M4 6h16v9.5H10l-5 4z" />
       <path d="M8 9.5h8M8 12.5h5" />
+    </>
+  ),
+  assistant: (
+    <>
+      <path d="M4 6h16v10.5h-6l-4 4v-4H4z" />
+      <circle cx="9" cy="11" r="1" fill="currentColor" />
+      <circle cx="12" cy="11" r="1" fill="currentColor" />
+      <circle cx="15" cy="11" r="1" fill="currentColor" />
     </>
   ),
   claims: (
@@ -228,6 +237,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       ) : null}
 
       <main className="app-main">{children}</main>
+
+      <TouTouOrb />
     </div>
   );
 }

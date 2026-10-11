@@ -45,6 +45,7 @@ from app.resume_studio_routes import router as resume_studio_router
 from app.interview_record_routes import router as interview_record_router
 from app.career_hub import router as career_hub_router
 from app.application_routes import router as application_router
+from app.assistant_routes import router as assistant_router
 from app.profile_schemas import CareerPreferencesInput, CareerPreferencesRead, ProfileRead, ProfileUpdate
 from app.profile_service import (
     confirm_profile,
@@ -2699,6 +2700,7 @@ app.include_router(resume_studio_router)
 app.include_router(interview_record_router)
 app.include_router(career_hub_router)
 app.include_router(application_router)
+app.include_router(assistant_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_allowed_frontend_origins(),

@@ -1,8 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import type { Route } from "next";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import {
   APPLICATION_CHANNELS,
@@ -11,24 +9,11 @@ import {
   createApplication,
   deleteApplication,
   fetchApplications,
-  fetchTracker,
   readCurrentProfileId,
-  STAGE_LABEL,
-  stageBadgeClass,
   updateApplication,
   type ApplicationRead,
   type ApplicationStatus,
-  type TrackerRead,
 } from "../career-hub.ts";
-import { isUnknownIdentity } from "../mission-state.ts";
-
-const FILTERS = [
-  { key: "ALL", label: "全部" },
-  { key: "PREPARING", label: "准备中" },
-  { key: "APPLIED", label: "已投递" },
-  { key: "INTERVIEW", label: "面试中" },
-  { key: "COMPLETED", label: "已结束" },
-] as const;
 
 function applicationBadgeClass(status: ApplicationStatus): string {
   if (status === "INTERVIEW" || status === "OFFER") return "filled";
@@ -38,9 +23,7 @@ function applicationBadgeClass(status: ApplicationStatus): string {
 }
 
 export default function TrackerPage() {
-  const [tracker, setTracker] = useState<TrackerRead | null>(null);
   const [applications, setApplications] = useState<ApplicationRead[]>([]);
-  const [filter, setFilter] = useState<string>("ALL");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState("");
@@ -56,8 +39,7 @@ export default function TrackerPage() {
     setLoading(true);
     setError("");
     try {
-      const [trackerData, appsData] = await Promise.all([fetchTracker(pid), fetchApplications(pid)]);
-      setTracker(trackerData);
+      const appsData = await fetchApplications(pid);
       setApplications(appsData.applications);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "读取投递失败。");
@@ -69,12 +51,6 @@ export default function TrackerPage() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  const missions = useMemo(() => {
-    const all = tracker?.applications ?? [];
-    if (filter === "ALL") return all;
-    return all.filter((item) => item.stage === filter);
-  }, [tracker, filter]);
 
   async function advance(app: ApplicationRead) {
     setBusyId(app.id);
@@ -198,50 +174,7 @@ export default function TrackerPage() {
           </div>
         ))
       ) : (
-        <div className="app-empty" style={{ marginBottom: "1.5rem" }}>还没有投递记录。点击右上角「新建投递记录」，或从岗位广场「加入投递台」。</div>
-      )}
-
-      <h2 className="section-kicker" style={{ margin: "1.5rem 0 0.5rem" }}>岗位准备进度</h2>
-      <div className="app-filter-row" role="tablist" aria-label="按阶段筛选">
-        {FILTERS.map((f) => (
-          <button
-            key={f.key}
-            type="button"
-            role="tab"
-            aria-selected={filter === f.key}
-            className={`app-filter${filter === f.key ? " active" : ""}`}
-            onClick={() => setFilter(f.key)}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
-      {loading ? (
-        <div className="app-empty">读取中…</div>
-      ) : missions.length ? (
-        missions.map((item) => (
-          <Link
-            key={item.mission_id}
-            className="app-card app-row"
-            href={`/missions/${encodeURIComponent(item.mission_id)}/role` as Route}
-          >
-            <div>
-              <div className="app-card-title">
-                {isUnknownIdentity(item.role) ? "未命名岗位" : item.role}
-              </div>
-              <div className="app-card-meta">
-                {isUnknownIdentity(item.company) ? "" : `${item.company} · `}
-                {item.location || "地点未定"}
-                {item.resume_ready ? " · 简历已备" : " · 简历待备"}
-                {item.outcome_status ? ` · ${item.outcome_status}` : ""}
-              </div>
-            </div>
-            <span className={`app-badge ${stageBadgeClass(item.stage)}`}>{STAGE_LABEL[item.stage]}</span>
-          </Link>
-        ))
-      ) : (
-        <div className="app-empty">当前筛选下没有岗位。</div>
+        <div className="app-empty" style={{ marginBottom: "1.5rem" }}>还没有投递记录。点击右上角「新建投递记录」，或从岗位页「加入投递台」。</div>
       )}
     </main>
   );
