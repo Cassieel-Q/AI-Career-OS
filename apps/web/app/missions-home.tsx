@@ -164,17 +164,15 @@ export function MissionsHome() {
   }
 
   return (
-    <main className="mission-home">
-      <header className="workflow-header">
-        <Link className="workflow-brand" href="/missions">
-          <span className="workflow-brand-mark" aria-hidden="true">A</span>
-          <span>AI Career OS</span>
-        </Link>
-      </header>
+    <main className="app-page">
       <section className="mission-home-content">
-        <p className="eyebrow">AI Career OS</p>
-        <h1>岗位档案</h1>
-        <p className="summary">集中管理目标岗位、简历版本与面试记录。</p>
+        <header className="app-page-header">
+          <div>
+            <p className="app-eyebrow">Jobs</p>
+            <h1 className="app-page-title">岗位广场</h1>
+            <p className="app-page-subtitle">集中管理目标岗位、简历版本与面试准备。</p>
+          </div>
+        </header>
 
         <div className="mission-home-actions">
           <Link className="mission-primary-cta link-cta" href={newHref}>

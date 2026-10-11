@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { ShellController } from "./shell-controller";
 
 export const metadata: Metadata = {
   title: "AI Career OS",
-  description: "管理目标岗位、简历版本与模拟面试。",
+  description: "管理目标岗位、简历版本、求职进度与模拟面试。",
 };
 
 export default function RootLayout({
@@ -16,7 +17,9 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
-      <body>{children}</body>
+      <body>
+        <ShellController>{children}</ShellController>
+      </body>
     </html>
   );
 }

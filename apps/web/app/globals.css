@@ -1769,3 +1769,418 @@ a.mission-progress-node:hover { transform:translate(-1px, -1px); background:var(
   .mission-shell:is(button, a):hover, .mission-home :is(button, a):hover,
   .workflow-shell :is(button, a):hover { transform:none !important; }
 }
+
+/* ==========================================================================
+   App Shell —— 全局侧栏多模块工作台（仿 ResumeForge 布局，黑白灰单色系）
+   ========================================================================== */
+.app-shell {
+  display: grid;
+  grid-template-columns: 15.5rem minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text-primary);
+}
+
+.app-sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  height: 100vh;
+  padding: 1.25rem 0.875rem 1.5rem;
+  border-right: 1px solid var(--border-medium);
+  background: var(--surface);
+  overflow-y: auto;
+}
+
+.app-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.25rem 0.5rem;
+  color: var(--text-primary);
+  font-weight: 800;
+  font-size: 0.95rem;
+  text-decoration: none;
+  letter-spacing: -0.01em;
+}
+
+.app-brand-mark {
+  display: grid;
+  width: 1.9rem;
+  height: 1.9rem;
+  place-items: center;
+  border-radius: 0.55rem;
+  background: var(--fill-selected);
+  color: var(--text-inverse);
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.app-brand-name {
+  white-space: nowrap;
+}
+
+.app-nav {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.app-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 2.5rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.app-nav-item:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.app-nav-item.active {
+  background: var(--fill-selected);
+  color: var(--text-inverse);
+  font-weight: 600;
+}
+
+.app-nav-icon {
+  flex: none;
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.app-nav-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-space {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-weak);
+}
+
+.app-space-title {
+  margin: 0 0 0.5rem 0.65rem;
+  color: var(--text-quaternary);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.app-main {
+  min-width: 0;
+  background: var(--bg);
+}
+
+/* 模块页通用内容容器 */
+.app-page {
+  width: min(100% - 3rem, 68rem);
+  margin: 0 auto;
+  padding: 2.5rem 0 4rem;
+}
+
+.app-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.app-page-title {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.app-page-subtitle {
+  margin: 0.4rem 0 0;
+  color: var(--text-tertiary);
+  font-size: 0.9rem;
+}
+
+.app-eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--text-quaternary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* 概览统计卡 */
+.app-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.875rem;
+  margin-bottom: 1.75rem;
+}
+
+.app-stat-card {
+  padding: 1.1rem 1.25rem;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.app-stat-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.app-stat-label {
+  margin-top: 0.45rem;
+  color: var(--text-tertiary);
+  font-size: 0.8rem;
+}
+
+/* 通用卡片 */
+.app-card {
+  padding: 1.25rem 1.4rem;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.app-card + .app-card {
+  margin-top: 0.875rem;
+}
+
+.app-card-title {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.app-card-meta {
+  margin: 0;
+  color: var(--text-tertiary);
+  font-size: 0.8rem;
+}
+
+/* 空态 */
+.app-empty {
+  padding: 3rem 1.5rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text-tertiary);
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+/* 状态徽章（单色系：灰阶 + 描边 + 字重） */
+.app-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;
+  padding: 0.1rem 0.55rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.app-badge.filled {
+  border-color: var(--fill-selected);
+  background: var(--fill-selected);
+  color: var(--text-inverse);
+}
+
+.app-badge.muted {
+  border-color: var(--border-weak);
+  background: var(--surface-muted);
+  color: var(--text-quaternary);
+}
+
+.app-badge.attention {
+  border-color: var(--accent-attention);
+  color: var(--accent-attention);
+}
+
+.app-badge.danger {
+  border-color: var(--accent-danger);
+  color: var(--accent-danger);
+}
+
+/* 主按钮（黑白灰） */
+.app-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.25rem;
+  padding: 0.45rem 1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.app-btn:hover {
+  background: var(--surface-hover);
+}
+
+.app-btn.primary {
+  border-color: var(--fill-selected);
+  background: var(--fill-selected);
+  color: var(--text-inverse);
+}
+
+.app-btn.primary:hover {
+  background: var(--fill-selected-hover);
+}
+
+@media (max-width: 860px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+  .app-sidebar {
+    position: static;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+    height: auto;
+    padding: 0.5rem 0.75rem;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border-medium);
+  }
+  .app-nav {
+    display: flex;
+    gap: 0.25rem;
+  }
+  .app-nav-label,
+  .app-space-title,
+  .app-brand-name {
+    display: none;
+  }
+  .app-space {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    margin-left: auto;
+  }
+  .app-page {
+    width: min(100% - 1.5rem, 40rem);
+  }
+}
+
+/* 顶层模块页内嵌旧 mission-home-content 的归一化：满宽、去旧居中 */
+.app-main .mission-home-content {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+.app-main .mission-home-content h1.app-page-title {
+  font-size: 1.75rem;
+}
+.app-main .mission-home-content .summary {
+  color: var(--text-tertiary);
+}
+
+/* 首页快捷入口 + 行卡片 */
+.app-quick-link {
+  display: grid;
+  gap: 0.2rem;
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: border-color 0.12s ease, transform 0.12s ease;
+}
+.app-quick-link:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.app-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: border-color 0.12s ease;
+}
+.app-row:hover {
+  border-color: var(--border-strong);
+}
+
+/* 筛选行（求职进度） */
+.app-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.app-filter {
+  min-height: 2rem;
+  padding: 0.3rem 0.85rem;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text-tertiary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.app-filter:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+.app-filter.active {
+  border-color: var(--fill-selected);
+  background: var(--fill-selected);
+  color: var(--text-inverse);
+}
+
+/* 事实台账卡片 */
+.claim-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.claim-text {
+  margin: 0.75rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.claim-risk {
+  margin: 0.6rem 0 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-weak);
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+  color: var(--text-tertiary);
+  font-size: 0.8rem;
+}
+
+.resume-version {
+  color: var(--text-quaternary);
+  font-weight: 600;
+}
