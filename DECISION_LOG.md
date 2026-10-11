@@ -10,3 +10,9 @@
 - 面试记录 PATCH 与新建采用相同的岗位归属、轮次、必填字段和问答排序约束。替换问答时先 flush 删除旧行，再插入新行，避免 `(record_id, sort_order)` 唯一键冲突。依据：独立代码审查、红灯复现和回归测试。
 
 不要把早期 `014_interview_records` 或 UI 的浏览器打印 PDF 入口混回当前产品。
+
+## 2026-10-11 主线交付与交接
+
+- 将 `feature/eval-benchmark-v1` 快进合并到 `main`，以 `2ca4359` 作为当前共享基线，并推送 `origin/main`。依据：本地 `git merge --ff-only`、`git ls-remote origin refs/heads/main` 与 Web 验证结果。
+- Resume Studio 采用岗位页的米白/深绿色视觉系统，只调整样式、宽度、卡片和响应式间距，不改变事实确认、修订、导出和面试上下文逻辑。依据：`apps/web/app/resume-studio/studio.css`、Project Tour Studio 截图和 Web 194 项测试。
+- WorkBuddy 下一阶段必须从 `main` 新建 worktree；主检出的 `image/` 与旧的 `014_interview_records.py` 继续保留但不进入当前代码提交。依据：合并前本地未提交内容和当前迁移链 `013 → 014_resume_studio → 015_interview_records`。
