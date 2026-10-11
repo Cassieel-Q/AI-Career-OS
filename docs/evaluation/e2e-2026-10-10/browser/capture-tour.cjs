@@ -22,10 +22,10 @@ async function main() {
   const report = [];
   for (const [file, route] of routes) {
     const url = `${web}${route}`;
-    const response = await page.goto(url, { waitUntil: "networkidle", timeout: 60000 }).catch((error) => ({ status: () => 0, error: String(error) }));
-    await page.waitForTimeout(700);
+    const response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 }).catch((error) => ({ status: () => 0, error: String(error) }));
+    await page.waitForTimeout(1400);
     const screenshotPath = path.join(outputDir, file);
-    await page.screenshot({ path: screenshotPath, fullPage: true });
+    await page.screenshot({ path: screenshotPath, fullPage: true, timeout: 60000 });
     report.push({
       file,
       route,
