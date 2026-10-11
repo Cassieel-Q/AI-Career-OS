@@ -15,16 +15,16 @@ export type StepIndicatorState = {
 };
 
 const STEP_LABELS: Record<WorkflowStep, string> = {
-  profile: "Profile",
-  preferences: "Career Preferences",
-  "role-exploration": "Role Selection",
-  "job-descriptions": "Job Descriptions",
-  "market-profile": "Market Profile",
-  "gap-analysis": "Gap Analysis",
-  priorities: "Priorities",
-  roadmap: "4-Week Roadmap",
-  progress: "Progress",
-  dashboard: "Dashboard",
+  profile: "求职档案",
+  preferences: "求职偏好",
+  "role-exploration": "角色选择",
+  "job-descriptions": "岗位 JD",
+  "market-profile": "市场画像",
+  "gap-analysis": "差距分析",
+  priorities: "优先级",
+  roadmap: "四周计划",
+  progress: "进度跟踪",
+  dashboard: "求职仪表盘",
 };
 
 const NEXT_LABELS: Record<WorkflowStep, string | null> = {
@@ -36,7 +36,7 @@ const NEXT_LABELS: Record<WorkflowStep, string | null> = {
   "gap-analysis": "确认优先级",
   priorities: "生成四周计划",
   roadmap: "查看进度",
-  progress: "打开 Dashboard",
+  progress: "打开求职仪表盘",
   dashboard: null,
 };
 
