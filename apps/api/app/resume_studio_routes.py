@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from . import models
 from .database import get_db
+from .resume_studio_export import render_export
 from .resume_studio_render import ResumeRenderError, render_document
 from .resume_studio_schemas import StudioOperation
 from .resume_studio_sample import sample_document
@@ -122,6 +123,43 @@ def confirm_studio(
     db.commit()
     db.refresh(row)
     return {**read_document(row), "page_count": rendered.page_count, "checks": checks}
+
+
+@router.get("/job-missions/{mission_id}/resume-studio/export")
+def export_studio_text(
+    mission_id: UUID,
+    format: str = "markdown",
+    draft: bool = False,
+    db: Session = Depends(get_db),
+) -> Response:
+    """Markdown / 纯文本 / JSON 导出（不依赖 Typst）。
+
+    默认沿用与 PDF 相同的事实门禁；``draft=true`` 允许导出草稿自检，
+    与 ResumeForge 的「仍要导出草稿」对齐。
+    """
+    row = get_or_create_document(db, mission_id)
+    checks = export_checks(row.document_json)
+    if not draft and any(check["level"] == "block" for check in checks):
+        raise HTTPException(409, {"message": "请先核对标记的事实或补全占位内容。", "checks": checks})
+    try:
+        body, media_type = render_export(row.document_json, format)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    ext = {"markdown": "md", "txt": "txt", "json": "json"}.get((format or "").strip().lower(), "txt")
+    name = (row.document_json.get("basics") or {}).get("name", {}).get("text", "")
+    mission = db.get(models.JobMission, mission_id)
+    pieces = [name, mission.company if mission else "", mission.role if mission else ""]
+    safe_parts = ["".join(char for char in piece if char.isalnum() or char in "-_ ").strip()[:40] for piece in pieces]
+    base = "-".join(piece for piece in safe_parts if piece) or "简历"
+    filename = f"{base}.{ext}"
+    return Response(
+        body,
+        media_type=media_type,
+        headers={
+            "Content-Disposition": f"attachment; filename=resume.{ext}; filename*=UTF-8''{quote(filename)}",
+            "X-Resume-Revision": str(row.revision),
+        },
+    )
 
 
 @router.get("/job-missions/{mission_id}/resume-studio/pdf")
