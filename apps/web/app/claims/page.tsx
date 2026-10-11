@@ -33,7 +33,7 @@ export default function ClaimsPage() {
     try {
       setClaims(await fetchClaims(pid));
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "读取事实台账失败。");
+      setError(caught instanceof Error ? caught.message : "读取事实核对失败。");
     } finally {
       setLoading(false);
     }
@@ -48,7 +48,7 @@ export default function ClaimsPage() {
       <header className="app-page-header">
         <div>
           <p className="app-eyebrow">Claims</p>
-          <h1 className="app-page-title">事实台账</h1>
+          <h1 className="app-page-title">事实核对</h1>
           <p className="app-page-subtitle">只有确认过的事实才会写进简历，未确认的显式避开。</p>
         </div>
       </header>

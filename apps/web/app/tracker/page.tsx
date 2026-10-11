@@ -33,7 +33,7 @@ export default function TrackerPage() {
     try {
       setTracker(await fetchTracker(pid));
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "读取求职进度失败。");
+      setError(caught instanceof Error ? caught.message : "读取投递失败。");
     } finally {
       setLoading(false);
     }
@@ -54,7 +54,7 @@ export default function TrackerPage() {
       <header className="app-page-header">
         <div>
           <p className="app-eyebrow">Tracker</p>
-          <h1 className="app-page-title">求职进度</h1>
+          <h1 className="app-page-title">投递</h1>
           <p className="app-page-subtitle">一家公司一条记录，跟踪投递、面试与结果。</p>
         </div>
       </header>

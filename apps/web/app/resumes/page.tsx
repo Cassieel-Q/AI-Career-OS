@@ -24,7 +24,7 @@ export default function ResumesPage() {
     try {
       setOverview(await fetchResumesOverview(pid));
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "读取简历中心失败。");
+      setError(caught instanceof Error ? caught.message : "读取简历失败。");
     } finally {
       setLoading(false);
     }
@@ -39,7 +39,7 @@ export default function ResumesPage() {
       <header className="app-page-header">
         <div>
           <p className="app-eyebrow">Resumes</p>
-          <h1 className="app-page-title">简历中心</h1>
+          <h1 className="app-page-title">简历</h1>
           <p className="app-page-subtitle">每个岗位的定向简历版本集中管理。</p>
         </div>
       </header>

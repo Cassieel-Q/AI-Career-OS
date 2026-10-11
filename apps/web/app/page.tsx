@@ -7,15 +7,16 @@ import { useCallback, useEffect, useState } from "react";
 import { fetchResumesOverview, fetchTracker, readCurrentProfileId, STAGE_LABEL, stageBadgeClass, type TrackerRead } from "./career-hub.ts";
 import { isUnknownIdentity } from "./mission-state.ts";
 
-const QUICK_LINKS: Array<{ key: string; title: string; desc: string; href: Route }> = [
-  { key: "jobs", title: "找岗位", desc: "管理目标岗位与 JD", href: "/missions" },
-  { key: "resume", title: "做简历", desc: "查看岗位定向简历版本", href: "/resumes" },
-  { key: "track", title: "投递跟进", desc: "求职进度一目了然", href: "/tracker" },
-  { key: "interview", title: "面试准备", desc: "面试记录与复盘", href: "/interview-records" },
+/** 求职路径四步：一条横向前进的流程，而非功能入口堆叠。 */
+const FLOW: Array<{ key: string; title: string; desc: string; href: Route }> = [
+  { key: "find", title: "找岗位", desc: "明确目标与 JD", href: "/missions" },
+  { key: "write", title: "写简历", desc: "岗位定向版本", href: "/resumes" },
+  { key: "track", title: "投递跟进", desc: "记录每一家进度", href: "/tracker" },
+  { key: "interview", title: "面试复盘", desc: "沉淀真实面试", href: "/interview-records" },
 ];
 
 export default function HomePage() {
-  const [profileId] = useState<string>(readCurrentProfileId());
+  const [profileId, setProfileId] = useState<string>("");
   const [tracker, setTracker] = useState<TrackerRead | null>(null);
   const [resumeCount, setResumeCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -41,6 +42,7 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    setProfileId(readCurrentProfileId());
     void load();
   }, [load]);
 
@@ -51,15 +53,27 @@ export default function HomePage() {
       <header className="app-page-header">
         <div>
           <p className="app-eyebrow">Overview</p>
-          <h1 className="app-page-title">首页</h1>
-          <p className="app-page-subtitle">从看岗位到拿 offer，每一步都在这里。</p>
+          <h1 className="app-page-title">求职工作台</h1>
+          <p className="app-page-subtitle">从目标岗位到 offer，一条清晰的路径。</p>
         </div>
         {profileId ? (
-          <span className="app-badge muted" title={profileId}>当前档案已就绪</span>
+          <span className="app-badge muted" title={profileId}>档案已就绪</span>
         ) : null}
       </header>
 
       {error ? <p className="message error" role="alert">{error}</p> : null}
+
+      <section aria-label="求职路径" style={{ marginBottom: "1.75rem" }}>
+        <div className="app-flow">
+          {FLOW.map((step, index) => (
+            <Link key={step.key} className="app-flow-step" href={step.href}>
+              <span className="app-flow-index">{index + 1}</span>
+              <span className="app-flow-title">{step.title}</span>
+              <span className="app-flow-desc">{step.desc}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
 
       <section className="app-stat-grid" aria-label="数据概览">
         <div className="app-stat-card">
@@ -80,19 +94,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section aria-label="快捷入口">
-        <h2 className="app-card-title" style={{ margin: "0 0 0.75rem" }}>开始使用</h2>
-        <div className="app-stat-grid">
-          {QUICK_LINKS.map((link) => (
-            <Link key={link.key} className="app-card app-quick-link" href={link.href}>
-              <span className="app-card-title">{link.title}</span>
-              <span className="app-card-meta">{link.desc}</span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section aria-label="最近岗位" style={{ marginTop: "1.5rem" }}>
+      <section aria-label="最近岗位">
         <h2 className="app-card-title" style={{ margin: "0 0 0.75rem" }}>最近岗位</h2>
         {loading ? (
           <div className="app-empty">读取中…</div>
