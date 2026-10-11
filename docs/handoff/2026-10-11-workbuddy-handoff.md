@@ -67,7 +67,7 @@
 - Web：`npm run type-check` 通过。
 - Web：`npm run build` 通过；仅有已有 ESLint/自定义字体 warning。
 - `git diff --check` 通过。
-- `origin/main` 与本地 `main` 均为 `2ca4359`。
+- `origin/main` 与本地 `main` 均为 `f4b77b1`；产品代码提交为 `2ca4359`。
 - Project Tour 浏览器报告和截图来自本地实际运行，不是静态 mock HTML。
 
 ### 当前可以推断的结论
