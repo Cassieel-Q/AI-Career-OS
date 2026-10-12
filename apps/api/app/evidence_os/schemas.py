@@ -151,6 +151,12 @@ class MatchRunResult(BaseModel):
     weak: int
     missing: int
     needs_excavation: int
+    # ---- 准入建议与参考分（纯本地规则派生，不落库、不参与任何自动决策）----
+    admission: str = "pending"  # can_apply / confirm / do_not_apply
+    admission_reason: str = ""
+    ref_score: int | None = None  # 0–100 参考分
+    ref_score_breakdown: list[dict[str, Any]] = Field(default_factory=list)
+    disclaimer: str = "参考分为本地规则估算，不代表真实 ATS 解析结果或投递成功概率。"
 
 
 # --- Positioning / Version / Audit / Render ---

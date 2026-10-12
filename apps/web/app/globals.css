@@ -2686,6 +2686,48 @@ a.mission-progress-node:hover { transform:translate(-1px, -1px); background:var(
   overflow: auto;
 }
 
+/* 单岗位匹配度（准入建议 + 参考分 + 五类结论） */
+.match-result {
+  width: 100%;
+  display: grid;
+  gap: 0.6rem;
+  padding: 1rem;
+  border: 1px solid var(--border-weak);
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+}
+.match-result-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+.match-score { display: inline-flex; align-items: baseline; gap: 0.35rem; }
+.match-score b { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text-primary); }
+.match-score small { font-size: 0.72rem; color: var(--text-tertiary); }
+.match-result .start-note { margin: 0; }
+.match-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
+.match-rows li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.3rem 0.6rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border-weak);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.match-rows-text { font-size: 0.85rem; line-height: 1.5; color: var(--text-primary); }
+.match-rows-hint { grid-column: 2; font-size: 0.75rem; font-style: normal; color: var(--text-tertiary); line-height: 1.5; }
+.match-status {
+  align-self: start;
+  padding: 0.15rem 0.45rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.match-status.covered { border-color: var(--fill-selected); background: var(--fill-selected); color: var(--text-inverse); }
+.match-status.needs_excavation { border-color: var(--border-strong); }
+.match-status.not_applicable { opacity: 0.65; }
+
 /* 岗位广场 */
 .plaza-grid {
   display: grid;

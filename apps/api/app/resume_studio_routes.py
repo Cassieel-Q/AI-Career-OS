@@ -110,7 +110,7 @@ def confirm_studio(
         raise HTTPException(409, {"message": "简历已更新，请重新检查。", "latest": read_document(row)})
     checks = export_checks(row.document_json)
     if any(check["level"] == "block" for check in checks):
-        raise HTTPException(409, {"message": "请先核对标记的事实。", "checks": checks})
+        raise HTTPException(409, {"message": "正文还有未完成内容（占位标记或空白简历），请补齐后再确认。", "checks": checks})
     rendered = _render(row)
     if not 1 <= rendered.page_count <= 2:
         raise HTTPException(409, {"message": "简历应控制在一至两页。", "page_count": rendered.page_count})
@@ -134,13 +134,13 @@ def export_studio_text(
 ) -> Response:
     """Markdown / 纯文本 / JSON 导出（不依赖 Typst）。
 
-    默认沿用与 PDF 相同的事实门禁；``draft=true`` 允许导出草稿自检，
-    与 ResumeForge 的「仍要导出草稿」对齐。
+    默认沿用与 PDF 相同的导出自检（占位残留 / 空简历）；``draft=true``
+    允许跳过自检导出草稿自检，与 ResumeForge 的「仍要导出草稿」对齐。
     """
     row = get_or_create_document(db, mission_id)
     checks = export_checks(row.document_json)
     if not draft and any(check["level"] == "block" for check in checks):
-        raise HTTPException(409, {"message": "请先核对标记的事实或补全占位内容。", "checks": checks})
+        raise HTTPException(409, {"message": "正文还有未完成内容（占位标记或空白简历），请补齐后再导出。", "checks": checks})
     try:
         body, media_type = render_export(row.document_json, format, getattr(row, "layout_config", None))
     except ValueError as exc:

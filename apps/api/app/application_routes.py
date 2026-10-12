@@ -33,6 +33,18 @@ APPLICATION_STATUSES = (
     "CLOSED",       # 已结束
 )
 
+# 状态转移规则：只允许前进；CLOSED（已结束/拒信）可从任意活跃状态进入；
+# CLOSED 之后锁定为终态。这是「漏斗只有一个口径」的保证。
+APPLICATION_FORWARD: dict[str, set[str]] = {
+    "PENDING":    {"APPLIED", "CLOSED"},
+    "APPLIED":    {"SCREENING", "ASSESSMENT", "INTERVIEW", "OFFER", "CLOSED"},
+    "SCREENING":  {"ASSESSMENT", "INTERVIEW", "OFFER", "CLOSED"},
+    "ASSESSMENT": {"INTERVIEW", "OFFER", "CLOSED"},
+    "INTERVIEW":  {"OFFER", "CLOSED"},
+    "OFFER":      {"CLOSED"},
+    "CLOSED":     set(),
+}
+
 # workflow_state → 准备度评分（0–100）
 _PREP_SCORE: dict[str, int] = {
     "JD_REQUIRED": 5,
@@ -271,6 +283,12 @@ def update_application(application_id: UUID, payload: ApplicationUpdate, db: Ses
         status = str(updates["status"]).upper()
         if status not in APPLICATION_STATUSES:
             raise HTTPException(status_code=422, detail=f"无效的投递状态：{updates['status']}")
+        # 状态只进不退：新状态必须从当前状态可达（CLOSED 为终态，不可再出）
+        if status != row.status and status not in APPLICATION_FORWARD.get(row.status, set()):
+            raise HTTPException(
+                status_code=422,
+                detail=f"投递状态不可从「{row.status}」回退到「{status}」（只允许前进；已结束除外）",
+            )
         updates["status"] = status
     for key, value in updates.items():
         if value is None and key not in {"location", "applied_at", "next_action", "notes"}:

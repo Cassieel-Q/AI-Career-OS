@@ -179,6 +179,75 @@ def _claim_covers(claim: models.EosClaim, req: models.EosRequirement) -> str:
     return MatchStatus.MISSING
 
 
+# 「未证实」= 完全没找到对应主张，或找到核心/硬性要求却无主张可引（待深挖）。
+# 注意：run_match 对 hard_gate / core 的未命中会标成 needs_excavation 而非 missing，
+# 所以这里两态都要算，否则「不建议投递」永远不可达。
+_UNPROVEN = (MatchStatus.MISSING, MatchStatus.NEEDS_EXCAVATION)
+
+
+def _admission_recommendation(
+    rows: list[models.EosMatchRow],
+    req_by_id: dict[UUID, models.EosRequirement],
+) -> tuple[str, str]:
+    """准入建议：硬性要求未证实 → 不投；核心未证实或表达缺口 → 先确认；否则能投。"""
+    admission = "can_apply"
+    reasons: list[str] = []
+    core_gaps: list[str] = []
+
+    for row in rows:
+        req = req_by_id.get(row.requirement_id)
+        if req is None or row.match_status not in _UNPROVEN:
+            continue
+        if req.priority == RequirementPriority.HARD_GATE:
+            admission = "do_not_apply"
+            reasons.append(f"硬性要求未证实：{req.raw_text[:60]}")
+        elif req.priority == RequirementPriority.CORE:
+            core_gaps.append(f"核心要求未证实：{req.raw_text[:60]}")
+
+    if admission != "do_not_apply" and core_gaps:
+        admission = "confirm"
+        reasons.append(core_gaps[0])
+        if len(core_gaps) > 1:
+            reasons.append(f"另有 {len(core_gaps) - 1} 条核心要求未证实")
+
+    if admission == "can_apply" and any(row.match_status == MatchStatus.WEAK for row in rows):
+        admission = "confirm"
+        reasons.append("存在表达缺口（主张未确认或证据偏薄），投递前建议先补齐。")
+
+    if not reasons:
+        reasons.append("全部硬性/核心要求均已匹配。")
+    return admission, "；".join(reasons)
+
+
+def _ref_score(
+    rows: list[models.EosMatchRow],
+    reqs: list[models.EosRequirement],
+) -> tuple[int, list[dict]]:
+    """0–100 参考分（纯本地派生，不落库、不参与准入）。"""
+    total = len(reqs) or 1
+    covered = sum(1 for r in rows if r.match_status == MatchStatus.COVERED)
+    weak = sum(1 for r in rows if r.match_status == MatchStatus.WEAK)
+    score = round((covered * 1.0 + weak * 0.5) / total * 100)
+
+    hard_core_ids = {
+        r.id for r in reqs if r.priority in (RequirementPriority.HARD_GATE, RequirementPriority.CORE)
+    }
+    unproven_hard_core = sum(
+        1 for r in rows if r.match_status in _UNPROVEN and r.requirement_id in hard_core_ids
+    )
+    breakdown = [
+        {
+            "name": "技能/关键词覆盖",
+            "detail": f"共 {total} 条要求，已匹配 {covered} 条、偏弱 {weak} 条",
+        },
+        {
+            "name": "硬性/核心门槛",
+            "detail": f"{len(hard_core_ids)} 条硬性/核心要求，未证实 {unproven_hard_core} 条",
+        },
+    ]
+    return score, breakdown
+
+
 def run_match(db: Session, profile_id: UUID, jd_id: UUID) -> schemas.MatchRunResult:
     jd, reqs = get_jd_with_requirements(db, jd_id)
     if not jd or jd.profile_id != profile_id:
@@ -236,6 +305,12 @@ def run_match(db: Session, profile_id: UUID, jd_id: UUID) -> schemas.MatchRunRes
     db.commit()
     for r in rows_out:
         db.refresh(r)
+
+    # 准入建议与参考分：只读派生，不改动已落库的 match rows。
+    req_by_id = {req.id: req for req in reqs}
+    admission, admission_reason = _admission_recommendation(rows_out, req_by_id)
+    ref_score, ref_score_breakdown = _ref_score(rows_out, reqs)
+
     return schemas.MatchRunResult(
         jd_id=jd_id,
         rows=[schemas.MatchRowOut.model_validate(r) for r in rows_out],
@@ -243,6 +318,10 @@ def run_match(db: Session, profile_id: UUID, jd_id: UUID) -> schemas.MatchRunRes
         weak=counts["weak"],
         missing=counts["missing"],
         needs_excavation=counts["needs_excavation"],
+        admission=admission,
+        admission_reason=admission_reason,
+        ref_score=ref_score,
+        ref_score_breakdown=ref_score_breakdown,
     )
 
 
