@@ -672,6 +672,14 @@ def _mission_read(row: models.JobMission) -> dict[str, object]:
     intel = row.interview_intel or []
     if not intel:
         warnings.append("company_intel_unavailable")
+    # 岗位要点解析软失败时 create_mission 会带 analysis_error 返回，但那个字段没落库，
+    # 页面重新 GET 就丢了原因。这里按同一口径在读取时重新推导：
+    # what_matters 没有 core_capabilities 即视为解析降级（软降级产物是 confidence=0 的空结构）。
+    what_matters = row.what_matters or {}
+    core_capabilities = what_matters.get("core_capabilities") if isinstance(what_matters, dict) else None
+    jd_analysis_degraded = not core_capabilities
+    if jd_analysis_degraded:
+        warnings.append("jd_analysis_unavailable")
     company = (row.company or "").strip() or "UNKNOWN"
     role = (row.role or "").strip() or "UNKNOWN"
     parsed = row.parsed_jd or {}
@@ -701,8 +709,14 @@ def _mission_read(row: models.JobMission) -> dict[str, object]:
         "workflow_state": getattr(row, "workflow_state", None) or WorkflowState.ROLE_UNDERSTOOD.value,
         "resume_source": getattr(row, "resume_source", None),
         "warnings": list(dict.fromkeys(warnings)),
+        # 与 warnings 同源：只在降级时为非 None，前端据此给「重新解析」入口。
+        "analysis_error": (
+            {"type": "partial_jd_analysis", "reason": "what_matters_degraded", "status_code": None}
+            if jd_analysis_degraded
+            else None
+        ),
         "parsed_jd": row.parsed_jd or {},
-        "what_matters": row.what_matters or {},
+        "what_matters": what_matters,
         "resume_strategy": row.resume_strategy or {},
         "interview_intel": intel,
         "created_at": row.created_at,

@@ -2000,6 +2000,20 @@ a.mission-progress-node:hover { transform:translate(-1px, -1px); background:var(
 .app-guide-card strong { font-size:0.95rem; }
 .app-guide-card p { margin:0; color:#3a3a3c; font-size:0.9rem; line-height:1.6; }
 .app-guide-card ol { margin:0; padding-left:1.4rem; color:#3a3a3c; font-size:0.9rem; line-height:1.7; }
+/* 精简版说明：默认只有一行，长解释收进 <details>，避免工具页用大段文字讲一遍产品观。 */
+.app-guide-card-compact { padding:0.85rem 1.1rem; }
+.app-guide-card-compact details { margin-top:0.15rem; }
+.app-guide-card-compact summary {
+  cursor:pointer; font-size:0.85rem; font-weight:600; color:#3a3a3c; list-style:none;
+}
+.app-guide-card-compact summary::-webkit-details-marker { display:none; }
+.app-guide-card-compact summary::before { content:"＋ "; color:#8e8e93; }
+.app-guide-card-compact details[open] summary::before { content:"− "; }
+.app-guide-card-compact details p { margin-top:0.45rem; }
+
+/* 岗位解析降级提示：一个原因 + 一个可恢复动作。 */
+.mission-analysis-fallback { border-color:#f0d9a8; background:#fffaf0; }
+.mission-analysis-fallback-hint { font-size:0.82rem; color:#6e6e73; align-self:center; }
 
 .app-page-subtitle {
   margin: 0.4rem 0 0;

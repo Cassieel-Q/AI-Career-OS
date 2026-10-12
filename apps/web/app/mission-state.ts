@@ -1920,3 +1920,43 @@ export function strengthenStatusSummary(status: string | null | undefined): stri
   if (key === "READY_TO_APPLY") return "当前主张已可支撑投递。";
   return "";
 }
+
+export type JdAnalysisDegradation = {
+  /** true 表示岗位智能解析没有完整跑完，岗位页应给「重新解析」这类可恢复入口。 */
+  degraded: boolean;
+  /** 面向用户的一句话原因；未降级时为空串。 */
+  message: string;
+};
+
+function hasAnyListItem(value: unknown): boolean {
+  return Array.isArray(value) && value.length > 0;
+}
+
+/**
+ * 岗位解析「软失败」检测。
+ *
+ * 后端 `create_mission` 对 analyze_jd 失败是渐进式降级：仍然建任务，只把
+ * warnings / analysis_error 带回来（见 mission_service.py）。此时 what_matters
+ * 可能是空的。前端必须如实说明，而不是回退到「AI 产品能力、项目经验、数据分析」
+ * 这种编出来的占位文案——那会让用户以为解析成功了。
+ */
+export function describeJdAnalysisDegradation(input: {
+  analysisError?: { type?: string | null; reason?: string | null } | null;
+  warnings?: string[] | null;
+  whatMatters?: Record<string, unknown> | null;
+}): JdAnalysisDegradation {
+  const warnings = input.warnings ?? [];
+  const what = input.whatMatters ?? {};
+  const identityUnresolved = warnings.includes("jd_identity_unresolved");
+  const jdUnavailable = warnings.includes("jd_analysis_unavailable");
+  const emptyWhatMatters = !hasAnyListItem(what.core_capabilities);
+  const degraded = Boolean(input.analysisError) || jdUnavailable || identityUnresolved || emptyWhatMatters;
+  if (!degraded) return { degraded: false, message: "" };
+  if (identityUnresolved) {
+    return { degraded: true, message: "没能从 JD 里认出公司和岗位名，请先在下面手动补全。" };
+  }
+  if (jdUnavailable || emptyWhatMatters) {
+    return { degraded: true, message: "岗位要点解析没有跑完，现在看到的只有 JD 原文和基本信息。" };
+  }
+  return { degraded: true, message: "岗位解析只完成了一部分，建议重新解析一次再往下走。" };
+}

@@ -128,11 +128,13 @@ export default function EvidenceOsPage() {
         <span className="app-badge muted">进阶模式</span>
       </header>
 
-      <section className="app-card app-guide-card" aria-label="使用说明">
-        <strong>这一页解决什么问题？</strong>
-        <p>面试官追问「这件事真是你做的吗」时，你需要拿出经得起追问的细节。证据库把经历原文拆成一条条不可变的证据事实，简历主张、面试回答都能引用它们。</p>
-        <strong>和简历、面试是什么关系？</strong>
-        <p>日常使用不必手动维护本页——上传简历时系统会自动沉淀证据。本页是进阶模式：想手动补充证据（如项目数据、聊天记录摘录）或核验某条主张时才需要用到，按顶部 8 步从左到右操作即可，通常只用前 3 步（录入证据 → 建立主张 → 解析岗位）。</p>
+      <section className="app-card app-guide-card app-guide-card-compact" aria-label="使用说明">
+        <p>日常不必手动维护本页——上传简历时系统会自动沉淀证据。只有想手动补证据（项目数据、聊天记录摘录）或核验某条主张时，才需要按下面 8 步往下走；通常只用前 3 步。</p>
+        <details>
+          <summary>什么时候需要用到这一页？</summary>
+          <p>面试官追问「这件事真是你做的吗」时，你需要拿出经得起追问的细节。证据库把经历原文拆成一条条不可变的证据事实，简历主张、面试回答都能引用它们。</p>
+          <p>完整 8 步：录入证据 → 建立主张 → 解析岗位 → 运行匹配 → 定位缺口 → 生成要点 → 复核 → 成稿。日常走前 3 步即可。</p>
+        </details>
       </section>
 
       <section className="app-card">

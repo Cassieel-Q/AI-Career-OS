@@ -62,6 +62,17 @@ export type MissionResumeSource = {
   updated_master?: boolean;
 };
 
+/**
+ * 后端在「岗位智能解析」软失败时仍会创建任务（渐进式降级，避免 502），
+ * 但会把失败原因放在这里。前端据此显示可恢复的提示，而不是让用户看半空结果。
+ */
+export type MissionAnalysisError = {
+  /** 异常类名，例如 partial_jd_analysis / MissionProviderInvalidResponseError。 */
+  type?: string;
+  reason?: string | null;
+  status_code?: number | null;
+};
+
 export type Mission = {
   id: string;
   profile_id: string;
@@ -76,6 +87,7 @@ export type Mission = {
   workflow_state?: WorkflowState | string;
   resume_source?: MissionResumeSource | null;
   warnings?: string[];
+  analysis_error?: MissionAnalysisError | null;
   parsed_jd: Record<string, unknown>;
   what_matters: Record<string, unknown>;
   resume_strategy: Record<string, unknown>;
