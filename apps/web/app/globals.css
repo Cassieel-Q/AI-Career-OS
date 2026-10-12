@@ -2891,3 +2891,17 @@ pre.batch-draft-excerpt { white-space: pre-wrap; word-break: break-word; backgro
 /* 个人资料可折叠板块（目标四）：默认展开，点击折叠 */
 .profile-section .section-toggle { background:none; border:none; padding:0; font:inherit; font-weight:600; color:inherit; cursor:pointer; display:inline-flex; align-items:center; gap:0.35rem; }
 .profile-section .section-toggle span[aria-hidden] { font-size:0.7rem; color:var(--text-tertiary,#6e6e73); }
+
+/* 助手 Agent 上下文条（第三阶段） */
+.assistant-context { display:flex; flex-wrap:wrap; gap:0.4rem 0.9rem; align-items:center; padding:0.5rem 0.7rem; margin-bottom:0.5rem; border:1px solid var(--border-medium,#e5e5ea); border-radius:var(--radius-sm,8px); background:var(--surface-hover,#f0f0f2); font-size:0.75rem; color:var(--text-secondary,#3c3c43); }
+.assistant-context-title { font-weight:600; color:var(--text-primary,#1c1c1e); }
+.assistant-context-flag { padding:0.1rem 0.45rem; border-radius:999px; background:var(--text-primary,#1c1c1e); color:#fff; font-size:0.7rem; }
+.assistant-context-missing { color:var(--accent-warning,#b25000); }
+.assistant-degraded { margin:0 0 0.5rem; padding:0.45rem 0.6rem; border-left:3px solid var(--accent-warning,#b25000); background:var(--surface-hover,#f0f0f2); font-size:0.78rem; color:var(--text-secondary,#3c3c43); }
+
+/* 题库题目必答信息（第六阶段） */
+.question-meta-tag { padding:0.1rem 0.4rem; border:1px solid var(--border-medium,#e5e5ea); border-radius:999px; font-size:0.68rem; color:var(--text-tertiary,#6e6e73); }
+.question-followups { margin:0.3rem 0 0; padding-left:1rem; font-size:0.78rem; color:var(--text-secondary,#3c3c43); display:flex; flex-direction:column; gap:0.15rem; }
+.question-explain { margin:0.4rem 0 0; display:grid; grid-template-columns:auto 1fr; gap:0.15rem 0.5rem; font-size:0.75rem; }
+.question-explain dt { color:var(--text-tertiary,#6e6e73); white-space:nowrap; }
+.question-explain dd { margin:0; color:var(--text-secondary,#3c3c43); }

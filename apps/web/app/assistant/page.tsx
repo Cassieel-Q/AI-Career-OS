@@ -5,13 +5,26 @@ import type { AssistantConversation } from "../assistant.ts";
 import { createConversation, deleteConversation, getConversation, listConversations } from "../assistant.ts";
 import { readCurrentProfileId } from "../career-hub.ts";
 import { AssistantChat } from "../assistant-chat.tsx";
+import { readAssistantContext } from "../assistant-context.ts";
 
 export default function AssistantPage() {
   const [conversations, setConversations] = useState<AssistantConversation[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  // 第三阶段：从岗位面试页进入时，URL 会带上 mission_id / target_resume_id，自动作为 Agent 上下文。
+  const [missionId, setMissionId] = useState<string | null>(null);
+  const [targetResumeId, setTargetResumeId] = useState<string | null>(null);
+  const [route, setRoute] = useState<string | null>(null);
   const profileId = readCurrentProfileId();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const context = readAssistantContext();
+    setMissionId(context.missionId);
+    setTargetResumeId(context.targetResumeId);
+    setRoute(context.route);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -109,6 +122,9 @@ export default function AssistantPage() {
               surface="page"
               conversationId={activeId}
               profileId={profileId}
+              missionId={missionId}
+              targetResumeId={targetResumeId}
+              route={route}
               onConversationChange={(id) => {
                 setActiveId(id);
                 void load();

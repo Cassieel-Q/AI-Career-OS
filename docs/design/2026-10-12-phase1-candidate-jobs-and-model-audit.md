@@ -515,3 +515,72 @@ git diff --check
 
 
 **没有真实样本和人工评分的数据一律标记 `NOT_RUN`。不要把「模型生成成功 / 单元测试通过 / 目标阈值」写成真实效果。**
+
+---
+
+# 附录 B · AI 面试助手（顺顺）优化（第九轮迭代）
+
+本次把「顺顺」从普通聊天助手改造成真正的**面试准备 Agent**，落地九阶段。
+
+## B.0 生产错误修复（必须）
+
+`apps/api/app/assistant_routes.py` 原为 `for c in sorted(tool_calls.values())`：`tool_calls.values()` 是 dict 列表，
+模型一次返回多个工具调用时会抛 `'<' not supported between instances of 'dict' and 'dict'`，整轮流式回复中断。
+
+改为按 tool call index 排序：`ordered_calls = [tool_calls[i] for i in sorted(tool_calls.keys())]`，
+并让执行顺序与回填的 `calls` 下标一一对应；`tool_call_id` 也随之改为 `calls[i]["id"]`。
+
+回归测试：`tests/test_interview_agent.py::test_two_parallel_tool_calls_do_not_break_and_generation_continues`
+（模型一次返回 `list_jobs` + `list_resumes`，两个工具都执行成功，第二轮继续生成正文，无 `error` 事件）。
+
+## B.1 新增模块
+
+| 文件 | 职责 |
+|---|---|
+| `apps/api/app/interview_context.py` | **第一阶段** `InterviewContextResolver`：六类 intent + 六条规则 |
+| `apps/api/app/mission_interview_context.py` | **第二阶段** 统一 `MissionInterviewContext` + 四个取数工具 |
+| `apps/api/app/interview_prep_planner.py` | **第四/五阶段** 固定流程状态机（8 步）+ CRASH_PREP 8 段结构 |
+| `apps/api/app/mock_interview_service.py` / `mock_interview_routes.py` | **第七阶段** 任务级模拟面试：逐轮追问 + 7 维评估 + 整体报告 |
+| `apps/api/app/tool_result.py` | **第八阶段** 结构化 `ToolResult`；兼容旧三元组解包 |
+| `apps/api/alembic/versions/024_interview_agent.py` | 题库题目扩展字段 + `interview_sessions.config` + 模拟面试两表 |
+| `apps/web/app/assistant-context.ts` | **第三阶段** 前端页面上下文（URL > sessionStorage） |
+
+## B.2 各阶段落地
+
+- **第一阶段**：`resolve_interview_context()` 输出 intent / company / role / mission_id / target_resume_id /
+  context_confidence / needs_clarification / reason。规则：已粘贴 JD 不要求重录；优先匹配已有 mission；
+  查不到就用本轮 JD 继续；同公司多岗位列候选不随机选；「我的简历」优先 mission 绑定 target resume；
+  无岗位简历显式提示但继续用已确认资料。
+- **第二阶段**：`build_mission_interview_context()` 聚合 raw_jd / parsed_requirements / what_matters /
+  target_resume / confirmed_claims / relevant_experiences / interview_intel / source_refs / missing_context。
+  `target_resume` 含 bullet 级 `source_experience_id / claim_status / evidence_refs / risk_flags`；
+  **无 `evidence_refs` 的条目单独放进 `needs_confirmation`，不作为已完成事实**。不默认发送整份原始简历与隐私联系方式。
+- **第三阶段**：进入助手自动传 `mission_id / target_resume_id / profile_id`；顶部上下文条显示
+  当前岗位 / 简历版本 / 已加载经历数 / 已确认事实数 / 是否有面经 / 缺失资料；简历工作台自动登记上下文。
+- **第四/五阶段**：后端状态机 `PIPELINE_STEPS`（8 步）控制步骤与工具；`plan_interview_prep()` 产出
+  READY/DEGRADED/BLOCKED 与 CRASH_PREP 8 段结构（含 60 分钟计划与「立即开始第一道模拟题」）。
+- **第六阶段**：`QuestionItem` 新增 `jd_requirement_refs / experience_refs / why_asked / expected_evidence /
+  followup_paths / sample_answer / risk_flags`；`generate_bank_from_context()` 从真实上下文生成三分类题库，
+  无已确认经历时打 `NO_VERIFIED_EXPERIENCE` 风险标记。
+- **第七阶段**：模拟面试启动参数 `mission_id / target_resume_id / interview_type / difficulty /
+  interviewer_style / rounds`；每轮评估含 `answer_coverage / evidence_status / missing_evidence /
+  unsupported_claims / jd_alignment / next_followup / improvement_tip`；追问针对「刚刚的回答」；
+  最后一轮才给整体报告。
+- **第八阶段**：所有工具返回 `ToolResult(name/arguments/ok/summary/error/changed/source_refs)`；
+  工具失败不终止整轮，把原因回给模型，保留已加载上下文并输出降级说明（`degraded` SSE 事件）。
+- **第九阶段**：`tests/test_interview_agent.py` 覆盖用户列出的 15 条用例 + 固定案例五项检查。
+
+## B.3 验收结果（诚实标注）
+
+| 命令 | 结果 |
+|---|---|
+| `apps/api: pytest tests -q` | **701 passed / 7 failed / 5 skipped**（7 例均为改动前既有，`git stash` 对照确认） |
+| `apps/api: pytest -k "assistant or question_bank or mock_interview or interview_agent or grounding or resume_studio" -q` | **76 passed** |
+| `apps/web: npx tsc --noEmit` | **退出码 0** |
+| `apps/web: npm test` | **226 passed / 2 failed**（2 例既有，读 `app/page.tsx`） |
+| `apps/web: npm run build` | **成功**（含 `/question-bank`、`/assistant` 等全部路由） |
+| `git diff --check` | 干净 |
+
+**未运行（`NOT_RUN`）**：真实模型样本评测 / 人工评分。本次所有结论均为单元/集成测试结果，
+**不声称「工具调用成功」等于「面试建议真实有效」**。固定案例检查（正确岗位 / 正确简历 / 引用真实经历 /
+无编造事实 / 工具失败后继续）已用 `tests/test_interview_agent.py::test_fixed_case_five_required_checks` 落地。

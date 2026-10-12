@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AssistantChat } from "./assistant-chat.tsx";
 import { listConversations, type AssistantConversation } from "./assistant.ts";
 import { readCurrentProfileId } from "./career-hub.ts";
+import { missionIdFromPath, readAssistantContext } from "./assistant-context.ts";
 
 /**
  * 「顺顺」悬浮球：任意页面右下角常驻，点击打开浮窗问答。
@@ -12,9 +13,17 @@ import { readCurrentProfileId } from "./career-hub.ts";
 export function TouTouOrb() {
   const [open, setOpen] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [missionId, setMissionId] = useState<string | null>(null);
+  const [targetResumeId, setTargetResumeId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
+    if (typeof window !== "undefined") {
+      // 第三阶段：浮窗也自动带上下文（URL 兜底从 /missions/<id> 解析）。
+      const context = readAssistantContext();
+      setMissionId(context.missionId || missionIdFromPath(window.location.pathname));
+      setTargetResumeId(context.targetResumeId);
+    }
     let active = true;
     listConversations("orb")
       .then((list) => {
@@ -48,6 +57,8 @@ export function TouTouOrb() {
               surface="orb"
               conversationId={conversationId}
               profileId={profileId}
+              missionId={missionId}
+              targetResumeId={targetResumeId}
               compact
               onConversationChange={(id) => setConversationId(id)}
             />

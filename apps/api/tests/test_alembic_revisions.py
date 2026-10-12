@@ -181,13 +181,14 @@ def test_alembic_graph_has_single_latest_head_and_preserves_prior_chain() -> Non
         "021_question_bank": "020_profile_boundary",
         "022_template_layout": "021_question_bank",
         "023_write_proposals": "022_template_layout",
+        "024_interview_agent": "023_write_proposals",
     }
-    assert script.get_heads() == ["023_write_proposals"]
+    assert script.get_heads() == ["024_interview_agent"]
     revisions = {revision.revision: revision.down_revision for revision in script.walk_revisions()}
     assert revisions == expected_down_revisions
 
 
-# Tables introduced by migrations 019–023 (this change).
+# Tables introduced by migrations 019–024 (this change).
 NEW_TABLES = {
     "candidate_jobs",
     "application_profiles",
@@ -197,11 +198,13 @@ NEW_TABLES = {
     "resume_template_drafts",
     "write_proposals",
     "write_receipts",
+    "mock_interview_sessions",
+    "mock_interview_turns",
 }
 
 
 def test_new_revisions_upgrade_and_downgrade_from_018(tmp_path, monkeypatch) -> None:
-    """Exercise the 019–023 migrations on an isolated SQLite DB.
+    """Exercise the 019–024 migrations on an isolated SQLite DB.
 
     The full chain cannot run on SQLite (early revisions use create_check_constraint),
     so the pre-019 schema is built with create_all and stamped at 018_assistant.
@@ -221,6 +224,7 @@ def test_new_revisions_upgrade_and_downgrade_from_018(tmp_path, monkeypatch) -> 
             ("education", "cet4_score"),
             ("education", "cet6_score"),
             ("resume_studio_documents", "layout_config"),
+            ("interview_sessions", "config"),
         ):
             try:
                 connection.exec_driver_sql(f"ALTER TABLE {table} DROP COLUMN {column}")

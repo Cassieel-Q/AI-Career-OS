@@ -1,14 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { AssistantMessage, AssistantSurface } from "./assistant.ts";
-import { createConversation, streamChat } from "./assistant.ts";
+import type { AssistantMessage, AssistantSurface, InterviewContextSummary } from "./assistant.ts";
+import { createConversation, resolveInterviewContext, streamChat } from "./assistant.ts";
 
 type Props = {
   surface: AssistantSurface;
   conversationId: string | null;
   profileId?: string | null;
   missionId?: string | null;
+  /** 第三阶段：从岗位面试页进入时自动带上岗位版简历。 */
+  targetResumeId?: string | null;
+  route?: string | null;
   /** 会话列表变动时通知外层（用于刷新侧栏） */
   onConversationChange?: (id: string) => void;
   /** 浮窗模式只展示联网与思考强度，不展示「允许写入」开关 */
@@ -23,7 +26,24 @@ type Controls = {
 
 const DEFAULT_CONTROLS: Controls = { web_search: false, allow_write: true, reasoning_effort: "medium" };
 
-export function AssistantChat({ surface, conversationId, profileId, missionId, onConversationChange, compact = false }: Props) {
+const MISSING_LABELS: Record<string, string> = {
+  mission: "岗位",
+  target_resume: "岗位版简历",
+  raw_jd: "JD 原文",
+  raw_jd_from_message: "已使用本轮 JD",
+  interview_intel: "真实面经",
+};
+
+export function AssistantChat({
+  surface,
+  conversationId,
+  profileId,
+  missionId,
+  targetResumeId,
+  route,
+  onConversationChange,
+  compact = false,
+}: Props) {
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -32,7 +52,33 @@ export function AssistantChat({ surface, conversationId, profileId, missionId, o
   const [streamingText, setStreamingText] = useState("");
   const [activeTools, setActiveTools] = useState<Array<{ name: string; changed: boolean; summary: string }>>([]);
   const [activeSources, setActiveSources] = useState<Array<Record<string, unknown>>>([]);
+  const [contextSummary, setContextSummary] = useState<InterviewContextSummary | null>(null);
+  const [prepMode, setPrepMode] = useState<string | null>(null);
+  const [degradedReasons, setDegradedReasons] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // 进入助手时自动解析面试上下文（岗位 / 简历版本 / 经历数 / 确认事实数 / 面经 / 缺失资料）。
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const result = await resolveInterviewContext({
+          profile_id: profileId ?? null,
+          mission_id: missionId ?? null,
+          target_resume_id: targetResumeId ?? null,
+          route,
+        });
+        if (cancelled) return;
+        setContextSummary(result.summary ?? null);
+        setPrepMode(result.prep?.mode ?? null);
+      } catch {
+        if (!cancelled) setContextSummary(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [profileId, missionId, targetResumeId, route]);
 
   const scrollToBottom = useCallback(() => {
     const el = scrollRef.current;
@@ -60,6 +106,7 @@ export function AssistantChat({ surface, conversationId, profileId, missionId, o
     setStreamingText("");
     setActiveTools([]);
     setActiveSources([]);
+    setDegradedReasons([]);
 
     let fullText = "";
     try {
@@ -69,6 +116,8 @@ export function AssistantChat({ surface, conversationId, profileId, missionId, o
           content,
           profile_id: profileId ?? null,
           mission_id: missionId ?? null,
+          target_resume_id: targetResumeId ?? null,
+          route: route ?? null,
           web_search: controls.web_search,
           allow_write: controls.allow_write,
           reasoning_effort: controls.reasoning_effort,
@@ -79,6 +128,7 @@ export function AssistantChat({ surface, conversationId, profileId, missionId, o
             setStreamingText(fullText);
           } else if (event.type === "tool") setActiveTools((prev) => [...prev, { name: event.name, changed: event.changed, summary: event.summary }]);
           else if (event.type === "sources") setActiveSources(event.sources as Array<Record<string, unknown>>);
+          else if (event.type === "degraded") setDegradedReasons(event.reasons);
           else if (event.type === "error") setError(event.message);
         },
       );
@@ -105,6 +155,33 @@ export function AssistantChat({ surface, conversationId, profileId, missionId, o
 
   return (
     <div className="assistant-chat">
+      {contextSummary ? (
+        <div className="assistant-context" role="status" aria-label="当前 Agent 上下文">
+          <span className="assistant-context-title">当前上下文</span>
+          <span className="assistant-context-item">
+            岗位：{contextSummary.company || "未识别"} · {contextSummary.role || "未识别"}
+          </span>
+          <span className="assistant-context-item">
+            简历版本：{contextSummary.resume_version != null ? `v${contextSummary.resume_version}（${contextSummary.resume_status || "DRAFT"}）` : "未绑定岗位版简历"}
+          </span>
+          <span className="assistant-context-item">已加载经历：{contextSummary.experience_count}</span>
+          <span className="assistant-context-item">已确认事实：{contextSummary.confirmed_claims_count}</span>
+          <span className="assistant-context-item">面经：{contextSummary.has_interview_intel ? "有" : "无"}</span>
+          {prepMode === "CRASH_PREP" ? <span className="assistant-context-flag">短时准备模式</span> : null}
+          {contextSummary.missing_context.length ? (
+            <span className="assistant-context-missing">
+              缺失资料：{contextSummary.missing_context.map((item) => MISSING_LABELS[item] || item).join("、")}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+
+      {degradedReasons.length ? (
+        <p className="assistant-degraded" role="alert">
+          ⚠️ 部分资料本次未加载成功（{degradedReasons.join("；")}）。回答基于已成功加载的内容。
+        </p>
+      ) : null}
+
       <div className="assistant-messages" ref={scrollRef}>
         {messages.length === 0 && !streamingText ? (
           <div className="assistant-empty">
