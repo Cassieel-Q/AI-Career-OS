@@ -2256,6 +2256,198 @@ a.mission-progress-node:hover { transform:translate(-1px, -1px); background:var(
   color: var(--text-inverse);
 }
 
+/* ==========================================================================
+   数据表格（岗位 / 简历）—— 表格式信息密度
+   表头灰底 + 行分隔线 + 单元格内多行标签，替代原来的卡片网格。
+   全站保持黑白灰：层级只靠底色深浅与字重区分，不引入彩色。
+   ========================================================================== */
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.table-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 16rem;
+  min-width: 11rem;
+}
+.table-search svg {
+  position: absolute;
+  left: 0.8rem;
+  width: 1rem;
+  height: 1rem;
+  color: var(--text-quaternary);
+  pointer-events: none;
+}
+.table-search input {
+  width: 100%;
+  height: 2.5rem;
+  padding: 0 0.9rem 0 2.4rem;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+.table-search input::placeholder { color: var(--text-quaternary); }
+.table-search input:focus {
+  outline: none;
+  border-color: var(--fill-selected);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+}
+
+.table-select {
+  height: 2.5rem;
+  padding: 0 2.1rem 0 0.85rem;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  background-color: var(--surface);
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%238e8e93' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 0.75rem;
+  appearance: none;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+.table-select:focus {
+  outline: none;
+  border-color: var(--fill-selected);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+}
+
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.875rem;
+}
+
+.data-table-wrap {
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table thead th {
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--border-medium);
+  background: var(--surface-muted);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.data-table tbody td {
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--border-weak);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  vertical-align: top;
+}
+.data-table tbody tr:last-child td { border-bottom: 0; }
+.data-table tbody tr:hover { background: #fbfbfc; }
+
+.data-table .cell-title {
+  display: grid;
+  justify-items: start;
+  gap: 0.45rem;
+}
+.data-table .cell-title a {
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+.data-table .cell-title a:hover { text-decoration: underline; }
+
+.cell-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.cell-tag {
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-xs);
+  background: var(--surface-muted);
+  color: var(--text-tertiary);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.cell-tag.strong {
+  background: #ececf0;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.cell-muted { color: var(--text-quaternary); }
+
+.cell-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 6.5rem;
+}
+.cell-progress-bar {
+  position: relative;
+  flex: 1;
+  height: 5px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+  overflow: hidden;
+}
+.cell-progress-bar > span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: var(--radius-pill);
+  background: var(--fill-selected);
+}
+.cell-progress-value {
+  color: var(--text-tertiary);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.cell-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+.cell-actions .app-btn {
+  padding: 0.32rem 0.65rem;
+  border-radius: var(--radius-xs);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.table-empty {
+  padding: 2.75rem 1rem;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+/* 窄屏：表格允许横向滚动，不挤压列宽 */
+@media (max-width: 760px) {
+  .data-table-wrap { overflow-x: auto; }
+  .data-table { min-width: 46rem; }
+}
+
 /* 事实台账卡片 */
 .claim-card-header {
   display: flex;
