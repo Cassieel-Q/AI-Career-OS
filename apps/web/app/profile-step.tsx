@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { ChangeEvent, ReactNode } from "react";
 import Link from "next/link";
 
+import { initialSectionState, isSectionOpen, toggleSectionState } from "./collapsible.ts";
 import {
   confirmProfileRequest,
   createEmptyEducation,
@@ -25,6 +26,7 @@ import type {
 import type { WorkflowNextAction, WorkflowStepControls } from "./workflow-route.tsx";
 
 type EditableSection = "education" | "skills" | "experiences" | "certifications";
+const SECTION_KEYS: EditableSection[] = ["education", "skills", "experiences", "certifications"];
 
 const proficiencyOptions: Array<{ value: Proficiency; label: string }> = [
   { value: "AWARE", label: "AWARE" },
@@ -178,6 +180,8 @@ export function ProfileStep({ profile: serverProfile, controls }: { profile: Pro
               <TextField label="Major" value={item.field_of_study} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("education", index, "field_of_study", value)} />
               <TextField label="Dates" value={item.dates} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("education", index, "dates", value)} />
               <TextField label="Relevant courses" value={(item.relevant_courses ?? []).join(", ")} disabled={profileLocked || mutationBusy} onChange={(value) => updateEducationCourses(index, value ?? "")} />
+              <TextField label="CET-4 分数" value={item.cet4_score ?? ""} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("education", index, "cet4_score", value)} />
+              <TextField label="CET-6 分数" value={item.cet6_score ?? ""} disabled={profileLocked || mutationBusy} onChange={(value) => updateItem("education", index, "cet6_score", value)} />
             </div>
             <Evidence item={item} />
           </>
@@ -271,18 +275,30 @@ function ProfileSection<T extends ProfileItem>({
   onDelete: (section: EditableSection, index: number) => void;
   render: (item: T, index: number) => ReactNode;
 }) {
+  // 目标四：各板块默认展开，点击标题可折叠；多条目照常增删。
+  const [openMap, setOpenMap] = useState(() => initialSectionState(SECTION_KEYS));
+  const open = isSectionOpen(openMap, section);
   return (
     <section className="profile-section">
       <div className="section-heading">
-        <h3>{title}</h3>
+        <h3>
+          <button
+            type="button"
+            className="section-toggle"
+            aria-expanded={open}
+            onClick={() => setOpenMap((prev) => toggleSectionState(prev, section))}
+          >
+            <span aria-hidden="true">{open ? "▾" : "▸"}</span> {title}
+          </button>
+        </h3>
         <button type="button" className="text-button" onClick={() => onAdd(section)} disabled={locked}>+ Add</button>
       </div>
-      {items.length ? items.map((item, index) => (
+      {open && (items.length ? items.map((item, index) => (
         <article className="profile-item" key={`${section}-${item.id ?? `new-${index}`}`}>
           {render(item, index)}
           <button type="button" className="delete-button" onClick={() => onDelete(section, index)} disabled={locked}>Delete</button>
         </article>
-      )) : <p className="empty">No entries yet. Add one if it belongs in your profile.</p>}
+      )) : <p className="empty">No entries yet. Add one if it belongs in your profile.</p>)}
     </section>
   );
 }

@@ -31,7 +31,20 @@ export type StudioState = {
   confirmed_revision: number | null;
   language: "zh" | "en";
   template_id: string;
+  layout_config?: LayoutConfig;
   document: StudioDocument;
+};
+/** 版式配置（目标五）：Preview / PDF / Word / Markdown 共用同一份。 */
+export type LayoutConfig = {
+  template: string;
+  page_limit: number;
+  font_scale: number;
+  line_height: number;
+  section_gap: number;
+  columns: number;
+  accent_color: string;
+  photo_enabled: boolean;
+  section_order: string[];
 };
 export type StudioTemplate = {
   id: string;
@@ -68,4 +81,5 @@ export type StudioOperation =
   | { type: "move"; node_id: string; before_id?: string }
   | { type: "set_template"; template_id: string }
   | { type: "set_language"; language: "zh" | "en" }
-  | { type: "set_evidence"; node_id: string; evidence_refs: string[] };
+  | { type: "set_evidence"; node_id: string; evidence_refs: string[] }
+  | { type: "set_layout"; layout_config: Partial<LayoutConfig> };

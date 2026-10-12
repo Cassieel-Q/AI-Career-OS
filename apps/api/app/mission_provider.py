@@ -766,7 +766,7 @@ class OpenAIMissionProvider:
             return {
                 "id": f"req-{idx+1}",
                 "text": text[:1000],
-                "category": default_category[:64],
+                "category": OpenAIMissionProvider._derive_requirement_category(default_category, text, default_category),
                 "evidence_text": text[:1000],
             }
         if not isinstance(item, dict):
@@ -794,9 +794,29 @@ class OpenAIMissionProvider:
         return {
             "id": req_id[:96],
             "text": text[:1000],
-            "category": category[:64],
+            "category": OpenAIMissionProvider._derive_requirement_category(category, text, default_category),
             "evidence_text": evidence or text[:1000],
         }
+
+    @staticmethod
+    def _derive_requirement_category(category: str, text: str, default_category: str) -> str:
+        """把 must-have / nice-to-have 显式化，提升必备要求的可对齐性（目标二 · 问题 4）。
+
+        只根据 JD 原文里的措辞判断，不臆造语义；无法判断时沿用原 category。
+        """
+        folded = (text or "").casefold()
+        preferred_markers = ("优先", "加分", "nice to have", "preferred", "plus", "更佳", "更好", "有则更好")
+        must_markers = ("必须", "必备", "硬性", "不低于", "至少", "以上学历", "要求", "需具备", "熟练", "精通")
+        if any(marker in folded for marker in preferred_markers):
+            return "nice_to_have"
+        if any(marker in folded for marker in must_markers):
+            return "must_have"
+        normalized = (category or "").strip().casefold()
+        if normalized in {"preferred", "nice_to_have", "nice-to-have", "optional"}:
+            return "nice_to_have"
+        if normalized in {"requirement", "requirements", "must_have", "must-have", "required", "education"}:
+            return "must_have"
+        return (category or default_category)[:64]
 
     @staticmethod
     def _normalize_job_extraction(data: dict) -> dict:
@@ -1475,31 +1495,52 @@ class OpenAIMissionProvider:
         work_content = " ".join((title, description)).casefold()
         caps = [str(item.name).strip() for item in (what_matters.core_capabilities or []) if str(item.name).strip()]
         cap_hits = [cap for cap in caps if cap.casefold() in blob]
-        campus_terms = ("心理委员", "班委", "学生会", "体育部", "社团", "团支书", "学生干部", "宿舍", "志愿")
-        # Awards and generic competition words are not technical evidence by
-        # themselves; campus roles must show an actual product/engineering
-        # action before they can outrank a project or research experience.
-        technical_terms = ("项目", "研究", "实验", "模型", "风机", "算法", "数据", "评测", "产品", "结构", "工程", "系统", "量产", "python", "matlab", "autocad", "supermap", "效率", "设计", "优化", "测试", "发电", "波能", "系泊", "方案", "原型", "需求", "指标", "rag", "agent", "prompt", "编程")
-        product_terms = ("创作", "内容", "用户", "增长", "运营", "a/b", "ab测试", "ab test", "实验", "产品", "需求", "原型", "指标", "评测", "工作流", "交互")
-        service_terms = ("收银", "咖啡师", "咖啡", "酒吧", "外卖", "配送", "快递", "服务员", "餐饮", "店员", "导购", "收银员", "barista", "courier", "waiter", "retail")
-        admin_terms = ("助理", "运行保障", "行政", "资料整理", "事务")
+        campus_terms = (
+            "心理委员", "班委", "学生会", "体育部", "社团", "团支书", "学生干部", "宿舍", "志愿",
+            "迎新", "支教", "部门干事", "组织委员", "宣传委员", "学习委员", "生活委员", "纪律委员",
+        )
+        # 「强技术/产品证据」= 能撑起简历条目的动作或产出；
+        # 「弱证据」= 泛词（数据/设计/优化…），单独出现不足以判定该经历相关（避免全高亮）。
+        strong_evidence_terms = (
+            "项目", "研究", "实验", "模型", "风机", "算法", "评测", "结构", "工程", "系统", "量产",
+            "python", "matlab", "autocad", "supermap", "测试", "发电", "波能", "系泊", "原型", "需求",
+            "指标", "rag", "agent", "prompt", "编程", "sql", "埋点", "看板", "ab测试", "ab test", "a/b",
+            "转化率", "留存", "召回", "准确率", "产品文档", "prd", "工作流", "交互设计",
+        )
+        weak_evidence_terms = ("数据", "设计", "优化", "方案", "效率", "分析", "运营", "内容", "用户", "增长", "产品")
+        product_terms = ("创作", "内容", "用户", "增长", "运营", "a/b", "ab测试", "ab test", "实验", "产品", "需求", "原型", "指标", "评测", "工作流", "交互", "转化", "留存", "埋点")
+        service_terms = (
+            "收银", "咖啡师", "咖啡", "酒吧", "外卖", "配送", "快递", "服务员", "餐饮", "店员", "导购",
+            "收银员", "理货", "传菜", "后厨", "促销员", "地推", "发单", "客服", "话务", "保安", "保洁",
+            "barista", "courier", "waiter", "retail", "cashier",
+        )
+        admin_terms = ("助理", "运行保障", "行政", "资料整理", "事务", "文员", "归档", "台账", "报表整理")
         is_campus = any(term in blob for term in campus_terms) or experience_type in {"CAMPUS", "STUDENT", "LEADERSHIP", "VOLUNTEER"}
         technical_text = description.casefold() if is_campus else work_content
-        has_technical = any(term.casefold() in technical_text for term in technical_terms) or any(term.casefold() in technical_text for term in product_terms) or (bool(cap_hits) and not is_campus)
+        strong_hits = [term for term in strong_evidence_terms if term.casefold() in technical_text]
+        weak_hits = [term for term in weak_evidence_terms if term.casefold() in technical_text]
+        has_strong_evidence = bool(strong_hits) or (bool(cap_hits) and not is_campus)
+        has_weak_evidence = bool(weak_hits)
+        # 兼容旧语义：has_technical = 任一技术/产品词命中（含弱词）。
+        has_technical = has_strong_evidence or any(term.casefold() in technical_text for term in product_terms)
         is_admin = any(term in blob for term in admin_terms)
         label = title or organization or "这段经历"
         role = extraction.role if extraction.role and extraction.role != "UNKNOWN" else "目标岗位"
-        is_product_target = any(term in role.casefold() for term in ("产品", "product", "pm", "ai", "技术", "工程", "technical"))
         is_service_role = any(term.casefold() in blob for term in service_terms)
-        if is_campus and not has_technical:
+        if is_campus and not has_strong_evidence:
             return "OMIT", f"「{label}」主要是校园事务，与{role}的核心产品/技术职责关联弱，暂不放入本份岗位简历。", [], 0.92
-        if is_product_target and is_service_role and not has_technical:
+        # 基础服务类（收银/外卖/咖啡师…）：无论目标岗位是不是产品岗，只要没有强技术/产品证据就不进本份简历。
+        if is_service_role and not has_strong_evidence:
             return "OMIT", f"「{label}」主要是基础服务工作，未体现{role}需要的产品或技术证据，暂不放入本份岗位简历。", [], 0.94
-        if is_admin and not has_technical:
+        if is_admin and not has_strong_evidence:
             return "DEEMPHASIZE", f"「{label}」可保留为背景，但与{role}的核心能力关联有限，建议弱化篇幅，不作为重点经历。", cap_hits, 0.82
-        highlights = cap_hits or ["项目中的个人负责部分", "使用的方法与决策", "可核对的结果或奖项"]
-        detail = description[:180] if description else "；".join(highlights)
-        return "KEEP_AND_HIGHLIGHT", f"「{label}」包含与{role}相关的可验证内容：{detail}。建议围绕个人动作、方法和结果展开。", highlights, 0.93 if has_technical else 0.62
+        if has_strong_evidence:
+            highlights = cap_hits or ["项目中的个人负责部分", "使用的方法与决策", "可核对的结果或奖项"]
+            detail = description[:180] if description else "；".join(highlights)
+            return "KEEP_AND_HIGHLIGHT", f"「{label}」包含与{role}相关的可验证内容：{detail}。建议围绕个人动作、方法和结果展开。", highlights, 0.93
+        if has_weak_evidence:
+            return "KEEP", f"「{label}」与{role}有一定关联，但缺少明确的项目/技术产出证据，建议保留为辅助经历，不重点展开。", cap_hits, 0.6
+        return "DEEMPHASIZE", f"「{label}」与{role}的直接关联不明显，本份简历里弱化处理即可。", cap_hits, 0.5
 
     def build_resume_strategy(self, *, profile_facts: list[dict[str, object]], extraction: JobExtractionPayload, what_matters: WhatMattersPayload, selections: ExperienceSelectionPayload) -> ResumeStrategyPayload:
         eligible = [row for row in selections.selections if str(getattr(row.decision, "value", row.decision)) != "OMIT"]
@@ -1868,6 +1909,14 @@ class OpenAIMissionProvider:
         topics: list[dict[str, object]] = []
 
         def _is_demo_intel(item: dict[str, object]) -> bool:
+            # 复用 interview_pack_intel 的权威判定（含 company_relevance == SYNTHETIC_DEMO）。
+            try:
+                from .interview_pack_intel import is_synthetic_item
+
+                if is_synthetic_item(item):
+                    return True
+            except Exception:  # noqa: BLE001
+                pass
             blob = " ".join(
                 [
                     str(item.get("skill_id") or ""),
@@ -1883,6 +1932,28 @@ class OpenAIMissionProvider:
                 or "SYNTHETIC" in blob
                 or "DEMO ONLY" in blob
                 or "SYNTHETIC_DEMO" in blob
+            )
+
+        def _scrub_intel_text(value: object) -> str:
+            """清掉内部标签与整理表头（CURATED / 合成演示 / 「观察到以下信号」），避免泄漏到题目。
+
+            复用 interview_pack_intel 的权威清洗：整理表头与占位行整行丢弃（返回空串）。
+            """
+            raw = str(value or "")
+            if not raw:
+                return ""
+            try:
+                from .interview_pack_intel import clean_intel_hint
+
+                cleaned = clean_intel_hint(raw)
+                return cleaned if cleaned is not None else ""
+            except Exception:  # noqa: BLE001
+                pass
+            return (
+                raw.replace("CURATED", "")
+                .replace("SYNTHETIC_DEMO", "")
+                .replace("DEMO ONLY", "")
+                .strip()
             )
 
         def _has_cjk(value: object) -> bool:
@@ -1952,7 +2023,7 @@ class OpenAIMissionProvider:
             evidence_expected: list[str] | None = None,
             intel_refs: list[str] | None = None,
         ) -> None:
-            cleaned = (topic or "").strip()
+            cleaned = _scrub_intel_text(topic)
             if not cleaned:
                 return
             if any(str(item.get("topic", "")).strip() == cleaned for item in topics):
@@ -1961,7 +2032,7 @@ class OpenAIMissionProvider:
                 {
                     "priority": priority,
                     "topic": cleaned[:600],
-                    "why": (why or "本岗面试很可能追问这个主题。").strip()[:1000],
+                    "why": _scrub_intel_text(why) or "本岗面试很可能追问这个主题。"[:1000],
                     "claims": list(claims or [])[:20],
                     "capabilities": list(capabilities or [])[:20],
                     "intel_refs": list(intel_refs or [])[:20],
@@ -1997,12 +2068,12 @@ class OpenAIMissionProvider:
                     topic = name
                 else:
                     continue
-            why = str(
+            why = _scrub_intel_text(
                 item.get("why")
                 or item.get("summary")
                 or item.get("rationale")
                 or f"来自面经/情报的常见追问方向（{company}）。"
-            ).replace("CURATED", "").replace("SYNTHETIC_DEMO", "").strip()
+            )
             refs = _intel_refs(item)
             patterns = _intel_questions(item)
             _add(

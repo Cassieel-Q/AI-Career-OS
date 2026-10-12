@@ -21,7 +21,7 @@ class DefaultCareerEvidenceIntelligence:
     def profile_facts(profile: object) -> list[dict[str, object]]:
         facts: list[dict[str, object]] = []
         for collection_name, kind, fields in (
-            ("education", "education", ("institution", "degree", "field_of_study", "dates", "relevant_courses")),
+            ("education", "education", ("institution", "degree", "field_of_study", "dates", "cet4_score", "cet6_score", "relevant_courses")),
             ("skills", "skill", ("name", "proficiency")),
             ("experiences", "experience", ("title", "organization", "dates", "description", "experience_type")),
             ("certifications", "certification", ("name", "issuer", "date", "score", "status")),

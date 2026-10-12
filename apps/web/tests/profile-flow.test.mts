@@ -88,6 +88,8 @@ test("PUT payload contains only backend-editable fields", () => {
         field_of_study: null,
         dates: null,
         relevant_courses: [],
+        cet4_score: null,
+        cet6_score: null,
       },
     ],
     skills: [

@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from . import models
 from .mission_service import _effective_profile_for_mission
+from .resume_layout import normalize_layout_config
 from .resume_studio_schemas import StudioOperation
 
 
@@ -281,6 +282,7 @@ def read_document(row: models.ResumeStudioDocument) -> dict:
         "confirmed_revision": row.confirmed_revision,
         "language": row.language,
         "template_id": row.template_id,
+        "layout_config": normalize_layout_config(getattr(row, "layout_config", None)),
         "document": row.document_json,
     }
 
@@ -483,6 +485,10 @@ def apply_operation(db: Session, mission_id: UUID, expected_revision: int, raw_o
         if template["language"] != row.language:
             raise HTTPException(422, "请先完成当前简历语言的内容。")
         row.template_id = operation.template_id
+    elif kind == "set_layout":
+        if not operation.layout_config:
+            raise HTTPException(422, "缺少版式配置。")
+        row.layout_config = normalize_layout_config({**(row.layout_config or {}), **operation.layout_config})
 
     result = db.execute(
         update(models.ResumeStudioDocument)
@@ -493,6 +499,7 @@ def apply_operation(db: Session, mission_id: UUID, expected_revision: int, raw_o
             confirmed_revision=None,
             language=row.language,
             template_id=row.template_id,
+            layout_config=row.layout_config,
             updated_at=datetime.now(timezone.utc),
         )
     )

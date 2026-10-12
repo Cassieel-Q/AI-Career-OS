@@ -173,35 +173,79 @@ def test_alembic_graph_has_single_latest_head_and_preserves_prior_chain() -> Non
         "013_profile_contacts": "012_workflow_state",
         "014_resume_studio": "013_profile_contacts",
         "015_interview_records": "014_resume_studio",
+        "016_education_honors": "015_interview_records",
+        "017_job_applications": "016_education_honors",
+        "018_assistant": "017_job_applications",
+        "019_candidate_jobs": "018_assistant",
+        "020_profile_boundary": "019_candidate_jobs",
+        "021_question_bank": "020_profile_boundary",
+        "022_template_layout": "021_question_bank",
+        "023_write_proposals": "022_template_layout",
     }
-    assert script.get_heads() == ["015_interview_records"]
+    assert script.get_heads() == ["023_write_proposals"]
     revisions = {revision.revision: revision.down_revision for revision in script.walk_revisions()}
     assert revisions == expected_down_revisions
 
 
-def test_new_revisions_upgrade_and_downgrade_from_old_head(tmp_path, monkeypatch) -> None:
-    """Exercise 013 -> 015 on an isolated SQLite copy of the old schema."""
+# Tables introduced by migrations 019–023 (this change).
+NEW_TABLES = {
+    "candidate_jobs",
+    "application_profiles",
+    "question_banks",
+    "question_items",
+    "reference_answers",
+    "resume_template_drafts",
+    "write_proposals",
+    "write_receipts",
+}
+
+
+def test_new_revisions_upgrade_and_downgrade_from_018(tmp_path, monkeypatch) -> None:
+    """Exercise the 019–023 migrations on an isolated SQLite DB.
+
+    The full chain cannot run on SQLite (early revisions use create_check_constraint),
+    so the pre-019 schema is built with create_all and stamped at 018_assistant.
+    """
     database_path = tmp_path / "migration-check.db"
     database_url = f"sqlite:///{database_path.as_posix()}"
     engine = create_engine(database_url)
-    new_tables = {"resume_studio_documents", "interview_records", "interview_record_items"}
-    Base.metadata.create_all(engine, tables=[table for table in Base.metadata.sorted_tables if table.name not in new_tables])
+    new_tables = NEW_TABLES
+    Base.metadata.create_all(
+        engine,
+        tables=[table for table in Base.metadata.sorted_tables if table.name not in new_tables],
+    )
+    # create_all reflects the latest ORM, so peel off the columns later migrations add,
+    # to make the base schema match the 018 state.
+    with engine.begin() as connection:
+        for table, column in (
+            ("education", "cet4_score"),
+            ("education", "cet6_score"),
+            ("resume_studio_documents", "layout_config"),
+        ):
+            try:
+                connection.exec_driver_sql(f"ALTER TABLE {table} DROP COLUMN {column}")
+            except Exception:  # pragma: no cover - older SQLite without DROP COLUMN
+                pass
     engine.dispose()
 
     monkeypatch.setenv("DATABASE_URL", database_url)
-    # Keep Alembic from reconfiguring pytest's logging handlers in this process.
     config = Config()
     config.set_main_option("script_location", str(VERSIONS_DIR.parent))
-    command.stamp(config, "013_profile_contacts")
+    command.stamp(config, "018_assistant")
+
     command.upgrade(config, "head")
     engine = create_engine(database_url)
-    assert new_tables.issubset(set(inspect(engine).get_table_names()))
+    tables = set(inspect(engine).get_table_names())
+    columns = {col["name"] for col in inspect(engine).get_columns("education")}
     engine.dispose()
+    assert new_tables.issubset(tables)
+    assert {"cet4_score", "cet6_score"}.issubset(columns)
 
-    command.downgrade(config, "013_profile_contacts")
+    command.downgrade(config, "018_assistant")
     engine = create_engine(database_url)
-    assert new_tables.isdisjoint(set(inspect(engine).get_table_names()))
+    tables = set(inspect(engine).get_table_names())
     engine.dispose()
+    assert new_tables.isdisjoint(tables)
 
     command.upgrade(config, "head")
     engine = create_engine(database_url)

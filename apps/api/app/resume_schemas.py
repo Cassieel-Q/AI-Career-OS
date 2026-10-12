@@ -26,6 +26,9 @@ class Education(ExtractedFact):
     degree: str | None = None
     field_of_study: str | None = None
     dates: str | None = None
+    # CET-4/6 分数：保留分数，不能只保存「已通过」。
+    cet4_score: str | None = None
+    cet6_score: str | None = None
     relevant_courses: list[str] = Field(default_factory=list)
     honors: list[str] = Field(default_factory=list)
 
@@ -59,6 +62,8 @@ class LeanEducation(BaseModel):
     degree: str | None = None
     field_of_study: str | None = None
     dates: str | None = None
+    cet4_score: str | None = None
+    cet6_score: str | None = None
     relevant_courses: list[str] = Field(default_factory=list)
     honors: list[str] = Field(default_factory=list)
 

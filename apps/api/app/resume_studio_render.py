@@ -151,8 +151,16 @@ def _render_uncached(document: dict, template: dict, binary: Path) -> RenderResu
         return RenderResult(pdf=pdf, pages=pages, layout_map=_layout_map(binary, cwd, widths), page_count=page_count)
 
 
-def render_document(document: dict, template_id: str) -> RenderResult:
+def render_document(document: dict, template_id: str, layout_config: dict | None = None) -> RenderResult:
+    # 版式配置为单一事实来源：预览与 PDF 使用同一份 layout_config（目标五）。
+    from .resume_layout import apply_layout_to_template, apply_section_order, normalize_layout_config
+
+    layout = normalize_layout_config(layout_config) if layout_config else None
+    if layout is not None:
+        document = apply_section_order(document, layout)
     template = get_template(template_id)
+    if layout is not None:
+        template = apply_layout_to_template(template, layout)
     binary = typst_binary()
     if binary is None:
         raise ResumeRenderError("未找到 Typst 0.15.1。请安装 Typst 并设置 TYPST_BIN。")

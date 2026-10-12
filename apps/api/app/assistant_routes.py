@@ -19,8 +19,6 @@ from sqlalchemy.orm import Session
 from . import models
 from .assistant_service import build_client, build_system_prompt, execute_tool, tool_specs
 from .database import get_db
-from .mission_schemas import MissionCreate
-from .mission_service import create_mission
 
 logger = logging.getLogger("career_os.assistant_routes")
 
@@ -67,22 +65,6 @@ class ChatRequest(BaseModel):
     web_search: bool = False
     allow_write: bool = False
     reasoning_effort: str = Field(default="medium", pattern="^(low|medium|high)$")
-
-
-class ParseBatchRequest(BaseModel):
-    raw_text: str = Field(min_length=1)
-
-
-class JobDraft(BaseModel):
-    title: str = ""
-    company: str = ""
-    role: str = ""
-    location: str = ""
-    description: str = ""
-
-
-class BulkCreateRequest(BaseModel):
-    drafts: list[JobDraft]
 
 
 # ---------------------------------------------------------------------------
@@ -310,7 +292,9 @@ async def _stream_chat(payload: ChatRequest, conversation_id: UUID, surface: str
                     args = {}
                 try:
                     with next(get_db_gen()) as db2:
-                        result_text, changed, sources = execute_tool(name, args, db2, payload.profile_id)
+                        result_text, changed, sources = execute_tool(
+                            name, args, db2, payload.profile_id, conversation_id
+                        )
                 except ValueError as exc:
                     result_text = str(exc)
                     changed = False
@@ -423,125 +407,58 @@ def get_db_gen():
 
 
 # ---------------------------------------------------------------------------
-# 岗位批量导入
+# 写入安全（目标七）：能力目录 + 提案 → 确认 → 执行 → 回执
 # ---------------------------------------------------------------------------
 
 
-@router.post("/profiles/{profile_id}/job-missions/parse-batch", response_model=list[JobDraft])
-def parse_job_batch(profile_id: UUID, payload: ParseBatchRequest, db: Session = Depends(get_db)):
-    """把一大段粘贴文本拆分成多份岗位草稿（先用启发式分段，再用模型规整）。"""
-    db.get(models.UserProfile, profile_id)  # 校验档案存在
-    chunks = _split_jobs(payload.raw_text)
-    if not chunks:
-        raise HTTPException(status_code=422, detail="没有识别到岗位描述，请确认粘贴内容。")
-
-    drafts: list[JobDraft] = []
-    for chunk in chunks:
-        draft = _normalize_draft(chunk)
-        if draft.description.strip() or draft.role.strip() or draft.company.strip():
-            drafts.append(draft)
-    if not drafts:
-        raise HTTPException(status_code=422, detail="没有识别到岗位描述，请确认粘贴内容。")
-    return drafts
+class ProposalConfirmRequest(BaseModel):
+    profile_id: str | None = None
 
 
-@router.post("/profiles/{profile_id}/job-missions/bulk-create", response_model=dict)
-def bulk_create_job_missions(profile_id: UUID, payload: BulkCreateRequest, db: Session = Depends(get_db)):
-    """把确认后的岗位草稿批量创建为 job mission（逐个走标准 JD 分析）。"""
-    created: list[dict[str, Any]] = []
-    errors: list[dict[str, Any]] = []
-    for i, draft in enumerate(payload.drafts):
-        raw_text = _draft_to_jd(draft)
-        if len(raw_text.strip()) < 20:
-            errors.append({"index": i, "error": "岗位描述过短"})
-            continue
-        try:
-            mission = create_mission(db, profile_id, MissionCreate(raw_text=raw_text))
-            created.append({"mission_id": str(mission.id), "company": draft.company or "", "role": draft.role or ""})
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("批量创建岗位失败：%s", exc)
-            errors.append({"index": i, "error": str(exc)})
-    return {"created": created, "errors": errors, "total": len(payload.drafts)}
+@router.get("/assistant/capabilities")
+def list_capabilities() -> list[dict]:
+    """助手可用的写操作能力目录（含参数 schema 与敏感标记）。"""
+    from .assistant_capabilities import capability_catalog
+
+    return capability_catalog()
 
 
-# --- 启发式分段与草稿规整 ---
+@router.get("/assistant/proposals")
+def list_write_proposals(
+    conversation_id: UUID | None = None,
+    status: str | None = Query(default=None, pattern="^(PROPOSED|CONFIRMED|REJECTED|EXECUTED)$"),
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    from .assistant_capabilities import list_proposals, proposal_read
+
+    return [proposal_read(row) for row in list_proposals(db, conversation_id=conversation_id, status=status)]
 
 
-def _split_jobs(raw_text: str) -> list[str]:
-    import re
+@router.get("/assistant/proposals/{proposal_id}")
+def read_write_proposal(proposal_id: UUID, db: Session = Depends(get_db)) -> dict:
+    from .assistant_capabilities import get_proposal, proposal_read
 
-    text = raw_text.strip()
-    if not text:
-        return []
-    # 以「岗位/职位/公司」开头 + 空行分隔，先按空行粗切，再按标题合并
-    lines = text.splitlines()
-    blocks: list[list[str]] = []
-    current: list[str] = []
-    title_re = re.compile(r"^(岗位|职位|招聘|公司|【|\[)?[：: ]*(岗位|职位|招聘)[：:]", re.I)
-    for line in lines:
-        stripped = line.strip()
-        if not stripped:
-            if current:
-                blocks.append(current)
-                current = []
-            continue
-        if title_re.match(stripped) and current and len(current) > 2:
-            blocks.append(current)
-            current = []
-        current.append(line)
-    if current:
-        blocks.append(current)
-
-    # 若切得太碎（单行块）则退回整段为一块
-    merged: list[str] = []
-    for block in blocks:
-        text_block = "\n".join(block).strip()
-        if len(text_block) < 20:
-            continue
-        merged.append(text_block)
-    if not merged and text:
-        merged = [text]
-    return merged
+    return proposal_read(get_proposal(db, proposal_id))
 
 
-def _normalize_draft(chunk: str) -> JobDraft:
-    import re
+@router.post("/assistant/proposals/{proposal_id}/confirm")
+def confirm_write_proposal(
+    proposal_id: UUID,
+    payload: ProposalConfirmRequest | None = None,
+    db: Session = Depends(get_db),
+) -> dict:
+    """用户确认写入提案 → 执行 → 返回操作回执。"""
+    from .assistant_capabilities import confirm_proposal, get_proposal, proposal_read
 
-    lines = [l.strip() for l in chunk.splitlines() if l.strip()]
-    company = role = location = ""
-    for line in lines:
-        m = re.search(r"公司[：:]\s*([^\s，,]+)", line)
-        if m and not company:
-            company = m.group(1)
-        m = re.search(r"(岗位|职位|职位名称)[：:]\s*([^\s，,]+)", line)
-        if m and not role:
-            role = m.group(2)
-        m = re.search(r"(地点|工作地点|城市)[：:]\s*([^\s，,]+)", line)
-        if m and not location:
-            location = m.group(2)
-    # 兜底：首行常是「公司 - 岗位」
-    if not role and lines:
-        first = lines[0]
-        if " - " in first:
-            company = first.split(" - ")[0].strip()
-            role = first.split(" - ")[1].strip()
-        elif "｜" in first or " | " in first:
-            parts = re.split(r"[｜|]", first)
-            if len(parts) >= 2:
-                company = parts[0].strip()
-                role = parts[1].strip()
-    title = f"{company} · {role}".strip(" ·") if (company or role) else "未命名岗位"
-    return JobDraft(title=title, company=company, role=role, location=location, description=chunk)
+    override = None
+    if payload and payload.profile_id:
+        override = UUID(payload.profile_id)
+    confirm_proposal(db, proposal_id, profile_id=override)
+    return proposal_read(get_proposal(db, proposal_id))
 
 
-def _draft_to_jd(draft: JobDraft) -> str:
-    parts = [f"公司：{draft.company or 'UNKNOWN'}", f"岗位：{draft.role or 'UNKNOWN'}"]
-    if draft.location:
-        parts.append(f"地点：{draft.location}")
-    parts.append("")
-    parts.append("岗位描述：")
-    parts.append(draft.description.strip() or "（岗位描述见原文）")
-    return "\n".join(parts)
+@router.post("/assistant/proposals/{proposal_id}/reject")
+def reject_write_proposal(proposal_id: UUID, db: Session = Depends(get_db)) -> dict:
+    from .assistant_capabilities import proposal_read, reject_proposal
 
-
-__all__ = ["router"]
+    return proposal_read(reject_proposal(db, proposal_id))
