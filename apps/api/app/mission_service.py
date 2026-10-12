@@ -268,6 +268,11 @@ def advance_workflow(mission: models.JobMission, event: str, *, user_confirmed: 
         if event == "confirm_experiences":
             _set_workflow(mission, WorkflowState.RESUME_STRATEGY_REQUIRED)
         return
+    # 重新选择 / 导入简历：允许从任意阶段退回重选。否则岗位一旦推进到
+    # 面试准备等后续阶段，就再也无法更换简历来源（用户遇到过 409 拦截）。
+    if event == "select_resume":
+        _set_workflow(mission, WorkflowState.RESUME_REQUIRED)
+        return
     nxt = transitions.get(current, {}).get(event)
     if not nxt:
         raise _http(409, f"当前步骤不能执行该操作（{current} / {event}）。")
@@ -1419,12 +1424,27 @@ def generate_target_resume(db: Session, mission_id: UUID, provider=None, *, sour
     mission = _mission(db, mission_id)
     _require_resume_source(mission)
     current = _workflow_of(mission)
-    if current not in {
+    # 只有「还没走到简历策略确认」的阶段才禁止生成；一旦策略已确认，
+    # 允许在任何后续阶段（含面试准备）重新生成改写要点，用于回补重点展示等缺口。
+    _too_early_for_target_resume = {
+        WorkflowState.JD_REQUIRED.value,
+        WorkflowState.JOB_ANALYZING.value,
+        WorkflowState.ROLE_UNDERSTOOD.value,
+        WorkflowState.RESUME_REQUIRED.value,
+        WorkflowState.RESUME_SELECTED.value,
+        WorkflowState.EXPERIENCE_SELECTION_REQUIRED.value,
+        WorkflowState.EXPERIENCES_CONFIRMED.value,
+        WorkflowState.RESUME_STRATEGY_REQUIRED.value,
+    }
+    if current in _too_early_for_target_resume:
+        raise _http(409, "请先确认经历筛选与简历策略，再生成目标简历。")
+    # 仅在草稿阶段生成时才把工作流推进到「岗位版本草稿」；从更后面的阶段
+    # （如面试准备）回补改写，不能把进度倒退回草稿。
+    _at_draft_phase = current in {
         WorkflowState.RESUME_STRATEGY_CONFIRMED.value,
         WorkflowState.TARGET_RESUME_DRAFT.value,
         WorkflowState.RESUME_UPGRADE_AVAILABLE.value,
-    }:
-        raise _http(409, "请先确认简历策略，再生成目标简历。")
+    }
     profile = _effective_profile_for_mission(db, mission)
     existing_resume = db.scalar(select(models.TargetResume).where(models.TargetResume.mission_id == mission.id).order_by(models.TargetResume.version.desc()))
     strategy_raw = mission.resume_strategy or {}
@@ -1659,8 +1679,9 @@ def generate_target_resume(db: Session, mission_id: UUID, provider=None, *, sour
             status=default_status,
             sort_order=index,
         ))
-    mission.status = MissionStatus.RESUME_PREP.value
-    _set_workflow(mission, WorkflowState.TARGET_RESUME_DRAFT)
+    if _at_draft_phase:
+        mission.status = MissionStatus.RESUME_PREP.value
+        _set_workflow(mission, WorkflowState.TARGET_RESUME_DRAFT)
     mission.updated_at = datetime.now(timezone.utc)
     try:
         db.commit()

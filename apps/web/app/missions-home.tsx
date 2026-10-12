@@ -124,6 +124,23 @@ export function MissionsHome() {
     }
   }
 
+  async function recede(item: PlazaItem) {
+    if (!item.application_id) return;
+    setBusyId(item.mission_id);
+    setError("");
+    try {
+      const current = (item.application_status as ApplicationStatus) ?? "PENDING";
+      const index = APPLICATION_STATUS_ORDER.indexOf(current);
+      const prev = APPLICATION_STATUS_ORDER[Math.max(index - 1, 0)];
+      await updateApplication(item.application_id, { status: prev });
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "退回投递状态失败。");
+    } finally {
+      setBusyId("");
+    }
+  }
+
   return (
     <main className="app-page">
       <header className="app-page-header">
@@ -207,14 +224,25 @@ export function MissionsHome() {
                     进入岗位
                   </Link>
                   {item.application_id ? (
-                    <button
-                      type="button"
-                      className="app-btn primary"
-                      disabled={busyId === item.mission_id}
-                      onClick={() => void advance(item)}
-                    >
-                      {status === "CLOSED" ? "已结束" : `推进：${APPLICATION_STATUS_LABEL[APPLICATION_STATUS_ORDER[Math.min(APPLICATION_STATUS_ORDER.indexOf(status ?? "PENDING") + 1, APPLICATION_STATUS_ORDER.length - 1)]]}`}
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        className="app-btn"
+                        disabled={busyId === item.mission_id || (status ?? "PENDING") === "PENDING"}
+                        title="退回上一个阶段"
+                        onClick={() => void recede(item)}
+                      >
+                        ← 退回
+                      </button>
+                      <button
+                        type="button"
+                        className="app-btn primary"
+                        disabled={busyId === item.mission_id}
+                        onClick={() => void advance(item)}
+                      >
+                        {status === "CLOSED" ? "已结束" : `推进：${APPLICATION_STATUS_LABEL[APPLICATION_STATUS_ORDER[Math.min(APPLICATION_STATUS_ORDER.indexOf(status ?? "PENDING") + 1, APPLICATION_STATUS_ORDER.length - 1)]]}`}
+                      </button>
+                    </>
                   ) : (
                     <button
                       type="button"

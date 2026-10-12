@@ -136,6 +136,9 @@ class OpenAIMissionProvider:
                 options: dict[str, object] = {"api_key": api_key, "timeout": _timeout_seconds(), "max_retries": _max_retries()}
                 if base_url:
                     options["base_url"] = base_url
+                # trust_env=False：忽略 HTTP_PROXY/HTTPS_PROXY，避免本地代理
+                # 拦截 → 连接超时 / 流式被缓冲，导致 AI 生成时好时坏。
+                options["http_client"] = httpx.Client(trust_env=False, timeout=_timeout_seconds())
                 self.client = OpenAI(**options)
             except MissionProviderError:
                 raise

@@ -1,6 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import type { Route } from "next";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   APPLICATION_CHANNELS,
@@ -8,7 +10,7 @@ import {
   APPLICATION_STATUS_ORDER,
   createApplication,
   deleteApplication,
-  fetchApplications,
+  fetchAllApplications,
   readCurrentProfileId,
   updateApplication,
   type ApplicationRead,
@@ -22,6 +24,18 @@ function applicationBadgeClass(status: ApplicationStatus): string {
   return "filled";
 }
 
+function prevStatus(status: ApplicationStatus): ApplicationStatus | null {
+  const index = APPLICATION_STATUS_ORDER.indexOf(status);
+  if (index <= 0) return null;
+  return APPLICATION_STATUS_ORDER[index - 1];
+}
+
+function nextStatus(status: ApplicationStatus): ApplicationStatus | null {
+  const index = APPLICATION_STATUS_ORDER.indexOf(status);
+  if (index < 0 || index >= APPLICATION_STATUS_ORDER.length - 1) return null;
+  return APPLICATION_STATUS_ORDER[index + 1];
+}
+
 export default function TrackerPage() {
   const [applications, setApplications] = useState<ApplicationRead[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,15 +45,11 @@ export default function TrackerPage() {
   const [form, setForm] = useState({ company: "", role: "", location: "", channel: "官网", status: "PENDING" as ApplicationStatus, next_action: "" });
 
   const load = useCallback(async () => {
-    const pid = readCurrentProfileId();
-    if (!pid) {
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     setError("");
     try {
-      const appsData = await fetchApplications(pid);
+      // 全局读取：岗位可能挂在其它档案上，按当前档案查会漏记录。
+      const appsData = await fetchAllApplications();
       setApplications(appsData.applications);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "读取投递失败。");
@@ -52,16 +62,21 @@ export default function TrackerPage() {
     void load();
   }, [load]);
 
-  async function advance(app: ApplicationRead) {
+  const stats = useMemo(() => ({
+    total: applications.length,
+    pending: applications.filter((a) => a.status === "PENDING").length,
+    applied: applications.filter((a) => ["APPLIED", "SCREENING", "ASSESSMENT"].includes(a.status)).length,
+    interview: applications.filter((a) => ["INTERVIEW", "OFFER"].includes(a.status)).length,
+  }), [applications]);
+
+  async function setStatus(app: ApplicationRead, status: ApplicationStatus) {
     setBusyId(app.id);
     setError("");
     try {
-      const index = APPLICATION_STATUS_ORDER.indexOf(app.status);
-      const next = APPLICATION_STATUS_ORDER[Math.min(index + 1, APPLICATION_STATUS_ORDER.length - 1)];
-      await updateApplication(app.id, { status: next });
+      await updateApplication(app.id, { status });
       await load();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "推进状态失败。");
+      setError(caught instanceof Error ? caught.message : "更新状态失败。");
     } finally {
       setBusyId("");
     }
@@ -82,8 +97,13 @@ export default function TrackerPage() {
   }
 
   async function submitForm() {
-    const pid = readCurrentProfileId();
-    if (!pid || !form.company.trim() || !form.role.trim()) {
+    // 优先用当前档案；没有就复用已有记录所属的档案（本地单用户场景）。
+    const pid = readCurrentProfileId() || applications[0]?.profile_id || "";
+    if (!pid) {
+      setError("还没有简历档案。请先到「简历」页上传一份简历，再新建投递记录。");
+      return;
+    }
+    if (!form.company.trim() || !form.role.trim()) {
       setError("请填写公司和岗位。");
       return;
     }
@@ -111,7 +131,7 @@ export default function TrackerPage() {
         <div>
           <p className="app-eyebrow">Tracker</p>
           <h1 className="app-page-title">投递</h1>
-          <p className="app-page-subtitle">记录每一次投递动作，推进状态，跟踪面试与结果。</p>
+          <p className="app-page-subtitle">记录每一次投递动作，逐级推进或退回状态，并沉淀面试问答。</p>
         </div>
         <button type="button" className="app-btn primary" onClick={() => setShowForm((v) => !v)}>
           {showForm ? "收起表单" : "新建投递记录"}
@@ -139,42 +159,66 @@ export default function TrackerPage() {
       ) : null}
 
       <section className="app-stat-grid" aria-label="投递概览">
-        <div className="app-stat-card"><div className="app-stat-value">{applications.length}</div><div className="app-stat-label">投递记录</div></div>
-        <div className="app-stat-card"><div className="app-stat-value">{applications.filter((a) => a.status === "PENDING").length}</div><div className="app-stat-label">待投递</div></div>
-        <div className="app-stat-card"><div className="app-stat-value">{applications.filter((a) => ["APPLIED", "SCREENING", "ASSESSMENT"].includes(a.status)).length}</div><div className="app-stat-label">已投递</div></div>
-        <div className="app-stat-card"><div className="app-stat-value">{applications.filter((a) => ["INTERVIEW", "OFFER"].includes(a.status)).length}</div><div className="app-stat-label">面试 / Offer</div></div>
+        <div className="app-stat-card"><div className="app-stat-value">{stats.total}</div><div className="app-stat-label">投递记录</div></div>
+        <div className="app-stat-card"><div className="app-stat-value">{stats.pending}</div><div className="app-stat-label">待投递</div></div>
+        <div className="app-stat-card"><div className="app-stat-value">{stats.applied}</div><div className="app-stat-label">已投递</div></div>
+        <div className="app-stat-card"><div className="app-stat-value">{stats.interview}</div><div className="app-stat-label">面试 / Offer</div></div>
       </section>
 
       <h2 className="section-kicker" style={{ margin: "0 0 0.5rem" }}>投递记录</h2>
       {loading ? (
         <div className="app-empty">读取中…</div>
       ) : applications.length ? (
-        applications.map((app) => (
-          <div className="app-card app-row" key={app.id}>
-            <div style={{ flex: 1 }}>
-              <div className="app-card-title">{app.role}</div>
-              <div className="app-card-meta">
-                {app.company}
-                {app.location ? ` · ${app.location}` : ""}
-                {app.channel ? ` · ${app.channel}` : ""}
-                {app.next_action ? ` · 下一步：${app.next_action}` : ""}
+        applications.map((app) => {
+          const prev = prevStatus(app.status);
+          const next = nextStatus(app.status);
+          return (
+            <div className="app-card app-row" key={app.id}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="app-card-title">{app.role}</div>
+                <div className="app-card-meta">
+                  {app.company}
+                  {app.location ? ` · ${app.location}` : ""}
+                  {app.channel ? ` · ${app.channel}` : ""}
+                  {app.next_action ? ` · 下一步：${app.next_action}` : ""}
+                </div>
+              </div>
+              <span className={`app-badge ${applicationBadgeClass(app.status)}`}>{APPLICATION_STATUS_LABEL[app.status]}</span>
+              <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  className="app-btn"
+                  disabled={busyId === app.id || !prev}
+                  title={prev ? `退回至「${APPLICATION_STATUS_LABEL[prev]}」` : "已在最前阶段"}
+                  onClick={() => prev && void setStatus(app, prev)}
+                >
+                  ← 退回
+                </button>
+                <button
+                  type="button"
+                  className="app-btn primary"
+                  disabled={busyId === app.id || !next}
+                  title={next ? `推进至「${APPLICATION_STATUS_LABEL[next]}」` : "已到最后阶段"}
+                  onClick={() => next && void setStatus(app, next)}
+                >
+                  推进 →
+                </button>
+                <Link
+                  className="app-btn"
+                  href={`/interview-records/new?company=${encodeURIComponent(app.company)}` as Route}
+                  title="记录这家公司的面试问题与回答"
+                >
+                  记面试问答
+                </Link>
+                <button type="button" className="app-btn danger" disabled={busyId === app.id} onClick={() => void remove(app)}>
+                  删除
+                </button>
               </div>
             </div>
-            <span className={`app-badge ${applicationBadgeClass(app.status)}`}>{APPLICATION_STATUS_LABEL[app.status]}</span>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
-              {app.status !== "CLOSED" ? (
-                <button type="button" className="app-btn" disabled={busyId === app.id} onClick={() => void advance(app)}>
-                  推进
-                </button>
-              ) : null}
-              <button type="button" className="app-btn danger" disabled={busyId === app.id} onClick={() => void remove(app)}>
-                删除
-              </button>
-            </div>
-          </div>
-        ))
+          );
+        })
       ) : (
-        <div className="app-empty" style={{ marginBottom: "1.5rem" }}>还没有投递记录。点击右上角「新建投递记录」，或从岗位页「加入投递台」。</div>
+        <div className="app-empty" style={{ marginBottom: "1.5rem" }}>还没有投递记录。点击右上角「新建投递记录」，或到「岗位」页「加入投递台」。</div>
       )}
     </main>
   );

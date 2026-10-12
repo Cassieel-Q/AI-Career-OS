@@ -63,7 +63,7 @@ export function AssistantChat({ surface, conversationId, profileId, missionId, o
 
     let fullText = "";
     try {
-      await streamChat(
+      const finalMessage = await streamChat(
         cid,
         {
           content,
@@ -82,15 +82,21 @@ export function AssistantChat({ surface, conversationId, profileId, missionId, o
           else if (event.type === "error") setError(event.message);
         },
       );
-      // 追加助手消息
-      setMessages((prev) => {
-        const final: AssistantMessage = { id: `local-${Date.now()}-a`, role: "assistant", content: fullText || "（已处理）" };
-        return [...prev, final];
-      });
+      // 以服务端落库的最终消息为准（避免与流式片段不一致）。
+      const finalText = (finalMessage.content || fullText || "（已处理）").trim();
+      setMessages((prev) => [
+        ...prev,
+        { id: finalMessage.id || `local-${Date.now()}-a`, role: "assistant", content: finalText, tool_calls: finalMessage.tool_calls ?? null, sources: finalMessage.sources ?? null },
+      ]);
       setStreamingText("");
       setActiveTools([]);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "发送失败。");
+      const message = caught instanceof Error ? caught.message : "发送失败。";
+      // 保留已经流出的部分内容，避免"答到一半"的成果被清空。
+      if (fullText.trim()) {
+        setMessages((prev) => [...prev, { id: `local-${Date.now()}-partial`, role: "assistant", content: fullText.trim() }]);
+      }
+      setError(message);
       setStreamingText("");
     } finally {
       setBusy(false);
@@ -102,7 +108,7 @@ export function AssistantChat({ surface, conversationId, profileId, missionId, o
       <div className="assistant-messages" ref={scrollRef}>
         {messages.length === 0 && !streamingText ? (
           <div className="assistant-empty">
-            <p className="assistant-empty-title">你好，我是「投投」</p>
+            <p className="assistant-empty-title">你好，我是「顺顺」</p>
             <p>可以问我岗位怎么准备、简历怎么改、投递卡在哪、面经怎么沉淀。涉及你的数据我会先查证再回答。</p>
           </div>
         ) : null}
@@ -110,7 +116,7 @@ export function AssistantChat({ surface, conversationId, profileId, missionId, o
         {messages.map((m) => (
           <div key={m.id} className={`assistant-msg ${m.role}`}>
             <div className="assistant-msg-body">
-              <span className="assistant-msg-role">{m.role === "user" ? "你" : "投投"}</span>
+              <span className="assistant-msg-role">{m.role === "user" ? "你" : "顺顺"}</span>
               <p className="assistant-msg-text">{m.content}</p>
               {m.tool_calls && m.tool_calls.length > 0 ? (
                 <div className="assistant-tools">
@@ -129,7 +135,7 @@ export function AssistantChat({ surface, conversationId, profileId, missionId, o
         {streamingText ? (
           <div className="assistant-msg assistant">
             <div className="assistant-msg-body">
-              <span className="assistant-msg-role">投投</span>
+              <span className="assistant-msg-role">顺顺</span>
               <p className="assistant-msg-text assistant-streaming">{streamingText}<span className="assistant-caret" /></p>
             </div>
           </div>
@@ -138,7 +144,7 @@ export function AssistantChat({ surface, conversationId, profileId, missionId, o
         {activeTools.length > 0 && !streamingText ? (
           <div className="assistant-msg assistant">
             <div className="assistant-msg-body">
-              <span className="assistant-msg-role">投投</span>
+              <span className="assistant-msg-role">顺顺</span>
               <div className="assistant-tools">
                 {activeTools.map((t, i) => (
                   <span key={i} className="assistant-tool-chip" title={t.summary}>

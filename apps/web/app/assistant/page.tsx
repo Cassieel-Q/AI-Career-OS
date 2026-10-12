@@ -71,8 +71,8 @@ export default function AssistantPage() {
     <main className="app-page">
       <header className="app-page-header">
         <div>
-          <p className="app-eyebrow">AI Assistant</p>
-          <h1 className="app-page-title">AI 求职助手</h1>
+          <p className="app-eyebrow">顺顺 · AI Assistant</p>
+          <h1 className="app-page-title">顺顺 · AI 求职助手</h1>
           <p className="app-page-subtitle">流式问答，可关联岗位 / 简历，按需联网搜索与写入。</p>
         </div>
         <button type="button" className="app-btn primary" onClick={() => void newConversation()}>

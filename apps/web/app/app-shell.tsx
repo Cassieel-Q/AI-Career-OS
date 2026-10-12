@@ -26,7 +26,7 @@ const JOURNEY_ITEMS: NavItem[] = [
   { key: "resumes", label: "简历", href: "/resumes", icon: "resume", match: (p) => p === "/resumes" || p.startsWith("/resumes/") },
   { key: "tracker", label: "投递", href: "/tracker", icon: "tracker", match: (p) => p === "/tracker" },
   { key: "interview", label: "面试", href: "/interview-records", icon: "interview", match: (p) => p.startsWith("/interview-records") },
-  { key: "assistant", label: "AI 助手", href: "/assistant", icon: "assistant", match: (p) => p === "/assistant" },
+  { key: "assistant", label: "顺顺", href: "/assistant", icon: "assistant", match: (p) => p === "/assistant" },
 ];
 
 const TOOL_ITEMS: NavItem[] = [

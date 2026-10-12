@@ -105,16 +105,18 @@ export function InterviewRecordsNew({ initialCompany = "" }: { initialCompany?: 
   }
 
   return (
-    <main className="mission-home">
-      <section className="mission-home-content">
-        <p style={{ margin: 0 }}>
-          <Link className="button-secondary" href={"/interview-records" as Route}>← 返回面试</Link>
-        </p>
-        <p className="eyebrow">新建录入</p>
-        <h1>记录一场真实面试</h1>
-        <p className="summary">填写公司、轮次和问答。保存后会自动评分并生成复盘 / 补强建议。</p>
+    <main className="app-page">
+      <header className="app-page-header">
+        <div>
+          <p className="app-eyebrow">面试 · 新建录入</p>
+          <h1 className="app-page-title">记录一场真实面试</h1>
+          <p className="app-page-subtitle">按公司保存被问到的问题与你的回答，系统会自动评分并给出补强建议。</p>
+        </div>
+        <Link className="app-btn" href={"/interview-records" as Route}>← 返回面试</Link>
+      </header>
 
-        <form className="mission-card mission-form" onSubmit={(event) => void onSubmit(event)}>
+      <form className="app-card" onSubmit={(event) => void onSubmit(event)}>
+        <div className="tracker-form-grid">
           <label className="field-label">
             档案
             <select
@@ -161,73 +163,74 @@ export function InterviewRecordsNew({ initialCompany = "" }: { initialCompany?: 
           </label>
           <label className="field-label">
             备注（可选）
-            <textarea className="textarea" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
+            <textarea className="textarea" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
           </label>
+        </div>
 
-          <div className="proof-card-list">
-            {items.map((item, index) => (
-              <div className="proof-card" key={`item-${index}`}>
-                <h3>问答 {index + 1}</h3>
-                <label className="field-label">
-                  问题
-                  <textarea
-                    className="textarea"
-                    rows={2}
-                    value={item.question}
-                    onChange={(e) => updateItem(index, { question: e.target.value })}
-                  />
-                </label>
-                <label className="field-label">
-                  内容 / 上下文（可选）
-                  <textarea
-                    className="textarea"
-                    rows={2}
-                    value={item.context}
-                    onChange={(e) => updateItem(index, { context: e.target.value })}
-                  />
-                </label>
-                <label className="field-label">
-                  我的回答
-                  <textarea
-                    className="textarea"
-                    rows={4}
-                    value={item.my_answer}
-                    onChange={(e) => updateItem(index, { my_answer: e.target.value })}
-                  />
-                </label>
-                {items.length > 1 ? (
-                  <button
-                    type="button"
-                    className="button-secondary"
-                    onClick={() => setItems((prev) => prev.filter((_, i) => i !== index))}
-                  >
-                    删除这道题
-                  </button>
-                ) : null}
-              </div>
-            ))}
-          </div>
+        <h3 className="section-kicker" style={{ margin: "1.25rem 0 0.5rem" }}>面试问答</h3>
+        <div className="proof-card-list">
+          {items.map((item, index) => (
+            <div className="proof-card" key={`item-${index}`}>
+              <h3>问答 {index + 1}</h3>
+              <label className="field-label">
+                问题
+                <textarea
+                  className="textarea"
+                  rows={2}
+                  value={item.question}
+                  onChange={(e) => updateItem(index, { question: e.target.value })}
+                />
+              </label>
+              <label className="field-label">
+                内容 / 上下文（可选）
+                <textarea
+                  className="textarea"
+                  rows={2}
+                  value={item.context}
+                  onChange={(e) => updateItem(index, { context: e.target.value })}
+                />
+              </label>
+              <label className="field-label">
+                我的回答
+                <textarea
+                  className="textarea"
+                  rows={4}
+                  value={item.my_answer}
+                  onChange={(e) => updateItem(index, { my_answer: e.target.value })}
+                />
+              </label>
+              {items.length > 1 ? (
+                <button
+                  type="button"
+                  className="button-secondary"
+                  onClick={() => setItems((prev) => prev.filter((_, i) => i !== index))}
+                >
+                  删除这道题
+                </button>
+              ) : null}
+            </div>
+          ))}
+        </div>
 
-          <div className="mission-action-row">
-            <button
-              type="button"
-              className="button-secondary"
-              onClick={() => setItems((prev) => [...prev, { question: "", context: "", my_answer: "" }])}
-            >
-              再加一道题
-            </button>
-            <button type="submit" className="mission-primary-cta" disabled={busy}>
-              {busy ? "录入并评分中…" : "录入并评分"}
-            </button>
-          </div>
+        <div className="mission-action-row">
+          <button
+            type="button"
+            className="button-secondary"
+            onClick={() => setItems((prev) => [...prev, { question: "", context: "", my_answer: "" }])}
+          >
+            再加一道题
+          </button>
+          <button type="submit" className="mission-primary-cta" disabled={busy}>
+            {busy ? "录入并评分中…" : "录入并评分"}
+          </button>
+        </div>
 
-          {error ? (
-            <p className="message error" role="alert">
-              {error}
-            </p>
-          ) : null}
-        </form>
-      </section>
+        {error ? (
+          <p className="message error" role="alert">
+            {error}
+          </p>
+        ) : null}
+      </form>
     </main>
   );
 }
