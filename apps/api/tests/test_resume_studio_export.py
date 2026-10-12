@@ -71,11 +71,46 @@ def test_json_export_is_structured_and_skips_omitted():
 def test_render_export_rejects_unknown_format():
     doc = _document()
     try:
-        render_export(doc, "docx")
+        render_export(doc, "rtf")
     except ValueError as exc:
         assert "markdown" in str(exc)
     else:
         raise AssertionError("expected ValueError for unsupported format")
+
+
+def test_docx_export_returns_valid_ooxml_package():
+    import io
+    import zipfile
+
+    from app.resume_studio_export import render_docx
+
+    doc = _document()
+    body, media = render_export(doc, "docx")
+    assert media == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    assert isinstance(body, (bytes, bytearray)) and bytes(body).startswith(b"PK")
+    with zipfile.ZipFile(io.BytesIO(bytes(body))) as archive:
+        assert "word/document.xml" in archive.namelist()
+        xml = archive.read("word/document.xml").decode("utf-8")
+    assert "Ada Chen" in xml
+
+
+def test_layout_section_order_syncs_across_exports():
+    import io
+    import json as _json
+    import zipfile
+
+    from app.resume_studio_export import render_docx, render_json, render_markdown
+
+    doc = _document()
+    layout = {"section_order": ["skills", "experience"]}
+    md = render_markdown(doc, layout)
+    assert md.index("## 技能") < md.index("## 工作与项目经历")
+    data = _json.loads(render_json(doc, layout))
+    assert [s["kind"] for s in data["sections"]] == ["skills", "experience"]
+    with zipfile.ZipFile(io.BytesIO(render_docx(doc, layout))) as archive:
+        xml = archive.read("word/document.xml").decode("utf-8")
+    assert xml.index("技能") < xml.index("工作与项目经历")
+
 
 
 def test_export_endpoint_serves_text_and_respects_draft(client, db_session):
@@ -95,5 +130,12 @@ def test_export_endpoint_serves_text_and_respects_draft(client, db_session):
     assert js.status_code == 200
     assert js.json()["basics"]["name"] == "Ada Chen"
 
-    unknown = client.get(f"{base}?format=docx")
+    docx = client.get(f"{base}?format=docx")
+    assert docx.status_code == 200
+    assert docx.headers["content-type"].startswith(
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+    assert docx.content.startswith(b"PK")
+
+    unknown = client.get(f"{base}?format=rtf")
     assert unknown.status_code == 422

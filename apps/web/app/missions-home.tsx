@@ -20,40 +20,43 @@ import { JobBatchImport } from "./job-batch-import.tsx";
 const FILTERS = [
   { key: "ALL", label: "全部" },
   { key: "READY", label: "简历已备" },
-  { key: "APPLIED", label: "已投递" },
+  { key: "TRACKER", label: "投递台" },
   { key: "INTERVIEW", label: "面试中" },
 ] as const;
 
 type FilterKey = (typeof FILTERS)[number]["key"];
 
-function stageOf(item: PlazaItem): string {
+/** 投递状态是否已进入面试/Offer 阶段。 */
+function isInterviewing(item: PlazaItem): boolean {
   const status = item.application_status as ApplicationStatus | null;
-  if (!status) return "PREPARING";
-  if (status === "CLOSED") return "CLOSED";
-  if (status === "INTERVIEW" || status === "OFFER") return "INTERVIEW";
-  return "APPLIED";
+  return status === "INTERVIEW" || status === "OFFER";
+}
+
+/**
+ * 卡片右上角状态标签：直接取真实投递状态，与卡片内状态完全一致。
+ * 之前用「阶段桶」把 PENDING 也渲染成「已投递」，导致同一张卡片
+ * 右上角显示「已投递」、卡内小标签却写「待投递」的自相矛盾。
+ */
+function cardStatusLabel(item: PlazaItem): string {
+  const status = item.application_status as ApplicationStatus | null;
+  if (status) return APPLICATION_STATUS_LABEL[status] ?? status;
+  return item.target_resume_confirmed ? "简历已备" : "准备中";
+}
+
+function cardStatusClass(item: PlazaItem): string {
+  const status = item.application_status as ApplicationStatus | null;
+  if (!status) return "muted";
+  if (status === "CLOSED") return "attention";
+  if (status === "PENDING") return "muted";
+  return "filled";
 }
 
 function matchFilter(item: PlazaItem, filter: FilterKey): boolean {
   if (filter === "ALL") return true;
   if (filter === "READY") return item.target_resume_confirmed;
-  const stage = stageOf(item);
-  if (filter === "APPLIED") return stage === "APPLIED";
-  if (filter === "INTERVIEW") return stage === "INTERVIEW";
+  if (filter === "TRACKER") return Boolean(item.application_id);
+  if (filter === "INTERVIEW") return isInterviewing(item);
   return true;
-}
-
-function badgeClass(stage: string): string {
-  if (stage === "INTERVIEW" || stage === "APPLIED") return "filled";
-  if (stage === "CLOSED") return "attention";
-  return "muted";
-}
-
-function stageLabel(stage: string): string {
-  if (stage === "APPLIED") return "已投递";
-  if (stage === "INTERVIEW") return "面试中";
-  if (stage === "CLOSED") return "已结束";
-  return "准备中";
 }
 
 export function MissionsHome() {
@@ -165,7 +168,7 @@ export function MissionsHome() {
         <div className="app-stat-card"><div className="app-stat-value">{items.length}</div><div className="app-stat-label">岗位总数</div></div>
         <div className="app-stat-card"><div className="app-stat-value">{items.filter((i) => i.target_resume_confirmed).length}</div><div className="app-stat-label">简历已备</div></div>
         <div className="app-stat-card"><div className="app-stat-value">{items.filter((i) => i.application_id).length}</div><div className="app-stat-label">已入投递台</div></div>
-        <div className="app-stat-card"><div className="app-stat-value">{items.filter((i) => stageOf(i) === "INTERVIEW").length}</div><div className="app-stat-label">面试中</div></div>
+        <div className="app-stat-card"><div className="app-stat-value">{items.filter(isInterviewing).length}</div><div className="app-stat-label">面试中</div></div>
       </section>
 
       <div className="app-filter-row" role="tablist" aria-label="按状态筛选">
@@ -188,7 +191,6 @@ export function MissionsHome() {
       ) : filtered.length ? (
         <div className="plaza-grid">
           {filtered.map((item) => {
-            const stage = stageOf(item);
             const status = item.application_status as ApplicationStatus | null;
             const role = isUnknownIdentity(item.role) ? "未命名岗位" : item.role;
             const company = isUnknownIdentity(item.company) ? "" : item.company;
@@ -202,7 +204,7 @@ export function MissionsHome() {
                       {item.location ? ` · ${item.location}` : ""}
                     </p>
                   </div>
-                  <span className={`app-badge ${badgeClass(stage)}`}>{stageLabel(stage)}</span>
+                  <span className={`app-badge ${cardStatusClass(item)}`}>{cardStatusLabel(item)}</span>
                 </div>
 
                 <div className="plaza-progress-row">
@@ -213,10 +215,10 @@ export function MissionsHome() {
                   <span className="plaza-progress-value">{item.prep_score}</span>
                 </div>
 
+                {/* 投递状态只由右上角徽标呈现，避免「已投递 / 待投递」两处不一致。 */}
                 <div className="plaza-tags">
                   {item.resume_ready ? <span className="plaza-tag">已绑定简历</span> : <span className="plaza-tag muted">简历待绑定</span>}
                   {item.target_resume_confirmed ? <span className="plaza-tag">岗位版本已确认</span> : null}
-                  {status ? <span className="plaza-tag status">{APPLICATION_STATUS_LABEL[status]}</span> : null}
                 </div>
 
                 <div className="plaza-card-actions">

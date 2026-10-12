@@ -31,7 +31,9 @@ _BASE_SYSTEM_PROMPT = """你是「AI Career OS」的 AI 求职助手，只处理
 
 # 行为准则（最高优先级）
 1. 实事求是：不知道就说不知道，绝不编造事实、数据、入口或「某功能存不存在」的说法。凡涉及用户数据的结论（有几个岗位/投递/面经/提醒/内推），必须先调用工具查证后再回答，不得凭猜或凭印象作答。
-2. 只在用户明确要求时才写入/修改数据。用户只是让你分析、评价、给建议时，不要顺手改动任何数据；写完要如实说明改了什么。
+2. 只在用户明确要求时才写入/修改数据。用户只是让你分析、评价、给建议时，不要顺手改动任何数据。
+   写工具（记面经/记内推/记提醒）**不会直接写库**：调用后只会生成一条「写入提案」，需用户在对话里确认后才会真正保存。
+   因此写完要如实说「已生成待确认的写入提案」，绝不能说「已记录/已保存」。
 3. 涉及用户数据一律用工具查证后再答；工具返回什么就说什么，工具没查到的不要脑补。
 
 # 各模块工具用法
@@ -123,6 +125,8 @@ _WRITE_TOOL_SPECS: list[dict[str, Any]] = [
     _fn("create_referral", "记一条内推记录。用户明确要求时才调用。", {"company": _str_prop("公司名"), "contact": _str_prop("内推人（可选）"), "channel": _str_prop("渠道/关系（可选）"), "note": _str_prop("备注（可选）")}, required=["company"]),
     _fn("create_reminder", "记一条求职提醒。用户明确要求时才调用，时间必须来自用户原话。", {"title": _str_prop("提醒内容，如：下周一跟进 HR"), "due_at": _str_prop("时间 YYYY-MM-DD HH:MM（可选）")}, required=["title"]),
 ]
+
+_WRITE_TOOL_NAMES: set[str] = {spec["function"]["name"] for spec in _WRITE_TOOL_SPECS}
 
 _WEB_SEARCH_SPEC: dict[str, Any] = _fn(
     "web_search",
@@ -299,8 +303,18 @@ def _diagnose(db: Session, profile_id: str | None, args: dict[str, Any]) -> str:
     )
 
 
-def execute_tool(name: str, args: dict[str, Any], db: Session, profile_id: str | None) -> tuple[str, bool, list[dict[str, Any]]]:
-    """执行工具，返回 (结果文本, 是否改动数据, 来源列表)。"""
+def execute_tool(
+    name: str,
+    args: dict[str, Any],
+    db: Session,
+    profile_id: str | None,
+    conversation_id: Any = None,
+) -> tuple[str, bool, list[dict[str, Any]]]:
+    """执行工具，返回 (结果文本, 是否改动数据, 来源列表)。
+
+    写工具（目标七）不再直接落库：改为生成 ``WriteProposal``（待用户确认），
+    因此 ``changed`` 恒为 False——真正写入发生在用户确认提案之后。
+    """
     changed = False
     sources: list[dict[str, Any]] = []
     if name == "list_jobs":
@@ -333,51 +347,33 @@ def execute_tool(name: str, args: dict[str, Any], db: Session, profile_id: str |
         sources = _web_search(args.get("query") or "")
         return json.dumps(sources, ensure_ascii=False), changed, sources
 
-    # ---- 写工具（仅在 allow_write 时才会被下发，这里再兜一层）----
-    if name == "create_interview_experience":
-        profile = _require_profile(profile_id)
-        company = (args.get("company") or "").strip()
-        if not company:
-            return "记面经需要公司名。", False, sources
-        row = models.InterviewRecord(
-            profile_id=profile,
-            company=company,
-            role=(args.get("role") or "").strip() or None,
-            interview_round=(args.get("round") or "面经").strip(),
-            interviewed_on=_parse_date(args.get("date") or ""),
-            notes=(args.get("notes") or "").strip() or None,
-            status="DRAFT",
+    # ---- 写工具（目标七）：不再直接写库，先产提案等待用户确认 ----
+    if name in _WRITE_TOOL_NAMES:
+        from .assistant_capabilities import propose_write
+
+        profile_uuid = None
+        if profile_id:
+            profile_uuid = _to_uuid(profile_id)
+        try:
+            proposal = propose_write(
+                db,
+                name,
+                args,
+                conversation_id=conversation_id,
+                profile_id=profile_uuid,
+            )
+        except ValueError as exc:  # Pydantic 校验失败
+            return f"写入提案参数不合法：{exc}", False, sources
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("生成写入提案失败 %s：%s", name, exc)
+            return f"生成写入提案失败：{exc}", False, sources
+        return (
+            f"已生成写入提案「{proposal.summary}」（提案号 {proposal.id}）。"
+            "按安全规则我**不会直接写入**——请你在对话里的写入提案卡片上确认后才会真正保存；"
+            "若不需要可直接拒绝。请如实告诉用户：该写入**尚未生效**，需其确认。",
+            False,
+            sources,
         )
-        db.add(row)
-        db.commit()
-        changed = True
-        return f"已记录面经「{company} {args.get('role') or ''}」，可在「面试」页核对。", changed, sources
-    if name == "create_referral":
-        profile = _require_profile(profile_id)
-        company = (args.get("company") or "").strip()
-        if not company:
-            return "记内推需要公司名。", False, sources
-        row = models.Referral(
-            profile_id=profile,
-            company=company,
-            contact=(args.get("contact") or "").strip() or None,
-            channel=(args.get("channel") or "").strip() or None,
-            note=(args.get("note") or "").strip() or None,
-        )
-        db.add(row)
-        db.commit()
-        changed = True
-        return f"已记录内推「{company}」，可在「投递」页核对。", changed, sources
-    if name == "create_reminder":
-        profile = _require_profile(profile_id)
-        title = (args.get("title") or "").strip()
-        if not title:
-            return "记提醒需要内容。", False, sources
-        row = models.Reminder(profile_id=profile, title=title, due_at=_parse_datetime(args.get("due_at") or ""))
-        db.add(row)
-        db.commit()
-        changed = True
-        return f"已记录提醒「{title}」。", changed, sources
     return f"未知工具：{name}", changed, sources
 
 

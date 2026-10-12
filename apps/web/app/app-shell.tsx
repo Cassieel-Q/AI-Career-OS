@@ -26,12 +26,14 @@ const JOURNEY_ITEMS: NavItem[] = [
   { key: "resumes", label: "简历", href: "/resumes", icon: "resume", match: (p) => p === "/resumes" || p.startsWith("/resumes/") },
   { key: "tracker", label: "投递", href: "/tracker", icon: "tracker", match: (p) => p === "/tracker" },
   { key: "interview", label: "面试", href: "/interview-records", icon: "interview", match: (p) => p.startsWith("/interview-records") },
+  { key: "question-bank", label: "题库", href: "/question-bank", icon: "bank", match: (p) => p.startsWith("/question-bank") },
   { key: "assistant", label: "顺顺", href: "/assistant", icon: "assistant", match: (p) => p === "/assistant" },
 ];
 
 const TOOL_ITEMS: NavItem[] = [
   { key: "claims", label: "事实核对", href: "/claims", icon: "claims", match: (p) => p === "/claims" },
   { key: "evidence", label: "证据库", href: "/evidence-os", icon: "evidence", match: (p) => p.startsWith("/evidence-os") },
+  { key: "application-profile", label: "网申资料", href: "/application-profile", icon: "profile", match: (p) => p.startsWith("/application-profile") },
   { key: "upload", label: "上传简历", href: "/workflow/start", icon: "upload", match: (p) => p.startsWith("/workflow") },
 ];
 
@@ -103,6 +105,19 @@ const ICON_PATHS: Record<string, ReactNode> = {
       <path d="M12 15V4" />
       <path d="m7.5 8 4.5-4.5L16.5 8" />
       <path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" />
+    </>
+  ),
+  bank: (
+    <>
+      <path d="M4 6.5h16" />
+      <path d="M5 6.5v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-11" />
+      <path d="M9.5 10.5h5M9.5 14h5" />
+    </>
+  ),
+  profile: (
+    <>
+      <circle cx="12" cy="8" r="3.2" />
+      <path d="M5.5 19.5a6.5 6.5 0 0 1 13 0" />
     </>
   ),
   panelCollapse: (

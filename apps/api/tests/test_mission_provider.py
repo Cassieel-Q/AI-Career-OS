@@ -63,7 +63,7 @@ def test_mission_provider_uses_faster_default_timeout_with_mission_override(monk
     assert _timeout_seconds() == 21.0
 
 
-@pytest.mark.parametrize("content,reason", [("not-json", "json_decode"), ('{"company":"Baidu"}', "schema_validation")])
+@pytest.mark.parametrize("content,reason", [("not-json", "json_decode")])
 def test_mission_provider_classifies_structured_output_failures(content: str, reason: str):
     provider = OpenAIMissionProvider(client=_Client(content))
 
@@ -71,6 +71,32 @@ def test_mission_provider_classifies_structured_output_failures(content: str, re
         provider.parse_jd("Evaluation JD")
 
     assert error.value.reason == reason
+
+
+def test_mission_provider_classifies_schema_validation_failure():
+    """A payload that cannot satisfy the target schema is reported as schema_validation."""
+    from pydantic import BaseModel as _BaseModel
+
+    class _RequiresRole(_BaseModel):
+        role: str
+
+    provider = OpenAIMissionProvider(client=_Client('{"company":"Baidu"}'))
+    response = provider._request(operation="test", payload={})
+
+    with pytest.raises(MissionProviderInvalidResponseError) as error:
+        provider._parse(response, _RequiresRole)
+
+    assert error.value.reason == "schema_validation"
+
+
+def test_parse_jd_leniently_normalizes_partial_json_without_inventing():
+    """JD 抽取是「渐进式软失败」：字段缺失落 UNKNOWN，绝不臆造要求。"""
+    provider = OpenAIMissionProvider(client=_Client('{"company":"Baidu"}'))
+
+    parsed = provider.parse_jd("Baidu evaluation JD")
+
+    assert parsed.company == "Baidu"
+    assert parsed.requirements == []
 
 
 def test_resume_strategy_does_not_emit_english_placeholder_guidance():

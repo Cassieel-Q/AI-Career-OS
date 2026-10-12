@@ -257,47 +257,107 @@ export async function deleteApplication(
 }
 
 // ---------------------------------------------------------------------------
-// 岗位批量导入
+// 候选岗位暂存区（目标一）：生成草稿 → 逐条确认/拒绝 → 幂等导入
 // ---------------------------------------------------------------------------
 
-export type JobDraft = {
+export type CandidateJob = {
+  id: string;
+  profile_id: string;
+  source_kind: string;
+  recognition_source: string;
+  source_excerpt: string;
+  company: string | null;
+  role: string | null;
+  location: string | null;
+  status: "DRAFT" | "CONFIRMED" | "IMPORTED" | "REJECTED";
+  imported_mission_id: string | null;
+  warnings: string[];
   title: string;
+  created_at: string | null;
+  updated_at: string | null;
+};
+
+export type CandidateImportResult = {
+  candidate_id: string;
+  mission_id: string;
   company: string;
   role: string;
-  location: string;
-  description: string;
+  status: string;
+  reused: boolean;
 };
 
-export type BulkCreateResult = {
-  created: Array<{ mission_id: string; company: string; role: string }>;
-  errors: Array<{ index: number; error: string }>;
-  total: number;
-};
-
-export async function parseJobBatch(
+export async function parseCandidateJobs(
   profileId: string,
-  rawText: string,
+  sourceText: string,
+  sourceKind = "PASTE",
   apiUrl = MISSION_API_BASE_URL,
   request: MissionRequester = fetch,
-): Promise<JobDraft[]> {
-  const response = await request(`${apiUrl}/api/v1/profiles/${encodeURIComponent(profileId)}/job-missions/parse-batch`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ raw_text: rawText }),
-  });
-  return readApiPayload<JobDraft[]>(response);
+): Promise<CandidateJob[]> {
+  const response = await request(
+    `${apiUrl}/api/v1/profiles/${encodeURIComponent(profileId)}/candidate-jobs/parse`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ source_text: sourceText, source_kind: sourceKind }),
+    },
+  );
+  return readApiPayload<CandidateJob[]>(response);
 }
 
-export async function bulkCreateMissions(
+export async function fetchCandidateJobs(
   profileId: string,
-  drafts: JobDraft[],
   apiUrl = MISSION_API_BASE_URL,
   request: MissionRequester = fetch,
-): Promise<BulkCreateResult> {
-  const response = await request(`${apiUrl}/api/v1/profiles/${encodeURIComponent(profileId)}/job-missions/bulk-create`, {
-    method: "POST",
+): Promise<CandidateJob[]> {
+  const response = await request(
+    `${apiUrl}/api/v1/profiles/${encodeURIComponent(profileId)}/candidate-jobs`,
+  );
+  return readApiPayload<CandidateJob[]>(response);
+}
+
+export async function updateCandidateJob(
+  candidateId: string,
+  patch: { company?: string | null; role?: string | null; location?: string | null },
+  apiUrl = MISSION_API_BASE_URL,
+  request: MissionRequester = fetch,
+): Promise<CandidateJob> {
+  const response = await request(`${apiUrl}/api/v1/candidate-jobs/${encodeURIComponent(candidateId)}`, {
+    method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ drafts }),
+    body: JSON.stringify(patch),
   });
-  return readApiPayload<BulkCreateResult>(response);
+  return readApiPayload<CandidateJob>(response);
+}
+
+export async function confirmCandidateJob(
+  candidateId: string,
+  apiUrl = MISSION_API_BASE_URL,
+  request: MissionRequester = fetch,
+): Promise<CandidateJob> {
+  const response = await request(`${apiUrl}/api/v1/candidate-jobs/${encodeURIComponent(candidateId)}/confirm`, {
+    method: "POST",
+  });
+  return readApiPayload<CandidateJob>(response);
+}
+
+export async function rejectCandidateJob(
+  candidateId: string,
+  apiUrl = MISSION_API_BASE_URL,
+  request: MissionRequester = fetch,
+): Promise<CandidateJob> {
+  const response = await request(`${apiUrl}/api/v1/candidate-jobs/${encodeURIComponent(candidateId)}/reject`, {
+    method: "POST",
+  });
+  return readApiPayload<CandidateJob>(response);
+}
+
+export async function importCandidateJob(
+  candidateId: string,
+  apiUrl = MISSION_API_BASE_URL,
+  request: MissionRequester = fetch,
+): Promise<CandidateImportResult> {
+  const response = await request(`${apiUrl}/api/v1/candidate-jobs/${encodeURIComponent(candidateId)}/import`, {
+    method: "POST",
+  });
+  return readApiPayload<CandidateImportResult>(response);
 }

@@ -34,7 +34,7 @@ def _revision(value: str | None) -> int:
 
 def _render(row):
     try:
-        return render_document(row.document_json, row.template_id)
+        return render_document(row.document_json, row.template_id, getattr(row, "layout_config", None))
     except ResumeRenderError as exc:
         raise HTTPException(422, str(exc)) from exc
 
@@ -142,10 +142,12 @@ def export_studio_text(
     if not draft and any(check["level"] == "block" for check in checks):
         raise HTTPException(409, {"message": "请先核对标记的事实或补全占位内容。", "checks": checks})
     try:
-        body, media_type = render_export(row.document_json, format)
+        body, media_type = render_export(row.document_json, format, getattr(row, "layout_config", None))
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
-    ext = {"markdown": "md", "txt": "txt", "json": "json"}.get((format or "").strip().lower(), "txt")
+    ext = {"markdown": "md", "txt": "txt", "json": "json", "docx": "docx", "word": "docx"}.get(
+        (format or "").strip().lower(), "txt"
+    )
     name = (row.document_json.get("basics") or {}).get("name", {}).get("text", "")
     mission = db.get(models.JobMission, mission_id)
     pieces = [name, mission.company if mission else "", mission.role if mission else ""]

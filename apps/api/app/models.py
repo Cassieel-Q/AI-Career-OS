@@ -68,6 +68,19 @@ class UserProfile(Base):
         passive_deletes=True,
         order_by=lambda: (JobApplication.created_at, JobApplication.id),
     )
+    candidate_jobs: Mapped[list["CandidateJob"]] = relationship(
+        "CandidateJob",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by=lambda: (CandidateJob.created_at, CandidateJob.id),
+    )
+    application_profile: Mapped["ApplicationProfile | None"] = relationship(
+        "ApplicationProfile",
+        back_populates="profile",
+        uselist=False,
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
 
 class ProfileChild:
@@ -88,6 +101,9 @@ class Education(ProfileChild, Base):
     degree: Mapped[str | None] = mapped_column(String(255), nullable=True)
     field_of_study: Mapped[str | None] = mapped_column(String(255), nullable=True)
     dates: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # CET-4/6 分数：不能只保存「已通过」，否则丢失分数（目标四）。
+    cet4_score: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    cet6_score: Mapped[str | None] = mapped_column(String(32), nullable=True)
     relevant_courses: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
     honors: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
     profile: Mapped[UserProfile] = relationship(back_populates="education")
@@ -121,6 +137,34 @@ class Certification(ProfileChild, Base):
     score: Mapped[str | None] = mapped_column(String(64), nullable=True)
     status: Mapped[str | None] = mapped_column(String(32), nullable=True)
     profile: Mapped[UserProfile] = relationship(back_populates="certifications")
+
+
+class ApplicationProfile(Base):
+    """网申资料（ApplicationProfile）：身份证、家庭、健康、档案、紧急联系人、到岗信息等。
+
+    与 ResumeProfile 严格分界：
+    - 简历生成**只读** ResumeProfile（UserProfile + 子表），绝不读本表；
+    - 网申填表可读 ResumeProfile + 本表；
+    - 助手默认**不读**本表敏感字段。
+    """
+
+    __tablename__ = "application_profiles"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    profile_id: Mapped[UUID] = mapped_column(
+        ForeignKey("user_profiles.id", ondelete="CASCADE"), nullable=False, unique=True, index=True
+    )
+    id_number: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    family_info: Mapped[str | None] = mapped_column(Text, nullable=True)
+    health_status: Mapped[str | None] = mapped_column(Text, nullable=True)
+    archive_location: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    emergency_contact: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    emergency_phone: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    availability: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    profile: Mapped[UserProfile] = relationship("UserProfile", back_populates="application_profile")
 
 
 class CareerPreference(Base):
@@ -759,6 +803,8 @@ class ResumeStudioDocument(Base):
     language: Mapped[str] = mapped_column(String(2), nullable=False, default="zh", server_default="zh")
     template_id: Mapped[str] = mapped_column(String(64), nullable=False, default="zh-classic", server_default="zh-classic")
     document_json: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict, server_default="{}")
+    # 版式配置（单一事实来源）：Preview/PDF/Word/Markdown 统一读取本字段（目标五）。
+    layout_config: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict, server_default="{}")
     confirmed_revision: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
@@ -893,6 +939,49 @@ class JobApplication(Base):
     mission: Mapped[JobMission | None] = relationship("JobMission")
 
 
+class CandidateJob(Base):
+    """候选岗位草稿（批量导入暂存区）。
+
+    链路从「粘贴 → 直接建正式岗位」改为「粘贴 → 生成候选草稿 → 用户逐条确认 → 导入正式 JobMission」。
+    - `source_text` 保存本次粘贴的完整原文，`source_excerpt` 必须是原文里能查到的摘录（可回溯）；
+    - `source_hash` + `source_excerpt_hash` 做批次幂等，同批同段不重复生产草稿；
+    - `imported_mission_id` 非空即已导入，二次导入直接返回该 mission（幂等）。
+    """
+
+    __tablename__ = "candidate_jobs"
+    __table_args__ = (
+        UniqueConstraint(
+            "profile_id",
+            "source_hash",
+            "source_excerpt_hash",
+            name="uq_candidate_jobs_profile_source_excerpt",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    profile_id: Mapped[UUID] = mapped_column(
+        ForeignKey("user_profiles.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    source_text: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
+    source_hash: Mapped[str] = mapped_column(String(64), nullable=False, default="", server_default="")
+    source_kind: Mapped[str] = mapped_column(String(32), nullable=False, default="PASTE", server_default="PASTE")
+    recognition_source: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="HEURISTIC_SPLIT", server_default="HEURISTIC_SPLIT"
+    )
+    source_excerpt: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
+    source_excerpt_hash: Mapped[str] = mapped_column(String(64), nullable=False, default="", server_default="")
+    company: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    role: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    location: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    raw_payload: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict, server_default="{}")
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="DRAFT", server_default="DRAFT")
+    imported_mission_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("job_missions.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
 class AssistantConversation(Base):
     """AI 求职助手「顺顺」会话。surface 区分「侧栏页(page)」与「顺顺浮窗(orb)」两套独立记录。"""
 
@@ -963,3 +1052,156 @@ class Reminder(Base):
     status: Mapped[str] = mapped_column(String(24), nullable=False, default="PENDING", server_default="PENDING")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
+# ---------------------------------------------------------------------------
+# 题库（目标三）：独立于 mission 的模拟面试流程，可复用、可保存
+# ---------------------------------------------------------------------------
+
+
+class QuestionBank(Base):
+    """题库容器：可挂某个岗位（mission_id 非空）或作为通用题库（mission_id 为空）。"""
+
+    __tablename__ = "question_banks"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    profile_id: Mapped[UUID] = mapped_column(
+        ForeignKey("user_profiles.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    mission_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("job_missions.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False, default="默认题库", server_default="默认题库")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    items: Mapped[list["QuestionItem"]] = relationship(
+        "QuestionItem",
+        back_populates="bank",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by=lambda: (QuestionItem.sort_order, QuestionItem.id),
+    )
+
+
+class QuestionItem(Base):
+    """一道题：三分类 BASIC / PROJECT_DEEP_DIVE / HR_QUESTIONS；来源 MODEL 或 REAL_INTERVIEW。"""
+
+    __tablename__ = "question_items"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    bank_id: Mapped[UUID] = mapped_column(
+        ForeignKey("question_banks.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    category: Mapped[str] = mapped_column(String(32), nullable=False)
+    difficulty: Mapped[str] = mapped_column(String(16), nullable=False, default="MEDIUM", server_default="MEDIUM")
+    interviewer_style: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    question_text: Mapped[str] = mapped_column(Text, nullable=False)
+    # MODEL / REAL_INTERVIEW
+    source: Mapped[str] = mapped_column(String(24), nullable=False, default="MODEL", server_default="MODEL")
+    evidence_refs: Mapped[list] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    bank: Mapped[QuestionBank] = relationship("QuestionBank", back_populates="items")
+    reference_answers: Mapped[list["ReferenceAnswer"]] = relationship(
+        "ReferenceAnswer",
+        back_populates="question_item",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by=lambda: (ReferenceAnswer.created_at, ReferenceAnswer.id),
+    )
+
+
+class ReferenceAnswer(Base):
+    """参考答案：只能基于已确认 ResumeClaim + confirmed target resume。
+
+    事实门控失败时 grounding 落 UNKNOWN / NEEDS_CONFIRMATION，且不得编造事实。
+    """
+
+    __tablename__ = "reference_answers"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    question_item_id: Mapped[UUID] = mapped_column(
+        ForeignKey("question_items.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    answer_text: Mapped[str] = mapped_column(Text, nullable=False)
+    # BULLETS / TARGET_RESUME / UNKNOWN / NEEDS_CONFIRMATION
+    grounding: Mapped[str] = mapped_column(String(32), nullable=False, default="NEEDS_CONFIRMATION", server_default="NEEDS_CONFIRMATION")
+    evidence_refs: Mapped[list] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    question_item: Mapped[QuestionItem] = relationship("QuestionItem", back_populates="reference_answers")
+
+
+# ---------------------------------------------------------------------------
+# 模板草稿（目标五）：参考模板识别后先落草稿，用户确认后才作为可用模板
+# ---------------------------------------------------------------------------
+
+
+class ResumeTemplateDraft(Base):
+    """参考模板（HTML/图片/PDF/DOCX）识别后的模板草稿。"""
+
+    __tablename__ = "resume_template_drafts"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    profile_id: Mapped[UUID] = mapped_column(
+        ForeignKey("user_profiles.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    # IMAGE / PDF / DOCX / HTML
+    source_kind: Mapped[str] = mapped_column(String(16), nullable=False)
+    source_ref: Mapped[str | None] = mapped_column(Text, nullable=True)
+    layout_config: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict, server_default="{}")
+    sanitized_html: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="DRAFT", server_default="DRAFT")
+    warnings: Mapped[list] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
+# ---------------------------------------------------------------------------
+# 助手写入安全（目标七）：提案 → 用户确认 → 执行 → 回执
+# ---------------------------------------------------------------------------
+
+
+class WriteProposal(Base):
+    """助手写入提案：助手不直接落库，先产提案等待用户确认。"""
+
+    __tablename__ = "write_proposals"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    conversation_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True), nullable=True, index=True)
+    message_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True), nullable=True, index=True)
+    profile_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True), nullable=True, index=True)
+    capability: Mapped[str] = mapped_column(String(64), nullable=False)
+    args: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict, server_default="{}")
+    summary: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
+    # PROPOSED / CONFIRMED / REJECTED / EXECUTED
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="PROPOSED", server_default="PROPOSED")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    receipt: Mapped["WriteReceipt | None"] = relationship(
+        "WriteReceipt",
+        back_populates="proposal",
+        uselist=False,
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+
+class WriteReceipt(Base):
+    """操作回执：确认执行后留痕——做了什么、改了哪条、时间、来源。"""
+
+    __tablename__ = "write_receipts"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    proposal_id: Mapped[UUID] = mapped_column(
+        ForeignKey("write_proposals.id", ondelete="CASCADE"), nullable=False, unique=True, index=True
+    )
+    target_table: Mapped[str] = mapped_column(String(64), nullable=False)
+    target_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    diff: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict, server_default="{}")
+    executed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    proposal: Mapped[WriteProposal] = relationship("WriteProposal", back_populates="receipt")

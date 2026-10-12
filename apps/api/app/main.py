@@ -46,6 +46,10 @@ from app.interview_record_routes import router as interview_record_router
 from app.career_hub import router as career_hub_router
 from app.application_routes import router as application_router
 from app.assistant_routes import router as assistant_router
+from app.candidate_job_routes import router as candidate_job_router
+from app.question_bank_routes import router as question_bank_router
+from app.application_profile_routes import router as application_profile_router
+from app.resume_template_routes import router as resume_template_router
 from app.profile_schemas import CareerPreferencesInput, CareerPreferencesRead, ProfileRead, ProfileUpdate
 from app.profile_service import (
     confirm_profile,
@@ -1321,6 +1325,32 @@ def _recover_contact_facts(result: ResumeExtractionResult, source_text: str) -> 
     return result.model_copy(update=updates)
 
 
+_CET4_PATTERN = re.compile(r"(?:CET[\s\-]?4|四级|大学英语四级)[^\d]{0,12}(\d{3})", re.IGNORECASE)
+_CET6_PATTERN = re.compile(r"(?:CET[\s\-]?6|六级|大学英语六级)[^\d]{0,12}(\d{3})", re.IGNORECASE)
+
+
+def _recover_cet_scores(result: ResumeExtractionResult, source_text: str) -> ResumeExtractionResult:
+    """从简历原文里补出 CET-4/6 分数（不能只保存「已通过」，否则丢分数）。
+
+    只填第一个education条目上为空的字段；不覆盖已有值，不臆造分数。
+    """
+    cet4 = _CET4_PATTERN.search(source_text or "")
+    cet6 = _CET6_PATTERN.search(source_text or "")
+    if (cet4 is None and cet6 is None) or not result.education:
+        return result
+    education = list(result.education)
+    first = education[0]
+    updates: dict[str, str] = {}
+    if cet4 is not None and not (getattr(first, "cet4_score", None) or "").strip():
+        updates["cet4_score"] = cet4.group(1)
+    if cet6 is not None and not (getattr(first, "cet6_score", None) or "").strip():
+        updates["cet6_score"] = cet6.group(1)
+    if not updates:
+        return result
+    education[0] = first.model_copy(update=updates)
+    return result.model_copy(update={"education": education})
+
+
 def _guess_name_from_head(source_text: str) -> str | None:
     """Heuristic name guess from the text before phone/email.
 
@@ -2450,7 +2480,7 @@ def _run_full_resume_fallback(
             provider_call=True,
         )
     return process_resume_extraction(
-        _recover_contact_facts(result, source_text),
+        _recover_cet_scores(_recover_contact_facts(result, source_text), source_text),
         source_text,
         allow_repair=False,
         initial_llm_calls=1,
@@ -2641,7 +2671,7 @@ def extract_section_first_resume(
         )
 
     merged = _attach_course_section_to_education(merged, source_text)
-    merged = _recover_contact_facts(merged, source_text)
+    merged = _recover_cet_scores(_recover_contact_facts(merged, source_text), source_text)
 
     processed = process_resume_extraction(
         merged,
@@ -2701,6 +2731,10 @@ app.include_router(interview_record_router)
 app.include_router(career_hub_router)
 app.include_router(application_router)
 app.include_router(assistant_router)
+app.include_router(candidate_job_router)
+app.include_router(question_bank_router)
+app.include_router(application_profile_router)
+app.include_router(resume_template_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_allowed_frontend_origins(),

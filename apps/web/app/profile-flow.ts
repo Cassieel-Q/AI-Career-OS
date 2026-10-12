@@ -21,6 +21,9 @@ export type Education = ProfileItem & {
   field_of_study: string | null;
   dates: string | null;
   relevant_courses?: string[] | null;
+  /** 教育信息必须保留具体分数，而不是只记「已通过」（目标四）。 */
+  cet4_score?: string | null;
+  cet6_score?: string | null;
 };
 
 export type Skill = ProfileItem & {
@@ -69,6 +72,8 @@ export function createEmptyEducation(): Education {
     field_of_study: null,
     dates: null,
     relevant_courses: [],
+    cet4_score: null,
+    cet6_score: null,
   };
 }
 
@@ -79,6 +84,8 @@ export function normalizeProfile(profile: Profile): Profile {
     education: (profile.education ?? []).map((item) => ({
       ...item,
       relevant_courses: item.relevant_courses ?? [],
+      cet4_score: item.cet4_score ?? null,
+      cet6_score: item.cet6_score ?? null,
     })),
     skills: profile.skills ?? [],
     experiences: profile.experiences ?? [],
@@ -98,6 +105,8 @@ export type ProfileUpdatePayload = {
     field_of_study: string | null;
     dates: string | null;
     relevant_courses: string[];
+    cet4_score: string | null;
+    cet6_score: string | null;
   }>;
   skills: Array<{ id?: string; name: string; proficiency: Proficiency | null }>;
   experiences: Array<{
@@ -128,13 +137,15 @@ export function toUpdatePayload(profile: Profile): ProfileUpdatePayload {
     ...(profile.city ? { city: profile.city } : {}),
     // evidence_text and source_type are intentionally omitted: existing
     // evidence is server-owned and new rows default to USER_ENTERED server-side.
-    education: (profile.education ?? []).map(({ id, institution, degree, field_of_study, dates, relevant_courses }) => ({
+    education: (profile.education ?? []).map(({ id, institution, degree, field_of_study, dates, relevant_courses, cet4_score, cet6_score }) => ({
       ...(id ? { id } : {}),
       institution,
       degree,
       field_of_study,
       dates,
       relevant_courses: relevant_courses ?? [],
+      cet4_score: cet4_score ?? null,
+      cet6_score: cet6_score ?? null,
     })),
     skills: profile.skills.map(({ id, name, proficiency }) => ({
       ...(id ? { id } : {}),

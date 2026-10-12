@@ -855,11 +855,14 @@ useEffect(() => {
       setExportNotice("");
       return;
     }
+    // 联系方式以简历工作台（Studio 投递版）为单一事实来源；这里只检查岗位内容，
+    // 避免「Studio 已填联系方式、来源档案没填」导致假阳性提醒。
     const checks = buildPreExportChecklist({
       profile: profileSnap,
       experiences: experiences.length ? experiences : profileSnap?.experiences ?? [],
       bullets: latestResume.bullets,
       selections: experienceSelection.map((row) => ({ experience_id: row.experience_id, decision: row.decision })),
+      includeContactWarnings: false,
     });
     const blocking = checks.filter((item) => item.level === "block");
     if (blocking.length) {

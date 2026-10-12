@@ -90,6 +90,8 @@ def create_draft_profile(db: Session, extraction: ResumeExtractionResult) -> mod
             degree=item.degree,
             field_of_study=item.field_of_study,
             dates=item.dates,
+            cet4_score=getattr(item, "cet4_score", None),
+            cet6_score=getattr(item, "cet6_score", None),
             relevant_courses=item.relevant_courses,
             honors=item.honors,
             evidence_text=item.evidence_text,
@@ -263,7 +265,7 @@ def update_draft_profile(db: Session, profile_id: UUID, payload: ProfileUpdate) 
         profile,
         "education",
         payload.education,
-        ("institution", "degree", "field_of_study", "dates", "relevant_courses", "honors"),
+        ("institution", "degree", "field_of_study", "dates", "cet4_score", "cet6_score", "relevant_courses", "honors"),
         models.Education,
     )
     _replace_collection(profile, "skills", payload.skills, ("name", "proficiency"), models.ProfileSkill)
@@ -384,6 +386,8 @@ def replace_profile_from_extraction(db: Session, profile_id: UUID, extraction: R
                 degree=item.degree,
                 field_of_study=item.field_of_study,
                 dates=item.dates,
+                cet4_score=getattr(item, "cet4_score", None),
+                cet6_score=getattr(item, "cet6_score", None),
                 relevant_courses=item.relevant_courses,
                 honors=item.honors,
                 evidence_text=item.evidence_text,

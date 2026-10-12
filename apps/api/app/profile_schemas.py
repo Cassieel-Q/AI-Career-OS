@@ -104,6 +104,9 @@ class EducationInput(ProfileItemInput):
     degree: str | None = None
     field_of_study: str | None = None
     dates: str | None = None
+    # CET-4/6 分数：简历只读 ResumeProfile，这里必须保留分数而非「已通过」。
+    cet4_score: str | None = None
+    cet6_score: str | None = None
     relevant_courses: list[str] = Field(default_factory=list)
     honors: list[str] = Field(default_factory=list)
 
@@ -115,7 +118,7 @@ class EducationInput(ProfileItemInput):
             raise ValueError("institution must not be blank")
         return normalized
 
-    @field_validator("degree", "field_of_study", "dates", mode="before")
+    @field_validator("degree", "field_of_study", "dates", "cet4_score", "cet6_score", mode="before")
     @classmethod
     def normalize_optional_fields(cls, value: str | None) -> str | None:
         return _blank_to_none(value)
