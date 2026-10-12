@@ -93,6 +93,45 @@ export async function fetchTracker(
   return readApiPayload<TrackerRead>(response);
 }
 
+// ---------------------------------------------------------------------------
+// 求职工作台总览（全局口径）
+// ---------------------------------------------------------------------------
+
+export type OverviewTotals = {
+  missions: number;
+  resumes: number;
+  applications: number;
+  applied: number;
+  interviewing: number;
+};
+
+export type OverviewMission = {
+  mission_id: string;
+  company: string;
+  role: string;
+  location: string | null;
+  stage: TrackerItem["stage"];
+};
+
+export type OverviewRead = {
+  totals: OverviewTotals;
+  recent_missions: OverviewMission[];
+};
+
+/**
+ * 总览统计统一走全局口径。
+ *
+ * 岗位 / 简历 / 投递各自页面都是跨档案展示的，总览若按「当前档案」查就会对不上
+ * （典型症状：总览 0 已投递，投递页却有一堆记录）。
+ */
+export async function fetchOverview(
+  apiUrl = MISSION_API_BASE_URL,
+  request: MissionRequester = fetch,
+): Promise<OverviewRead> {
+  const response = await request(`${apiUrl}/api/v1/overview`);
+  return readApiPayload<OverviewRead>(response);
+}
+
 export async function fetchClaims(
   profileId: string,
   apiUrl = MISSION_API_BASE_URL,

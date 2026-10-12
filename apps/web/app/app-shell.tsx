@@ -25,13 +25,21 @@ const JOURNEY_ITEMS: NavItem[] = [
   { key: "missions", label: "岗位", href: "/missions", icon: "jobs", match: (p) => p === "/missions" || p.startsWith("/missions/") },
   { key: "resumes", label: "简历", href: "/resumes", icon: "resume", match: (p) => p === "/resumes" || p.startsWith("/resumes/") },
   { key: "tracker", label: "投递", href: "/tracker", icon: "tracker", match: (p) => p === "/tracker" },
-  { key: "interview", label: "面试", href: "/interview-records", icon: "interview", match: (p) => p.startsWith("/interview-records") },
-  { key: "question-bank", label: "题库", href: "/question-bank", icon: "bank", match: (p) => p.startsWith("/question-bank") },
+  // 「面试」与「题库」原本是两个入口但功能重叠，现已合并为「面试题库」：
+  // 题目准备与面试记录在同一页，按「公司 + 第几次面试」这个场次切换。
+  // /interview-records 保留为深链（投递页的「记面试问答」仍会用到）。
+  {
+    key: "interview-bank",
+    label: "面试题库",
+    href: "/question-bank",
+    icon: "bank",
+    match: (p) => p.startsWith("/question-bank") || p.startsWith("/interview-records"),
+  },
   { key: "assistant", label: "顺顺", href: "/assistant", icon: "assistant", match: (p) => p === "/assistant" },
 ];
 
 const TOOL_ITEMS: NavItem[] = [
-  { key: "claims", label: "事实核对", href: "/claims", icon: "claims", match: (p) => p === "/claims" },
+  // 「事实核对」(/claims) 与「证据库」职责重复，已下线；证据是唯一事实来源。
   { key: "evidence", label: "证据库", href: "/evidence-os", icon: "evidence", match: (p) => p.startsWith("/evidence-os") },
   { key: "application-profile", label: "网申资料", href: "/application-profile", icon: "profile", match: (p) => p.startsWith("/application-profile") },
   { key: "upload", label: "上传简历", href: "/workflow/start", icon: "upload", match: (p) => p.startsWith("/workflow") },

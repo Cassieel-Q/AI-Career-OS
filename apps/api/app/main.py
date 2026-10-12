@@ -51,6 +51,7 @@ from app.question_bank_routes import router as question_bank_router
 from app.application_profile_routes import router as application_profile_router
 from app.resume_template_routes import router as resume_template_router
 from app.mock_interview_routes import router as mock_interview_router
+from app.overview_routes import router as overview_router
 from app.profile_schemas import CareerPreferencesInput, CareerPreferencesRead, ProfileRead, ProfileUpdate
 from app.profile_service import (
     confirm_profile,
@@ -2737,6 +2738,7 @@ app.include_router(question_bank_router)
 app.include_router(application_profile_router)
 app.include_router(resume_template_router)
 app.include_router(mock_interview_router)
+app.include_router(overview_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_allowed_frontend_origins(),

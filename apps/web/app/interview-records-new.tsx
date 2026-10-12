@@ -25,13 +25,19 @@ function todayIso(): string {
   return `${y}-${m}-${d}`;
 }
 
-export function InterviewRecordsNew({ initialCompany = "" }: { initialCompany?: string }) {
+export function InterviewRecordsNew({
+  initialCompany = "",
+  initialRound = "一面",
+}: {
+  initialCompany?: string;
+  initialRound?: InterviewRound;
+}) {
   const router = useRouter();
   const [profileId, setProfileId] = useState("");
   const [company, setCompany] = useState(initialCompany);
   const [role, setRole] = useState("");
   const [interviewedOn, setInterviewedOn] = useState(todayIso());
-  const [round, setRound] = useState<InterviewRound>("一面");
+  const [round, setRound] = useState<InterviewRound>(initialRound);
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<DraftItem[]>([{ question: "", context: "", my_answer: "" }]);
   const [busy, setBusy] = useState(false);

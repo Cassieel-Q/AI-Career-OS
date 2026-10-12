@@ -18,10 +18,37 @@
 #let field(n) = if visible(n) { [#metadata(n.id) #n.text] } else { [] }
 #let contact = [#field(data.basics.phone) #h(9pt) #field(data.basics.email) #h(9pt) #field(data.basics.location)]
 
+// Typst 的 str.len() / str.slice() 都按 UTF-8 字节算，中文一个字 3 字节；
+// 判断「这是不是一个短条目」必须按字符数（字素簇）来。
+#let char-len(t) = t.clusters().len()
+
+// 取「标签：」前缀（全角冒号优先，其次半角）；没有冒号返回 none。
+#let bullet-label(t) = {
+  let full = t.split("：")
+  if full.len() >= 2 { full.at(0) + "：" } else {
+    let half = t.split(":")
+    if half.len() >= 2 { half.at(0) + ":" } else { none }
+  }
+}
+
 #let entry-body(e) = [
   #if visible(e.subtitle) { [#text(fill: rgb("#5c6475"))[#field(e.subtitle)] #linebreak()] }
-  #for bullet in e.bullets {
-    if visible(bullet) { [#text(fill: accent)[•] #field(bullet) #linebreak()] }
+  #let vis = e.bullets.filter(b => visible(b))
+  #if vis.len() > 0 {
+    // 整段都是短条目（奖项 / 荣誉这类）时横排，避免一条一行把版面撑空；
+    // 若它们共享同一个「标签：」前缀，则标签只写一次。
+    if vis.all(b => char-len(b.text) <= 30) {
+      let labels = vis.map(b => bullet-label(b.text))
+      let shared = if labels.all(l => l != none) and labels.all(l => l == labels.at(0)) { labels.at(0) } else { none }
+      if shared != none { [#text(fill: accent)[#shared]] }
+      for (i, b) in vis.enumerate() {
+        let stripped = if shared != none and b.text.starts-with(shared) { b.text.slice(shared.len()).trim() } else { b.text }
+        [#metadata(b.id) #stripped]
+        if i < vis.len() - 1 { [#h(2pt)#text(fill: rgb("#a1a1a6"))[·]#h(2pt)] }
+      }
+    } else {
+      for b in vis { [#text(fill: accent)[•] #field(b) #linebreak()] }
+    }
   }
 ]
 

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AssistantMessage, AssistantSurface, InterviewContextSummary } from "./assistant.ts";
 import { createConversation, resolveInterviewContext, streamChat } from "./assistant.ts";
+import { Markdown } from "./markdown-render.tsx";
 
 type Props = {
   surface: AssistantSurface;
@@ -194,7 +195,13 @@ export function AssistantChat({
           <div key={m.id} className={`assistant-msg ${m.role}`}>
             <div className="assistant-msg-body">
               <span className="assistant-msg-role">{m.role === "user" ? "你" : "顺顺"}</span>
-              <p className="assistant-msg-text">{m.content}</p>
+              {m.role === "user" ? (
+                <p className="assistant-msg-text">{m.content}</p>
+              ) : (
+                <div className="assistant-msg-text">
+                  <Markdown text={m.content} />
+                </div>
+              )}
               {m.tool_calls && m.tool_calls.length > 0 ? (
                 <div className="assistant-tools">
                   {m.tool_calls.map((t, i) => (
@@ -213,7 +220,10 @@ export function AssistantChat({
           <div className="assistant-msg assistant">
             <div className="assistant-msg-body">
               <span className="assistant-msg-role">顺顺</span>
-              <p className="assistant-msg-text assistant-streaming">{streamingText}<span className="assistant-caret" /></p>
+              <div className="assistant-msg-text assistant-streaming">
+                <Markdown text={streamingText} />
+                <span className="assistant-caret" />
+              </div>
             </div>
           </div>
         ) : null}
