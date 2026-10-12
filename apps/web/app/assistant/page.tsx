@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { AssistantConversation } from "../assistant.ts";
-import { createConversation, deleteConversation, getConversation, listConversations } from "../assistant.ts";
+import { createConversation, deleteConversation, listConversations } from "../assistant.ts";
 import { readCurrentProfileId } from "../career-hub.ts";
 import { AssistantChat } from "../assistant-chat.tsx";
 import { readAssistantContext } from "../assistant-context.ts";
@@ -68,16 +68,10 @@ export default function AssistantPage() {
     }
   }
 
-  async function select(id: string) {
+  function select(id: string) {
+    // 历史消息由 AssistantChat 按 conversationId 自行回填，这里只切换选中项。
     setActiveId(id);
     setError("");
-    try {
-      const detail = await getConversation(id, "page");
-      // 预取后交给 AssistantChat 内部通过 conversationId 加载；这里只确保存在
-      void detail;
-    } catch {
-      /* 404 等由聊天区兜底 */
-    }
   }
 
   return (

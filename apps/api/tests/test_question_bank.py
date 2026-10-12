@@ -7,6 +7,11 @@ from app import models
 from app import question_bank_service as svc
 
 
+def _offline_model(**_kwargs):
+    """模拟模型不可用：验证降级路径时完全不依赖网络与模型输出。"""
+    raise RuntimeError("model offline")
+
+
 def _make_mission(db, profile_id):
     target_job = models.TargetJob(
         profile_id=profile_id, raw_text="QQQ" * 10, content_hash=uuid4().hex + uuid4().hex
@@ -63,7 +68,7 @@ def test_reference_answer_without_evidence_is_unknown(db_session, persisted_prof
     assert "不编造" in answer.answer_text
 
 
-def test_reference_answer_uses_only_confirmed_claims(db_session, persisted_profile) -> None:
+def test_reference_answer_uses_only_confirmed_claims(db_session, persisted_profile, monkeypatch) -> None:
     target_job = models.TargetJob(
         profile_id=persisted_profile.id, raw_text="JD" * 20, content_hash=uuid4().hex + uuid4().hex
     )
@@ -96,6 +101,8 @@ def test_reference_answer_uses_only_confirmed_claims(db_session, persisted_profi
 
     bank = svc.create_bank(db_session, persisted_profile.id)
     item = svc.add_item(db_session, bank.id, question_text="讲一下你怎么做指标体系建设")
+    # 走「模型不可用」降级路径：断言点在于只用已确认事实，与模型输出无关。
+    monkeypatch.setattr(svc, "generate_answer", _offline_model)
     answer = svc.generate_reference_answer(db_session, item.id)
 
     assert answer.grounding == "BULLETS"
@@ -103,6 +110,36 @@ def test_reference_answer_uses_only_confirmed_claims(db_session, persisted_profi
     assert str(unconfirmed.id) not in answer.evidence_refs
     assert "未经确认的主张" not in answer.answer_text
     assert "指标体系建设" in answer.answer_text
+
+
+def test_reference_answer_uses_llm_when_available(db_session, persisted_profile, monkeypatch) -> None:
+    """模型可用时走 LLM 生成路径，grounding 标记为 LLM_GROUNDED。"""
+    target_job = models.TargetJob(
+        profile_id=persisted_profile.id, raw_text="J" * 30, content_hash=uuid4().hex + uuid4().hex
+    )
+    db_session.add(target_job)
+    db_session.flush()
+    confirmed = models.ResumeClaim(
+        target_job_id=target_job.id,
+        profile_id=persisted_profile.id,
+        claim="主导过指标体系建设",
+        reason="r",
+        jd_relevance="j",
+        readiness_status="SUPPORTED",
+        confidence=0.9,
+        risk_reason="",
+        fingerprint=uuid4().hex,
+    )
+    db_session.add(confirmed)
+    db_session.commit()
+
+    bank = svc.create_bank(db_session, persisted_profile.id)
+    item = svc.add_item(db_session, bank.id, question_text="讲一下你怎么做指标体系建设")
+    monkeypatch.setattr(svc, "generate_answer", lambda **_kwargs: "我会先梳理核心指标，再逐层搭建看板。")
+    answer = svc.generate_reference_answer(db_session, item.id)
+
+    assert answer.grounding == "LLM_GROUNDED"
+    assert answer.answer_text == "我会先梳理核心指标，再逐层搭建看板。"
 
 
 # ---------------------------------------------------------------------------
