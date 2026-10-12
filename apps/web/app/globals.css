@@ -2690,6 +2690,34 @@ a.mission-progress-node:hover { transform:translate(-1px, -1px); background:var(
 .assistant-msg-text { white-space: pre-wrap; word-break: break-word; line-height: 1.55; margin: 0; }
 .assistant-streaming .assistant-caret::after { content: "▋"; animation: toutou-blink 1s infinite; }
 @keyframes toutou-blink { 50% { opacity: 0; } }
+
+/* 顺顺回答的 Markdown 渲染（markdown.ts 解析 + markdown-render.tsx 输出）。
+   此前回答是整段纯文本，模型输出的 ## / ** / | 表格 会原样显示。 */
+.md-body { white-space: normal; }
+.md-body > *:first-child { margin-top: 0; }
+.md-body > *:last-child { margin-bottom: 0; }
+.md-body p { margin: 0 0 0.5rem; }
+.md-body strong { font-weight: 800; }
+.md-body em { font-style: italic; }
+.md-body a { color: inherit; text-decoration: underline; }
+.md-heading { margin: 0.8rem 0 0.4rem; line-height: 1.35; font-weight: 800; }
+.md-heading-1 { font-size: 1.06rem; }
+.md-heading-2 { font-size: 0.98rem; }
+.md-heading-3 { font-size: 0.92rem; }
+.md-heading-4, .md-heading-5, .md-heading-6 { font-size: 0.88rem; }
+.md-body ul, .md-body ol { margin: 0 0 0.5rem; padding-left: 1.15rem; display: grid; gap: 0.2rem; }
+.md-body li { line-height: 1.55; }
+.md-body code { background: rgba(0, 0, 0, 0.06); border-radius: 4px; padding: 0.05rem 0.28rem; font-size: 0.86em; }
+.md-body pre { margin: 0 0 0.5rem; padding: 0.55rem 0.7rem; background: rgba(0, 0, 0, 0.06); border-radius: 6px; overflow-x: auto; }
+.md-body pre code { background: none; padding: 0; }
+.md-body hr { border: 0; border-top: 1px solid var(--border-medium, #e5e5ea); margin: 0.7rem 0; }
+.md-table-wrap { overflow-x: auto; margin: 0 0 0.6rem; }
+.md-table-wrap table { border-collapse: collapse; width: 100%; font-size: 0.82rem; }
+.md-table-wrap th, .md-table-wrap td { border: 1px solid var(--border-medium, #e5e5ea); padding: 0.32rem 0.5rem; text-align: left; vertical-align: top; }
+.md-table-wrap th { background: rgba(0, 0, 0, 0.045); font-weight: 800; }
+/* 流式光标接到正文最后一块后面，而不是另起一行 */
+.assistant-streaming > .assistant-caret { display: none; }
+.assistant-streaming .md-body > *:last-child::after { content: "▋"; margin-left: 2px; animation: toutou-blink 1s infinite; }
 .assistant-tools { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.4rem; }
 .assistant-tool-chip {
   font-size: 0.72rem;
@@ -2869,6 +2897,21 @@ pre.batch-draft-excerpt { white-space: pre-wrap; word-break: break-word; backgro
 .question-meta { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .question-answer { white-space: pre-wrap; font-size: 0.82rem; color: var(--text-secondary, #3c3c43); background: var(--surface-hover, #f0f0f2); border-radius: 6px; padding: 0.5rem; }
 .question-answer.grounded-unknown { border-left: 3px solid var(--accent-warning, #b25000); }
+
+/* 面试题库：面试 + 题库合并后的场次选择与分区 */
+.session-bar { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; gap: 0.75rem; align-items: end; }
+.session-bar .field-label { display: grid; gap: 0.35rem; font-size: 0.78rem; color: var(--text-tertiary, #6e6e73); }
+.session-bar select { width: 100%; padding: 0.45rem 0.55rem; border: 1px solid var(--border-medium, #e5e5ea); border-radius: 8px; background: var(--surface, #fff); color: var(--text-primary, #1c1c1e); font: inherit; font-size: 0.85rem; }
+.session-tabs { display: flex; gap: 0.35rem; margin: 0.25rem 0 0.9rem; }
+.session-tabs button { padding: 0.45rem 0.85rem; border: 1px solid var(--border-medium, #e5e5ea); border-radius: 999px; background: var(--surface, #fff); color: var(--text-secondary, #3c3c43); font-size: 0.85rem; }
+.session-tabs button.active { background: var(--fill-selected, #111); border-color: var(--fill-selected, #111); color: var(--text-inverse, #fff); }
+.session-record-list { display: grid; gap: 0.5rem; margin-top: 0.6rem; }
+.session-record-item { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; border: 1px solid var(--border-medium, #e5e5ea); border-radius: 8px; padding: 0.7rem 0.85rem; background: var(--surface, #fff); color: inherit; text-decoration: none; }
+.session-record-item:hover { background: var(--surface-hover, #f0f0f2); }
+.session-record-main { display: grid; gap: 0.15rem; min-width: 0; }
+.session-record-main strong { font-size: 0.92rem; }
+.session-record-main small { color: var(--text-tertiary, #6e6e73); font-size: 0.76rem; }
+@media (max-width: 860px) { .session-bar { grid-template-columns: 1fr; } }
 
 /* 通用小控件（题库 / 网申资料等新页面复用） */
 .app-chip { padding:0.25rem 0.6rem; border:1px solid var(--border-medium,#e5e5ea); border-radius:999px; background:var(--surface,#fff); color:var(--text-secondary,#3c3c43); font-size:0.75rem; cursor:pointer; }

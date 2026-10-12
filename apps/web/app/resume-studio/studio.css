@@ -121,3 +121,33 @@
 .rs-loading { min-height:100vh; display:grid; place-content:center; text-align:center; gap:10px; background:#fafafa; }.rs-loading h1 { margin:0; }.rs-loading a { color:#111111; }
 @media (max-width:1150px) { .rs-toolbar, .rs-workbench { padding-left:24px; padding-right:24px; }.rs-alert { margin-left:24px; margin-right:24px; }.rs-workbench { grid-template-columns:230px minmax(350px, 1fr); }.rs-inspector { grid-column:1 / -1; max-height:none; min-height:0; display:grid; grid-template-columns:1fr 1fr; }.rs-inspector .rs-panel-heading { grid-column:1 / -1; }.rs-export { grid-column:1 / -1; }.rs-template-grid { grid-template-columns:repeat(2, 1fr); } }
 @media (max-width:760px) { .rs-topbar { padding:0 16px; height:62px; }.rs-top-actions { gap:8px; }.rs-revision, .rs-stage { display:none; }.rs-toolbar { display:block; padding:25px 16px 16px; }.rs-toolbar h1 { font-size:23px; }.rs-toolbar-buttons { justify-content:start; margin-top:16px; }.rs-workbench { display:block; padding:0 12px 25px; }.rs-mobile-tabs { display:flex; padding:0 12px 12px; gap:5px; }.rs-mobile-tabs button { flex:1; background:#f5f5f7; color:#111111; border-radius:5px; }.rs-mobile-tabs button.active { background:#111111; color:white; }.rs-mobile-hidden { display:none !important; }.rs-outline, .rs-inspector { max-height:none; min-height:0; margin-bottom:12px; }.rs-inspector { display:block; }.rs-preview-panel { min-height:0; }.rs-pages { padding:12px; max-height:none; }.rs-preview-heading { padding:14px; }.rs-gallery-backdrop { padding:0; }.rs-gallery { max-height:100vh; }.rs-gallery-header { padding:20px 16px; }.rs-template-grid { grid-template-columns:1fr 1fr; padding:14px; gap:8px; }.rs-template-info { padding:10px; }.rs-template-info h3 { font-size:13px; }.rs-language-tabs { padding:10px 14px; flex-wrap:wrap; }.rs-language-tabs span { width:100%; }.rs-alert { margin:0 12px 12px; } }
+
+/* ---- 版式设置（inspector 第三个板块）----
+   此前这两个板块只有 globals.css 的通用样式：auto-fit minmax(9rem) 在 285px 窄栏里
+   退化成单列长条；栏目顺序的箭头按钮被全局 button 的 color:#fff 继承，而这里又只把
+   背景改成白色 —— 白字白底，箭头等于隐形。这里按窄栏重做。 */
+.rs-root .rs-layout { padding:17px 20px; border-top:0; border-bottom:1px solid #f5f5f7; margin-top:0; }
+.rs-root .rs-layout h3 { margin:0 0 6px; font-size:13px; }
+.rs-root .rs-layout > p { margin:0 0 12px; font-size:10px; line-height:1.55; color:#8e8e93; }
+.rs-root .layout-controls { grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px 12px; margin:0; }
+.rs-root .layout-controls label { display:flex; flex-direction:column; gap:5px; font-size:10px; font-weight:700; color:#6e6e73; min-width:0; }
+.rs-root .layout-controls input[type="number"],
+.rs-root .layout-controls select { width:100%; height:30px; padding:0 7px; font-size:11px; border-radius:5px; color:#111111; }
+/* 强调色 / 照片是「标签 + 小控件」的单行结构：标签靠左，控件靠右且保持小尺寸，
+   不要拉满整栏——拉满会在窄栏里变成一条很粗的色带。 */
+.rs-root .layout-controls .rs-layout-color,
+.rs-root .layout-controls .rs-layout-photo { flex-direction:row; align-items:center; justify-content:space-between; gap:8px; }
+.rs-root .layout-controls input[type="color"] { width:56px; height:30px; flex:none; padding:2px; border-radius:5px; background:#ffffff; border:1px solid #e5e5ea; }
+.rs-root .layout-controls .rs-layout-photo input { width:16px; height:16px; flex:none; }
+
+.rs-root .rs-layout-order { display:grid; gap:7px; margin-top:16px; }
+.rs-root .rs-layout-order > span { font-size:10px; font-weight:700; color:#6e6e73; }
+.rs-root .layout-order-list { gap:5px; margin:0; }
+.rs-root .layout-order-item { padding:6px 7px 6px 10px; border-radius:5px; font-size:11px; color:#111111; }
+.rs-root .layout-order-item > span:first-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.rs-root .layout-order-item > span:last-child { display:flex; gap:4px; flex:none; }
+.rs-root .rs-layout-order .layout-order-item button { width:22px; height:22px; min-width:22px; display:grid; place-items:center; padding:0; color:#111111; background:#f5f5f7; border:1px solid #e5e5ea; border-radius:4px; font-size:11px; line-height:1; }
+.rs-root .rs-layout-order .layout-order-item button:hover:not(:disabled) { background:#111111; color:#ffffff; border-color:#111111; }
+.rs-root .rs-layout-order .layout-order-item button:disabled { opacity:.38; cursor:not-allowed; background:#f5f5f7; color:#8e8e93; }
+
+@media (max-width:1150px) { .rs-root .rs-layout { padding:17px 20px; } }
