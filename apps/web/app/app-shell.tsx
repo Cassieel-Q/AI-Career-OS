@@ -23,7 +23,7 @@ const SIDEBAR_COLLAPSED_KEY = "career-os.sidebar.collapsed";
 const JOURNEY_ITEMS: NavItem[] = [
   { key: "home", label: "总览", href: "/", icon: "overview", match: (p) => p === "/" },
   { key: "missions", label: "岗位", href: "/missions", icon: "jobs", match: (p) => p === "/missions" || p.startsWith("/missions/") },
-  { key: "resumes", label: "简历", href: "/resumes", icon: "resume", match: (p) => p === "/resumes" || p.startsWith("/resumes/") },
+  { key: "resumes", label: "简历中心", href: "/resumes", icon: "resume", match: (p) => p === "/resumes" || p.startsWith("/resumes/") },
   { key: "tracker", label: "投递", href: "/tracker", icon: "tracker", match: (p) => p === "/tracker" },
   // 「面试」与「题库」原本是两个入口但功能重叠，现已合并为「面试题库」：
   // 题目准备与面试记录在同一页，按「公司 + 第几次面试」这个场次切换。
@@ -42,7 +42,7 @@ const TOOL_ITEMS: NavItem[] = [
   // 「事实核对」(/claims) 与「证据库」职责重复，已下线；证据是唯一事实来源。
   { key: "evidence", label: "证据库", href: "/evidence-os", icon: "evidence", match: (p) => p.startsWith("/evidence-os") },
   { key: "application-profile", label: "网申资料", href: "/application-profile", icon: "profile", match: (p) => p.startsWith("/application-profile") },
-  { key: "upload", label: "上传简历", href: "/workflow/start", icon: "upload", match: (p) => p.startsWith("/workflow") },
+  // 「上传简历」已合并进「简历中心」(/resumes)：上传、改原文、档案管理都在那里。
 ];
 
 /** 线形图标（1.5 描边、圆角端点），统一几何语言。 */

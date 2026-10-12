@@ -76,13 +76,19 @@ def _preferences_read(
     )
 
 
-def create_draft_profile(db: Session, extraction: ResumeExtractionResult) -> models.UserProfile:
+def create_draft_profile(
+    db: Session,
+    extraction: ResumeExtractionResult,
+    *,
+    raw_text: str | None = None,
+) -> models.UserProfile:
     profile = models.UserProfile(
         status=ProfileStatus.DRAFT.value,
         full_name=extraction.full_name,
         phone=extraction.phone,
         email=extraction.email,
         city=extraction.city,
+        resume_text=(raw_text or "").strip() or None,
     )
     profile.education = [
         models.Education(
@@ -365,11 +371,20 @@ def create_empty_draft_profile(db: Session) -> ProfileRead:
     return _profile_read(profile)
 
 
-def replace_profile_from_extraction(db: Session, profile_id: UUID, extraction: ResumeExtractionResult) -> ProfileRead:
+def replace_profile_from_extraction(
+    db: Session,
+    profile_id: UUID,
+    extraction: ResumeExtractionResult,
+    *,
+    raw_text: str | None = None,
+) -> ProfileRead:
     """Re-ingest a resume into an existing draft profile (clears collections first)."""
     profile = _get_profile(db, profile_id, for_update=True)
     if profile.status == ProfileStatus.CONFIRMED.value:
         raise HTTPException(status_code=409, detail="Confirmed profiles cannot be replaced from a resume upload")
+    cleaned_raw = (raw_text or "").strip()
+    if cleaned_raw:
+        profile.resume_text = cleaned_raw
     profile.education = []
     profile.skills = []
     profile.experiences = []

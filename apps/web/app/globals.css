@@ -3200,3 +3200,185 @@ pre.batch-draft-excerpt { white-space: pre-wrap; word-break: break-word; backgro
 .question-explain { margin:0.4rem 0 0; display:grid; grid-template-columns:auto 1fr; gap:0.15rem 0.5rem; font-size:0.75rem; }
 .question-explain dt { color:var(--text-tertiary,#6e6e73); white-space:nowrap; }
 .question-explain dd { margin:0; color:var(--text-secondary,#3c3c43); }
+
+/* ==========================================================================
+   岗位洞察（批次二）：关键词 chips / 匹配度圆环 / 匹配分析侧栏
+   ========================================================================== */
+
+/* 岗位名改为可点击文本按钮：点一下开侧栏，再点一下进岗位页 */
+.cell-title-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+.cell-title-link:hover { text-decoration: underline; }
+.cell-title-link.active { color: var(--fill-selected); text-decoration: underline; }
+
+/* 岗位关键词 */
+.kw-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.kw-chip {
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* 匹配度单元格：圆环 + 结论徽章 */
+.cell-score { display: flex; align-items: center; gap: 0.5rem; }
+
+/* 匹配度圆环 */
+.score-ring {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.score-ring svg { display: block; }
+.score-ring-value {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.score-ring.large .score-ring-value { font-size: 1.35rem; }
+
+/* 次级按钮（表格里的「待分析」「分析关键词」） */
+.app-btn.subtle {
+  border-color: var(--border-medium);
+  background: var(--surface-muted);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.app-btn.subtle:hover:not(:disabled) { background: var(--surface-hover); }
+
+/* 侧栏不做模态遮罩：岗位名在表格最左侧，不会被盖住，所以「再点一下岗位名进岗位页」始终可点 */
+
+/* 匹配分析侧栏 */
+.job-drawer { width: min(30rem, 100vw); }
+.job-drawer-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1rem;
+  gap: 1rem;
+}
+.job-drawer-title { display: grid; gap: 0.35rem; }
+.job-drawer-name {
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+.job-drawer-name:hover { text-decoration: underline; }
+.job-drawer-meta { margin: 0; color: var(--text-tertiary); font-size: 0.8rem; }
+.job-drawer-score {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+}
+.job-drawer-score > div { display: grid; gap: 0.45rem; justify-items: start; }
+.job-drawer-advice { margin: 0; color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5; }
+.job-drawer-block { display: grid; gap: 0.45rem; }
+.job-drawer-block h4 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.job-drawer-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.35rem;
+}
+.job-drawer-list li {
+  position: relative;
+  padding-left: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+.job-drawer-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.5rem;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: var(--text-tertiary);
+}
+.job-drawer-list.good li::before { background: var(--fill-selected); }
+.job-drawer-list.bad li::before { background: var(--accent-danger); }
+.job-drawer-source { margin: 0; color: var(--text-quaternary); font-size: 0.72rem; }
+.job-drawer-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border-weak);
+  background: var(--surface);
+}
+
+/* 岗位页面上的简历匹配度卡片 */
+.mission-match-card { display: grid; gap: 0.85rem; }
+.mission-match-head { display: flex; align-items: center; gap: 1rem; }
+.mission-match-head-text { display: grid; gap: 0.4rem; justify-items: start; }
+.mission-match-block { display: grid; gap: 0.35rem; }
+.mission-match-block h4 { margin: 0; font-size: 0.85rem; font-weight: 700; color: var(--text-primary); }
+.mission-match-block .summary { margin: 0; max-width: none; font-size: 0.9rem; }
+.mission-match-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; }
+.mission-match-grid > div { display: grid; gap: 0.45rem; align-content: start; }
+.mission-match-grid h4 { margin: 0; font-size: 0.85rem; font-weight: 700; color: var(--text-primary); }
+.mission-match-grid .summary { margin: 0; max-width: none; font-size: 0.85rem; }
+
+/* 提示条：成功（黑白灰体系，左侧强调条区分） */
+.message.success {
+  background: var(--surface-muted);
+  color: var(--text-primary);
+  border-left: 3px solid var(--fill-selected);
+}
+
+/* 简历中心（合并上传入口）：档案卡 + 原文工作台 */
+.resume-archive,
+.resume-studio { display: grid; gap: 0.9rem; margin-bottom: 1rem; }
+.resume-archive .start-card-head p,
+.resume-studio .start-card-head p { margin: 0.2rem 0 0; color: var(--text-tertiary); font-size: 0.85rem; }
+.resume-archive-current { display: flex; align-items: center; gap: 0.5rem; margin: 0; font-size: 0.9rem; font-weight: 600; }
+.resume-archive-actions { flex-wrap: wrap; align-items: center; }
+.resume-studio-text {
+  width: 100%;
+  min-height: 18rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-primary);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  resize: vertical;
+}
+.resume-studio-text:focus { outline: 2px solid var(--focus-ring); outline-offset: -1px; }
+.resume-studio-text:disabled { background: var(--surface-disabled); color: var(--text-quaternary); }
+.resume-studio .start-note { margin: 0; }

@@ -207,6 +207,15 @@ export type PlazaItem = {
   seniority: string;
   workflow_state: string;
   prep_score: number;
+  /** 岗位关键词（模型分析，2~3 个），未分析时为空数组。 */
+  keywords: string[];
+  job_summary: string;
+  analysis_source: string;
+  /** 简历 × 岗位匹配度；未分析时为 null（此时退回 prep_score 展示）。 */
+  match_score: number | null;
+  match_verdict: string | null;
+  match_verdict_label: string | null;
+  match_source: string;
   resume_ready: boolean;
   target_resume_confirmed: boolean;
   application_id: string | null;

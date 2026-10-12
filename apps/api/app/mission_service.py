@@ -2382,6 +2382,7 @@ def bind_mission_resume_from_extraction(
     filename: str | None = None,
     content_hash_value: str | None = None,
     source_section_order: list[str] | None = None,
+    raw_text: str | None = None,
 ) -> dict[str, object]:
     """Ingest upload/paste for a mission with copy-on-write by default.
 
@@ -2411,7 +2412,7 @@ def bind_mission_resume_from_extraction(
     ]
 
     if update_master:
-        replace_profile_from_extraction(db, master_id, extraction)
+        replace_profile_from_extraction(db, master_id, extraction, raw_text=raw_text)
         # replace_profile commits; re-load mission
         mission = _mission(db, mission_id)
         mission.resume_source = {
@@ -2426,7 +2427,7 @@ def bind_mission_resume_from_extraction(
         }
         bound_profile_id = master_id
     else:
-        local = create_draft_profile(db, extraction)
+        local = create_draft_profile(db, extraction, raw_text=raw_text)
         # create_draft_profile commits; re-load mission in this session
         mission = _mission(db, mission_id)
         mission.resume_source = {

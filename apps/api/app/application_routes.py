@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from . import models
 from .database import get_db
+from .job_insight_service import cached_insight
 
 
 router = APIRouter(prefix="/api/v1")
@@ -149,6 +150,14 @@ class PlazaItem(BaseModel):
     seniority: str = "UNKNOWN"
     workflow_state: str = "JD_REQUIRED"
     prep_score: int = 0
+    # --- 025_job_insight：岗位关键词 + 简历×岗位匹配度（读缓存，不触发模型） ---
+    keywords: list[str] = Field(default_factory=list)
+    job_summary: str = ""
+    analysis_source: str = "NONE"
+    match_score: int | None = None
+    match_verdict: str | None = None
+    match_verdict_label: str | None = None
+    match_source: str = "NONE"
     resume_ready: bool = False
     target_resume_confirmed: bool = False
     application_id: str | None = None
@@ -368,6 +377,7 @@ def read_plaza(profile_id: UUID | None = None, db: Session = Depends(get_db)):
     for mission in missions:
         application = applications_by_mission.get(mission.id)
         confirmed = bool(target_resumes_by_mission.get(mission.id))
+        insight = cached_insight(mission)
         items.append(
             PlazaItem(
                 mission_id=str(mission.id),
@@ -378,6 +388,13 @@ def read_plaza(profile_id: UUID | None = None, db: Session = Depends(get_db)):
                 seniority=mission.seniority,
                 workflow_state=mission.workflow_state,
                 prep_score=_prep_score(mission.workflow_state, target_resume_confirmed=confirmed),
+                keywords=insight["keywords"],
+                job_summary=insight["summary"],
+                analysis_source=insight["analysis_source"],
+                match_score=insight["match_score"],
+                match_verdict=insight["match_verdict"],
+                match_verdict_label=insight["match_verdict_label"],
+                match_source=insight["match_source"],
                 resume_ready=bool(mission.resume_source),
                 target_resume_confirmed=confirmed,
                 application_id=str(application.id) if application else None,

@@ -19,6 +19,9 @@ class UserProfile(Base):
     phone: Mapped[str | None] = mapped_column(String(64), nullable=True)
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     city: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # 025_job_insight：简历原始文字（上传 PDF 提取到的原文 / 用户粘贴的文本），
+    # 供「简历中心 · 简历工作台」直接编辑；与逐条事实解耦，改完可重新解析。
+    resume_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
@@ -704,6 +707,9 @@ class JobMission(Base):
     what_matters: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict, server_default="{}")
     resume_strategy: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict, server_default="{}")
     interview_intel: Mapped[list] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
+    # --- 025_job_insight：岗位关键词分析 / 简历×岗位匹配度（模型生成后缓存，避免每次进列表都调用） ---
+    analysis: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    match_analysis: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
