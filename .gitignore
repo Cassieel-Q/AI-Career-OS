@@ -51,3 +51,6 @@ evals/benchmark/runs/**
 !evals/benchmark/runs/.gitkeep
 .runtime/evaluation/
 
+
+# 本地反馈截图，勿提交
+image/
