@@ -23,7 +23,8 @@ def test_stale_revision_does_not_overwrite_a_saved_edit(db_session):
     assert _first_entry(read_document(get_or_create_document(db_session, mission.id)))["bullets"][0]["text"] == "Saved wording"
 
 
-def test_new_metric_requires_fact_confirmation_only_while_included(db_session):
+def test_unconfirmed_fact_warns_but_never_blocks_export(db_session):
+    """「事实核对」已下线：新增未核对要点只产生 warn，不再拦截导出。"""
     mission, _, _ = _mission_with_resume(db_session)
     first = read_document(get_or_create_document(db_session, mission.id))
     entry_id = _first_entry(first)["id"]
@@ -32,15 +33,33 @@ def test_new_metric_requires_fact_confirmation_only_while_included(db_session):
     new_bullet = _first_entry(added)["bullets"][-1]
     assert new_bullet["claim_status"] == "NEEDS_CONFIRMATION"
     assert new_bullet["risk_level"] == "HIGH"
-    assert any(item["node_id"] == new_bullet["id"] and item["level"] == "block" for item in export_checks(added["document"]))
+
+    checks = export_checks(added["document"])
+    assert not any(item["level"] == "block" for item in checks)
+    hits = [item for item in checks if item.get("node_id") == new_bullet["id"]]
+    assert hits and all(item["level"] == "warn" for item in hits)
+    assert hits[0]["code"] == "unconfirmed_fact"
 
     omitted = apply_operation(db_session, mission.id, 2, {"type": "omit", "node_id": new_bullet["id"]})
     assert not any(item.get("node_id") == new_bullet["id"] for item in export_checks(omitted["document"]))
 
     restored = apply_operation(db_session, mission.id, 3, {"type": "restore", "node_id": new_bullet["id"]})
     assert any(item.get("node_id") == new_bullet["id"] for item in export_checks(restored["document"]))
+
     confirmed = apply_operation(db_session, mission.id, 4, {"type": "confirm_fact", "node_id": new_bullet["id"]})
     assert not any(item.get("node_id") == new_bullet["id"] for item in export_checks(confirmed["document"]))
+
+
+def test_placeholder_residue_still_blocks_export(db_session):
+    """占位残留属于内容质量问题，不在「事实核对」范畴，继续拦截导出。"""
+    mission, _, _ = _mission_with_resume(db_session)
+    first = read_document(get_or_create_document(db_session, mission.id))
+    entry_id = _first_entry(first)["id"]
+
+    added = apply_operation(db_session, mission.id, 1, {"type": "add_bullet", "entry_id": entry_id, "text": "负责数据看板【待补：补充量化结果】"})
+    new_bullet = _first_entry(added)["bullets"][-1]
+    blocks = [item for item in export_checks(added["document"]) if item["level"] == "block"]
+    assert any(item["code"] == "placeholder_residue" and item.get("node_id") == new_bullet["id"] for item in blocks)
 
 
 def test_added_entries_and_bullets_keep_ids_when_reordered(db_session):

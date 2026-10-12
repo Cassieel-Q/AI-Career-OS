@@ -22,6 +22,44 @@ const STEPS = [
 
 type Json = Record<string, unknown>;
 
+type RequirementOut = { id: string; raw_text: string; priority: string };
+
+type MatchRowOut = {
+  requirement_id: string;
+  match_status: string;
+  rationale: string;
+  excavation_questions: string[];
+};
+
+type MatchResult = {
+  covered: number;
+  weak: number;
+  missing: number;
+  needs_excavation: number;
+  rows: MatchRowOut[];
+  admission: string;
+  admission_reason: string;
+  ref_score: number | null;
+  ref_score_breakdown: { name: string; detail: string }[];
+  disclaimer: string;
+};
+
+// 五类结论与准入建议的中文名映射：只做展示层，不改后端枚举值。
+const MATCH_STATUS_LABEL: Record<string, string> = {
+  covered: "已匹配",
+  weak: "表达缺口",
+  missing: "真实缺口",
+  not_applicable: "不适用",
+  needs_excavation: "待确认",
+};
+
+const ADMISSION_LABEL: Record<string, string> = {
+  can_apply: "可以投递",
+  confirm: "先确认再投",
+  do_not_apply: "暂不建议投递",
+  pending: "待评估",
+};
+
 async function api<T = Json>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API}${path}`, {
     ...init,
@@ -51,7 +89,8 @@ export default function EvidenceOsPage() {
   const [evidenceId, setEvidenceId] = useState("");
   const [jdText, setJdText] = useState("");
   const [jdId, setJdId] = useState("");
-  const [matchSummary, setMatchSummary] = useState("");
+  const [jdReqs, setJdReqs] = useState<RequirementOut[]>([]);
+  const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
   const [versionId, setVersionId] = useState("");
   const [versionHash, setVersionHash] = useState("");
   const [draftText, setDraftText] = useState("");
@@ -61,6 +100,10 @@ export default function EvidenceOsPage() {
 
   function note(msg: string) {
     setLog((prev) => `${new Date().toLocaleTimeString()}  ${msg}\n${prev}`);
+  }
+
+  function requirementText(requirementId: string): string {
+    return jdReqs.find((item) => item.id === requirementId)?.raw_text || "（未找到对应要求原文）";
   }
 
   async function run(fn: () => Promise<void>) {
@@ -88,8 +131,8 @@ export default function EvidenceOsPage() {
       <section className="app-card app-guide-card" aria-label="使用说明">
         <strong>这一页解决什么问题？</strong>
         <p>面试官追问「这件事真是你做的吗」时，你需要拿出经得起追问的细节。证据库把经历原文拆成一条条不可变的证据事实，简历主张、面试回答都能引用它们。</p>
-        <strong>和「事实核对」什么关系？</strong>
-        <p>日常使用不必手动维护本页——上传简历、确认事实时会自动沉淀证据。本页是进阶模式：想手动补充证据（如项目数据、聊天记录摘录）或审计某条主张时才需要用到，按顶部 8 步从左到右操作即可，通常只用前 3 步（录入证据 → 建立主张 → 解析岗位）。</p>
+        <strong>和简历、面试是什么关系？</strong>
+        <p>日常使用不必手动维护本页——上传简历时系统会自动沉淀证据。本页是进阶模式：想手动补充证据（如项目数据、聊天记录摘录）或核验某条主张时才需要用到，按顶部 8 步从左到右操作即可，通常只用前 3 步（录入证据 → 建立主张 → 解析岗位）。</p>
       </section>
 
       <section className="app-card">
@@ -229,6 +272,8 @@ export default function EvidenceOsPage() {
                     body: JSON.stringify({ title: "目标岗位", raw_text: jdText, language: "en" }),
                   });
                   setJdId(String(jd.id));
+                  setJdReqs((jd.requirements as RequirementOut[]) || []);
+                  setMatchResult(null);
                   note(`岗位已解析：${jd.id}，共 ${(jd.requirements as unknown[])?.length || 0} 条要求`);
                   setStep(3);
                 })
@@ -248,20 +293,58 @@ export default function EvidenceOsPage() {
               type="button"
               onClick={() =>
                 run(async () => {
-                  const m = await api(`/evidence-os/profiles/${profileId}/jds/${jdId}/match`, {
+                  const m = await api<MatchResult>(`/evidence-os/profiles/${profileId}/jds/${jdId}/match`, {
                     method: "POST",
                   });
-                  setMatchSummary(
-                    `已覆盖 ${m.covered} · 偏弱 ${m.weak} · 缺失 ${m.missing} · 需深挖 ${m.needs_excavation}`
-                  );
-                  note(`匹配结果：${JSON.stringify(m)}`);
-                  setStep(4);
+                  setMatchResult(m);
+                  note(`匹配完成：${ADMISSION_LABEL[m.admission] || m.admission} · 参考分 ${m.ref_score}`);
                 })
               }
             >
               运行匹配与差距分析
             </button>
-            {matchSummary && <pre className="evidence-log">{matchSummary}</pre>}
+
+            {matchResult && (
+              <div className="match-result">
+                <div className="match-result-head">
+                  <span className={`app-badge ${matchResult.admission === "do_not_apply" ? "attention" : "muted"}`}>
+                    {ADMISSION_LABEL[matchResult.admission] || matchResult.admission}
+                  </span>
+                  <span className="match-score">
+                    <b>{matchResult.ref_score ?? "—"}</b>
+                    <small>参考分 / 100</small>
+                  </span>
+                </div>
+
+                <p className="start-note">{matchResult.admission_reason}</p>
+                <p className="start-note">
+                  已匹配 {matchResult.covered} · 表达缺口 {matchResult.weak} · 真实缺口 {matchResult.missing} · 待确认{" "}
+                  {matchResult.needs_excavation}
+                </p>
+
+                <ul className="match-rows">
+                  {matchResult.rows.map((row) => (
+                    <li key={row.requirement_id}>
+                      <span className={`match-status ${row.match_status}`}>
+                        {MATCH_STATUS_LABEL[row.match_status] || row.match_status}
+                      </span>
+                      <span className="match-rows-text">{requirementText(row.requirement_id)}</span>
+                      {row.excavation_questions.length > 0 && (
+                        <em className="match-rows-hint">深挖问题：{row.excavation_questions[0]}</em>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+
+                {matchResult.ref_score_breakdown.map((item) => (
+                  <p className="start-note" key={item.name}>
+                    · {item.name}：{item.detail}
+                  </p>
+                ))}
+                <p className="start-note">{matchResult.disclaimer}</p>
+                <p className="start-note">结论已生成。确认后点上方「5. 定位成稿」继续。</p>
+              </div>
+            )}
           </div>
         )}
 

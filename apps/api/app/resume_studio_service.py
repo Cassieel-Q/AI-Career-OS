@@ -334,7 +334,12 @@ def _risk_for_text(text: str, previous: str = "LOW") -> str:
 
 
 def export_checks(document: dict) -> list[dict]:
-    """Only rendered high-risk unresolved claims or residual placeholders block a formal PDF."""
+    """导出前自检。
+
+    「事实核对」已下线：未核对的内容不再拦截导出，只以 ``warn`` 返回提示
+    （信息不丢，供调用方自行决定是否展示）。仍然 ``block`` 的只剩两类
+    内容质量问题：正文残留占位标记、以及一条要点都没有的空简历。
+    """
     checks: list[dict] = []
     rendered_bullets = 0
 
@@ -343,8 +348,12 @@ def export_checks(document: dict) -> list[dict]:
             return
         status = node.get("claim_status")
         if status in {"NEEDS_CONFIRMATION", "BLOCKED_MISSING"}:
-            level = "block" if node.get("risk_level") == "HIGH" else "warn"
-            checks.append({"level": level, "code": "unconfirmed_fact", "node_id": node["id"], "message": "这项内容需要核对事实。"})
+            checks.append({
+                "level": "warn",
+                "code": "unconfirmed_fact",
+                "node_id": node["id"],
+                "message": "这项内容尚未核对事实；不影响导出，建议投递前自行确认。",
+            })
         residue = _placeholder_residue(node.get("text"))
         if residue:
             where = f"（{location}）" if location else ""

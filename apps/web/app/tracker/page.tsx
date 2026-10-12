@@ -24,12 +24,6 @@ function applicationBadgeClass(status: ApplicationStatus): string {
   return "filled";
 }
 
-function prevStatus(status: ApplicationStatus): ApplicationStatus | null {
-  const index = APPLICATION_STATUS_ORDER.indexOf(status);
-  if (index <= 0) return null;
-  return APPLICATION_STATUS_ORDER[index - 1];
-}
-
 function nextStatus(status: ApplicationStatus): ApplicationStatus | null {
   const index = APPLICATION_STATUS_ORDER.indexOf(status);
   if (index < 0 || index >= APPLICATION_STATUS_ORDER.length - 1) return null;
@@ -131,7 +125,7 @@ export default function TrackerPage() {
         <div>
           <p className="app-eyebrow">Tracker</p>
           <h1 className="app-page-title">投递</h1>
-          <p className="app-page-subtitle">记录每一次投递动作，逐级推进或退回状态，并沉淀面试问答。</p>
+          <p className="app-page-subtitle">记录每一次投递动作，逐级推进状态（只进不退），并沉淀面试问答。</p>
         </div>
         <button type="button" className="app-btn primary" onClick={() => setShowForm((v) => !v)}>
           {showForm ? "收起表单" : "新建投递记录"}
@@ -170,7 +164,6 @@ export default function TrackerPage() {
         <div className="app-empty">读取中…</div>
       ) : applications.length ? (
         applications.map((app) => {
-          const prev = prevStatus(app.status);
           const next = nextStatus(app.status);
           return (
             <div className="app-card app-row" key={app.id}>
@@ -185,15 +178,6 @@ export default function TrackerPage() {
               </div>
               <span className={`app-badge ${applicationBadgeClass(app.status)}`}>{APPLICATION_STATUS_LABEL[app.status]}</span>
               <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-                <button
-                  type="button"
-                  className="app-btn"
-                  disabled={busyId === app.id || !prev}
-                  title={prev ? `退回至「${APPLICATION_STATUS_LABEL[prev]}」` : "已在最前阶段"}
-                  onClick={() => prev && void setStatus(app, prev)}
-                >
-                  ← 退回
-                </button>
                 <button
                   type="button"
                   className="app-btn primary"
