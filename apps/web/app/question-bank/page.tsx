@@ -13,6 +13,7 @@ import {
   type InterviewRound,
 } from "../interview-records.ts";
 import {
+  GROUNDING_LABEL,
   QUESTION_CATEGORIES,
   QUESTION_CATEGORY_LABEL,
   QUESTION_DIFFICULTIES,
@@ -44,6 +45,7 @@ export default function QuestionBankPage() {
   const [tab, setTab] = useState<Tab>("prepare");
   const [profileId, setProfileId] = useState("");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   // ---- 题库（原「题库」页能力，整体保留）----
   const [banks, setBanks] = useState<QuestionBank[]>([]);
@@ -149,11 +151,22 @@ export default function QuestionBankPage() {
   const newRecordHref = `/interview-records/new?company=${encodeURIComponent(activeSession?.company ?? "")}&round=${encodeURIComponent(round)}` as Route;
 
   const handleCreateBank = useCallback(async () => {
-    if (!profileId || !bankName.trim()) return;
+    // 原来这里是静默 return：没档案或题库名为空时点了毫无反应。改为明确提示。
+    if (!bankName.trim()) {
+      setError("请先填写题库名。");
+      return;
+    }
+    if (!profileId) {
+      setError("还没有简历档案，无法创建题库。请先在「简历」页上传一份简历。");
+      return;
+    }
+    setError("");
+    setNotice("");
     setBusyId("new-bank");
     try {
-      await createQuestionBank(profileId, bankName.trim(), activeSession?.missionId ?? null);
+      const bank = await createQuestionBank(profileId, bankName.trim(), activeSession?.missionId ?? null);
       await loadBanks(profileId);
+      setNotice(`已创建题库「${bank.name}」。可以在下方「添加题目」逐条录入，或点「按当前岗位生成题库」。`);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "创建题库失败。");
     } finally {
@@ -164,15 +177,21 @@ export default function QuestionBankPage() {
   // 第六阶段：按真实上下文（JD + 已确认岗位简历）生成三分类题库。
   // 优先用本页选中的场次，其次回落到顺顺登记的上下文。
   const handleGenerateFromContext = useCallback(async () => {
-    if (!profileId) return;
+    if (!profileId) {
+      setError("还没有简历档案，无法生成题库。请先在「简历」页上传一份简历。");
+      return;
+    }
+    setError("");
+    setNotice("");
     setBusyId("generate");
     try {
       const context = readAssistantContext();
-      await generateQuestionBank(profileId, {
+      const bank = await generateQuestionBank(profileId, {
         mission_id: activeSession?.missionId || context.missionId,
         target_resume_id: context.targetResumeId,
       });
       await loadBanks(profileId);
+      setNotice(`已生成题库「${bank.name}」，共 ${bank.item_count} 道题。`);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "按岗位生成题库失败。");
     } finally {
@@ -181,7 +200,16 @@ export default function QuestionBankPage() {
   }, [activeSession?.missionId, loadBanks, profileId]);
 
   const handleAddQuestion = useCallback(async () => {
-    if (!profileId || !newQuestion.trim()) return;
+    if (!newQuestion.trim()) {
+      setError("请先输入题目。");
+      return;
+    }
+    if (!profileId) {
+      setError("还没有简历档案，无法添加题目。请先在「简历」页上传一份简历。");
+      return;
+    }
+    setError("");
+    setNotice("");
     setBusyId("new-question");
     try {
       const payload = {
@@ -255,6 +283,7 @@ export default function QuestionBankPage() {
       </header>
 
       {error && <p className="app-inline-error" role="alert">{error}</p>}
+      {notice ? <p className="message success" role="status">{notice}</p> : null}
 
       {!profileId && !loading ? (
         <section className="app-card app-empty">还没有简历档案，请先上传简历后再建题库。</section>
@@ -363,6 +392,7 @@ export default function QuestionBankPage() {
               <section className="app-card" aria-label="题目列表">
                 <div className="question-card-head">
                   <strong>题目（{items.length}）</strong>
+                  <span className="app-muted">{banks.length ? `共 ${banks.length} 个题库` : "还没有题库"}</span>
                   <div className="question-meta">
                     {CATEGORY_FILTERS.map((value) => (
                       <button
@@ -426,7 +456,7 @@ export default function QuestionBankPage() {
                               {ungrounded && <strong>事实不足，未编造答案：</strong>}
                               {answer.answer_text}
                               <div className="question-meta">
-                                <span className="app-badge muted">接地：{answer.grounding}</span>
+                                <span className="app-badge muted">{GROUNDING_LABEL[answer.grounding] ?? `接地：${answer.grounding}`}</span>
                               </div>
                             </div>
                           ) : (

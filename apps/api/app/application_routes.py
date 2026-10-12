@@ -1,6 +1,6 @@
 """投递台（Job Applications）与岗位广场（Job Plaza）聚合。
 
-- JobApplication：一家公司一个岗位一条投递动作记录，状态可单向推进。
+- JobApplication：一家公司一个岗位一条投递动作记录，状态可前进、也可退回上一阶段。
 - Plaza：跨岗位聚合浏览 + 准备度评分 + 一键加入投递台。
 """
 from __future__ import annotations
@@ -202,6 +202,31 @@ def _prep_score(workflow_state: str, *, target_resume_confirmed: bool = False) -
     return score
 
 
+_STATUS_INDEX: dict[str, int] = {status: index for index, status in enumerate(APPLICATION_STATUSES)}
+
+
+def _validate_status_transition(current: str, target: str) -> None:
+    """校验投递状态变更：允许前进，也允许退回更早阶段。
+
+    - 相同状态：允许（幂等）。
+    - CLOSED 是终态，不允许再变更。
+    - 任意活跃状态 → CLOSED：允许（拒信 / 主动结束）。
+    - 前进：目标在 APPLICATION_FORWARD[current] 内。
+    - 退回：目标阶段序号小于当前阶段序号（误点修正）。
+    """
+    if current == target:
+        return
+    if current == "CLOSED":
+        raise HTTPException(status_code=422, detail="已结束的投递记录不能再变更状态")
+    if target == "CLOSED":
+        return
+    if target in APPLICATION_FORWARD.get(current, set()):
+        return
+    if _STATUS_INDEX.get(target, -1) < _STATUS_INDEX.get(current, 0):
+        return
+    raise HTTPException(status_code=422, detail=f"投递状态不可从「{current}」变更为「{target}」")
+
+
 # ---------------------------------------------------------------------------
 # Applications CRUD
 # ---------------------------------------------------------------------------
@@ -283,12 +308,8 @@ def update_application(application_id: UUID, payload: ApplicationUpdate, db: Ses
         status = str(updates["status"]).upper()
         if status not in APPLICATION_STATUSES:
             raise HTTPException(status_code=422, detail=f"无效的投递状态：{updates['status']}")
-        # 状态只进不退：新状态必须从当前状态可达（CLOSED 为终态，不可再出）
-        if status != row.status and status not in APPLICATION_FORWARD.get(row.status, set()):
-            raise HTTPException(
-                status_code=422,
-                detail=f"投递状态不可从「{row.status}」回退到「{status}」（只允许前进；已结束除外）",
-            )
+        # 状态可前进、也可退回上一阶段（允许误点修正）；CLOSED 为终态。
+        _validate_status_transition(row.status, status)
         updates["status"] = status
     for key, value in updates.items():
         if value is None and key not in {"location", "applied_at", "next_action", "notes"}:

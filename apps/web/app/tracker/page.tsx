@@ -30,6 +30,14 @@ function nextStatus(status: ApplicationStatus): ApplicationStatus | null {
   return APPLICATION_STATUS_ORDER[index + 1];
 }
 
+/** 退回上一阶段；CLOSED 是终态，不允许再退回。 */
+function prevStatus(status: ApplicationStatus): ApplicationStatus | null {
+  if (status === "CLOSED") return null;
+  const index = APPLICATION_STATUS_ORDER.indexOf(status);
+  if (index <= 0) return null;
+  return APPLICATION_STATUS_ORDER[index - 1];
+}
+
 export default function TrackerPage() {
   const [applications, setApplications] = useState<ApplicationRead[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,7 +133,7 @@ export default function TrackerPage() {
         <div>
           <p className="app-eyebrow">Tracker</p>
           <h1 className="app-page-title">投递</h1>
-          <p className="app-page-subtitle">记录每一次投递动作，逐级推进状态（只进不退），并沉淀面试问答。</p>
+          <p className="app-page-subtitle">记录每一次投递动作，可逐级推进、也可退回上一阶段，并沉淀面试问答。</p>
         </div>
         <button type="button" className="app-btn primary" onClick={() => setShowForm((v) => !v)}>
           {showForm ? "收起表单" : "新建投递记录"}
@@ -165,6 +173,7 @@ export default function TrackerPage() {
       ) : applications.length ? (
         applications.map((app) => {
           const next = nextStatus(app.status);
+          const prev = prevStatus(app.status);
           return (
             <div className="app-card app-row" key={app.id}>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -178,6 +187,15 @@ export default function TrackerPage() {
               </div>
               <span className={`app-badge ${applicationBadgeClass(app.status)}`}>{APPLICATION_STATUS_LABEL[app.status]}</span>
               <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  className="app-btn"
+                  disabled={busyId === app.id || !prev}
+                  title={prev ? `退回至「${APPLICATION_STATUS_LABEL[prev]}」` : "已在最初阶段"}
+                  onClick={() => prev && void setStatus(app, prev)}
+                >
+                  ← 退回
+                </button>
                 <button
                   type="button"
                   className="app-btn primary"

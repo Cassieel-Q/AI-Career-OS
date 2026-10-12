@@ -144,6 +144,15 @@ export const fetchResumeSuggestions = (itemId: string) =>
     method: "POST",
   });
 
+/** 参考答案的来源标签：LLM_GROUNDED 表示由模型按你的简历生成。 */
+export const GROUNDING_LABEL: Record<string, string> = {
+  TARGET_RESUME: "依据岗位版简历要点",
+  BULLETS: "依据简历要点",
+  LLM_GROUNDED: "按你的简历生成",
+  UNKNOWN: "事实不足，未编造",
+  NEEDS_CONFIRMATION: "事实待确认",
+};
+
 /** 参考答案是否为「无法接地」状态（需人工补充事实，而非被编造）。 */
 export function isUngroundedAnswer(answer: ReferenceAnswer | null): boolean {
   if (!answer) return true;

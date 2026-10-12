@@ -22,6 +22,11 @@ from app.question_bank_service import generate_bank_from_context, generate_refer
 from app.tool_result import ToolResult
 
 
+def _offline_model(**_kwargs):
+    """模拟模型不可用：验证降级路径时不依赖网络与模型输出。"""
+    raise RuntimeError("model offline")
+
+
 # ---------------------------------------------------------------------------
 # 测试夹具：一个带岗位版简历的档案
 # ---------------------------------------------------------------------------
@@ -390,7 +395,7 @@ def test_unknown_company_does_not_crash_without_jd(db_session):
 # ---------------------------------------------------------------------------
 
 
-def test_reference_answer_does_not_invent_numbers(db_session):
+def test_reference_answer_does_not_invent_numbers(db_session, monkeypatch):
     profile = _make_profile(db_session)
     mission, experience = _make_mission(db_session, profile)
     _make_target_resume(db_session, mission, experience)
@@ -398,6 +403,8 @@ def test_reference_answer_does_not_invent_numbers(db_session):
 
     bank = generate_bank_from_context(db_session, profile.id, mission_id=mission.id)
     item = next(i for i in bank.items if i.category == "PROJECT_DEEP_DIVE")
+    # 模型不可用 → 走事实拼接降级路径，才能断言「没有编造数字」。
+    monkeypatch.setattr("app.question_bank_service.generate_answer", _offline_model)
     answer = generate_reference_answer(db_session, item.id)
 
     assert answer.grounding in {"TARGET_RESUME", "BULLETS"}

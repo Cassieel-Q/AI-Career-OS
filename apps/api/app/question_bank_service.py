@@ -15,6 +15,7 @@
 """
 from __future__ import annotations
 
+import logging
 import re
 from uuid import UUID
 
@@ -23,6 +24,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from . import models
+from .question_provider import generate_answer
+
+logger = logging.getLogger("career_os.question_bank")
 
 CATEGORIES = {"BASIC", "PROJECT_DEEP_DIVE", "HR_QUESTIONS"}
 DIFFICULTIES = {"EASY", "MEDIUM", "HARD"}
@@ -247,8 +251,34 @@ def generate_reference_answer(db: Session, item_id: UUID, *, force: bool = False
         grounding = UNKNOWN
         answer_text = "暂无已确认的简历事实可以支撑这道题。请先在「事实台账 / 岗位简历」里确认相关经历与要点，再生成参考答案（本功能不编造数字、工具、职责或结果）。"
     else:
-        grounding = "TARGET_RESUME" if evidence_bullets else "BULLETS"
-        answer_text = "；".join(parts) + "。请按 STAR 结构用自己的话展开，不要添加未记录的数据或成果。"
+        local_grounding = "TARGET_RESUME" if evidence_bullets else "BULLETS"
+        # 交给模型按「已确认事实 + 岗位要求」写一段能直接开口讲的回答；
+        # 模型不可用/失败时降级为事实拼接，不因此让功能不可用。
+        mission = db.get(models.JobMission, bank.mission_id) if bank.mission_id else None
+        facts: list[str] = []
+        for bullet in evidence_bullets[:6]:
+            text = (bullet.final_text or bullet.suggested_text or bullet.original_text or "").strip()
+            if text:
+                facts.append(text)
+        for claim in evidence_claims[:6]:
+            text = (claim.claim or claim.current_text or "").strip()
+            if text:
+                facts.append(text)
+        try:
+            answer_text = generate_answer(
+                question_text=item.question_text,
+                category=item.category,
+                jd_refs=list(getattr(item, "jd_requirement_refs", None) or []),
+                company=mission.company if mission is not None else None,
+                role=mission.role if mission is not None else None,
+                facts=facts,
+                followups=list(getattr(item, "followup_paths", None) or []),
+            )
+            grounding = "LLM_GROUNDED"
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("生成参考答案失败，降级为事实拼接：%s", exc)
+            grounding = local_grounding
+            answer_text = "；".join(parts) + "。请按 STAR 结构用自己的话展开，不要添加未记录的数据或成果。"
 
     # 只有接地成功才写入 sample_answer；UNKNOWN/未确认绝不补写成标准答案。
     if grounding in {UNKNOWN, NEEDS_CONFIRMATION}:
@@ -373,8 +403,18 @@ def generate_bank_from_context(
 
     target = ctx.get("target_resume") or {}
     verified = list(target.get("relevant_experiences") or [])
-    experience_refs = [b.get("bullet_id") for b in verified if b.get("bullet_id")]
-    expected_evidence = [b.get("bullet_text") for b in verified[:3] if b.get("bullet_text")]
+    # 「用哪段经历回答」显示经历名称；之前直接透出 bullet UUID，前端渲染成一串乱码。
+    experience_title_by_id: dict[str, str] = {}
+    for row in db.scalars(select(models.Experience).where(models.Experience.profile_id == profile_id)).all():
+        label = " · ".join(part for part in [row.organization, row.title] if part).strip(" ·")
+        if label:
+            experience_title_by_id[str(row.id)] = label
+    all_experience_labels: list[str] = []
+    for bullet in verified:
+        source_id = bullet.get("source_experience_id")
+        label = experience_title_by_id.get(str(source_id)) if source_id else None
+        if label and label not in all_experience_labels:
+            all_experience_labels.append(label)
     unverified_note = (
         []
         if verified
@@ -396,9 +436,9 @@ def generate_bank_from_context(
             difficulty="HARD" if index < 2 else "MEDIUM",
             source="MODEL",
             jd_requirement_refs=[requirement],
-            experience_refs=experience_refs,
+            experience_refs=_rotate_pick(all_experience_labels, index, 2),
             why_asked=f"对应 JD 要求「{requirement}」，面试官据此判断你能否真正落地这条要求。",
-            expected_evidence=expected_evidence,
+            expected_evidence=_pick_evidence(verified, requirement, offset=index),
             followup_paths=[
                 f"能举一个具体例子说明你做过「{requirement}」相关的事吗？",
                 "这件事里你个人的动作是什么，结果用什么衡量的？",
@@ -417,7 +457,7 @@ def generate_bank_from_context(
     if not basic_sources:
         # 保证三分类齐全：用第一条要求派生一道基础理解题。
         basic_sources = requirements[:1]
-    for text in list(dict.fromkeys(basic_sources))[:4]:
+    for index, text in enumerate(list(dict.fromkeys(basic_sources))[:4]):
         question = f"请解释你在实际工作中如何运用「{text}」？"
         if question in existing_texts:
             continue
@@ -429,15 +469,15 @@ def generate_bank_from_context(
             difficulty="EASY",
             source="MODEL",
             jd_requirement_refs=[text],
-            experience_refs=experience_refs,
+            experience_refs=_rotate_pick(all_experience_labels, index, 2),
             why_asked=f"核实「{text}」是真实掌握还是只在简历上出现。",
-            expected_evidence=expected_evidence,
+            expected_evidence=_pick_evidence(verified, text, offset=index),
             followup_paths=[f"{text} 里你最熟的是哪一部分？", "有没有踩过坑？怎么解决的？"],
             risk_flags=list(unverified_note),
         )
 
     # ---- HR 题 ----
-    for question, why in _HR_BANK_QUESTIONS:
+    for index, (question, why) in enumerate(_HR_BANK_QUESTIONS):
         if question in existing_texts:
             continue
         add_item(
@@ -449,9 +489,9 @@ def generate_bank_from_context(
             source="MODEL",
             # HR 题也关联到本岗位的头部 JD 要求，回答时仍要落到真实经历上。
             jd_requirement_refs=requirements[:1],
-            experience_refs=experience_refs,
+            experience_refs=_rotate_pick(all_experience_labels, index, 2),
             why_asked=why,
-            expected_evidence=expected_evidence,
+            expected_evidence=_pick_evidence(verified, question, offset=index),
             followup_paths=["能再具体一点吗？", "这和你的长期规划是怎么衔接的？"],
         )
 
@@ -487,6 +527,33 @@ def _requirement_texts(ctx: dict) -> list[str]:
                 elif isinstance(item, str) and item.strip():
                     out.append(item.strip())
     return list(dict.fromkeys(out))
+
+
+def _rotate_pick(items: list[str], offset: int, limit: int) -> list[str]:
+    """按题序号轮换取若干项，避免所有题目看到同一份经历。"""
+    if not items:
+        return []
+    shift = offset % len(items)
+    ordered = items[shift:] + items[:shift]
+    return ordered[:limit]
+
+
+def _pick_evidence(bullets: list[dict], query: str, *, offset: int = 0, limit: int = 2) -> list[str]:
+    """为一道题挑选最相关的简历要点。
+
+    之前所有题目共用同一份 expected_evidence，导致「可以说的事实」每道题一模一样。
+    这里先按词重合度排序，再按题序号轮换起点，并收窄条数，让每道题看到的事实有差异。
+    """
+    texts = [str(bullet.get("bullet_text") or "").strip() for bullet in bullets]
+    texts = [text for text in texts if text]
+    if not texts:
+        return []
+    tokens = [t for t in re.split(r"[\s，,。；;：:、/（）()「」]+", query or "") if len(t) >= 2]
+    hits = [sum(1 for token in tokens if token in text) for text in texts]
+    base = sorted(range(len(texts)), key=lambda i: (-hits[i], i))
+    shift = offset % len(base)
+    order = base[shift:] + base[:shift]
+    return [texts[i] for i in order[:limit]]
 
 
 # ---------------------------------------------------------------------------

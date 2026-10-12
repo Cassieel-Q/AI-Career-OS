@@ -271,7 +271,7 @@ export function MissionsHome() {
                             <button
                               type="button"
                               className="app-btn"
-                              disabled={busy || (status ?? "PENDING") === "PENDING"}
+                              disabled={busy || (status ?? "PENDING") === "PENDING" || status === "CLOSED"}
                               title="退回上一个阶段"
                               onClick={() => void recede(item)}
                             >

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AssistantMessage, AssistantSurface, InterviewContextSummary } from "./assistant.ts";
-import { createConversation, resolveInterviewContext, streamChat } from "./assistant.ts";
+import { createConversation, getConversation, resolveInterviewContext, streamChat } from "./assistant.ts";
 import { Markdown } from "./markdown-render.tsx";
 
 type Props = {
@@ -35,6 +35,35 @@ const MISSING_LABELS: Record<string, string> = {
   interview_intel: "真实面经",
 };
 
+/**
+ * 工具名 → 用户可读的中文标签。
+ * 后端工具名（list_jobs / get_job 等）是实现细节，不应直接暴露在对话气泡里。
+ */
+const TOOL_LABELS: Record<string, string> = {
+  list_jobs: "查询岗位",
+  get_job: "读取岗位详情",
+  list_resumes: "查询简历",
+  list_applications: "查询投递记录",
+  list_interview_experiences: "查询面试记录",
+  list_claims: "查询事实台账",
+  list_reminders: "查询提醒",
+  list_referrals: "查询内推记录",
+  format_templates: "查询简历模板",
+  diagnose_application_failure: "诊断投递问题",
+  create_interview_experience: "记录面经",
+  create_referral: "记录内推",
+  create_reminder: "创建提醒",
+  get_mission_context: "读取岗位上下文",
+  get_target_resume_context: "读取岗位版简历",
+  get_confirmed_claims_context: "读取已确认事实",
+  get_interview_intel_context: "读取真实面经",
+  web_search: "联网搜索",
+};
+
+function toolLabel(name: string): string {
+  return TOOL_LABELS[name] ?? "查阅资料";
+}
+
 export function AssistantChat({
   surface,
   conversationId,
@@ -57,6 +86,33 @@ export function AssistantChat({
   const [prepMode, setPrepMode] = useState<string | null>(null);
   const [degradedReasons, setDegradedReasons] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // 记录已经回填过历史的会话，避免父组件重渲染时反复拉取、也避免覆盖正在发送的消息。
+  const loadedConvRef = useRef<string | null>(null);
+
+  // 切换会话时回填历史消息：之前从不加载，导致「不同对话点进去都是同一个 / 关掉就没了」。
+  useEffect(() => {
+    if (!conversationId) {
+      loadedConvRef.current = null;
+      setMessages([]);
+      setStreamingText("");
+      setActiveTools([]);
+      return;
+    }
+    if (loadedConvRef.current === conversationId) return;
+    loadedConvRef.current = conversationId;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const detail = await getConversation(conversationId, surface);
+        if (!cancelled) setMessages((detail.messages ?? []) as AssistantMessage[]);
+      } catch {
+        if (!cancelled) setMessages([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [conversationId, surface]);
 
   // 进入助手时自动解析面试上下文（岗位 / 简历版本 / 经历数 / 确认事实数 / 面经 / 缺失资料）。
   useEffect(() => {
@@ -97,6 +153,8 @@ export function AssistantChat({
     if (!cid) {
       const conv = await createConversation(surface);
       cid = conv.id;
+      // 新会话刚创建，标记为已加载，避免下面的回填 effect 把刚发出的消息清空。
+      loadedConvRef.current = conv.id;
       onConversationChange?.(conv.id);
     }
     const userMessage: AssistantMessage = { id: `local-${Date.now()}`, role: "user", content };
@@ -206,7 +264,7 @@ export function AssistantChat({
                 <div className="assistant-tools">
                   {m.tool_calls.map((t, i) => (
                     <span key={i} className="assistant-tool-chip" title={t.summary}>
-                      {t.changed ? "✓" : "○"} {t.name}
+                      {t.changed ? "✓" : "○"} {toolLabel(t.name)}
                     </span>
                   ))}
                 </div>
@@ -235,7 +293,7 @@ export function AssistantChat({
               <div className="assistant-tools">
                 {activeTools.map((t, i) => (
                   <span key={i} className="assistant-tool-chip" title={t.summary}>
-                    {t.changed ? "✓" : "○"} {t.name}
+                    {t.changed ? "✓" : "○"} {toolLabel(t.name)}
                   </span>
                 ))}
               </div>
