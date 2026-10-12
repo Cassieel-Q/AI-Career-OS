@@ -1,6 +1,6 @@
-"""AI 求职助手「投投」路由：会话 CRUD、流式问答、岗位批量导入。
+"""AI 求职助手「顺顺」路由：会话 CRUD、流式问答、岗位批量导入。
 
-surface 区分「page（侧栏助手页）」与「orb（投投浮窗）」两套独立会话记录。
+surface 区分「page（侧栏助手页）」与「orb（顺顺浮窗）」两套独立会话记录。
 """
 from __future__ import annotations
 
@@ -236,6 +236,12 @@ async def _stream_chat(payload: ChatRequest, conversation_id: UUID, surface: str
 
     specs = tool_specs(allow_write=payload.allow_write, web_search=payload.web_search)
 
+    # DeepSeek 思考模型会先输出一段不展示的推理内容，导致「首字」要等十几秒，
+    # 表现为「不是流式、生成完才一次性出来」。对话助手这里关闭思考以换取即时流式。
+    import os
+    _is_deepseek = "deepseek" in (os.getenv("OPENAI_BASE_URL") or "").casefold()
+    _extra_body = {"thinking": {"type": "disabled"}} if _is_deepseek else None
+
     full_text = ""
     tool_log: list[dict[str, Any]] = []
     all_sources: list[dict[str, Any]] = []
@@ -251,14 +257,16 @@ async def _stream_chat(payload: ChatRequest, conversation_id: UUID, surface: str
             }
             if specs:
                 kwargs["tools"] = specs
+            if _extra_body is not None:
+                kwargs["extra_body"] = _extra_body
 
-            stream = client.chat.completions.create(**kwargs)
+            stream = await client.chat.completions.create(**kwargs)
 
             content_parts: list[str] = []
             tool_calls: dict[int, dict[str, Any]] = {}
             finish_reason = ""
 
-            for chunk in stream:
+            async for chunk in stream:
                 if not chunk.choices:
                     continue
                 choice = chunk.choices[0]
@@ -362,7 +370,28 @@ async def _stream_chat(payload: ChatRequest, conversation_id: UUID, surface: str
                 db2.commit()
         except Exception:  # noqa: BLE001
             pass
-        yield _sse({"type": "error", "message": str(exc)})
+        yield _sse({"type": "error", "message": _humanize_stream_error(exc)})
+    finally:
+        # 释放本次请求创建的异步 HTTP 连接，避免连接泄漏。
+        try:
+            await client.close()
+        except Exception:  # noqa: BLE001
+            pass
+
+
+def _humanize_stream_error(exc: Exception) -> str:
+    """把底层异常翻译成用户能看懂、可操作的中文提示。"""
+    name = type(exc).__name__.casefold()
+    text = str(exc)
+    if "timeout" in name or "timeout" in text.casefold():
+        return "模型响应超时（可能是网络或模型较慢）。请稍后重试，或把「思考强度」调低。"
+    if "connection" in name or "connect" in text.casefold() or "proxy" in text.casefold():
+        return "连接模型服务失败。请检查 API 地址 / 网络 / 代理配置后重试。"
+    if "authentication" in name or "401" in text or "api key" in text.casefold():
+        return "模型 API 鉴权失败，请在 .env 检查 OPENAI_API_KEY。"
+    if "rate" in name or "429" in text:
+        return "请求过于频繁（限速），请稍后再试。"
+    return f"回复中断：{text}"[:300]
 
 
 def get_db_gen():

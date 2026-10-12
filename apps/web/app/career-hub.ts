@@ -199,6 +199,15 @@ export async function fetchApplications(
   return readApiPayload<ApplicationsRead>(response);
 }
 
+/** 全局投递记录（跨档案）——避免岗位属于其它档案时投递页看不到。 */
+export async function fetchAllApplications(
+  apiUrl = MISSION_API_BASE_URL,
+  request: MissionRequester = fetch,
+): Promise<ApplicationsRead> {
+  const response = await request(`${apiUrl}/api/v1/applications`);
+  return readApiPayload<ApplicationsRead>(response);
+}
+
 export type ApplicationInput = {
   mission_id?: string | null;
   company: string;

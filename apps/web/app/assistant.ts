@@ -85,6 +85,7 @@ export async function streamChat(
   const decoder = new TextDecoder();
   let buffer = "";
   let finalMessage: AssistantMessage | null = null;
+  let serverError = "";
 
   const feed = (chunk: string) => {
     buffer += chunk;
@@ -98,6 +99,7 @@ export async function streamChat(
       try {
         const event = JSON.parse(json) as StreamEvent;
         if (event.type === "done") finalMessage = event.message;
+        else if (event.type === "error") serverError = event.message;
         onEvent(event);
       } catch {
         /* 忽略非 JSON 心跳行 */
@@ -112,6 +114,8 @@ export async function streamChat(
   }
   feed(decoder.decode());
 
-  if (!finalMessage) throw new Error("没有收到完整回复。");
+  // 优先透出服务端给出的具体错误，避免被笼统文案覆盖。
+  if (!finalMessage && serverError) throw new Error(serverError);
+  if (!finalMessage) throw new Error("没有收到完整回复，请重试。");
   return finalMessage;
 }

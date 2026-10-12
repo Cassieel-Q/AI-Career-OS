@@ -216,6 +216,27 @@ def list_applications(profile_id: UUID, db: Session = Depends(get_db)):
     )
 
 
+@router.get("/applications", response_model=ApplicationsRead)
+def list_all_applications(db: Session = Depends(get_db)):
+    """全局投递记录（跨档案）。
+
+    单用户本地场景下，岗位可能挂在不同档案上；「加入投递台」按岗位所属档案
+    建记录，若投递页只按当前档案查询就会看不到。这里提供全局视图兜底。
+    """
+    rows = list(
+        db.scalars(select(models.JobApplication).order_by(models.JobApplication.updated_at.desc())).all()
+    )
+    applications = [_application_read(row) for row in rows]
+    return ApplicationsRead(
+        total=len(applications),
+        pending=sum(1 for a in applications if a.status == "PENDING"),
+        applied=sum(1 for a in applications if a.status in {"APPLIED", "SCREENING", "ASSESSMENT"}),
+        interviewing=sum(1 for a in applications if a.status in {"INTERVIEW", "OFFER"}),
+        offer=sum(1 for a in applications if a.status == "OFFER"),
+        applications=applications,
+    )
+
+
 @router.post("/profiles/{profile_id}/applications", response_model=ApplicationRead, status_code=201)
 def create_application(profile_id: UUID, payload: ApplicationCreate, db: Session = Depends(get_db)):
     _profile(db, profile_id)

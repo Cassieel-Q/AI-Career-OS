@@ -1,4 +1,4 @@
-"""AI 求职助手「投投」的纯函数层：系统提示、工具定义与执行。
+"""AI 求职助手「顺顺」的纯函数层：系统提示、工具定义与执行。
 
 设计对齐 ResumeForge 的助手，但只保留本项目真实存在的数据面：
 - 读工具：岗位 / 简历 / 投递 / 面经 / 事实台账 / 提醒 / 内推 / 格式模板。
@@ -451,18 +451,31 @@ def _web_search(query: str) -> list[dict[str, Any]]:
 
 
 def build_client() -> Any:
+    """异步 OpenAI 兼容客户端。
+
+    用 AsyncOpenAI + trust_env=False：
+    - 异步调用不会阻塞事件循环，SSE 才能真正的「一字一字」流式推送；
+    - trust_env=False 关闭对 HTTP_PROXY/HTTPS_PROXY 环境变量的读取，
+      避免本地代理把流式响应整体缓冲（表现为「一次性回复」）或超时中断。
+    """
     import os
 
-    from openai import OpenAI
+    import httpx
+    from openai import AsyncOpenAI
 
     api_key = os.getenv("OPENAI_API_KEY", "").strip()
     base_url = os.getenv("OPENAI_BASE_URL") or None
     model = os.getenv("OPENAI_MISSION_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-4o-mini"
-    timeout = float(os.getenv("OPENAI_TIMEOUT_SECONDS") or "60")
-    options: dict[str, Any] = {"api_key": api_key, "timeout": timeout, "max_retries": 0}
+    timeout = float(os.getenv("OPENAI_ASSISTANT_TIMEOUT_SECONDS") or os.getenv("OPENAI_TIMEOUT_SECONDS") or "180")
+    options: dict[str, Any] = {
+        "api_key": api_key,
+        "timeout": timeout,
+        "max_retries": 0,
+        "http_client": httpx.AsyncClient(trust_env=False, timeout=timeout),
+    }
     if base_url:
         options["base_url"] = base_url
-    return OpenAI(**options), model
+    return AsyncOpenAI(**options), model
 
 
 __all__ = [

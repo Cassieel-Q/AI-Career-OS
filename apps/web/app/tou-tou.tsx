@@ -6,7 +6,7 @@ import { listConversations, type AssistantConversation } from "./assistant.ts";
 import { readCurrentProfileId } from "./career-hub.ts";
 
 /**
- * 「投投」悬浮球：任意页面右下角常驻，点击打开浮窗问答。
+ * 「顺顺」悬浮球：任意页面右下角常驻，点击打开浮窗问答。
  * 浮窗只展示联网搜索 + 思考强度两个控制；记录与侧栏助手页分开保存（surface=orb）。
  */
 export function TouTouOrb() {
@@ -33,11 +33,11 @@ export function TouTouOrb() {
   return (
     <>
       {open ? (
-        <div className="toutou-drawer" role="dialog" aria-label="投投助手浮窗">
+        <div className="toutou-drawer" role="dialog" aria-label="顺顺助手浮窗">
           <div className="toutou-drawer-head">
             <div>
               <span className="toutou-dot" aria-hidden="true" />
-              <strong>投投</strong>
+              <strong>顺顺</strong>
             </div>
             <button type="button" className="toutou-close" onClick={() => setOpen(false)} aria-label="关闭">
               ×
@@ -59,8 +59,8 @@ export function TouTouOrb() {
         type="button"
         className={`toutou-orb${open ? " open" : ""}`}
         onClick={() => setOpen((v) => !v)}
-        aria-label="打开投投助手"
-        title="投投 · AI 求职助手"
+        aria-label="打开顺顺助手"
+        title="顺顺 · AI 求职助手"
       >
         {open ? (
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">

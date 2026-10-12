@@ -894,7 +894,7 @@ class JobApplication(Base):
 
 
 class AssistantConversation(Base):
-    """AI 求职助手会话。surface 区分「侧栏页(page)」与「投投浮窗(orb)」两套独立记录。"""
+    """AI 求职助手「顺顺」会话。surface 区分「侧栏页(page)」与「顺顺浮窗(orb)」两套独立记录。"""
 
     __tablename__ = "assistant_conversations"
 
