@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import {
   APPLICATION_STATUS_LABEL,
@@ -16,6 +17,9 @@ import {
 } from "./career-hub.ts";
 import { isUnknownIdentity } from "./mission-state.ts";
 import { JobBatchImport } from "./job-batch-import.tsx";
+import { JobMatchDrawer } from "./job-match-drawer.tsx";
+import { ScoreRing } from "./score-ring.tsx";
+import { verdictLabel, verdictTone, fetchJobKeywords, fetchJobMatch } from "./job-insight.ts";
 
 const FILTERS = [
   { key: "ALL", label: "全部岗位" },
@@ -66,6 +70,7 @@ function nextStatusLabel(status: ApplicationStatus | null): string {
 }
 
 export function MissionsHome() {
+  const router = useRouter();
   const [items, setItems] = useState<PlazaItem[]>([]);
   const [filter, setFilter] = useState<FilterKey>("ALL");
   const [query, setQuery] = useState("");
@@ -73,6 +78,9 @@ export function MissionsHome() {
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState("");
   const [showBatch, setShowBatch] = useState(false);
+  const [drawerId, setDrawerId] = useState("");
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -161,13 +169,76 @@ export function MissionsHome() {
     }
   }
 
+  const drawerItem = items.find((item) => item.mission_id === drawerId) ?? null;
+  const pendingAnalysis = items.filter((item) => !item.keywords.length || item.match_score === null);
+
+  /**
+   * 批量补全分析：岗位表格的关键词与匹配度是模型算出来的，默认按需触发；
+   * 这里给一个一次性按钮，把还没分析的岗位依次补上（后端有缓存，重复点不会重复计费）。
+   */
+  async function analyzeAll() {
+    if (bulkBusy || !pendingAnalysis.length) return;
+    setBulkBusy(true);
+    setError("");
+    const targets = [...pendingAnalysis];
+    try {
+      for (let index = 0; index < targets.length; index += 1) {
+        const item = targets[index];
+        setBulkProgress(`${index + 1}/${targets.length}`);
+        try {
+          const [keywords, match] = await Promise.all([
+            fetchJobKeywords(item.mission_id),
+            fetchJobMatch(item.mission_id),
+          ]);
+          setItems((prev) =>
+            prev.map((row) =>
+              row.mission_id === item.mission_id
+                ? {
+                    ...row,
+                    keywords: keywords.keywords ?? [],
+                    job_summary: keywords.summary ?? "",
+                    analysis_source: keywords.source ?? row.analysis_source,
+                    match_score: match.score ?? null,
+                    match_verdict: match.verdict ?? null,
+                    match_verdict_label: match.verdict_label ?? null,
+                    match_source: match.source ?? row.match_source,
+                  }
+                : row,
+            ),
+          );
+        } catch (caught) {
+          setError(
+            `${item.company || item.role} 分析失败：${caught instanceof Error ? caught.message : "未知错误"}`,
+          );
+        }
+      }
+    } finally {
+      setBulkProgress("");
+      setBulkBusy(false);
+      await load();
+    }
+  }
+
+  /**
+   * 用户诉求：点一下岗位名 → 右侧滑出匹配分析侧栏；再点一下同一个岗位 → 进入岗位页面。
+   * 侧栏里也放了「进入岗位页面」按钮，两条路都能走通。
+   */
+  function openOrEnter(item: PlazaItem, href: Route) {
+    if (drawerId === item.mission_id) {
+      setDrawerId("");
+      router.push(href);
+      return;
+    }
+    setDrawerId(item.mission_id);
+  }
+
   return (
     <main className="app-page">
       <header className="app-page-header">
         <div>
           <p className="app-eyebrow">Jobs</p>
           <h1 className="app-page-title">岗位</h1>
-          <p className="app-page-subtitle">集中浏览与批量导入目标岗位，按准备度与投递状态统一管理。</p>
+          <p className="app-page-subtitle">集中浏览与批量导入目标岗位，按简历匹配度与投递状态统一管理；点岗位名看匹配分析。</p>
         </div>
       </header>
 
@@ -178,6 +249,7 @@ export function MissionsHome() {
         <div className="app-stat-card"><div className="app-stat-value">{items.filter((i) => i.target_resume_confirmed).length}</div><div className="app-stat-label">简历已备</div></div>
         <div className="app-stat-card"><div className="app-stat-value">{items.filter((i) => i.application_id).length}</div><div className="app-stat-label">已入投递台</div></div>
         <div className="app-stat-card"><div className="app-stat-value">{items.filter(isInterviewing).length}</div><div className="app-stat-label">面试中</div></div>
+        <div className="app-stat-card"><div className="app-stat-value">{items.filter((i) => i.match_verdict === "strong").length}</div><div className="app-stat-label">值得投递</div></div>
       </section>
 
       <div className="table-toolbar">
@@ -198,7 +270,7 @@ export function MissionsHome() {
           className="table-select"
           value={filter}
           onChange={(event) => setFilter(event.target.value as FilterKey)}
-          aria-label="按准备度与投递状态筛选"
+          aria-label="按匹配度与投递状态筛选"
         >
           {FILTERS.map((f) => (
             <option key={f.key} value={f.key}>{f.label}</option>
@@ -209,6 +281,18 @@ export function MissionsHome() {
       <div className="table-actions">
         <Link className="app-btn primary" href="/missions/new">＋ 新建岗位</Link>
         <button type="button" className="app-btn" onClick={() => setShowBatch(true)}>批量导入</button>
+        <button
+          type="button"
+          className="app-btn"
+          disabled={bulkBusy || !pendingAnalysis.length}
+          onClick={() => void analyzeAll()}
+        >
+          {bulkBusy
+            ? `分析中 ${bulkProgress}…`
+            : pendingAnalysis.length
+              ? `补全岗位分析（${pendingAnalysis.length}）`
+              : "分析已是最新"}
+        </button>
       </div>
 
       {loading ? (
@@ -221,8 +305,9 @@ export function MissionsHome() {
                 <th>职位</th>
                 <th>公司</th>
                 <th>城市</th>
+                <th>岗位关键词</th>
                 <th>投递状态</th>
-                <th>准备度</th>
+                <th>简历匹配度</th>
                 <th style={{ textAlign: "right" }}>操作</th>
               </tr>
             </thead>
@@ -237,7 +322,14 @@ export function MissionsHome() {
                   <tr key={item.mission_id}>
                     <td>
                       <div className="cell-title">
-                        <Link href={target}>{role}</Link>
+                        <button
+                          type="button"
+                          className={`cell-title-link${drawerId === item.mission_id ? " active" : ""}`}
+                          onClick={() => openOrEnter(item, target)}
+                          title={drawerId === item.mission_id ? "再点一次进入岗位页面" : "点一下看匹配分析"}
+                        >
+                          {role}
+                        </button>
                         <div className="cell-tags">
                           {item.resume_ready
                             ? <span className="cell-tag">已绑定简历</span>
@@ -249,20 +341,41 @@ export function MissionsHome() {
                     </td>
                     <td>{company || <span className="cell-muted">—</span>}</td>
                     <td>{item.location || <span className="cell-muted">—</span>}</td>
+                    <td>
+                      {item.keywords.length ? (
+                        <div className="kw-chips">
+                          {item.keywords.map((word) => (
+                            <span key={word} className="kw-chip">{word}</span>
+                          ))}
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          className="app-btn subtle"
+                          onClick={() => setDrawerId(item.mission_id)}
+                        >
+                          分析关键词
+                        </button>
+                      )}
+                    </td>
                     <td><span className={`app-badge ${cardStatusClass(item)}`}>{cardStatusLabel(item)}</span></td>
                     <td>
-                      <div className="cell-progress">
-                        <div
-                          className="cell-progress-bar"
-                          role="progressbar"
-                          aria-valuenow={item.prep_score}
-                          aria-valuemin={0}
-                          aria-valuemax={100}
+                      {item.match_score === null ? (
+                        <button
+                          type="button"
+                          className="app-btn subtle"
+                          onClick={() => setDrawerId(item.mission_id)}
                         >
-                          <span style={{ width: `${item.prep_score}%` }} />
+                          待分析
+                        </button>
+                      ) : (
+                        <div className="cell-score">
+                          <ScoreRing score={item.match_score} size={40} />
+                          <span className={`app-badge ${verdictTone(item.match_verdict) === "good" ? "filled" : verdictTone(item.match_verdict) === "warn" ? "attention" : verdictTone(item.match_verdict) === "bad" ? "danger" : "muted"}`}>
+                            {verdictLabel(item.match_verdict, item.match_verdict_label ?? "待评估")}
+                          </span>
                         </div>
-                        <span className="cell-progress-value">{item.prep_score}</span>
-                      </div>
+                      )}
                     </td>
                     <td>
                       <div className="cell-actions">
@@ -313,6 +426,21 @@ export function MissionsHome() {
       )}
 
       {showBatch ? <JobBatchImport onClose={() => setShowBatch(false)} onDone={() => { setShowBatch(false); void load(); }} /> : null}
+
+      {drawerItem ? (
+        <JobMatchDrawer
+          missionId={drawerItem.mission_id}
+          role={drawerItem.role}
+          company={drawerItem.company}
+          location={drawerItem.location}
+          seniority={drawerItem.seniority}
+          href={`/missions/${encodeURIComponent(drawerItem.mission_id)}/role` as Route}
+          onClose={() => {
+            setDrawerId("");
+            void load();
+          }}
+        />
+      ) : null}
     </main>
   );
 }

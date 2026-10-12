@@ -52,6 +52,7 @@ from app.application_profile_routes import router as application_profile_router
 from app.resume_template_routes import router as resume_template_router
 from app.mock_interview_routes import router as mock_interview_router
 from app.overview_routes import router as overview_router
+from app.job_insight_routes import router as job_insight_router
 from app.profile_schemas import CareerPreferencesInput, CareerPreferencesRead, ProfileRead, ProfileUpdate
 from app.profile_service import (
     confirm_profile,
@@ -2739,6 +2740,7 @@ app.include_router(application_profile_router)
 app.include_router(resume_template_router)
 app.include_router(mock_interview_router)
 app.include_router(overview_router)
+app.include_router(job_insight_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_allowed_frontend_origins(),
@@ -2810,7 +2812,7 @@ async def upload_resume(
             raise _provider_failure_http_exception(failure) from None
         db_started = time.perf_counter()
         try:
-            profile = create_draft_profile(db, processed.result)
+            profile = create_draft_profile(db, processed.result, raw_text=text)
             return get_profile(db, profile.id)
         except SQLAlchemyError as error:
             db.rollback()
@@ -2864,7 +2866,7 @@ async def ingest_resume_into_profile(
     try:
         provider = get_resume_provider()
         processed = extract_section_first_resume(provider, text_body, timing_ms={})
-        return replace_profile_from_extraction(db, profile_id, processed.result)
+        return replace_profile_from_extraction(db, profile_id, processed.result, raw_text=text_body)
     except HTTPException:
         raise
     except ResumeExtractionFailure as failure:
@@ -2895,7 +2897,7 @@ def ingest_resume_text_into_profile(
     try:
         provider = get_resume_provider()
         processed = extract_section_first_resume(provider, raw, timing_ms={})
-        return replace_profile_from_extraction(db, profile_id, processed.result)
+        return replace_profile_from_extraction(db, profile_id, processed.result, raw_text=raw)
     except HTTPException:
         raise
     except ResumeExtractionFailure as failure:

@@ -57,6 +57,7 @@ import type {
 } from "./missions.ts";
 import { readTargetJob, type TargetJob } from "./proof-flow.ts";
 import { MissionShell } from "./mission-shell.tsx";
+import { MissionMatchCard } from "./mission-match-card.tsx";
 import { deriveMissionProgress } from "./mission-progress.ts";
 import { TaskProgress } from "./task-progress.tsx";
 import { withTaskTimeout } from "./task-progress.ts";
@@ -969,6 +970,8 @@ useEffect(() => {
             {targetJob?.raw_text ? <div className="mission-original-jd-text">{targetJob.raw_text}</div> : <p className="summary">{targetJobError ? "原始岗位描述暂时无法读取，请刷新页面重试。" : "正在读取原始岗位描述…"}</p>}
           </div>
         </section>
+
+        <MissionMatchCard missionId={missionId} />
 
         <form
           key="mission-identity"

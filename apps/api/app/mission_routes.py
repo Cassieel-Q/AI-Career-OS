@@ -259,6 +259,7 @@ async def post_mission_resume_pdf(
             filename=file.filename,
             content_hash_value=digest,
             source_section_order=source_resume_section_order(text_body),
+            raw_text=text_body,
         )
     except HTTPException:
         raise
@@ -313,6 +314,7 @@ def post_mission_resume_text(
             filename=None,
             content_hash_value=digest,
             source_section_order=source_resume_section_order(raw),
+            raw_text=raw,
         )
     except HTTPException:
         raise
