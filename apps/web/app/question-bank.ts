@@ -41,6 +41,14 @@ export type QuestionItem = {
   question_text: string;
   source: string;
   evidence_refs: string[];
+  /** 第六阶段：每道题都必须能回答的六个问题。 */
+  jd_requirement_refs: string[];
+  experience_refs: string[];
+  why_asked: string | null;
+  expected_evidence: string[];
+  followup_paths: string[];
+  sample_answer: string | null;
+  risk_flags: string[];
   sort_order: number;
   reference_answer: ReferenceAnswer | null;
 };
@@ -96,6 +104,21 @@ export const createQuestionBank = (profileId: string, name = "默认题库", mis
     jsonInit("POST", { name, mission_id: missionId ?? null }),
   );
 
+/** 按真实上下文（JD 要点 + 已确认岗位简历）生成三分类题库。 */
+export const generateQuestionBank = (
+  profileId: string,
+  payload: { mission_id?: string | null; target_resume_id?: string | null; raw_jd?: string | null; name?: string | null } = {},
+) =>
+  request<QuestionBank>(
+    `${MISSION_API_BASE_URL}/api/v1/profiles/${encodeURIComponent(profileId)}/question-banks/generate`,
+    jsonInit("POST", {
+      mission_id: payload.mission_id ?? null,
+      target_resume_id: payload.target_resume_id ?? null,
+      raw_jd: payload.raw_jd ?? null,
+      name: payload.name ?? null,
+    }),
+  );
+
 export const addQuestionItem = (
   bankId: string,
   payload: { question_text: string; category?: string; difficulty?: string; interviewer_style?: string; source?: string },
@@ -125,4 +148,31 @@ export const fetchResumeSuggestions = (itemId: string) =>
 export function isUngroundedAnswer(answer: ReferenceAnswer | null): boolean {
   if (!answer) return true;
   return answer.grounding === "UNKNOWN" || answer.grounding === "NEEDS_CONFIRMATION";
+}
+
+export type QuestionExplainer = {
+  why: string;
+  jdRefs: string[];
+  experienceRefs: string[];
+  allowedFacts: string[];
+  notToInvent: string;
+  followups: string[];
+};
+
+const NOT_TO_INVENT_HINT = "只能使用上方「可以说的事实」；没有证据的数字、职责与结果一律不要编造，缺失时标注待确认。";
+
+/**
+ * 第六阶段：把一道题渲染成「六个必答问题」的答案视图。
+ * 全部来自题目自身字段，不做二次推断，避免前端补写未确认内容。
+ */
+export function explainQuestion(item: QuestionItem): QuestionExplainer {
+  const hasEvidence = item.experience_refs.length > 0 && item.expected_evidence.length > 0;
+  return {
+    why: item.why_asked || "该题未标注考察意图，建议先在题库里补齐 why_asked。",
+    jdRefs: item.jd_requirement_refs,
+    experienceRefs: item.experience_refs,
+    allowedFacts: item.expected_evidence,
+    notToInvent: hasEvidence ? NOT_TO_INVENT_HINT : "当前没有带证据的已确认经历可支撑这道题，回答前请先确认相关经历。",
+    followups: item.followup_paths,
+  };
 }

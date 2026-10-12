@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { readCurrentProfileId } from "../career-hub.ts";
+import { readAssistantContext } from "../assistant-context.ts";
 import {
   QUESTION_CATEGORIES,
   QUESTION_CATEGORY_LABEL,
@@ -11,7 +12,9 @@ import {
   addQuestionItem,
   createQuestionBank,
   createRealQuestion,
+  explainQuestion,
   fetchResumeSuggestions,
+  generateQuestionBank,
   generateReferenceAnswer,
   isUngroundedAnswer,
   listQuestionBanks,
@@ -81,6 +84,24 @@ export default function QuestionBankPage() {
       setBusyId("");
     }
   }, [bankName, load, profileId]);
+
+  // 第六阶段：按当前岗位/岗位版简历的真实上下文生成三分类题库。
+  const handleGenerateFromContext = useCallback(async () => {
+    if (!profileId) return;
+    setBusyId("generate");
+    try {
+      const context = readAssistantContext();
+      await generateQuestionBank(profileId, {
+        mission_id: context.missionId,
+        target_resume_id: context.targetResumeId,
+      });
+      await load();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "按岗位生成题库失败。");
+    } finally {
+      setBusyId("");
+    }
+  }, [load, profileId]);
 
   const handleAddQuestion = useCallback(async () => {
     if (!profileId || !newQuestion.trim()) return;
@@ -201,6 +222,9 @@ export default function QuestionBankPage() {
               <button type="button" className="app-btn" disabled={busyId === "new-bank"} onClick={() => void handleCreateBank()}>
                 新建题库
               </button>
+              <button type="button" className="app-btn primary" disabled={busyId === "generate"} onClick={() => void handleGenerateFromContext()}>
+                按当前岗位生成题库
+              </button>
             </div>
           </section>
 
@@ -230,6 +254,7 @@ export default function QuestionBankPage() {
                 {items.map((item) => {
                   const answer = item.reference_answer;
                   const ungrounded = isUngroundedAnswer(answer);
+                  const explain = explainQuestion(item);
                   return (
                     <article key={item.id} className="question-card">
                       <div className="question-card-head">
@@ -243,6 +268,27 @@ export default function QuestionBankPage() {
                         <span className="app-badge muted">{QUESTION_DIFFICULTY_LABEL[item.difficulty as QuestionDifficulty] ?? item.difficulty}</span>
                         {item.interviewer_style && <span className="app-badge muted">{item.interviewer_style}</span>}
                       </div>
+
+                      <dl className="question-explain">
+                        <dt>为什么问这题</dt>
+                        <dd>{explain.why}</dd>
+                        <dt>关联 JD 要求</dt>
+                        <dd>{explain.jdRefs.length ? explain.jdRefs.join("；") : "未标注"}</dd>
+                        <dt>用哪段经历回答</dt>
+                        <dd>{explain.experienceRefs.length ? explain.experienceRefs.join("；") : "暂无带证据的经历"}</dd>
+                        <dt>可以说的事实</dt>
+                        <dd>{explain.allowedFacts.length ? explain.allowedFacts.join("；") : "暂无已确认事实"}</dd>
+                        <dt>不能编造</dt>
+                        <dd>{explain.notToInvent}</dd>
+                      </dl>
+                      {explain.followups.length ? (
+                        <ul className="question-followups">
+                          {explain.followups.map((followup, index) => (
+                            <li key={`${item.id}-followup-${index}`}>可能追问：{followup}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+
                       {answer ? (
                         <div className={`question-answer${ungrounded ? " grounded-unknown" : ""}`}>
                           {ungrounded && <strong>事实不足，未编造答案：</strong>}

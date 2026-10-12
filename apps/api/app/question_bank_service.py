@@ -115,6 +115,13 @@ def add_item(
     interviewer_style: str | None = None,
     source: str = "MODEL",
     evidence_refs: list | None = None,
+    jd_requirement_refs: list | None = None,
+    experience_refs: list | None = None,
+    why_asked: str | None = None,
+    expected_evidence: list | None = None,
+    followup_paths: list | None = None,
+    sample_answer: str | None = None,
+    risk_flags: list | None = None,
 ) -> models.QuestionItem:
     bank = get_bank(db, bank_id)
     text = (question_text or "").strip()
@@ -131,6 +138,13 @@ def add_item(
         question_text=text,
         source=resolved_source,
         evidence_refs=list(evidence_refs or []),
+        jd_requirement_refs=list(jd_requirement_refs or []),
+        experience_refs=list(experience_refs or []),
+        why_asked=(why_asked or None),
+        expected_evidence=list(expected_evidence or []),
+        followup_paths=list(followup_paths or []),
+        sample_answer=(sample_answer or None),
+        risk_flags=list(risk_flags or []),
         sort_order=max_order + 1,
     )
     db.add(item)
@@ -236,6 +250,12 @@ def generate_reference_answer(db: Session, item_id: UUID, *, force: bool = False
         grounding = "TARGET_RESUME" if evidence_bullets else "BULLETS"
         answer_text = "；".join(parts) + "。请按 STAR 结构用自己的话展开，不要添加未记录的数据或成果。"
 
+    # 只有接地成功才写入 sample_answer；UNKNOWN/未确认绝不补写成标准答案。
+    if grounding in {UNKNOWN, NEEDS_CONFIRMATION}:
+        item.sample_answer = None
+    else:
+        item.sample_answer = answer_text
+
     if not force:
         existing = db.scalar(
             select(models.ReferenceAnswer).where(models.ReferenceAnswer.question_item_id == item.id)
@@ -300,6 +320,176 @@ def suggest_resume_optimizations(db: Session, item_id: UUID) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
+# 第六阶段：从真实上下文生成题库（每题都带 jd_requirement_refs / experience_refs 等）
+# ---------------------------------------------------------------------------
+
+
+_HR_BANK_QUESTIONS = (
+    ("请做一个 1 分钟自我介绍，突出与这个岗位最相关的一段经历。", "考察表达结构与岗位相关性，是面试开场定调题。"),
+    ("你为什么想做这个岗位？", "考察动机与岗位理解，判断是否只是广撒网。"),
+    ("你的职业规划是什么？", "考察稳定性与成长路径是否与团队匹配。"),
+)
+
+
+def generate_bank_from_context(
+    db: Session,
+    profile_id: UUID,
+    *,
+    mission_id: UUID | None = None,
+    target_resume_id: UUID | None = None,
+    raw_jd: str | None = None,
+    name: str | None = None,
+) -> models.QuestionBank:
+    """基于 MissionInterviewContext 生成题库：三分类齐全，且每题可回答六个必答问题。
+
+    只使用真实的 JD 要点、已确认（带证据）的岗位简历要点与技能；没有证据的方向
+    会带上 ``NO_VERIFIED_EXPERIENCE`` 风险标记，而不是编造经历。
+    """
+    from .mission_interview_context import build_mission_interview_context
+
+    ctx = build_mission_interview_context(
+        db,
+        profile_id=profile_id,
+        mission_id=mission_id,
+        target_resume_id=target_resume_id,
+        raw_jd=raw_jd,
+    )
+    bank = db.scalar(
+        select(models.QuestionBank).where(
+            models.QuestionBank.profile_id == profile_id,
+            models.QuestionBank.mission_id == mission_id,
+        )
+    )
+    if bank is None:
+        bank = create_bank(
+            db,
+            profile_id,
+            name=name or (f"{ctx.get('company') or '通用'} · {ctx.get('role') or '题库'}"),
+            mission_id=mission_id,
+        )
+    elif name:
+        bank.name = name[:255]
+        db.commit()
+
+    target = ctx.get("target_resume") or {}
+    verified = list(target.get("relevant_experiences") or [])
+    experience_refs = [b.get("bullet_id") for b in verified if b.get("bullet_id")]
+    expected_evidence = [b.get("bullet_text") for b in verified[:3] if b.get("bullet_text")]
+    unverified_note = (
+        []
+        if verified
+        else ["NO_VERIFIED_EXPERIENCE"]
+    )
+
+    # ---- JD 要求 → PROJECT_DEEP_DIVE ----
+    requirements = _requirement_texts(ctx)
+    existing_texts = {item.question_text for item in bank.items}
+    for index, requirement in enumerate(requirements[:6]):
+        question = f"请结合你的经历说明：你如何满足「{requirement}」？"
+        if question in existing_texts:
+            continue
+        add_item(
+            db,
+            bank.id,
+            question_text=question,
+            category="PROJECT_DEEP_DIVE",
+            difficulty="HARD" if index < 2 else "MEDIUM",
+            source="MODEL",
+            jd_requirement_refs=[requirement],
+            experience_refs=experience_refs,
+            why_asked=f"对应 JD 要求「{requirement}」，面试官据此判断你能否真正落地这条要求。",
+            expected_evidence=expected_evidence,
+            followup_paths=[
+                f"能举一个具体例子说明你做过「{requirement}」相关的事吗？",
+                "这件事里你个人的动作是什么，结果用什么衡量的？",
+            ],
+            risk_flags=list(unverified_note),
+        )
+
+    # ---- 技能型 JD 要求 / 技能 → BASIC ----
+    basic_sources: list[str] = [
+        requirement for requirement in requirements if _looks_like_skill(requirement)
+    ]
+    for skill in (target.get("skills") or []):
+        text = str(skill).strip()
+        if text:
+            basic_sources.append(text)
+    if not basic_sources:
+        # 保证三分类齐全：用第一条要求派生一道基础理解题。
+        basic_sources = requirements[:1]
+    for text in list(dict.fromkeys(basic_sources))[:4]:
+        question = f"请解释你在实际工作中如何运用「{text}」？"
+        if question in existing_texts:
+            continue
+        add_item(
+            db,
+            bank.id,
+            question_text=question,
+            category="BASIC",
+            difficulty="EASY",
+            source="MODEL",
+            jd_requirement_refs=[text],
+            experience_refs=experience_refs,
+            why_asked=f"核实「{text}」是真实掌握还是只在简历上出现。",
+            expected_evidence=expected_evidence,
+            followup_paths=[f"{text} 里你最熟的是哪一部分？", "有没有踩过坑？怎么解决的？"],
+            risk_flags=list(unverified_note),
+        )
+
+    # ---- HR 题 ----
+    for question, why in _HR_BANK_QUESTIONS:
+        if question in existing_texts:
+            continue
+        add_item(
+            db,
+            bank.id,
+            question_text=question,
+            category="HR_QUESTIONS",
+            difficulty="EASY",
+            source="MODEL",
+            # HR 题也关联到本岗位的头部 JD 要求，回答时仍要落到真实经历上。
+            jd_requirement_refs=requirements[:1],
+            experience_refs=experience_refs,
+            why_asked=why,
+            expected_evidence=expected_evidence,
+            followup_paths=["能再具体一点吗？", "这和你的长期规划是怎么衔接的？"],
+        )
+
+    db.refresh(bank)
+    return bank
+
+
+_SKILL_KEYWORDS = ("熟悉", "掌握", "了解", "熟练", "具备", "会用", "使用", "使用过", "经验")
+
+
+def _looks_like_skill(text: str) -> bool:
+    return any(keyword in (text or "") for keyword in _SKILL_KEYWORDS)
+
+
+def _requirement_texts(ctx: dict) -> list[str]:
+    out: list[str] = []
+    for item in ctx.get("parsed_requirements") or []:
+        if isinstance(item, dict):
+            text = item.get("text") or item.get("summary") or item.get("requirement") or item.get("name")
+            if text:
+                out.append(str(text))
+        elif isinstance(item, str) and item.strip():
+            out.append(item.strip())
+    what = ctx.get("what_matters") or {}
+    for key in ("must_have", "screening", "requirements"):
+        value = what.get(key)
+        if isinstance(value, list):
+            for item in value:
+                if isinstance(item, dict):
+                    text = item.get("text") or item.get("summary") or item.get("requirement")
+                    if text:
+                        out.append(str(text))
+                elif isinstance(item, str) and item.strip():
+                    out.append(item.strip())
+    return list(dict.fromkeys(out))
+
+
+# ---------------------------------------------------------------------------
 # 读出
 # ---------------------------------------------------------------------------
 
@@ -316,6 +506,13 @@ def item_read(item: models.QuestionItem) -> dict:
         "question_text": item.question_text,
         "source": item.source,
         "evidence_refs": list(item.evidence_refs or []),
+        "jd_requirement_refs": list(getattr(item, "jd_requirement_refs", None) or []),
+        "experience_refs": list(getattr(item, "experience_refs", None) or []),
+        "why_asked": getattr(item, "why_asked", None),
+        "expected_evidence": list(getattr(item, "expected_evidence", None) or []),
+        "followup_paths": list(getattr(item, "followup_paths", None) or []),
+        "sample_answer": getattr(item, "sample_answer", None),
+        "risk_flags": list(getattr(item, "risk_flags", None) or []),
         "sort_order": item.sort_order,
         "reference_answer": (
             {
@@ -350,6 +547,7 @@ __all__ = [
     "list_banks",
     "add_item",
     "get_item",
+    "generate_bank_from_context",
     "generate_reference_answer",
     "suggest_resume_optimizations",
     "item_read",

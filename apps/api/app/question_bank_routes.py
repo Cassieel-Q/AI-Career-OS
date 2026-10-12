@@ -25,6 +25,13 @@ class ItemCreateRequest(BaseModel):
     difficulty: str = "MEDIUM"
     interviewer_style: str | None = None
     source: str = "MODEL"
+    jd_requirement_refs: list[str] = Field(default_factory=list)
+    experience_refs: list[str] = Field(default_factory=list)
+    why_asked: str | None = None
+    expected_evidence: list[str] = Field(default_factory=list)
+    followup_paths: list[str] = Field(default_factory=list)
+    sample_answer: str | None = None
+    risk_flags: list[str] = Field(default_factory=list)
 
 
 class ReferenceAnswerRead(BaseModel):
@@ -47,6 +54,13 @@ class ItemRead(BaseModel):
     question_text: str
     source: str
     evidence_refs: list = Field(default_factory=list)
+    jd_requirement_refs: list = Field(default_factory=list)
+    experience_refs: list = Field(default_factory=list)
+    why_asked: str | None = None
+    expected_evidence: list = Field(default_factory=list)
+    followup_paths: list = Field(default_factory=list)
+    sample_answer: str | None = None
+    risk_flags: list = Field(default_factory=list)
     sort_order: int = 0
     reference_answer: ReferenceAnswerRead | None = None
 
@@ -98,8 +112,36 @@ def create_bank_item(bank_id: UUID, payload: ItemCreateRequest, db: Session = De
         difficulty=payload.difficulty,
         interviewer_style=payload.interviewer_style,
         source=payload.source,
+        jd_requirement_refs=payload.jd_requirement_refs,
+        experience_refs=payload.experience_refs,
+        why_asked=payload.why_asked,
+        expected_evidence=payload.expected_evidence,
+        followup_paths=payload.followup_paths,
+        sample_answer=payload.sample_answer,
+        risk_flags=payload.risk_flags,
     )
     return svc.item_read(item)
+
+
+class GenerateBankRequest(BaseModel):
+    mission_id: UUID | None = None
+    target_resume_id: UUID | None = None
+    raw_jd: str | None = Field(default=None, max_length=20_000)
+    name: str | None = None
+
+
+@router.post("/profiles/{profile_id}/question-banks/generate", response_model=BankRead, status_code=201)
+def generate_bank(profile_id: UUID, payload: GenerateBankRequest, db: Session = Depends(get_db)):
+    """按真实上下文（JD 要点 + 已确认岗位简历 + 技能）生成三分类题库。"""
+    bank = svc.generate_bank_from_context(
+        db,
+        profile_id,
+        mission_id=payload.mission_id,
+        target_resume_id=payload.target_resume_id,
+        raw_jd=payload.raw_jd,
+        name=payload.name,
+    )
+    return svc.bank_read(bank)
 
 
 @router.get("/question-items/{item_id}", response_model=ItemRead)

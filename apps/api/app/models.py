@@ -577,6 +577,8 @@ class InterviewSession(Base):
     gap_why: Mapped[str | None] = mapped_column(Text, nullable=True)
     gap_evidence: Mapped[list] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
     recommended_next_action: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # 第七阶段：模拟面试启动参数（mission_id/target_resume_id/interview_type/difficulty/interviewer_style/rounds）。
+    config: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict, server_default="{}")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
@@ -1085,7 +1087,11 @@ class QuestionBank(Base):
 
 
 class QuestionItem(Base):
-    """一道题：三分类 BASIC / PROJECT_DEEP_DIVE / HR_QUESTIONS；来源 MODEL 或 REAL_INTERVIEW。"""
+    """一道题：三分类 BASIC / PROJECT_DEEP_DIVE / HR_QUESTIONS；来源 MODEL 或 REAL_INTERVIEW。
+
+    第六阶段扩展字段：每道题都必须能回答「为什么问这题 / 和 JD 哪条要求有关 /
+    用简历哪段经历回答 / 哪些事实可以说 / 哪些不能编造 / 面试官可能怎么追问」。
+    """
 
     __tablename__ = "question_items"
 
@@ -1100,6 +1106,14 @@ class QuestionItem(Base):
     # MODEL / REAL_INTERVIEW
     source: Mapped[str] = mapped_column(String(24), nullable=False, default="MODEL", server_default="MODEL")
     evidence_refs: Mapped[list] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
+    # --- 第六阶段：题目必须回答的问题 ---
+    jd_requirement_refs: Mapped[list] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
+    experience_refs: Mapped[list] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
+    why_asked: Mapped[str | None] = mapped_column(Text, nullable=True)
+    expected_evidence: Mapped[list] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
+    followup_paths: Mapped[list] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
+    sample_answer: Mapped[str | None] = mapped_column(Text, nullable=True)
+    risk_flags: Mapped[list] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
@@ -1132,6 +1146,70 @@ class ReferenceAnswer(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
     question_item: Mapped[QuestionItem] = relationship("QuestionItem", back_populates="reference_answers")
+
+
+# ---------------------------------------------------------------------------
+# 第七阶段：任务级模拟面试（围绕岗位版简历 + 已确认事实，逐轮追问与评分）
+# ---------------------------------------------------------------------------
+
+
+class MockInterviewSession(Base):
+    """任务级模拟面试会话（不绑定单条 claim）。
+
+    启动参数：mission_id / target_resume_id / interview_type / difficulty /
+    interviewer_style / rounds。
+    """
+
+    __tablename__ = "mock_interview_sessions"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    profile_id: Mapped[UUID] = mapped_column(
+        ForeignKey("user_profiles.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    mission_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("job_missions.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    target_resume_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("target_resumes.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    interview_type: Mapped[str] = mapped_column(String(32), nullable=False, default="TECHNICAL", server_default="TECHNICAL")
+    difficulty: Mapped[str] = mapped_column(String(16), nullable=False, default="MEDIUM", server_default="MEDIUM")
+    interviewer_style: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    rounds: Mapped[int] = mapped_column(Integer, nullable=False, default=3, server_default="3")
+    current_round: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="ACTIVE", server_default="ACTIVE")
+    config: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict, server_default="{}")
+    report: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict, server_default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    turns: Mapped[list["MockInterviewTurn"]] = relationship(
+        "MockInterviewTurn",
+        back_populates="session",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by=lambda: (MockInterviewTurn.round_number, MockInterviewTurn.id),
+    )
+
+
+class MockInterviewTurn(Base):
+    __tablename__ = "mock_interview_turns"
+    __table_args__ = (UniqueConstraint("session_id", "round_number", name="uq_mock_interview_turns_round"),)
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    session_id: Mapped[UUID] = mapped_column(
+        ForeignKey("mock_interview_sessions.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    round_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    question: Mapped[str] = mapped_column(Text, nullable=False)
+    question_source: Mapped[str] = mapped_column(String(32), nullable=False, default="JD_DERIVED", server_default="JD_DERIVED")
+    answer: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # 回答评估：answer_coverage / evidence_status / missing_evidence / unsupported_claims /
+    # jd_alignment / next_followup / improvement_tip
+    evaluation: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict, server_default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    session: Mapped[MockInterviewSession] = relationship("MockInterviewSession", back_populates="turns")
 
 
 # ---------------------------------------------------------------------------

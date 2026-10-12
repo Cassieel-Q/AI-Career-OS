@@ -62,6 +62,9 @@ class ChatRequest(BaseModel):
     content: str = Field(min_length=1)
     profile_id: str | None = None
     mission_id: str | None = None
+    # 第三阶段：前端进入助手时自动带入岗位版简历与来源路由。
+    target_resume_id: str | None = None
+    route: str | None = None
     web_search: bool = False
     allow_write: bool = False
     reasoning_effort: str = Field(default="medium", pattern="^(low|medium|high)$")
@@ -211,6 +214,27 @@ async def _stream_chat(payload: ChatRequest, conversation_id: UUID, surface: str
                 context_lines.append(f"用户当前正在查看的岗位：{mission.company} · {mission.role}")
             except Exception:  # noqa: BLE001
                 pass
+
+    # 第一阶段：解析面试上下文（intent / 岗位 / 目标简历 / 置信度 / 缺失项）。
+    resolved: dict[str, Any] | None = None
+    try:
+        from .interview_context import resolve_interview_context
+
+        with next(get_db_gen()) as db2:
+            resolved_ctx = resolve_interview_context(
+                db2,
+                message=payload.content,
+                route=payload.route,
+                mission_id=payload.mission_id,
+                target_resume_id=payload.target_resume_id,
+                profile_id=payload.profile_id,
+                history=[{"role": m.role, "content": m.content} for m in history[-10:]],
+            )
+        resolved = resolved_ctx.to_dict()
+        context_lines.append(_render_resolved_context(resolved))
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("解析面试上下文失败：%s", exc)
+
     if context_lines:
         user_text += "\n\n[当前上下文]\n" + "\n".join(context_lines)
 
@@ -227,6 +251,10 @@ async def _stream_chat(payload: ChatRequest, conversation_id: UUID, surface: str
     full_text = ""
     tool_log: list[dict[str, Any]] = []
     all_sources: list[dict[str, Any]] = []
+    degraded = False
+    degraded_reasons: list[str] = []
+    # 目标一/二：本轮解析出的面试上下文（供 Agent 固定流程与降级回答使用）。
+    resolved_context: dict[str, Any] | None = None
 
     try:
         yield _sse({"type": "start", "conversation_id": str(conversation_id)})
@@ -272,48 +300,54 @@ async def _stream_chat(payload: ChatRequest, conversation_id: UUID, surface: str
                 full_text = round_text
                 break
 
-            # 回填 assistant tool_calls 消息
+            # 按 tool call index 排序（**不能**对 dict 排序：多个工具调用时
+            # `sorted(tool_calls.values())` 会抛 '<' not supported between instances of
+            # 'dict' and 'dict'，导致整轮流式回复中断）。
+            ordered_calls = [tool_calls[idx] for idx in sorted(tool_calls.keys())]
             calls = [
                 {
                     "id": c["id"] or f"call_{i}",
                     "type": "function",
                     "function": {"name": c["name"], "arguments": c["arguments"]},
                 }
-                for i, c in sorted(tool_calls.items())
+                for i, c in enumerate(ordered_calls)
             ]
             messages.append({"role": "assistant", "content": None, "tool_calls": calls})
 
-            # 逐个执行工具
-            for c in sorted(tool_calls.values()):
+            # 逐个执行工具：严格按 index 顺序，与上面 calls 一一对应。
+            for i, c in enumerate(ordered_calls):
                 name = c["name"]
                 try:
                     args = json.loads(c["arguments"] or "{}")
                 except json.JSONDecodeError:
                     args = {}
-                try:
-                    with next(get_db_gen()) as db2:
-                        result_text, changed, sources = execute_tool(
-                            name, args, db2, payload.profile_id, conversation_id
-                        )
-                except ValueError as exc:
-                    result_text = str(exc)
-                    changed = False
-                    sources = []
-                except Exception as exc:  # noqa: BLE001
-                    logger.warning("工具执行失败 %s：%s", name, exc)
-                    result_text = f"工具执行失败：{exc}"
-                    changed = False
-                    sources = []
+                with next(get_db_gen()) as db2:
+                    result = execute_tool(
+                        name, args, db2, payload.profile_id, conversation_id, default_context=resolved
+                    )
 
-                tool_log.append({"name": name, "changed": changed, "summary": result_text[:200]})
-                if sources:
-                    all_sources.extend(sources)
-                messages.append({"role": "tool", "tool_call_id": c["id"] or f"call_0", "content": result_text})
+                # 目标八：单个工具失败不得终止整轮，把失败原因回给模型继续作答。
+                tool_log.append({
+                    "name": name,
+                    "changed": result.changed,
+                    "summary": result.summary[:200],
+                    "ok": result.ok,
+                    "error": result.error,
+                })
+                if result.source_refs:
+                    all_sources.extend(result.source_refs)
+                if not result.ok:
+                    degraded = True
+                    if result.error:
+                        degraded_reasons.append(f"{name}: {result.error}")
+                messages.append({"role": "tool", "tool_call_id": calls[i]["id"], "content": result.content_for_model})
                 yield _sse({
                     "type": "tool",
                     "name": name,
-                    "changed": changed,
-                    "summary": result_text[:200],
+                    "changed": result.changed,
+                    "ok": result.ok,
+                    "error": result.error,
+                    "summary": result.summary[:200],
                 })
 
             if all_sources:
@@ -321,6 +355,18 @@ async def _stream_chat(payload: ChatRequest, conversation_id: UUID, surface: str
 
         if not full_text.strip() and tool_log:
             full_text = "已完成：\n" + "\n".join(f"- {t['summary']}" for t in tool_log)
+
+        # 目标八：工具失败不显示「回复中断」作为唯一结果——明确说明哪些内容没加载成功，
+        # 并保留已成功加载的上下文继续作答。
+        if degraded:
+            missing_note = "；".join(dict.fromkeys(degraded_reasons)) or "部分工具未执行成功"
+            full_text = (full_text or "").strip()
+            full_text = (
+                (full_text + "\n\n" if full_text else "")
+                + f"⚠️ 部分资料本次未加载成功（{missing_note}）。以上回答基于已成功加载的内容；"
+                "未加载成功的部分我已明确标出，你可以重试或直接告诉我缺失的信息。"
+            )
+            yield _sse({"type": "degraded", "reasons": list(dict.fromkeys(degraded_reasons))})
 
         # 落库助手消息
         with next(get_db_gen()) as db2:
@@ -343,14 +389,22 @@ async def _stream_chat(payload: ChatRequest, conversation_id: UUID, surface: str
 
     except Exception as exc:  # noqa: BLE001
         logger.exception("助手流式回复出错")
-        # 尽力落库错误消息
+        # 尽力落库：保留已完成内容和工具记录，避免「答到一半」的成果丢失（第八阶段）。
         try:
+            fallback = full_text.strip()
+            if not fallback and tool_log:
+                fallback = "已完成：\n" + "\n".join(f"- {t['summary']}" for t in tool_log)
             with next(get_db_gen()) as db2:
                 assistant_row = models.AssistantMessage(
                     conversation_id=conversation_id, role="assistant",
-                    content=full_text or f"（回复出错：{exc}）", tool_calls=tool_log or None,
+                    content=fallback or f"（回复出错：{exc}）",
+                    tool_calls=tool_log or None,
+                    sources=all_sources or None,
                 )
                 db2.add(assistant_row)
+                conv = db2.get(models.AssistantConversation, conversation_id)
+                if conv:
+                    conv.updated_at = datetime.now()
                 db2.commit()
         except Exception:  # noqa: BLE001
             pass
@@ -361,6 +415,33 @@ async def _stream_chat(payload: ChatRequest, conversation_id: UUID, surface: str
             await client.close()
         except Exception:  # noqa: BLE001
             pass
+
+
+def _render_resolved_context(resolved: dict[str, Any]) -> str:
+    """把解析出的面试上下文渲染成注入给模型的紧凑文本（不要求用户重录岗位）。"""
+    lines = ["【本轮面试上下文（后端已解析，直接使用，不要要求用户重新录入）】"]
+    if resolved.get("intent"):
+        lines.append(f"- 意图：{resolved['intent']}")
+    if resolved.get("company") or resolved.get("role"):
+        lines.append(f"- 岗位：{resolved.get('company') or '未识别'} · {resolved.get('role') or '未识别'}")
+    if resolved.get("mission_id"):
+        lines.append(f"- 已匹配岗位 mission_id：{resolved['mission_id']}")
+    else:
+        lines.append("- 未匹配到已有岗位：若本轮附了 JD，就用它作为临时岗位上下文继续回答。")
+    if resolved.get("target_resume_id"):
+        lines.append(f"- 目标简历 target_resume_id：{resolved['target_resume_id']}")
+    else:
+        lines.append("- 当前岗位没有绑定岗位版简历：请明确说明，并改用已确认个人资料 + 本轮 JD 继续。")
+    if resolved.get("jd_in_message"):
+        lines.append("- 用户在消息里粘贴了完整 JD：直接使用，不要再要求提供岗位信息。")
+    if resolved.get("crash_prep"):
+        lines.append("- 检测到「今天/马上要面试」：进入短时准备模式（CRASH_PREP），先给最高优先级内容，不要长篇泛泛建议。")
+    if resolved.get("candidates"):
+        names = "、".join(f"{c.get('company')} {c.get('role')}" for c in resolved["candidates"][:5])
+        lines.append(f"- 同公司多岗位候选（必须让用户确认，不要随机选）：{names}")
+    if resolved.get("reason"):
+        lines.append(f"- 解析说明：{resolved['reason']}")
+    return "\n".join(lines)
 
 
 def _humanize_stream_error(exc: Exception) -> str:
@@ -462,3 +543,55 @@ def reject_write_proposal(proposal_id: UUID, db: Session = Depends(get_db)) -> d
     from .assistant_capabilities import proposal_read, reject_proposal
 
     return proposal_read(reject_proposal(db, proposal_id))
+
+
+# ---------------------------------------------------------------------------
+# 面试上下文（第一/二/三/四阶段）：解析 + 统一上下文 + 准备流程
+# ---------------------------------------------------------------------------
+
+
+class ContextResolveRequest(BaseModel):
+    message: str = Field(default="", max_length=20_000)
+    profile_id: str | None = None
+    mission_id: str | None = None
+    target_resume_id: str | None = None
+    route: str | None = None
+
+
+@router.post("/assistant/interview-context")
+def resolve_context(payload: ContextResolveRequest, db: Session = Depends(get_db)) -> dict:
+    """解析当前面试上下文并返回统一上下文摘要（供助手顶部上下文条使用）。"""
+    from .interview_context import resolve_interview_context
+    from .mission_interview_context import build_mission_interview_context, context_summary
+
+    resolved = resolve_interview_context(
+        db,
+        message=payload.message,
+        route=payload.route,
+        mission_id=payload.mission_id,
+        target_resume_id=payload.target_resume_id,
+        profile_id=payload.profile_id,
+    )
+    result: dict[str, Any] = {"resolved": resolved.to_dict(), "summary": None, "prep": None}
+    if payload.profile_id:
+        try:
+            profile_uuid = UUID(payload.profile_id)
+        except (ValueError, TypeError):
+            profile_uuid = None
+        if profile_uuid is not None:
+            mission_uuid = UUID(resolved.mission_id) if resolved.mission_id else None
+            resume_uuid = UUID(resolved.target_resume_id) if resolved.target_resume_id else None
+            ctx = build_mission_interview_context(
+                db,
+                profile_id=profile_uuid,
+                mission_id=mission_uuid,
+                target_resume_id=resume_uuid,
+                raw_jd=resolved.raw_jd,
+                company=resolved.company,
+                role=resolved.role,
+            )
+            result["summary"] = context_summary(ctx)
+            from .interview_prep_planner import plan_interview_prep
+
+            result["prep"] = plan_interview_prep(resolved.to_dict(), ctx)
+    return result
