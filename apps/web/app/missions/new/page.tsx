@@ -1,6 +1,7 @@
 import { MissionCreate } from "../../mission-create.tsx";
+import { readSearchParam, type SearchParamValue } from "../../search-params.ts";
 
-type Search = { profile_id?: string };
+type Search = { profile_id?: SearchParamValue };
 
 /** /missions/new — 粘贴 JD 分析入口（始终可进，不依赖已有 mission）。 */
 export default async function NewMissionPage({
@@ -9,6 +10,6 @@ export default async function NewMissionPage({
   searchParams: Promise<Search>;
 }) {
   const resolved = await Promise.resolve(searchParams);
-  const profileId = resolved?.profile_id?.trim() || "";
+  const profileId = readSearchParam(resolved?.profile_id);
   return <MissionCreate profileId={profileId || undefined} />;
 }

@@ -67,6 +67,7 @@ import {
   coreInterviewCopy,
   coreResumeNextStep,
   deriveResumeSubstep,
+  describeJdAnalysisDegradation,
   humanizeMissionError,
   readinessStatusLabel,
   strengthenStatusSummary,
@@ -572,6 +573,12 @@ useEffect(() => {
 
   const currentMission = mission;
   const what = currentMission.what_matters ?? {};
+  // 后端在岗位解析软失败时仍会建任务（渐进式降级），这里据此给可恢复入口。
+  const analysisDegradation = describeJdAnalysisDegradation({
+    analysisError: currentMission.analysis_error,
+    warnings: currentMission.warnings,
+    whatMatters: what,
+  });
   const latestResume = resumes[resumes.length - 1] ?? null;
   const highRiskCount = countHighRiskFindings(redTeam.findings);
   const workflowState = normalizeWorkflowState(currentMission.workflow_state);
@@ -640,6 +647,18 @@ useEffect(() => {
     readinessStatus: readiness?.status ?? null,
     evidenceGapCount,
   };
+
+  /** 岗位解析降级后的唯一恢复动作：拿原始 JD 再跑一次解析。 */
+  async function reanalyzeRole() {
+    const raw = (targetJob?.raw_text || "").trim();
+    if (raw.length < 20) {
+      setError("原始 JD 还没读到（或过短），请刷新页面后再试。");
+      return;
+    }
+    await run(async () => {
+      await withTaskTimeout(reanalyzeMission(missionId, raw), 120_000, "岗位识别");
+    }, "jd_analysis");
+  }
 
   /** Open 补强 (proof) tab. Skip advance(strengthen) when already STRENGTHENING_* — that 409s and blocks navigation. */
   async function navigateToStrengthen() {
@@ -919,15 +938,31 @@ useEffect(() => {
           </div>
         </div>
 
+        {analysisDegradation.degraded && (
+          <section className="mission-card mission-analysis-fallback" role="status">
+            <p className="section-kicker">下一步只有一个动作</p>
+            <h3>岗位智能解析没跑完</h3>
+            <p className="summary">{analysisDegradation.message}</p>
+            <div className="mission-action-row">
+              <PrimaryButton disabled={busy || !(targetJob?.raw_text || "").trim()} onClick={() => void reanalyzeRole()}>
+                {busy ? "正在重新解析…" : "重新解析岗位"}
+              </PrimaryButton>
+              <span className="mission-analysis-fallback-hint">或者直接在下面手动更正公司 / 岗位，再「保存岗位」。</span>
+            </div>
+          </section>
+        )}
+
         <section className="mission-card">
-          <p className="section-kicker">岗位已识别</p>
+          <p className="section-kicker">{analysisDegradation.degraded ? "岗位基本信息" : "岗位已识别"}</p>
           <h3>
             {isUnknownIdentity(currentMission.company)
               ? "请补充公司和岗位名称"
               : "已识别：" + String(currentMission.company) + " / " + String(currentMission.role)}
           </h3>
           <p className="summary">
-            这个岗位主要关注：{capabilities.join("、") || "AI 产品能力、项目经验、数据分析"}。
+            {capabilities.length
+              ? `这个岗位主要关注：${capabilities.join("、")}。`
+              : "还没有解析出这个岗位的关键关注点——重新解析，或直接在下面手动更正岗位信息。"}
           </p>
           <div className="mission-original-jd">
             <p className="section-kicker">原始岗位描述</p>
