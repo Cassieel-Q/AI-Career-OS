@@ -3382,3 +3382,94 @@ pre.batch-draft-excerpt { white-space: pre-wrap; word-break: break-word; backgro
 .resume-studio-text:focus { outline: 2px solid var(--focus-ring); outline-offset: -1px; }
 .resume-studio-text:disabled { background: var(--surface-disabled); color: var(--text-quaternary); }
 .resume-studio .start-note { margin: 0; }
+
+/* ------------------------------------------------------------------ 岗位广场：一键采集
+   采集表单块、关键词 chips、分来源进度、统计条、JD 预览。 */
+.app-field-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+
+.app-field-block:last-child {
+  margin-bottom: 0;
+}
+
+.app-field-label {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.app-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.app-chip.active {
+  background: var(--text-primary, #1c1c1e);
+  border-color: var(--text-primary, #1c1c1e);
+  color: #fff;
+}
+
+.app-chip.ghost {
+  border-style: dashed;
+  color: var(--text-tertiary, #6e6e73);
+}
+
+.app-chip.warn {
+  border-color: var(--accent-attention, #b25000);
+  color: var(--accent-attention, #b25000);
+}
+
+.app-chip button {
+  margin-left: 0.3rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.app-progress-list {
+  margin: 0.7rem 0 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.app-stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.8rem;
+}
+
+.app-badge.warn {
+  border-color: var(--accent-attention);
+  color: var(--accent-attention);
+}
+
+.app-card.nested {
+  margin-top: 0.9rem;
+  padding: 1rem 1.1rem;
+  border-style: dashed;
+  background: var(--surface-muted, #f7f7f9);
+}
+
+.jd-preview {
+  max-width: 30rem;
+  max-height: 12rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}

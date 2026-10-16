@@ -1,0 +1,643 @@
+{
+  "remoteok_only": {
+    "request": {
+      "sources": [
+        "remoteok"
+      ],
+      "keywords": [
+        "product manager",
+        "AI 产品经理"
+      ],
+      "location": null,
+      "employment_type": null,
+      "posted_within_days": null,
+      "limit": 8,
+      "greenhouse_boards": [],
+      "lever_companies": []
+    },
+    "reports": [
+      {
+        "source": "remoteok",
+        "status": "OK",
+        "fetched": 8,
+        "count": 8,
+        "filtered_out": 0,
+        "note": "",
+        "errors": []
+      }
+    ],
+    "totals": {
+      "returned": 8,
+      "cross_source_duplicates": 0,
+      "sources_ok": 1,
+      "sources_failed": 0,
+      "sources_empty": 0
+    },
+    "sample_jobs": [
+      {
+        "source": "remoteok",
+        "company": "Thyme Care",
+        "role": "Principal Product Manager Strategic Initiatives",
+        "location": "Remote",
+        "employment_type": "UNKNOWN",
+        "posted_at": "2026-10-13T08:00:11+00:00",
+        "match_score": 3,
+        "source_url": "https://remoteOK.com/remote-jobs/remote-principal-product-manager-strategic-initiatives-thyme-care-1137510",
+        "needs_confirm": []
+      },
+      {
+        "source": "remoteok",
+        "company": "EDETEK",
+        "role": "Manager Clinical Data Management",
+        "location": "Remote",
+        "employment_type": "UNKNOWN",
+        "posted_at": "2026-10-10T08:00:08+00:00",
+        "match_score": 2,
+        "source_url": "https://remoteOK.com/remote-jobs/remote-manager-clinical-data-management-edetek-1137481",
+        "needs_confirm": []
+      },
+      {
+        "source": "remoteok",
+        "company": "Tether Operations Limited",
+        "role": "Product Engineering Lead",
+        "location": "Remote",
+        "employment_type": "UNKNOWN",
+        "posted_at": "2026-10-10T00:00:05+00:00",
+        "match_score": 2,
+        "source_url": "https://remoteOK.com/remote-jobs/remote-product-engineering-lead-tether-operations-limited-1137478",
+        "needs_confirm": []
+      },
+      {
+        "source": "remoteok",
+        "company": "DEUNA",
+        "role": "Technical Account Manager",
+        "location": "Ciudad de MÃ©xico, Mexico",
+        "employment_type": "UNKNOWN",
+        "posted_at": "2026-10-11T00:00:05+00:00",
+        "match_score": 2,
+        "source_url": "https://remoteOK.com/remote-jobs/remote-technical-account-manager-deuna-1137482",
+        "needs_confirm": []
+      },
+      {
+        "source": "remoteok",
+        "company": "Akicita Federal, LLC",
+        "role": "Contracts Manager Federal",
+        "location": "Remote",
+        "employment_type": "UNKNOWN",
+        "posted_at": "2026-10-15T00:00:13+00:00",
+        "match_score": 1,
+        "source_url": "https://remoteOK.com/remote-jobs/remote-contracts-manager-federal-akicita-federal-llc-1137522",
+        "needs_confirm": []
+      },
+      {
+        "source": "remoteok",
+        "company": "Akicita Federal, LLC",
+        "role": "Federal Account Manager Client Relationships",
+        "location": "Remote",
+        "employment_type": "UNKNOWN",
+        "posted_at": "2026-10-15T00:00:05+00:00",
+        "match_score": 1,
+        "source_url": "https://remoteOK.com/remote-jobs/remote-federal-account-manager-client-relationships-akicita-federal-llc-1137521",
+        "needs_confirm": []
+      },
+      {
+        "source": "remoteok",
+        "company": "Midnite",
+        "role": "Product Design Director",
+        "location": "United Kingdom",
+        "employment_type": "UNKNOWN",
+        "posted_at": "2026-10-11T16:00:03+00:00",
+        "match_score": 1,
+        "source_url": "https://remoteOK.com/remote-jobs/remote-product-design-director-midnite-1137497",
+        "needs_confirm": []
+      },
+      {
+        "source": "remoteok",
+        "company": "Fuel50",
+        "role": "Product Design Lead",
+        "location": "Remote",
+        "employment_type": "UNKNOWN",
+        "posted_at": "2026-10-09T08:00:04+00:00",
+        "match_score": 1,
+        "source_url": "https://remoteOK.com/remote-jobs/remote-product-design-lead-fuel50-1137474",
+        "needs_confirm": []
+      }
+    ]
+  },
+  "greenhouse_only": {
+    "request": {
+      "sources": [
+        "greenhouse"
+      ],
+      "keywords": [
+        "product manager"
+      ],
+      "location": null,
+      "employment_type": null,
+      "posted_within_days": null,
+      "limit": 8,
+      "greenhouse_boards": [
+        "stripe",
+        "airbnb"
+      ],
+      "lever_companies": []
+    },
+    "reports": [
+      {
+        "source": "greenhouse",
+        "status": "OK",
+        "fetched": 8,
+        "count": 8,
+        "filtered_out": 0,
+        "note": "",
+        "errors": []
+      }
+    ],
+    "totals": {
+      "returned": 8,
+      "cross_source_duplicates": 0,
+      "sources_ok": 1,
+      "sources_failed": 0,
+      "sources_empty": 0
+    },
+    "sample_jobs": [
+      {
+        "source": "greenhouse",
+        "company": "stripe",
+        "role": "Account Executive, Product - Buy Now Pay Later (AUNZ)",
+        "location": "Sydney",
+        "employment_type": "FULLTIME",
+        "posted_at": "2026-10-07T19:02:27-04:00",
+        "match_score": 2,
+        "source_url": "https://stripe.com/jobs/search?gh_jid=8174148",
+        "needs_confirm": [
+          "company"
+        ]
+      },
+      {
+        "source": "greenhouse",
+        "company": "stripe",
+        "role": "Account Executive Product - Billing (Japanese Fluency)",
+        "location": "Japan, Tokyo",
+        "employment_type": "UNKNOWN",
+        "posted_at": "2026-10-07T19:02:27-04:00",
+        "match_score": 1,
+        "source_url": "https://stripe.com/jobs/search?gh_jid=8188088",
+        "needs_confirm": [
+          "company"
+        ]
+      },
+      {
+        "source": "greenhouse",
+        "company": "stripe",
+        "role": "Account Executive Product - Fraud & Risk",
+        "location": "London",
+        "employment_type": "UNKNOWN",
+        "posted_at": "2026-10-14T05:08:07-04:00",
+        "match_score": 1,
+        "source_url": "https://stripe.com/jobs/search?gh_jid=8271657",
+        "needs_confirm": [
+          "company"
+        ]
+      },
+      {
+        "source": "greenhouse",
+        "company": "stripe",
+        "role": "Account Executive Product - Fraud & Risk",
+        "location": "Chicago, Seattle, NYC, San Francisco, Remote",
+        "employment_type": "UNKNOWN",
+        "posted_at": "2026-10-07T19:02:27-04:00",
+        "match_score": 1,
+        "source_url": "https://stripe.com/jobs/search?gh_jid=8181024",
+        "needs_confirm": [
+          "company"
+        ]
+      },
+      {
+        "source": "greenhouse",
+        "company": "stripe",
+        "role": "Account Executive Product - Global Selling",
+        "location": "Sydney Or Melbourne",
+        "employment_type": "UNKNOWN",
+        "posted_at": "2026-10-07T19:02:27-04:00",
+        "match_score": 1,
+        "source_url": "https://stripe.com/jobs/search?gh_jid=8174141",
+        "needs_confirm": [
+          "company"
+        ]
+      },
+      {
+        "source": "greenhouse",
+        "company": "stripe",
+        "role": "Account Executive Product - Issuing & Treasury",
+        "location": "London OR Paris OR Germany",
+        "employment_type": "UNKNOWN",
+        "posted_at": "2026-10-07T19:02:27-04:00",
+        "match_score": 1,
+        "source_url": "https://stripe.com/jobs/search?gh_jid=8203649",
+        "needs_confirm": [
+          "company"
+        ]
+      },
+      {
+        "source": "greenhouse",
+        "company": "stripe",
+        "role": "Account Executive, Product (Global Payouts - Hunter)",
+        "location": "London OR Dublin",
+        "employment_type": "UNKNOWN",
+        "posted_at": "2026-10-08T10:39:32-04:00",
+        "match_score": 1,
+        "source_url": "https://stripe.com/jobs/search?gh_jid=8213481",
+        "needs_confirm": [
+          "company"
+        ]
+      },
+      {
+        "source": "greenhouse",
+        "company": "stripe",
+        "role": "Account Executive, Product - Issuing & Treasury (Grower)",
+        "location": "US-San Francisco, US- New York, US-Chicago",
+        "employment_type": "UNKNOWN",
+        "posted_at": "2026-10-09T14:21:00-04:00",
+        "match_score": 1,
+        "source_url": "https://stripe.com/jobs/search?gh_jid=8190044",
+        "needs_confirm": [
+          "company"
+        ]
+      }
+    ]
+  },
+  "lever_only": {
+    "request": {
+      "sources": [
+        "lever"
+      ],
+      "keywords": [],
+      "location": null,
+      "employment_type": null,
+      "posted_within_days": null,
+      "limit": 5,
+      "greenhouse_boards": [],
+      "lever_companies": [
+        "leverdemo"
+      ]
+    },
+    "reports": [
+      {
+        "source": "lever",
+        "status": "OK",
+        "fetched": 5,
+        "count": 5,
+        "filtered_out": 0,
+        "note": "",
+        "errors": []
+      }
+    ],
+    "totals": {
+      "returned": 5,
+      "cross_source_duplicates": 0,
+      "sources_ok": 1,
+      "sources_failed": 0,
+      "sources_empty": 0
+    },
+    "sample_jobs": [
+      {
+        "source": "lever",
+        "company": "leverdemo",
+        "role": "Customer Success Manager",
+        "location": "Atlanta, Georgia",
+        "employment_type": "FULLTIME",
+        "posted_at": 1788199939703,
+        "match_score": 0,
+        "source_url": "https://jobs.lever.co/leverdemo/ad208490-4052-4f91-a57e-433f2d1e484b",
+        "needs_confirm": []
+      },
+      {
+        "source": "lever",
+        "company": "leverdemo",
+        "role": "Dentist",
+        "location": "Houston, TX",
+        "employment_type": "FULLTIME",
+        "posted_at": 1787600587936,
+        "match_score": 0,
+        "source_url": "https://jobs.lever.co/leverdemo/120b5976-ee4e-4dc5-b31b-2b1ca124460c",
+        "needs_confirm": [
+          "jd"
+        ]
+      },
+      {
+        "source": "lever",
+        "company": "leverdemo",
+        "role": "Director of Diversity, Equity, and Inclusion",
+        "location": "London, UK",
+        "employment_type": "FULLTIME",
+        "posted_at": 1718633877107,
+        "match_score": 0,
+        "source_url": "https://jobs.lever.co/leverdemo/1dbf02a6-d434-4e47-8d66-3aba2c17bed1",
+        "needs_confirm": [
+          "jd"
+        ]
+      },
+      {
+        "source": "lever",
+        "company": "leverdemo",
+        "role": "Sales Engineer",
+        "location": "New York, New York",
+        "employment_type": "UNKNOWN",
+        "posted_at": 1764105683926,
+        "match_score": 0,
+        "source_url": "https://jobs.lever.co/leverdemo/7e10ea46-98be-4bd1-a3ca-57d153b25c61",
+        "needs_confirm": []
+      },
+      {
+        "source": "lever",
+        "company": "leverdemo",
+        "role": "Sales Engineer AH",
+        "location": "Atlanta, Georgia",
+        "employment_type": "FULLTIME",
+        "posted_at": 1788288308535,
+        "match_score": 0,
+        "source_url": "https://jobs.lever.co/leverdemo/58db3f8e-b108-47d1-9e6e-87a1712497cd",
+        "needs_confirm": []
+      }
+    ]
+  },
+  "lever_bad_slug": {
+    "request": {
+      "sources": [
+        "lever"
+      ],
+      "keywords": [],
+      "location": null,
+      "employment_type": null,
+      "posted_within_days": null,
+      "limit": 5,
+      "greenhouse_boards": [],
+      "lever_companies": [
+        "this-slug-does-not-exist"
+      ]
+    },
+    "reports": [
+      {
+        "source": "lever",
+        "status": "ERROR",
+        "fetched": 0,
+        "count": 0,
+        "filtered_out": 0,
+        "note": "this-slug-does-not-exist：https://api.lever.co/v0/postings/this-slug-does-not-exist?mode=json 返回 HTTP 404",
+        "errors": [
+          "this-slug-does-not-exist：https://api.lever.co/v0/postings/this-slug-does-not-exist?mode=json 返回 HTTP 404"
+        ]
+      }
+    ],
+    "totals": {
+      "returned": 0,
+      "cross_source_duplicates": 0,
+      "sources_ok": 0,
+      "sources_failed": 1,
+      "sources_empty": 0
+    },
+    "sample_jobs": []
+  },
+  "multi_source": {
+    "request": {
+      "sources": [
+        "remoteok",
+        "greenhouse"
+      ],
+      "keywords": [
+        "product manager",
+        "AI 产品经理"
+      ],
+      "location": null,
+      "employment_type": null,
+      "posted_within_days": null,
+      "limit": 10,
+      "greenhouse_boards": [
+        "stripe"
+      ],
+      "lever_companies": []
+    },
+    "reports": [
+      {
+        "source": "remoteok",
+        "status": "OK",
+        "fetched": 10,
+        "count": 10,
+        "filtered_out": 0,
+        "note": "",
+        "errors": []
+      },
+      {
+        "source": "greenhouse",
+        "status": "OK",
+        "fetched": 10,
+        "count": 10,
+        "filtered_out": 0,
+        "note": "",
+        "errors": []
+      }
+    ],
+    "totals": {
+      "returned": 10,
+      "cross_source_duplicates": 0,
+      "sources_ok": 2,
+      "sources_failed": 0,
+      "sources_empty": 0
+    },
+    "sample_jobs": [
+      {
+        "source": "remoteok",
+        "company": "Thyme Care",
+        "role": "Principal Product Manager Strategic Initiatives",
+        "location": "Remote",
+        "employment_type": "UNKNOWN",
+        "posted_at": "2026-10-13T08:00:11+00:00",
+        "match_score": 3,
+        "source_url": "https://remoteOK.com/remote-jobs/remote-principal-product-manager-strategic-initiatives-thyme-care-1137510",
+        "needs_confirm": []
+      },
+      {
+        "source": "remoteok",
+        "company": "Bjak",
+        "role": "Technical Product Manager AI Stockbroking App",
+        "location": "Germany",
+        "employment_type": "UNKNOWN",
+        "posted_at": "2026-09-23T00:00:10+00:00",
+        "match_score": 3,
+        "source_url": "https://remoteOK.com/remote-jobs/remote-technical-product-manager-ai-stockbroking-app-bjak-1137421",
+        "needs_confirm": []
+      },
+      {
+        "source": "greenhouse",
+        "company": "stripe",
+        "role": "Account Executive, Product - Buy Now Pay Later (AUNZ)",
+        "location": "Sydney",
+        "employment_type": "FULLTIME",
+        "posted_at": "2026-10-07T19:02:27-04:00",
+        "match_score": 2,
+        "source_url": "https://stripe.com/jobs/search?gh_jid=8174148",
+        "needs_confirm": [
+          "company"
+        ]
+      },
+      {
+        "source": "remoteok",
+        "company": "EDETEK",
+        "role": "Manager Clinical Data Management",
+        "location": "Remote",
+        "employment_type": "UNKNOWN",
+        "posted_at": "2026-10-10T08:00:08+00:00",
+        "match_score": 2,
+        "source_url": "https://remoteOK.com/remote-jobs/remote-manager-clinical-data-management-edetek-1137481",
+        "needs_confirm": []
+      },
+      {
+        "source": "remoteok",
+        "company": "Tether Operations Limited",
+        "role": "Product Engineering Lead",
+        "location": "Remote",
+        "employment_type": "UNKNOWN",
+        "posted_at": "2026-10-10T00:00:05+00:00",
+        "match_score": 2,
+        "source_url": "https://remoteOK.com/remote-jobs/remote-product-engineering-lead-tether-operations-limited-1137478",
+        "needs_confirm": []
+      },
+      {
+        "source": "remoteok",
+        "company": "DEUNA",
+        "role": "Technical Account Manager",
+        "location": "Ciudad de MÃ©xico, Mexico",
+        "employment_type": "UNKNOWN",
+        "posted_at": "2026-10-11T00:00:05+00:00",
+        "match_score": 2,
+        "source_url": "https://remoteOK.com/remote-jobs/remote-technical-account-manager-deuna-1137482",
+        "needs_confirm": []
+      },
+      {
+        "source": "greenhouse",
+        "company": "stripe",
+        "role": "Account Executive Product - Billing (Japanese Fluency)",
+        "location": "Japan, Tokyo",
+        "employment_type": "UNKNOWN",
+        "posted_at": "2026-10-07T19:02:27-04:00",
+        "match_score": 1,
+        "source_url": "https://stripe.com/jobs/search?gh_jid=8188088",
+        "needs_confirm": [
+          "company"
+        ]
+      },
+      {
+        "source": "greenhouse",
+        "company": "stripe",
+        "role": "Account Executive Product - Fraud & Risk",
+        "location": "London",
+        "employment_type": "UNKNOWN",
+        "posted_at": "2026-10-14T05:08:07-04:00",
+        "match_score": 1,
+        "source_url": "https://stripe.com/jobs/search?gh_jid=8271657",
+        "needs_confirm": [
+          "company"
+        ]
+      }
+    ]
+  },
+  "intern_filter": {
+    "request": {
+      "sources": [
+        "remoteok"
+      ],
+      "keywords": [
+        "intern"
+      ],
+      "location": null,
+      "employment_type": "INTERN",
+      "posted_within_days": null,
+      "limit": 5,
+      "greenhouse_boards": [],
+      "lever_companies": []
+    },
+    "reports": [
+      {
+        "source": "remoteok",
+        "status": "OK",
+        "fetched": 5,
+        "count": 1,
+        "filtered_out": 4,
+        "note": "",
+        "errors": []
+      }
+    ],
+    "totals": {
+      "returned": 1,
+      "cross_source_duplicates": 0,
+      "sources_ok": 1,
+      "sources_failed": 0,
+      "sources_empty": 0
+    },
+    "sample_jobs": [
+      {
+        "source": "remoteok",
+        "company": "Ultimate Marketing",
+        "role": "Customer Support Specialist",
+        "location": "Remote",
+        "employment_type": "INTERN",
+        "posted_at": "2026-10-14T01:31:49+00:00",
+        "match_score": 1,
+        "source_url": "https://remoteOK.com/remote-jobs/remote-customer-support-specialist-ultimate-marketing-1137512",
+        "needs_confirm": []
+      }
+    ]
+  },
+  "city_filter": {
+    "request": {
+      "sources": [
+        "greenhouse"
+      ],
+      "keywords": [
+        "product manager"
+      ],
+      "location": "Dublin",
+      "employment_type": null,
+      "posted_within_days": null,
+      "limit": 5,
+      "greenhouse_boards": [
+        "stripe"
+      ],
+      "lever_companies": []
+    },
+    "reports": [
+      {
+        "source": "greenhouse",
+        "status": "OK",
+        "fetched": 5,
+        "count": 1,
+        "filtered_out": 4,
+        "note": "",
+        "errors": []
+      }
+    ],
+    "totals": {
+      "returned": 1,
+      "cross_source_duplicates": 0,
+      "sources_ok": 1,
+      "sources_failed": 0,
+      "sources_empty": 0
+    },
+    "sample_jobs": [
+      {
+        "source": "greenhouse",
+        "company": "stripe",
+        "role": "Account Executive, Product (Global Payouts - Hunter)",
+        "location": "London OR Dublin",
+        "employment_type": "UNKNOWN",
+        "posted_at": "2026-10-08T10:39:32-04:00",
+        "match_score": 1,
+        "source_url": "https://stripe.com/jobs/search?gh_jid=8213481",
+        "needs_confirm": [
+          "company"
+        ]
+      }
+    ]
+  }
+}

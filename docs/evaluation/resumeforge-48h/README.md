@@ -211,3 +211,56 @@ REM 5) 测试
 .venv\Scripts\python.exe -m pytest -q
 cd ..\web && npm test && npm run type-check && node scripts\capture-48h.cjs
 ```
+
+---
+
+## 9. 第二轮：岗位广场「一键采集」+「采集当前招聘网页」（2026-10-16 深夜）
+
+分支仍为 `feature/resumeforge-48h`。本轮把上一轮的采集后端与浏览器桥接进网页，形成真实可点的功能。
+
+### 9.1 新增能力
+
+| 能力 | 实现 | 状态 |
+|---|---|---|
+| 一键采集（多关键词） | `POST /api/v1/job-ingest/collect`：多关键词 OR 命中 + 匹配分排序（岗位名 3 分 > 公司/标签 2 分 > 仅 JD 1 分）；复合拉丁关键词（如 product manager）要求至少一个词元出现在岗位名/公司/标签，避免误命中 | 完成 |
+| 城市 / 实习全职 / 发布时间筛选 | `filter_jobs` 统一作用于所有来源；来源未给发布时间时**不猜**，如实标注"发布时间未知" | 完成 |
+| Greenhouse 公开招聘板 | `boards-api.greenhouse.io/v1/boards/{token}/jobs?content=true`，按企业板配置拉取；实测 stripe=731 / airbnb=169 / databricks=895 / anthropic=651 / figma=143 条真实岗位 | 完成 |
+| Lever 公开招聘板 | `api.lever.co/v0/postings/{company}?mode=json`；实测 `leverdemo` 板 10 条真实岗位（Lever 官方示例板）。常见企业 slug 返回真实 HTTP 404（netflix/ramp/cloudflare 等已迁离 Lever），如实报错 | 完成 |
+| 跨来源交替取样 | 多来源时逐条轮转合并再截断，避免第一个来源占满名额 | 完成 |
+| 采集当前招聘网页 | 复用受控浏览器桥新增 `POST /extract-job`：优先解析页面自带 schema.org JobPosting，其次 DOM 启发式；字段带 HIGH/MEDIUM/LOW/MISSING 置信度，低置信标「待确认」；**列表页明确返回 `LISTING_UNSUPPORTED`** 提示仅支持单职位 | 完成 |
+| 浏览器桥安全加固 | Bearer 令牌（启动时随机生成并写入 `<数据目录>/browser-bridge.token`，后端读同一份）+ 仅回环 + Origin 白名单 + 常数时间令牌比较；实测：无令牌 401、错令牌 401、非白名单 Origin 403 | 完成 |
+| 网页预览后入库 | 预览可编辑（企业/岗位/地点/JD），确认后才调 `save-collected`；预览不写库（有测试保证） | 完成 |
+| 岗位库直达 | 每行「匹配分析」→ `/missions/{id}/role`，「生成岗位定向简历」→ `/missions/{id}/resume`；候选草稿自动「导入为正式岗位」后跳转 | 完成 |
+| 采集结果单条直达 | 结果表每行「匹配分析 / 生成岗位定向简历」：自动保存 → 导入 → 跳转，重复岗位给明确提示 | 完成 |
+
+### 9.2 真实验收（全部在运行中的系统上执行）
+
+- **网页触发 E2E 13/13 通过**（`apps/web/scripts/e2e-job-collect.cjs`，真实浏览器 + 真实后端）：
+  多关键词 chips → 勾选 Greenhouse 填 `stripe,airbnb` → 开始采集 → 分来源报告 → 20 行真实岗位 → JD 展开预览（3312 字）→ 批量导入 → 岗位库 20 条且每行有直达按钮 → 桥状态「已连接」→ 打开本地职位详情页采集 → 解析出 星河科技/AI 产品经理/北京 + JD → 确认入库（21 条）→ 打开列表页采集 → 明确提示「列表页无法可靠区分，仅支持单职位导入」。
+- **分来源真实采集**（`docs/evaluation/resumeforge-48h/job-collect-evidence.json`）：
+  - RemoteOK：`product manager` / `AI 产品经理` 命中 8 条，前三名均为真实产品经理岗（匹配分 3）
+  - Greenhouse（stripe/airbnb）：真实岗位 8 条，`Account Executive, Product - BNPL (AUNZ) | Sydney | FULLTIME` 等
+  - Lever（leverdemo）：真实岗位 5 条，commitment 识别出 FULLTIME
+  - 坏 slug：如实 `ERROR`（HTTP 404），无任何演示数据兜底
+  - 城市筛选（Dublin）：精确命中 1 条
+  - 实习筛选：仅返回判定为 INTERN 的岗位
+- **回归**：后端 802 passed / 5 skipped / 7 failed —— 与基线完全相同的 7 项既有失败，无新增；前端 241/243（2 项既有失败）+ `tsc --noEmit` 通过。
+
+### 9.3 验收中修复的真实缺陷
+
+1. **实习误判**：RemoteOK 某资深岗 JD 含 "international"，子串匹配把 `intern` 误判为实习 → 改为词边界正则（`(?<![a-z])intern(?![a-z])` 等），实测 international 不再误判。
+2. **复合关键词误命中**：`product manager` 曾因 JD 里同时出现两个单词就命中无关岗位（如 Abuse Investigator）→ 复合关键词要求至少一个词元在岗位名/公司/标签。
+3. **多来源被首来源占满**：RemoteOK 先到先得把 20 条名额用完 → 改为跨来源交替取样。
+4. **浏览器桥可被任意本机网页调用** → 令牌 + Origin 白名单 + 回环校验。
+
+### 9.4 截图
+
+`docs/screenshots/job-collect/`：01 采集表单、02 采集结果（20 行真实岗位 + 统计条）、03 导入后岗位库、04 网页采集预览（含置信度 chips）、05 网页采集入库后、06 列表页明确不支持。
+
+### 9.5 本轮新增的已知限制（如实记录）
+
+1. Greenhouse / Lever 是**按企业招聘板**的公开接口，不是全网检索；必须填写企业板标识，且 Greenhouse 公开接口不返回公司名 → 用招聘板标识占位并标「待确认」。
+2. RemoteOK 只有远程岗位，城市筛选命中率低（已在 UI 说明）。
+3. Lever 大企业多已迁离（返回 404），实测可用的是 Lever 官方示例板 `leverdemo`。
+4. Greenhouse 的 `updated_at` 是最后更新时间，不一定是首次发布时间。
+5. 网页采集依赖页面自带 JobPosting 或规范 DOM；无结构化数据的页面只能低置信推断并要求用户确认。

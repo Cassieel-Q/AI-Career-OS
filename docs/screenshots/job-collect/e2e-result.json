@@ -1,0 +1,73 @@
+{
+  "ran_at": "2026-10-16T15:47:24.874Z",
+  "total": 13,
+  "passed": 13,
+  "failed": 0,
+  "results": [
+    {
+      "name": "创建/复用本地档案",
+      "ok": true,
+      "detail": "20a4ed09"
+    },
+    {
+      "name": "多关键词已添加为 chips",
+      "ok": true,
+      "detail": "product manager× | AI 产品经理× | RemoteOK 公开接口 | Greenhouse 公开招聘板"
+    },
+    {
+      "name": "采集返回分来源报告",
+      "ok": true,
+      "detail": "返回 20 来源成功 2 来源为空 0 来源失败 0 跨来源重复 0"
+    },
+    {
+      "name": "采集进度逐来源可见",
+      "ok": true,
+      "detail": "remoteok：OK（命中 18 条）"
+    },
+    {
+      "name": "采集结果表格有真实岗位行",
+      "ok": true,
+      "detail": "20 行"
+    },
+    {
+      "name": "JD 预览可展开且有正文",
+      "ok": true,
+      "detail": "3312 字"
+    },
+    {
+      "name": "批量导入后岗位库有记录",
+      "ok": true,
+      "detail": "5 · 已保存岗位（20）"
+    },
+    {
+      "name": "岗位库每行直达匹配分析/定向简历",
+      "ok": true,
+      "detail": "候选草稿\tLibertex Group\tBusiness Development Manager\tÙØ³ÙØ·, ÙØ³ÙØ· ÙØ³ÙØ· Ø¹Ù"
+    },
+    {
+      "name": "页面显示浏览器桥已连接",
+      "ok": true,
+      "detail": "浏览器桥已连接（http://127.0.0.1:8770）"
+    },
+    {
+      "name": "网页采集解析出企业/岗位/地点",
+      "ok": true,
+      "detail": "星河科技 | AI 产品经理 | 北京"
+    },
+    {
+      "name": "网页采集解析出 JD 正文",
+      "ok": true,
+      "detail": "78 字"
+    },
+    {
+      "name": "网页采集结果入库",
+      "ok": true,
+      "detail": "5 · 已保存岗位（21）"
+    },
+    {
+      "name": "列表页明确提示仅支持单职位导入",
+      "ok": true,
+      "detail": "这是一个岗位**列表页**，无法可靠地区分你要哪一个职位。请点进单个职位详情页后再采集；也可以复制选中文本或粘贴链接手动导入。"
+    }
+  ]
+}

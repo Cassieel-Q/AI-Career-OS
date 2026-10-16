@@ -19,16 +19,73 @@ export type FetchedJob = {
 };
 
 export type CollectedJob = {
+  schema?: string;
   source: string;
   source_url: string;
   apply_url?: string;
   company: string;
+  company_is_board_token?: boolean;
   role: string;
   location: string;
+  jd?: string;
+  jd_excerpt?: string;
   tags?: string[];
-  posted_at?: string;
+  posted_at?: string | null;
   collected_at: string;
+  employment_type?: "INTERN" | "FULLTIME" | "UNKNOWN";
+  dedupe_key?: string;
+  needs_confirm?: string[];
+  raw?: Record<string, unknown>;
   text: string;
+};
+
+export type SourceReport = {
+  source: string;
+  status: "OK" | "EMPTY" | "ERROR";
+  fetched?: number;
+  count: number;
+  filtered_out?: number;
+  note: string;
+  errors?: string[];
+};
+
+export type CollectResult = {
+  run_id: string;
+  started_at: string;
+  finished_at: string;
+  request: Record<string, unknown>;
+  reports: SourceReport[];
+  jobs: CollectedJob[];
+  duplicates: Array<{ company: string | null; role: string | null; reason: string; kept_source: string; dropped_source: string }>;
+  totals: { returned: number; cross_source_duplicates: number; sources_ok: number; sources_failed: number; sources_empty: number };
+};
+
+export type CollectFilter = {
+  keywords: string[];
+  sources: string[];
+  location?: string;
+  employment_type?: string;
+  posted_within_days?: number;
+  limit: number;
+  greenhouse_boards: string[];
+  lever_companies: string[];
+};
+
+export type BridgeStatus = {
+  available: boolean;
+  bridge_url: string;
+  session?: boolean;
+  currentUrl?: string | null;
+  error?: string;
+};
+
+export type BrowserCapture = {
+  status: "OK" | "BLOCKED" | "LISTING_UNSUPPORTED" | "EMPTY" | "ERROR";
+  page_url?: string;
+  page_title?: string;
+  note?: string;
+  confidence?: Record<string, string>;
+  job?: CollectedJob | null;
 };
 
 export type LibraryItem = {
@@ -103,10 +160,37 @@ export function collectRemoteOk(tag: string, limit: number): Promise<{
   });
 }
 
+export function collectJobs(filter: CollectFilter): Promise<CollectResult> {
+  return json("/api/v1/job-ingest/collect", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(filter),
+  });
+}
+
+export function readBridgeStatus(): Promise<BridgeStatus> {
+  return json("/api/v1/job-ingest/bridge-status");
+}
+
+export function collectBrowserPage(): Promise<BrowserCapture> {
+  return json("/api/v1/job-ingest/collect-browser", { method: "POST" });
+}
+
+export type SavedCollected = {
+  source?: string;
+  source_url?: string;
+  company?: string | null;
+  role?: string | null;
+  location?: string | null;
+  parse_status?: string;
+  needs_confirm?: string[];
+  candidate_ids: string[];
+};
+
 export function saveCollectedJobs(
   profileId: string,
   jobs: CollectedJob[],
-): Promise<{ saved: unknown[]; skipped: Array<Record<string, unknown>>; saved_count: number; skipped_count: number }> {
+): Promise<{ saved: SavedCollected[]; skipped: Array<Record<string, unknown>>; saved_count: number; skipped_count: number }> {
   return json(`/api/v1/profiles/${encodeURIComponent(profileId)}/job-ingest/save-collected`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
