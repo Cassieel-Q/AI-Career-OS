@@ -3473,3 +3473,23 @@ pre.batch-draft-excerpt { white-space: pre-wrap; word-break: break-word; backgro
   font-size: 0.78rem;
   line-height: 1.55;
 }
+
+/* ---- 岗位采集：结果状态与来源能力标记 ---- */
+.app-check-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.app-chip-note {
+  font-style: normal;
+  font-size: 0.68rem;
+  margin-left: 0.35rem;
+  padding: 0.05rem 0.3rem;
+  border-radius: 999px;
+  background: rgba(127, 127, 127, 0.18);
+  color: var(--text-secondary);
+}

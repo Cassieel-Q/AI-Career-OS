@@ -1,0 +1,385 @@
+{
+  "started_at": "2026-10-16T16:52:00.737507+00:00",
+  "base_url": "http://127.0.0.1:8100",
+  "profile_id": "3c148e6cfe4f46fab94547592b250ac3",
+  "cases": [
+    {
+      "case": "1-real-collect",
+      "task_status": "COMPLETED",
+      "elapsed_seconds": 5.75,
+      "totals": {
+        "returned": 6,
+        "fetched": 9,
+        "filtered_out": 0,
+        "cross_source_duplicates": 0,
+        "sources_total": 2,
+        "sources_ok": 2,
+        "sources_failed": 0,
+        "sources_empty": 0,
+        "sources_cancelled": 0,
+        "sources_timeout": 0,
+        "new": 0,
+        "duplicate": 6,
+        "updated": 0,
+        "needs_review": 0,
+        "failed": 0,
+        "saveable": 0
+      },
+      "batch_save": {
+        "attempted": 0,
+        "saved_count": 0,
+        "skipped_count": 0
+      },
+      "reports": [
+        {
+          "source": "remoteok",
+          "status": "OK",
+          "fetched": 6,
+          "kept": 6,
+          "latency_ms": 4690
+        },
+        {
+          "source": "remotive",
+          "status": "OK",
+          "fetched": 3,
+          "kept": 3,
+          "latency_ms": 1059
+        }
+      ],
+      "jobs_sample": [
+        {
+          "source": "remoteok",
+          "company": "BlueTuskr",
+          "role": "Graphic Designer & Video Editor",
+          "location": "Remote",
+          "employment_type": "UNKNOWN",
+          "result_status": "DUPLICATE",
+          "needs_confirm": [],
+          "source_url": "https://remoteOK.com/remote-jobs/remote-graphic-designer-video-editor-bluetuskr-1137507"
+        },
+        {
+          "source": "remoteok",
+          "company": "Allego",
+          "role": "Account Manager Mid Market",
+          "location": "Waltham",
+          "employment_type": "UNKNOWN",
+          "result_status": "DUPLICATE",
+          "needs_confirm": [],
+          "source_url": "https://remoteOK.com/remote-jobs/remote-account-manager-mid-market-allego-1137528"
+        },
+        {
+          "source": "remoteok",
+          "company": "Manila Recruitment",
+          "role": "Director US Tax & Accounting #35344",
+          "location": "Remote",
+          "employment_type": "FULLTIME",
+          "result_status": "DUPLICATE",
+          "needs_confirm": [],
+          "source_url": "https://remoteOK.com/remote-jobs/remote-director-us-tax-accounting-35344-manila-recruitment-1137525"
+        },
+        {
+          "source": "remoteok",
+          "company": "Akicita Federal, LLC",
+          "role": "Federal Account Manager Client Relationships",
+          "location": "Remote",
+          "employment_type": "UNKNOWN",
+          "result_status": "DUPLICATE",
+          "needs_confirm": [],
+          "source_url": "https://remoteOK.com/remote-jobs/remote-federal-account-manager-client-relationships-akicita-federal-llc-1137521"
+        },
+        {
+          "source": "remotive",
+          "company": "Coalition Technologies",
+          "role": "Freelance Copywriter",
+          "location": "Worldwide",
+          "employment_type": "UNKNOWN",
+          "result_status": "DUPLICATE",
+          "needs_confirm": [],
+          "source_url": "https://remotive.com/remote-jobs/writing/freelance-copywriter-1749306"
+        },
+        {
+          "source": "remoteok",
+          "company": "Utopia",
+          "role": "Payment Operations Specialist",
+          "location": "Remote",
+          "employment_type": "UNKNOWN",
+          "result_status": "DUPLICATE",
+          "needs_confirm": [],
+          "source_url": "https://remoteOK.com/remote-jobs/remote-payment-operations-specialist-utopia-1137514"
+        }
+      ]
+    },
+    {
+      "case": "2-dedupe",
+      "task_status": "COMPLETED",
+      "totals": {
+        "returned": 6,
+        "fetched": 9,
+        "filtered_out": 0,
+        "cross_source_duplicates": 0,
+        "sources_total": 2,
+        "sources_ok": 2,
+        "sources_failed": 0,
+        "sources_empty": 0,
+        "sources_cancelled": 0,
+        "sources_timeout": 0,
+        "new": 0,
+        "duplicate": 6,
+        "updated": 0,
+        "needs_review": 0,
+        "failed": 0,
+        "saveable": 0
+      },
+      "jobs_sample": [
+        {
+          "source": "remoteok",
+          "company": "BlueTuskr",
+          "role": "Graphic Designer & Video Editor",
+          "location": "Remote",
+          "employment_type": "UNKNOWN",
+          "result_status": "DUPLICATE",
+          "needs_confirm": [],
+          "source_url": "https://remoteOK.com/remote-jobs/remote-graphic-designer-video-editor-bluetuskr-1137507"
+        },
+        {
+          "source": "remoteok",
+          "company": "Allego",
+          "role": "Account Manager Mid Market",
+          "location": "Waltham",
+          "employment_type": "UNKNOWN",
+          "result_status": "DUPLICATE",
+          "needs_confirm": [],
+          "source_url": "https://remoteOK.com/remote-jobs/remote-account-manager-mid-market-allego-1137528"
+        },
+        {
+          "source": "remoteok",
+          "company": "Manila Recruitment",
+          "role": "Director US Tax & Accounting #35344",
+          "location": "Remote",
+          "employment_type": "FULLTIME",
+          "result_status": "DUPLICATE",
+          "needs_confirm": [],
+          "source_url": "https://remoteOK.com/remote-jobs/remote-director-us-tax-accounting-35344-manila-recruitment-1137525"
+        },
+        {
+          "source": "remoteok",
+          "company": "Akicita Federal, LLC",
+          "role": "Federal Account Manager Client Relationships",
+          "location": "Remote",
+          "employment_type": "UNKNOWN",
+          "result_status": "DUPLICATE",
+          "needs_confirm": [],
+          "source_url": "https://remoteOK.com/remote-jobs/remote-federal-account-manager-client-relationships-akicita-federal-llc-1137521"
+        },
+        {
+          "source": "remotive",
+          "company": "Coalition Technologies",
+          "role": "Freelance Copywriter",
+          "location": "Worldwide",
+          "employment_type": "UNKNOWN",
+          "result_status": "DUPLICATE",
+          "needs_confirm": [],
+          "source_url": "https://remotive.com/remote-jobs/writing/freelance-copywriter-1749306"
+        },
+        {
+          "source": "remoteok",
+          "company": "Utopia",
+          "role": "Payment Operations Specialist",
+          "location": "Remote",
+          "employment_type": "UNKNOWN",
+          "result_status": "DUPLICATE",
+          "needs_confirm": [],
+          "source_url": "https://remoteOK.com/remote-jobs/remote-payment-operations-specialist-utopia-1137514"
+        }
+      ]
+    },
+    {
+      "case": "3-empty-result",
+      "task_status": "COMPLETED",
+      "totals": {
+        "returned": 0,
+        "fetched": 0,
+        "filtered_out": 0,
+        "cross_source_duplicates": 0,
+        "sources_total": 1,
+        "sources_ok": 0,
+        "sources_failed": 0,
+        "sources_empty": 1,
+        "sources_cancelled": 0,
+        "sources_timeout": 0,
+        "new": 0,
+        "duplicate": 0,
+        "updated": 0,
+        "needs_review": 0,
+        "failed": 0,
+        "saveable": 0
+      },
+      "reports": [
+        [
+          "remoteok",
+          "EMPTY",
+          "RemoteOK 公开接口没有匹配到关键词的岗位（该站只有远程岗位）。"
+        ]
+      ]
+    },
+    {
+      "case": "4-source-error",
+      "task_status": "FAILED",
+      "totals": {
+        "returned": 0,
+        "fetched": 0,
+        "filtered_out": 0,
+        "cross_source_duplicates": 0,
+        "sources_total": 1,
+        "sources_ok": 0,
+        "sources_failed": 1,
+        "sources_empty": 0,
+        "sources_cancelled": 0,
+        "sources_timeout": 0,
+        "new": 0,
+        "duplicate": 0,
+        "updated": 0,
+        "needs_review": 0,
+        "failed": 0,
+        "saveable": 0
+      },
+      "reports": [
+        [
+          "greenhouse",
+          "ERROR",
+          "definitely-not-a-board-xyz：https://boards-api.greenhouse.io/v1/boards/definitely-not-a-board-xyz/jobs?content=true 返回 HTTP 404"
+        ]
+      ]
+    },
+    {
+      "case": "5-missing-fields",
+      "task_status": "COMPLETED",
+      "totals": {
+        "returned": 2,
+        "fetched": 3,
+        "filtered_out": 0,
+        "cross_source_duplicates": 1,
+        "sources_total": 1,
+        "sources_ok": 1,
+        "sources_failed": 0,
+        "sources_empty": 0,
+        "sources_cancelled": 0,
+        "sources_timeout": 0,
+        "new": 0,
+        "duplicate": 0,
+        "updated": 0,
+        "needs_review": 2,
+        "failed": 0,
+        "saveable": 2
+      },
+      "jobs_sample": [
+        {
+          "source": "greenhouse",
+          "company": "stripe",
+          "role": "Abuse Investigator",
+          "location": "Dublin",
+          "employment_type": "UNKNOWN",
+          "result_status": "NEEDS_REVIEW",
+          "needs_confirm": [
+            "company"
+          ],
+          "source_url": "https://stripe.com/jobs/search?gh_jid=8172487"
+        },
+        {
+          "source": "greenhouse",
+          "company": "stripe",
+          "role": "Abuse Investigator",
+          "location": "Seattle, San Francisco, New York City",
+          "employment_type": "UNKNOWN",
+          "result_status": "NEEDS_REVIEW",
+          "needs_confirm": [
+            "company"
+          ],
+          "source_url": "https://stripe.com/jobs/search?gh_jid=8172510"
+        }
+      ]
+    },
+    {
+      "case": "6-city-filter",
+      "task_status": "COMPLETED",
+      "totals": {
+        "returned": 0,
+        "fetched": 6,
+        "filtered_out": 6,
+        "cross_source_duplicates": 0,
+        "sources_total": 1,
+        "sources_ok": 1,
+        "sources_failed": 0,
+        "sources_empty": 0,
+        "sources_cancelled": 0,
+        "sources_timeout": 0,
+        "new": 0,
+        "duplicate": 0,
+        "updated": 0,
+        "needs_review": 0,
+        "failed": 0,
+        "saveable": 0
+      },
+      "reports": [
+        [
+          "remoteok",
+          "OK",
+          6,
+          6,
+          "local"
+        ]
+      ]
+    },
+    {
+      "case": "7-cancel",
+      "task_status": "CANCELLED",
+      "totals": {
+        "returned": 4,
+        "fetched": 5,
+        "filtered_out": 0,
+        "cross_source_duplicates": 1,
+        "sources_total": 3,
+        "sources_ok": 1,
+        "sources_failed": 0,
+        "sources_empty": 0,
+        "sources_cancelled": 2,
+        "sources_timeout": 0,
+        "new": 0,
+        "duplicate": 0,
+        "updated": 0,
+        "needs_review": 4,
+        "failed": 0,
+        "saveable": 4
+      },
+      "reports": [
+        [
+          "greenhouse",
+          "OK"
+        ],
+        [
+          "greenhouse",
+          "CANCELLED"
+        ],
+        [
+          "greenhouse",
+          "CANCELLED"
+        ]
+      ]
+    },
+    {
+      "case": "8-save-and-jd-analysis",
+      "collected": 2,
+      "saveable": 2,
+      "saved_count": 2,
+      "skipped_count": 0,
+      "candidate_id": "32b84e5c-8ff7-4baa-b726-9dd4750b5aa2",
+      "import_result": {
+        "mission_id": "6d9a72da-b02b-4d4c-9c33-c8272df006c8",
+        "company": "Credit Wellness, LLC",
+        "role": "Inside Sales Contractor",
+        "reused": false
+      }
+    }
+  ],
+  "finished_at": "2026-10-16T16:52:45.616563+00:00"
+}

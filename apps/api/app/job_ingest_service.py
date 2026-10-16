@@ -16,9 +16,14 @@ from __future__ import annotations
 
 import hashlib
 import html
+import os
 import re
+import threading
+import time
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlencode
 from uuid import UUID
 
 import fitz
@@ -31,6 +36,13 @@ from . import models
 
 USER_AGENT = "AICareerOS/1.0 (+local-first job collection; contact: local user)"
 REMOTEOK_API = "https://remoteok.com/api"
+REMOTIVE_API = "https://remotive.com/api/remote-jobs"
+
+#: 每个来源两次请求之间的最小间隔（秒）——对公开接口保持礼貌，避免触发限流。
+SOURCE_MIN_INTERVAL = float(os.environ.get("AI_CAREER_COLLECT_MIN_INTERVAL", "0.5"))
+#: 单个来源请求失败后的重试次数与退避基数（秒）。
+SOURCE_MAX_RETRIES = int(os.environ.get("AI_CAREER_COLLECT_RETRIES", "2"))
+SOURCE_BACKOFF = 0.8
 
 #: 识别到这些标记时判定为「需要登录 / 有访问限制」，不做任何绕过。
 _BLOCK_MARKERS = (
@@ -272,10 +284,42 @@ def normalize_job(
         "employment_type": employment,
         "tags": tags,
         "dedupe_key": dedupe_key(company, role, location),
+        # 正文指纹：优先级最高的去重依据。用「落库的那一段完整文本」来算，
+        # 这样 save 之后拿 row.source_text 重算能得到同样的值（同岗位 JD 更新 → UPDATED）。
+        "content_hash": content_hash(role, location, text),
         "needs_confirm": unresolved,
         "text": text,
         "raw": raw or {},
     }
+
+
+def content_hash(*parts: str | None) -> str:
+    """岗位正文指纹（公司除外，跨来源同一岗位的公司名写法可能不同）。
+
+    为什么要先做稳定化：RemoteOK 之类的来源会在 JD 正文里插入每次请求都不同的随机串
+    （例如 ``(#RMS4yMDMuMTEwLjIz)`` 这样的反垃圾标记），直接哈希会让同一岗位每次都被误判成
+    ``UPDATED``。因此先去掉 URL 与疑似随机长 token，再哈希。
+    """
+    normalized = " ".join(stable_text(part) for part in parts)
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+_URL_RE = re.compile(r"https?://\S+")
+#: 疑似随机 token：12 位以上、同时含字母与数字的字符串，允许 base64 的 ``=`` 补齐后缀。
+#: 形如 ``RMS4yMDMuMTEwLjE1Ng==`` / ``(#RMS4yMDMuMTEwLjIz)`` ——来源用这类随机串做反垃圾，
+#: 每次请求都不一样，必须剥掉才能稳定去重。
+_VOLATILE_TOKEN_RE = re.compile(
+    r"(?<![\w=])(?=[A-Za-z0-9_\-]*\d)(?=[A-Za-z0-9_\-]*[A-Za-z])[A-Za-z0-9_\-]{12,}={0,2}(?![\w=])"
+)
+_WS_RE2 = re.compile(r"\s+")
+
+
+def stable_text(value: str | None) -> str:
+    """去掉 URL 与每次请求都变的随机串，只保留稳定正文用于去重/比对。"""
+    text = (value or "").lower()
+    text = _URL_RE.sub(" ", text)
+    text = _VOLATILE_TOKEN_RE.sub(" ", text)
+    return _WS_RE2.sub(" ", text).strip()
 
 
 def _tokens(value: str) -> list[str]:
@@ -389,19 +433,49 @@ def filter_jobs(
 # ==================================================================== 来源适配器
 
 
-def _http_json(url: str, *, timeout: float = 20.0) -> tuple[object | None, str | None]:
-    """GET 一个公开 JSON 接口；失败时返回 (None, 真实错误原因)，绝不返回演示数据。"""
-    try:
-        with httpx.Client(timeout=timeout, follow_redirects=True, headers={"User-Agent": USER_AGENT}) as client:
-            response = client.get(url)
-    except httpx.HTTPError as exc:
-        return None, f"请求失败：{exc.__class__.__name__}"
-    if response.status_code != 200:
-        return None, f"{url} 返回 HTTP {response.status_code}"
-    try:
-        return response.json(), None
-    except ValueError:
-        return None, "返回内容不是合法 JSON"
+_RATE_LOCK = threading.Lock()
+_LAST_REQUEST_AT: dict[str, float] = {}
+
+
+def _throttle(key: str) -> None:
+    """同一 host 的请求之间留出最小间隔，避免短时间打爆公开接口。"""
+    interval = SOURCE_MIN_INTERVAL
+    if interval <= 0:
+        return
+    while True:
+        with _RATE_LOCK:
+            now = time.monotonic()
+            wait = interval - (now - _LAST_REQUEST_AT.get(key, 0.0))
+            if wait <= 0:
+                _LAST_REQUEST_AT[key] = now
+                return
+        time.sleep(min(wait, 2.0))
+
+
+def _http_json(url: str, *, timeout: float = 20.0, retries: int | None = None) -> tuple[object | None, str | None]:
+    """GET 一个公开 JSON 接口（带节流 / 重试 / 退避）；失败时返回 (None, 真实错误原因)，绝不返回演示数据。"""
+    attempts = SOURCE_MAX_RETRIES if retries is None else max(0, int(retries))
+    last_error = "请求失败"
+    for attempt in range(attempts + 1):
+        if attempt:
+            time.sleep(SOURCE_BACKOFF * attempt)
+        _throttle(url)
+        try:
+            with httpx.Client(timeout=timeout, follow_redirects=True, headers={"User-Agent": USER_AGENT}) as client:
+                response = client.get(url)
+        except httpx.HTTPError as exc:
+            last_error = f"请求失败：{exc.__class__.__name__}"
+            continue
+        if response.status_code in {429, 500, 502, 503, 504} and attempt < attempts:
+            last_error = f"{url} 返回 HTTP {response.status_code}"
+            continue
+        if response.status_code != 200:
+            return None, f"{url} 返回 HTTP {response.status_code}"
+        try:
+            return response.json(), None
+        except ValueError:
+            return None, "返回内容不是合法 JSON"
+    return None, f"{last_error}（已重试 {attempts} 次）"
 
 
 def collect_remoteok(*, tag: str | None = None, limit: int = 20, keywords: list[str] | None = None) -> dict:
@@ -414,9 +488,9 @@ def collect_remoteok(*, tag: str | None = None, limit: int = 20, keywords: list[
     collected_at = datetime.now(timezone.utc).isoformat()
     payload, error = _http_json(REMOTEOK_API)
     if error:
-        return {"source": "remoteok", "status": "ERROR", "note": error, "jobs": [], "count": 0, "collected_at": collected_at}
+        return {"source": "remoteok", "status": "ERROR", "note": error, "errors": [error], "jobs": [], "count": 0, "collected_at": collected_at}
     if not isinstance(payload, list):
-        return {"source": "remoteok", "status": "ERROR", "note": "返回内容不是岗位数组", "jobs": [], "count": 0, "collected_at": collected_at}
+        return {"source": "remoteok", "status": "ERROR", "note": "返回内容不是岗位数组", "errors": ["返回内容不是岗位数组"], "jobs": [], "count": 0, "collected_at": collected_at}
 
     wanted = [item for item in keywords if item] or ([tag] if tag else [])
     jobs: list[dict] = []
@@ -603,8 +677,216 @@ def collect_lever(*, companies: list[str], limit: int = 20, keywords: list[str] 
     }
 
 
+_REMOTIVE_JOB_TYPES = {"full_time": "FULLTIME", "part_time": "PARTTIME", "contract": "CONTRACT"}
+
+
+def collect_remotive(*, keywords: list[str] | None = None, limit: int = 20, **_unused) -> dict:
+    """Remotive 公开招聘接口：`remotive.com/api/remote-jobs?search=...`（无需登录，官方公开）。
+
+    该来源支持**服务端关键词检索**，但同样只有远程岗位，地点/实习仍靠本地过滤。
+    """
+    collected_at = datetime.now(timezone.utc).isoformat()
+    wanted = [item for item in (keywords or []) if item]
+    query = " ".join(wanted[:2]).strip()
+    limit = max(1, min(int(limit or 20), 50))
+    jdbc = REMOTIVE_API + ("?" + urlencode({"search": query, "limit": max(limit * 3, 30)}) if query else "?limit=30")
+    payload, error = _http_json(jdbc, timeout=25.0)
+    if error:
+        return {"source": "remotive", "status": "ERROR", "note": error, "jobs": [], "count": 0, "collected_at": collected_at, "errors": [error]}
+    rows = (payload or {}).get("jobs") if isinstance(payload, dict) else None
+    if not isinstance(rows, list):
+        note = "返回结构里没有 jobs 数组"
+        return {"source": "remotive", "status": "ERROR", "note": note, "jobs": [], "count": 0, "collected_at": collected_at, "errors": [note]}
+
+    jobs: list[dict] = []
+    for item in rows:
+        if not isinstance(item, dict) or not item.get("id"):
+            continue
+        tags = item.get("tags") or []
+        tags = tags if isinstance(tags, list) else []
+        description = html_to_text(item.get("description") or "")
+        job_type = str(item.get("job_type") or "").lower()
+        employment = _REMOTIVE_JOB_TYPES.get(job_type) or detect_employment_type(item.get("title"), " ".join(tags), description)
+        job = normalize_job(
+            source="remotive",
+            source_url=item.get("url") or "",
+            apply_url=item.get("url") or "",
+            company=(item.get("company_name") or "").strip(),
+            role=(item.get("title") or "").strip(),
+            location=(item.get("candidate_required_location") or "Remote").strip() or "Remote",
+            jd=description,
+            posted_at=item.get("publication_date"),
+            employment_type=employment,
+            tags=tags,
+            raw={"remotive_id": item.get("id"), "job_type": item.get("job_type"), "salary": item.get("salary")},
+        )
+        if job_matches(job, wanted):
+            jobs.append(job)
+        if len(jobs) >= limit:
+            break
+
+    note = "" if jobs else f"Remotive 公开接口没有匹配到关键词的岗位（查询词：{query or '空'}）。"
+    return {
+        "source": "remotive",
+        "status": "OK" if jobs else "EMPTY",
+        "collected_at": collected_at,
+        "count": len(jobs),
+        "note": note,
+        "errors": [],
+        "jobs": jobs,
+    }
+
+
+#: 统一适配器契约。每个来源必须声明自己支持什么，前端才不会假装它有某个筛选能力。
+#: - ``capabilities.keywords``：来源侧能否按关键词检索（否则就是拉全量后本地匹配）
+#: - ``capabilities.location / employment_type / posted_within``：是否支持服务端过滤
+#: - ``filter_mode``：``server`` = 服务端过滤；``local`` = 采集后再本地过滤（UI 需如实标注）
+ADAPTER_SPECS: dict[str, dict] = {
+    "remoteok": {
+        "id": "remoteok",
+        "label": "RemoteOK 公开接口",
+        "mode": "adapter",
+        "requires_config": False,
+        "capabilities": {"keywords": False, "location": False, "employment_type": False, "posted_within": False},
+        "filter_mode": "local",
+        "note": "RemoteOK 官方公开 JSON 接口（无需登录）。该站只有远程岗位，因此城市筛选命中率很低。",
+        "health_endpoint": REMOTEOK_API,
+        "collect": collect_remoteok,
+    },
+    "remotive": {
+        "id": "remotive",
+        "label": "Remotive 公开接口",
+        "mode": "adapter",
+        "requires_config": False,
+        "capabilities": {"keywords": True, "location": False, "employment_type": False, "posted_within": False},
+        "filter_mode": "local",
+        "note": "Remotive 官方公开接口，支持服务端关键词检索；同样只收录远程岗位。",
+        "health_endpoint": REMOTIVE_API + "?limit=1",
+        "collect": collect_remotive,
+    },
+    "greenhouse": {
+        "id": "greenhouse",
+        "label": "Greenhouse 公开招聘板",
+        "mode": "adapter",
+        "requires_config": True,
+        "config_key": "greenhouse_boards",
+        "config_placeholder": "招聘板标识，逗号分隔，例如：airbnb,stripe",
+        "presets": ["stripe", "airbnb", "anthropic", "figma", "databricks", "discord", "reddit", "roblox", "coinbase", "thoughtworks", "elastic", "scaleai", "figureai"],
+        "preset_verified_at": datetime(2026, 10, 16, tzinfo=timezone.utc).isoformat(),
+        "capabilities": {"keywords": False, "location": False, "employment_type": False, "posted_within": False},
+        "filter_mode": "local",
+        "note": "按企业招聘板标识逐个拉取（boards-api.greenhouse.io 公开接口），**不是全网检索**；需要先填写 board token。",
+        "health_endpoint": "https://boards-api.greenhouse.io/v1/boards/{config}/jobs?content=false",
+        "collect": collect_greenhouse,
+    },
+    "lever": {
+        "id": "lever",
+        "label": "Lever 公开招聘板",
+        "mode": "adapter",
+        "requires_config": True,
+        "config_key": "lever_companies",
+        "config_placeholder": "企业标识，逗号分隔，例如：palantir,spotify",
+        "presets": ["leverdemo", "palantir", "spotify"],
+        "preset_verified_at": datetime(2026, 10, 16, tzinfo=timezone.utc).isoformat(),
+        "capabilities": {"keywords": False, "location": False, "employment_type": False, "posted_within": False},
+        "filter_mode": "local",
+        "note": "按企业在 Lever 的标识逐个拉取（api.lever.co 公开接口），**不是全网检索**。",
+        "health_endpoint": "https://api.lever.co/v0/postings/{config}?mode=json",
+        "collect": collect_lever,
+    },
+    "browser": {
+        "id": "browser",
+        "label": "采集当前招聘网页",
+        "mode": "browser",
+        "requires_config": False,
+        "capabilities": {"keywords": False, "location": False, "employment_type": False, "posted_within": False},
+        "filter_mode": "local",
+        "note": "复用本地受控浏览器桥，读取你在浏览器里打开的招聘页面；只读取页面可见内容，不绕过登录与验证码。",
+        "collect": None,
+    },
+    "paste": {
+        "id": "paste",
+        "label": "粘贴完整 JD",
+        "mode": "manual",
+        "requires_config": False,
+        "capabilities": {"keywords": False, "location": False, "employment_type": False, "posted_within": False},
+        "filter_mode": "local",
+        "note": "任何平台都可用的兜底方式，正文由用户提供（也是 BOSS / 实习僧等需登录平台的唯一合规入口）。",
+        "collect": None,
+    },
+    "file": {
+        "id": "file",
+        "label": "岗位截图 / PDF / 文档",
+        "mode": "upload",
+        "requires_config": False,
+        "capabilities": {"keywords": False, "location": False, "employment_type": False, "posted_within": False},
+        "filter_mode": "local",
+        "note": "PDF / 文本 / Word 可直接解析；图片暂不支持自动 OCR，需手动粘贴。",
+        "collect": None,
+    },
+}
+
+
+def adapter_spec(source: str) -> dict | None:
+    spec = ADAPTER_SPECS.get(source)
+    if not spec:
+        return None
+    return {key: value for key, value in spec.items() if key != "collect"} | {"has_collect": spec.get("collect") is not None}
+
+
+def validate_source_config(source: str, *, greenhouse_boards: list[str] | None = None, lever_companies: list[str] | None = None) -> list[str]:
+    """采集前的配置校验：缺参数就明确报错，不让用户以为「采集过但没结果」。"""
+    spec = ADAPTER_SPECS.get(source)
+    if spec is None:
+        return [f"未知来源：{source}"]
+    if not spec.get("requires_config"):
+        return []
+    if source == "greenhouse" and not [item for item in (greenhouse_boards or []) if item and item.strip()]:
+        return ["Greenhouse 需要至少一个招聘板标识（board token），可在来源卡片里点击预设填。"]
+    if source == "lever" and not [item for item in (lever_companies or []) if item and item.strip()]:
+        return ["Lever 需要至少一个企业标识，可在来源卡片里点击预设填。"]
+    return []
+
+
+def health_check(source: str, *, greenhouse_boards: list[str] | None = None, lever_companies: list[str] | None = None) -> dict:
+    """来源可用性自检：真实发一次轻量请求，失败就如实返回 ERROR。"""
+    spec = ADAPTER_SPECS.get(source)
+    if spec is None:
+        return {"source": source, "status": "ERROR", "note": f"未知来源：{source}"}
+    endpoint = spec.get("health_endpoint")
+    if not endpoint:
+        return {"source": source, "status": "SKIPPED", "note": "该来源不支持自动健康检查（需用户手动触发或粘贴）。"}
+    targets: list[str] = [""]
+    if source == "greenhouse":
+        targets = [item for item in (greenhouse_boards or []) if item and item.strip()] or (spec.get("presets") or [])[:1]
+    if source == "lever":
+        targets = [item for item in (lever_companies or []) if item and item.strip()] or (spec.get("presets") or [])[:1]
+
+    notes: list[str] = []
+    failures: list[str] = []
+    started = time.monotonic()
+    for target in targets[:3]:
+        url = endpoint.format(config=target) if "{config}" in endpoint else endpoint
+        payload, error = _http_json(url, timeout=15.0, retries=0)
+        if error:
+            failures.append(f"{target or '默认接口'}：{error}")
+        else:
+            notes.append(f"{target or '默认接口'}：HTTP 200")
+    elapsed_ms = int((time.monotonic() - started) * 1000)
+    status = "OK" if notes and not failures else ("PARTIAL" if notes and failures else "ERROR")
+    return {
+        "source": source,
+        "status": status,
+        "checked": notes + failures,
+        "note": "；".join(failures) if failures else "；".join(notes),
+        "latency_ms": elapsed_ms,
+        "checked_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
 ADAPTERS = {
     "remoteok": lambda **kwargs: collect_remoteok(**kwargs),
+    "remotive": lambda **kwargs: collect_remotive(**kwargs),
     "greenhouse": lambda **kwargs: collect_greenhouse(**kwargs),
     "lever": lambda **kwargs: collect_lever(**kwargs),
 }
@@ -620,21 +902,54 @@ def run_collection(
     limit: int = 20,
     greenhouse_boards: list[str] | None = None,
     lever_companies: list[str] | None = None,
+    timeout_seconds: float | None = None,
+    cancel_check: Callable[[], bool] | None = None,
+    progress: Callable[[dict], None] | None = None,
 ) -> dict:
     """按来源逐个采集 → 统一筛选 → 跨来源去重，返回分来源成败统计。
 
     任何来源失败都如实写入 ``reports``，不静默吞错、不返回演示数据。
+    ``cancel_check`` 在每个来源之间被调用一次，用于支持用户取消。
     """
     started = datetime.now(timezone.utc)
     keywords = [item.strip() for item in (keywords or []) if item and item.strip()]
     reports: list[dict] = []
     per_source_jobs: list[list[dict]] = []
 
+    def report(event: dict) -> None:
+        if progress:
+            try:
+                progress(event)
+            except Exception:  # pragma: no cover - 进度回调失败不能影响主流程
+                pass
+
     for name in sources:
+        deadline_hit = timeout_seconds is not None and (datetime.now(timezone.utc) - started).total_seconds() >= timeout_seconds
+        cancelled = bool(cancel_check and cancel_check())
+        if cancelled or deadline_hit:
+            reports.append(
+                {
+                    "source": name,
+                    "status": "CANCELLED" if cancelled else "TIMEOUT",
+                    "fetched": 0,
+                    "count": 0,
+                    "filtered_out": 0,
+                    "note": "用户取消了采集。" if cancelled else "已达到本次采集的时间上限，剩余来源未继续请求。",
+                    "errors": [],
+                }
+            )
+            continue
+
+        config_errors = validate_source_config(name, greenhouse_boards=greenhouse_boards, lever_companies=lever_companies)
+        if config_errors:
+            reports.append({"source": name, "status": "ERROR", "fetched": 0, "count": 0, "filtered_out": 0, "note": "".join(config_errors), "errors": config_errors})
+            continue
+
         adapter = ADAPTERS.get(name)
         if adapter is None:
-            reports.append({"source": name, "status": "ERROR", "count": 0, "note": f"未知来源：{name}"})
+            reports.append({"source": name, "status": "ERROR", "fetched": 0, "count": 0, "filtered_out": 0, "note": f"未知来源：{name}", "errors": [f"未知来源：{name}"]})
             continue
+
         kwargs: dict = {"limit": limit, "keywords": keywords}
         if name == "greenhouse":
             kwargs["boards"] = greenhouse_boards or []
@@ -642,17 +957,22 @@ def run_collection(
             kwargs["companies"] = lever_companies or []
         if name == "remoteok" and keywords:
             kwargs["tag"] = keywords[0]
+
+        report({"type": "SOURCE_STARTED", "source": name, "index": len(reports)})
+        source_started = time.monotonic()
         try:
             result = adapter(**kwargs)
         except Exception as exc:  # pragma: no cover - 防御性：适配器不应抛出
-            reports.append({"source": name, "status": "ERROR", "count": 0, "note": f"采集异常：{exc.__class__.__name__}: {exc}"})
+            reports.append({"source": name, "status": "ERROR", "fetched": 0, "count": 0, "filtered_out": 0, "note": f"采集异常：{exc.__class__.__name__}: {exc}", "errors": [str(exc)]})
             continue
+        elapsed_ms = int((time.monotonic() - source_started) * 1000)
         source_jobs = filter_jobs(
             result.get("jobs", []),
             location=location,
             employment_type=employment_type,
             posted_within_days=posted_within_days,
         )
+        spec = ADAPTER_SPECS.get(name, {})
         reports.append(
             {
                 "source": name,
@@ -662,8 +982,12 @@ def run_collection(
                 "filtered_out": len(result.get("jobs", [])) - len(source_jobs),
                 "note": result.get("note", ""),
                 "errors": result.get("errors", []),
+                "filter_mode": spec.get("filter_mode", "local"),
+                "capabilities": spec.get("capabilities", {}),
+                "latency_ms": elapsed_ms,
             }
         )
+        report({"type": "SOURCE_FINISHED", "source": name, "status": result.get("status", "ERROR"), "fetched": len(result.get("jobs", [])), "kept": len(source_jobs)})
         per_source_jobs.append(source_jobs)
 
     # 跨来源交替取样，避免第一个来源就把名额占满，导致后续来源一条都看不到。
@@ -696,7 +1020,22 @@ def run_collection(
     jobs = rank_jobs(list(seen.values()), keywords)[:limit]
     for job in jobs:
         job["match_score"] = max((job_match_score(job, keyword) for keyword in keywords), default=0)
+
+    def overall_status() -> str:
+        states = {item["status"] for item in reports}
+        if "CANCELLED" in states:
+            return "CANCELLED"
+        if len(reports) == len([item for item in reports if item["status"] == "ERROR"]) and reports:
+            return "FAILED"
+        if "ERROR" in states or "TIMEOUT" in states:
+            return "PARTIAL"
+        if not jobs:
+            return "COMPLETED"
+        return "COMPLETED"
+
+    status = overall_status()
     return {
+        "status": status,
         "run_id": f"run-{started.strftime('%Y%m%d%H%M%S')}",
         "started_at": started.isoformat(),
         "finished_at": datetime.now(timezone.utc).isoformat(),
@@ -709,18 +1048,111 @@ def run_collection(
             "limit": limit,
             "greenhouse_boards": greenhouse_boards or [],
             "lever_companies": lever_companies or [],
+            "timeout_seconds": timeout_seconds,
         },
         "reports": reports,
         "jobs": jobs,
         "duplicates": duplicates,
-        "totals": {
-            "returned": len(jobs),
-            "cross_source_duplicates": len(duplicates),
-            "sources_ok": sum(1 for item in reports if item["status"] == "OK"),
-            "sources_failed": sum(1 for item in reports if item["status"] == "ERROR"),
-            "sources_empty": sum(1 for item in reports if item["status"] == "EMPTY"),
-        },
+        "totals": recompute_result_totals(
+            {
+                "returned": len(jobs),
+                "fetched": sum(item.get("fetched", 0) for item in reports),
+                "filtered_out": sum(item.get("filtered_out", 0) for item in reports),
+                "cross_source_duplicates": len(duplicates),
+                "sources_total": len(reports),
+                "sources_ok": sum(1 for item in reports if item["status"] == "OK"),
+                "sources_failed": sum(1 for item in reports if item["status"] == "ERROR"),
+                "sources_empty": sum(1 for item in reports if item["status"] == "EMPTY"),
+                "sources_cancelled": sum(1 for item in reports if item["status"] == "CANCELLED"),
+                "sources_timeout": sum(1 for item in reports if item["status"] == "TIMEOUT"),
+            },
+            jobs,
+        ),
     }
+
+
+def recompute_result_totals(totals: dict, jobs: list[dict]) -> dict:
+    """按每条结果的 ``result_status`` 重算「抓到 vs 可保存」的统计。
+
+    注意顺序：``classify_collected`` 在采集之后才跑，所以只有调用这个函数
+    得到的 new/duplicate/updated/needs_review/failed 才是准确的。
+    """
+    totals = dict(totals)
+    counts = {state: 0 for state in ("NEW", "DUPLICATE", "UPDATED", "NEEDS_REVIEW", "FAILED")}
+    for job in jobs:
+        state = job.get("result_status") or ("NEW" if not job.get("needs_confirm") else "NEEDS_REVIEW")
+        counts[state] = counts.get(state, 0) + 1
+    totals.update(
+        {
+            "new": counts["NEW"],
+            "duplicate": counts["DUPLICATE"],
+            "updated": counts["UPDATED"],
+            "needs_review": counts["NEEDS_REVIEW"],
+            "failed": counts["FAILED"],
+            # 「可保存」= 库里没有的新岗位 + 有变化可更新 + 待确认但用户补齐后仍可保存
+            "saveable": counts["NEW"] + counts["UPDATED"] + counts["NEEDS_REVIEW"],
+        }
+    )
+    return totals
+
+
+def classify_collected(db: Session, profile_id: UUID, jobs: list[dict]) -> list[dict]:
+    """给每条采集结果标注「相对于现有岗位库」的状态，UI 才能区分抓到 ≠ 新增。
+
+    ``NEW`` 库里没有；``DUPLICATE`` 已有且正文一致；``UPDATED`` 已有但 JD 有变化；
+    ``NEEDS_REVIEW`` 关键字段缺失/低置信需要用户确认；``FAILED`` 结构化失败（不可用）。
+    """
+    if not jobs:
+        return jobs
+
+    existing: dict[str, dict] = {}
+    for row in db.scalars(select(models.CandidateJob).where(models.CandidateJob.profile_id == profile_id)).all():
+        key = getattr(row, "dedupe_key", None) or dedupe_key(row.company, row.role, row.location)
+        payload = row.raw_payload if isinstance(row.raw_payload, dict) else {}
+        existing.setdefault(
+            key,
+            {
+                "kind": "CANDIDATE",
+                "id": str(row.id),
+                "company": row.company,
+                "role": row.role,
+                "hash": payload.get("content_hash"),
+            },
+        )
+    for row in db.scalars(select(models.JobMission).where(models.JobMission.profile_id == profile_id)).all():
+        key = dedupe_key(row.company, row.role, getattr(row, "location", None))
+        existing.setdefault(
+            key,
+            {
+                "kind": "MISSION",
+                "id": str(row.id),
+                "company": row.company,
+                "role": row.role,
+                "hash": ((row.resume_source or {}) or {}).get("content_hash") if isinstance(row.resume_source, dict) else None,
+            },
+        )
+
+    for job in jobs:
+        job.setdefault("needs_confirm", [])
+        is_usable = bool((job.get("role") or "").strip() or (job.get("company") or "").strip()) and bool((job.get("jd") or "").strip() or (job.get("source_url") or "").strip())
+        if not is_usable:
+            job["result_status"] = "FAILED"
+            job["result_reason"] = "结构化字段不足：既没有公司/岗位，也没有 JD 或来源链接。"
+            continue
+        key = job.get("dedupe_key") or dedupe_key(job.get("company"), job.get("role"), job.get("location"))
+        hit = existing.get(key)
+        if hit is None:
+            job["result_status"] = "NEEDS_REVIEW" if job.get("needs_confirm") else "NEW"
+            job["result_reason"] = "库里还没有这条岗位。" if not job.get("needs_confirm") else "关键字段缺失或置信度低，保存前请确认。"
+            continue
+        job["existing"] = hit
+        if hit.get("hash") and hit["hash"] == job.get("content_hash"):
+            job["result_status"] = "DUPLICATE"
+            job["result_reason"] = f"岗位库里已存在同一条（{hit['kind']}），正文完全一致。"
+        else:
+            job["result_status"] = "UPDATED"
+            job["result_reason"] = "岗位库里已存在同一条，但 JD 正文有变化，可选择更新。"
+    return jobs
 
 
 def dedupe_key(company: str | None, role: str | None, location: str | None) -> str:
@@ -786,11 +1218,16 @@ def normalize_browser_capture(payload: dict) -> dict:
 
 
 __all__ = [
+    "ADAPTER_SPECS",
     "ADAPTERS",
     "JOB_SCHEMA",
+    "adapter_spec",
+    "classify_collected",
     "collect_greenhouse",
     "collect_lever",
     "collect_remoteok",
+    "collect_remotive",
+    "content_hash",
     "dedupe_key",
     "detect_employment_type",
     "extract_file_text",
@@ -798,6 +1235,7 @@ __all__ = [
     "fetch_url_text",
     "filter_jobs",
     "find_duplicates",
+    "health_check",
     "html_to_text",
     "job_match_score",
     "job_matches",
@@ -805,4 +1243,5 @@ __all__ = [
     "normalize_browser_capture",
     "normalize_job",
     "run_collection",
+    "validate_source_config",
 ]

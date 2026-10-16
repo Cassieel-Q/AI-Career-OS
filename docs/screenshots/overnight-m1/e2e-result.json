@@ -1,0 +1,48 @@
+{
+  "ran_at": "2026-10-16T17:08:54.650Z",
+  "total": 8,
+  "passed": 8,
+  "failed": 0,
+  "results": [
+    {
+      "name": "创建本地档案",
+      "ok": true,
+      "detail": "fa056007"
+    },
+    {
+      "name": "统计条区分抓到与新增",
+      "ok": true,
+      "detail": "抓到 21 筛选后 20 新增 20 已存在 0 有更新 0 待确认 0 不可用 0 可保存 20 来源成功 2 来源失败 0 跨来源重复 0"
+    },
+    {
+      "name": "采集结果表格有真实行",
+      "ok": true,
+      "detail": "20 行"
+    },
+    {
+      "name": "批量导入真的写入岗位库",
+      "ok": true,
+      "detail": "新增保存 20 条"
+    },
+    {
+      "name": "岗位库出现刚保存的岗位",
+      "ok": true,
+      "detail": "20 条"
+    },
+    {
+      "name": "来源自检返回真实结果",
+      "ok": true,
+      "detail": "自检结果 · RemoteOK：OK（3166ms） — 默认接口：HTTP 200"
+    },
+    {
+      "name": "匹配分析进入 Mission 页",
+      "ok": true,
+      "detail": "http://127.0.0.1:3000/missions/6d478a8a-7305-41c5-a9fe-dd87fdd0a55b/role"
+    },
+    {
+      "name": "用户取消后任务状态为已取消",
+      "ok": true,
+      "detail": "任务状态：已取消"
+    }
+  ]
+}

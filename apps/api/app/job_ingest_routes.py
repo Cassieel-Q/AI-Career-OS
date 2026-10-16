@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from . import candidate_job_service as candidate_svc
 from . import job_ingest_service as ingest
+from . import job_ingest_tasks as tasks
 from . import models
 from . import webform_browser as browser
 from .database import get_db
@@ -39,77 +40,81 @@ class CollectRequest(BaseModel):
     limit: int = 20
     greenhouse_boards: list[str] = Field(default_factory=list)
     lever_companies: list[str] = Field(default_factory=list)
+    timeout_seconds: float | None = Field(default=None, description="整轮采集时间上限（秒），超时后剩余来源不再请求")
 
 
 class SaveCollectedRequest(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     jobs: list[dict] = Field(default_factory=list)
+    #: 采集结果被判定为 UPDATED（同岗位 JD 有变化）时，是否更新已有记录。
+    update_duplicates: bool = False
+
+
+#: 排序即 UI 展示顺序：先「不需要配置就能采」的来源。
+_SOURCE_ORDER = ["remoteok", "remotive", "greenhouse", "lever", "browser", "paste", "file"]
+_SOURCE_LABELS = {
+    "paste": ("粘贴完整 JD", "任何平台都可用的兜底方式，正文由用户提供（BOSS / 实习僧 / 脉脉等需登录平台的合规入口）。"),
+    "file": ("岗位截图 / PDF / 文档", "PDF / 文本 / Word 可直接解析；图片暂不支持自动 OCR，需手动粘贴。"),
+    "browser": ("采集当前招聘网页", "复用本地受控浏览器桥，读取你在浏览器里打开的招聘页面；只读取页面可见内容，不绕过登录与验证码。"),
+}
 
 
 @router.get("/job-ingest/sources")
 def list_sources() -> dict:
+    """来源清单：能力、筛选方式、是否需要配置、可用预设都如实返回。"""
+    items = []
+    for source in _SOURCE_ORDER:
+        spec = ingest.adapter_spec(source)
+        if not spec:
+            continue
+        label, note = _SOURCE_LABELS.get(source, (spec.get("label", source), spec.get("note", "")))
+        items.append(
+            {
+                "id": source,
+                "label": label,
+                "mode": spec.get("mode", "adapter"),
+                "auto_collect": source not in {"paste"},
+                "note": note,
+                "capabilities": spec.get("capabilities", {}),
+                "filter_mode": spec.get("filter_mode", "local"),
+                "requires_config": spec.get("requires_config", False),
+                "config_key": spec.get("config_key"),
+                "config_placeholder": spec.get("config_placeholder"),
+                "presets": spec.get("presets", []),
+                "preset_verified_at": spec.get("preset_verified_at"),
+                "has_collect": spec.get("has_collect", False),
+            }
+        )
+    return {"sources": items}
+
+
+@router.get("/job-ingest/adapters")
+def list_adapters() -> dict:
+    """适配器契约快照（用于自检与文档）：每个来源声明自己的真实能力。"""
     return {
-        "sources": [
-            {
-                "id": "paste",
-                "label": "粘贴完整 JD",
-                "mode": "manual",
-                "auto_collect": False,
-                "note": "任何平台都可用的兜底方式，正文由用户提供。",
-            },
-            {
-                "id": "generic_url",
-                "label": "公开招聘链接",
-                "mode": "fetch",
-                "auto_collect": True,
-                "note": "抓取公开可访问页面正文；需登录/验证码的页面会明确标记为不支持自动采集。",
-            },
-            {
-                "id": "file",
-                "label": "岗位截图 / PDF / 文档",
-                "mode": "upload",
-                "auto_collect": True,
-                "note": "PDF/文本/Word 可直接解析；图片暂不支持自动 OCR，需手动粘贴。",
-            },
-            {
-                "id": "remoteok",
-                "label": "RemoteOK 公开接口",
-                "mode": "adapter",
-                "auto_collect": True,
-                "note": "RemoteOK 官方公开 JSON 接口（无需登录）。该站只有远程岗位，因此城市筛选命中率很低。",
-                "needs_input": False,
-            },
-            {
-                "id": "greenhouse",
-                "label": "Greenhouse 公开招聘板",
-                "mode": "adapter",
-                "auto_collect": True,
-                "note": "按企业招聘板标识逐个拉取（boards-api.greenhouse.io 公开接口），不是全网检索；需要填写 board token。",
-                "needs_input": True,
-                "input_key": "greenhouse_boards",
-                "input_placeholder": "招聘板标识，逗号分隔，例如：airbnb,stripe",
-            },
-            {
-                "id": "lever",
-                "label": "Lever 公开招聘板",
-                "mode": "adapter",
-                "auto_collect": True,
-                "note": "按企业在 Lever 的标识逐个拉取（api.lever.co 公开接口），不是全网检索。",
-                "needs_input": True,
-                "input_key": "lever_companies",
-                "input_placeholder": "企业标识，逗号分隔，例如：netflix,ramp",
-            },
-            {
-                "id": "browser",
-                "label": "采集当前招聘网页",
-                "mode": "browser",
-                "auto_collect": True,
-                "note": "复用本地受控浏览器桥，读取你在浏览器里打开的招聘页面；只读取页面可见内容，不绕过登录与验证码。",
-                "needs_input": False,
-            },
-        ]
+        "schema": ingest.JOB_SCHEMA,
+        "result_states": list(tasks.RESULT_STATES),
+        "task_states": [tasks.TASK_IDLE, tasks.TASK_RUNNING, tasks.TASK_COMPLETED, tasks.TASK_PARTIAL, tasks.TASK_FAILED, tasks.TASK_CANCELLED],
+        "contract": ["source_id", "capabilities", "search_or_collect", "normalize", "validate", "deduplicate", "health_check"],
+        "adapters": [ingest.adapter_spec(name) for name in _SOURCE_ORDER if ingest.adapter_spec(name)],
     }
+
+
+class HealthCheckRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    greenhouse_boards: list[str] = Field(default_factory=list)
+    lever_companies: list[str] = Field(default_factory=list)
+
+
+@router.post("/job-ingest/adapters/{source}/health-check")
+def adapter_health_check(source: str, payload: HealthCheckRequest | None = None) -> dict:
+    """来源可用性自检：真实发一次请求，失败如实返回 ERROR（不返回演示数据）。"""
+    body = payload or HealthCheckRequest()
+    if ingest.adapter_spec(source) is None:
+        raise HTTPException(404, f"未知来源：{source}")
+    return ingest.health_check(source, greenhouse_boards=body.greenhouse_boards, lever_companies=body.lever_companies)
 
 
 @router.post("/job-ingest/fetch-url")
@@ -148,6 +153,38 @@ def collect_jobs(payload: CollectRequest) -> dict:
         greenhouse_boards=payload.greenhouse_boards,
         lever_companies=payload.lever_companies,
     )
+
+
+@router.post("/profiles/{profile_id}/job-ingest/collect-runs")
+def start_collect_run(profile_id: UUID, payload: CollectRequest) -> dict:
+    """启动一次采集任务：立即返回 task_id，前端轮询进度，支持中途取消。"""
+    _ensure_profile(str(profile_id))
+    request = payload.model_dump()
+    # limit 上限，避免一次拉太多把公开接口打爆
+    request["limit"] = max(1, min(int(payload.limit or 20), 50))
+    request["timeout_seconds"] = payload.timeout_seconds
+    return tasks.submit(str(profile_id), request)
+
+
+@router.get("/job-ingest/collect-runs/{task_id}")
+def read_collect_run(task_id: str) -> dict:
+    snapshot = tasks.get_snapshot(task_id)
+    if snapshot is None:
+        raise HTTPException(404, "采集任务不存在或已被清理。")
+    return snapshot
+
+
+@router.post("/job-ingest/collect-runs/{task_id}/cancel")
+def cancel_collect_run(task_id: str) -> dict:
+    snapshot = tasks.cancel_task(task_id)
+    if snapshot is None:
+        raise HTTPException(404, "采集任务不存在或已被清理。")
+    return snapshot
+
+
+@router.get("/profiles/{profile_id}/job-ingest/collect-runs")
+def list_collect_runs(profile_id: UUID, limit: int = Query(default=10, ge=1, le=50)) -> dict:
+    return {"tasks": tasks.recent_tasks(profile_id=str(profile_id), limit=limit)}
 
 
 @router.post("/job-ingest/collect-remoteok")
@@ -196,9 +233,15 @@ def collect_browser() -> dict:
 
 @router.post("/profiles/{profile_id}/job-ingest/save-collected")
 def save_collected(profile_id: UUID, payload: SaveCollectedRequest, db: Session = Depends(get_db)) -> dict:
-    """把采集到的真实岗位保存进候选岗位库（复用既有 parse/confirm/import 链路）。"""
+    """把采集到的真实岗位保存进候选岗位库（复用既有 parse/confirm/import 链路）。
+
+    - 库里已有且正文一致 → ``DUPLICATE`` 跳过；
+    - 库里已有但 JD 有变化 → 默认 ``UPDATED_KEPT`` 跳过，``update_duplicates=True`` 时才更新；
+    - 字段缺失/低置信 → 仍然保存，但 ``parse_status = NEEDS_CONFIRM``，导入正式岗位前必须补齐。
+    """
     saved: list[dict] = []
     skipped: list[dict] = []
+    updated: list[dict] = []
     for job in payload.jobs:
         text = (job.get("text") or "").strip()
         if not text:
@@ -206,7 +249,21 @@ def save_collected(profile_id: UUID, payload: SaveCollectedRequest, db: Session 
             continue
         duplicates = ingest.find_duplicates(db, profile_id, job.get("company"), job.get("role"), job.get("location"))
         if duplicates:
-            skipped.append({"company": job.get("company"), "role": job.get("role"), "reason": "DUPLICATE", "matches": duplicates})
+            incoming_hash = job.get("content_hash") or ingest.content_hash(job.get("role"), job.get("location"), job.get("text"))
+            if payload.update_duplicates:
+                touched = _apply_update(db, duplicates, job)
+                if touched:
+                    updated.append({"company": job.get("company"), "role": job.get("role"), "reason": "UPDATED", "targets": touched})
+                    continue
+            changed = [row for row in duplicates if not _same_hash(db, row, incoming_hash)]
+            skipped.append(
+                {
+                    "company": job.get("company"),
+                    "role": job.get("role"),
+                    "reason": "UPDATED" if changed else "DUPLICATE",
+                    "matches": duplicates,
+                }
+            )
             continue
         rows = candidate_svc.parse_candidates(db, profile_id, text, source_kind="LINK")
         # 一条采集结果 = 一条候选岗位：保留信息最全的那条，避免同一岗位被拆成多条草稿。
@@ -240,6 +297,7 @@ def save_collected(profile_id: UUID, payload: SaveCollectedRequest, db: Session 
                 "needs_confirm": needs_confirm,
                 "source_url": job.get("source_url") or "",
                 "collected_at": job.get("collected_at"),
+                "content_hash": job.get("content_hash") or ingest.content_hash(job.get("role"), job.get("location"), job.get("text")),
             }
             # 公司/岗位缺失时暂存待确认标记，导入正式岗位前 UI 会要求补齐。
             if needs_confirm and not (row.company or "").strip():
@@ -257,7 +315,81 @@ def save_collected(profile_id: UUID, payload: SaveCollectedRequest, db: Session 
                 "candidate_ids": [str(row.id) for row in rows],
             }
         )
-    return {"saved": saved, "skipped": skipped, "saved_count": len(saved), "skipped_count": len(skipped)}
+    db.commit()
+    return {
+        "saved": saved,
+        "updated": updated,
+        "skipped": skipped,
+        "saved_count": len(saved),
+        "updated_count": len(updated),
+        "skipped_count": len(skipped),
+    }
+
+
+def _load_duplicate_row(db: Session, kind: str, raw_id: str | None):
+    """``find_duplicates`` 返回的是字符串 id，直接喂给 ``Session.get`` 会因为 Uuid 列类型炸掉。"""
+    from uuid import UUID as _UUID
+
+    try:
+        identifier = _UUID(str(raw_id))
+    except (TypeError, ValueError):
+        return None
+    model = models.CandidateJob if kind == "CANDIDATE" else models.JobMission
+    return db.get(model, identifier)
+
+
+def _same_hash(db: Session, duplicate: dict, incoming_hash: str) -> bool:
+    """已有记录与本次采集的正文指纹是否一致（旧记录没有指纹时视为已变化）。"""
+    if not incoming_hash:
+        return True
+    row = _load_duplicate_row(db, duplicate.get("kind"), duplicate.get("id"))
+    if row is None:
+        return False
+    if duplicate.get("kind") == "CANDIDATE":
+        payload = row.raw_payload if isinstance(row.raw_payload, dict) else {}
+        return payload.get("content_hash") == incoming_hash
+    payload = row.resume_source if isinstance(row.resume_source, dict) else {}
+    return payload.get("content_hash") == incoming_hash
+
+
+def _apply_update(db: Session, duplicates: list[dict], job: dict) -> list[dict]:
+    """把新采集到的 JD 覆盖到已有候选岗位（只更新内容类字段，不动用户已有的状态）。"""
+    touched: list[dict] = []
+    incoming_hash = job.get("content_hash") or ingest.content_hash(job.get("role"), job.get("location"), job.get("text"))
+    for duplicate in duplicates:
+        if duplicate.get("kind") != "CANDIDATE":
+            continue
+        row = _load_duplicate_row(db, "CANDIDATE", duplicate.get("id"))
+        if row is None:
+            continue
+        if (job.get("role") or "").strip():
+            row.role = job.get("role")
+        if (job.get("company") or "").strip():
+            row.company = job.get("company")
+        if (job.get("location") or "").strip():
+            row.location = job.get("location")
+        row.source_url = (job.get("source_url") or "")[:1024] or None
+        row.source_excerpt = (job.get("jd_excerpt") or job.get("text") or "")[:2000] or row.source_excerpt
+        row.source_text = job.get("text") or row.source_text
+        row.collected_at = _now()
+        payload = row.raw_payload if isinstance(row.raw_payload, dict) else {}
+        payload.update(
+            {
+                "source": job.get("source", payload.get("source")),
+                "apply_url": job.get("apply_url") or payload.get("apply_url", ""),
+                "posted_at": job.get("posted_at") or payload.get("posted_at"),
+                "employment_type": job.get("employment_type") or payload.get("employment_type") or "UNKNOWN",
+                "tags": job.get("tags") or payload.get("tags") or [],
+                "needs_confirm": job.get("needs_confirm") or [],
+                "source_url": job.get("source_url") or payload.get("source_url", ""),
+                "collected_at": job.get("collected_at") or payload.get("collected_at"),
+                "content_hash": incoming_hash,
+            }
+        )
+        row.raw_payload = payload
+        row.parse_status = "NEEDS_CONFIRM" if job.get("needs_confirm") else "PARSED"
+        touched.append({"kind": "CANDIDATE", "id": str(row.id)})
+    return touched
 
 
 @router.get("/profiles/{profile_id}/job-ingest/library")
@@ -344,6 +476,16 @@ def _now():
     from datetime import datetime, timezone
 
     return datetime.now(timezone.utc)
+
+
+def _ensure_profile(profile_id: str) -> None:
+    """采集任务在后台线程执行，无法复用 Depends(get_db)，这里单独校验一次 id 合法性。"""
+    from uuid import UUID as _UUID
+
+    try:
+        _UUID(str(profile_id))
+    except ValueError as exc:
+        raise HTTPException(422, "profile_id 不是合法的 UUID。") from exc
 
 
 def _iso(value):

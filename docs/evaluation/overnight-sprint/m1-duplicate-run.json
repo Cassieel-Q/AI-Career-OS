@@ -1,0 +1,388 @@
+{
+  "task_id": "task-cec9834ea427",
+  "profile_id": "3c148e6c-fe4f-46fa-b945-47592b250ac3",
+  "status": "COMPLETED",
+  "stage": "FINISHED",
+  "current_source": "remotive",
+  "fetched": 2,
+  "created_at": "2026-10-16T16:46:33.293827+00:00",
+  "started_at": "2026-10-16T16:46:33.294002+00:00",
+  "finished_at": "2026-10-16T16:46:37.661857+00:00",
+  "elapsed_seconds": 4.37,
+  "request": {
+    "keywords": [
+      "product manager",
+      "AI 产品经理"
+    ],
+    "sources": [
+      "remoteok",
+      "remotive"
+    ],
+    "location": null,
+    "employment_type": null,
+    "posted_within_days": null,
+    "limit": 6,
+    "greenhouse_boards": [],
+    "lever_companies": [],
+    "timeout_seconds": 90.0
+  },
+  "progress": [
+    {
+      "type": "SOURCE_STARTED",
+      "source": "remoteok",
+      "index": 0,
+      "at": "2026-10-16T16:46:33.294027+00:00"
+    },
+    {
+      "type": "SOURCE_FINISHED",
+      "source": "remoteok",
+      "status": "OK",
+      "fetched": 6,
+      "kept": 6,
+      "at": "2026-10-16T16:46:36.516717+00:00"
+    },
+    {
+      "type": "SOURCE_STARTED",
+      "source": "remotive",
+      "index": 1,
+      "at": "2026-10-16T16:46:36.516738+00:00"
+    },
+    {
+      "type": "SOURCE_FINISHED",
+      "source": "remotive",
+      "status": "OK",
+      "fetched": 2,
+      "kept": 2,
+      "at": "2026-10-16T16:46:37.509792+00:00"
+    }
+  ],
+  "result": {
+    "status": "COMPLETED",
+    "run_id": "run-20261016164633",
+    "started_at": "2026-10-16T16:46:33.294009+00:00",
+    "finished_at": "2026-10-16T16:46:37.512755+00:00",
+    "request": {
+      "sources": [
+        "remoteok",
+        "remotive"
+      ],
+      "keywords": [
+        "product manager",
+        "AI 产品经理"
+      ],
+      "location": null,
+      "employment_type": null,
+      "posted_within_days": null,
+      "limit": 6,
+      "greenhouse_boards": [],
+      "lever_companies": [],
+      "timeout_seconds": 90.0
+    },
+    "reports": [
+      {
+        "source": "remoteok",
+        "status": "OK",
+        "fetched": 6,
+        "count": 6,
+        "filtered_out": 0,
+        "note": "",
+        "errors": [],
+        "filter_mode": "local",
+        "capabilities": {
+          "keywords": false,
+          "location": false,
+          "employment_type": false,
+          "posted_within": false
+        },
+        "latency_ms": 3222
+      },
+      {
+        "source": "remotive",
+        "status": "OK",
+        "fetched": 2,
+        "count": 2,
+        "filtered_out": 0,
+        "note": "",
+        "errors": [],
+        "filter_mode": "local",
+        "capabilities": {
+          "keywords": true,
+          "location": false,
+          "employment_type": false,
+          "posted_within": false
+        },
+        "latency_ms": 993
+      }
+    ],
+    "jobs": [
+      {
+        "schema": "ai-career-os/job@1",
+        "source": "remoteok",
+        "source_url": "https://remoteOK.com/remote-jobs/remote-principal-product-manager-strategic-initiatives-thyme-care-1137510",
+        "apply_url": "https://remoteOK.com/remote-jobs/remote-principal-product-manager-strategic-initiatives-thyme-care-1137510",
+        "company": "Thyme Care",
+        "role": "Principal Product Manager Strategic Initiatives",
+        "location": "Remote",
+        "jd": "OUR MISSION\nWe exist to create a more connected, compassionate, and confident experience for people with cancer and those who care for them. We make it easier to get answers, access high-quality care quickly, and feel supported throughout treatment and beyond.\nToday, Thyme Care is a market-leading value-based oncology care enabler, partnering with national and regional health plans, providers, and employers to deliver better outcomes and lower costs for thousands of people across the country. Our model combines high-touch human support with powerful technology and AI to bring together everyone involved in a person's cancer journey: caregivers, oncologists, health plans, and employers.\nAs a tech-native organization, we believe technology should strengthen the human connection at the center of care. Through data science, automation, and AI, we simplify complexity, improve collaboration, and help our care team focus on what matters most: supporting people through cancer.\nLooking ahead, our vision is bold: to become a household name in cancer care, where every person diagnosed asks for Thyme Care by name. If you're inspired to make cancer care more human and to help reimagine what's possible, we'd love to meet you. Together, we can build a future where every person with cancer feels truly cared for, in every moment that matters.\nWHAT YOU'LL DO\nWe're hiring a Principal Product Manager to set the product direction for new, zero-to-one initiatives focused on applying AI to make better care decisions in oncology â helping people receive the right, evidence-based treatment at the moment it matters. Working closely with senior clinical, operations, engineering, and business leaders, you will shape the strategy, identify the highest-value opportunities, and lead the most complex and consequential product work needed to build a solution with the potential to become a category-defining platform.\nThis is a hands-on, zero-to-one role for a product leader who can operate at both the strategic and implementation levels â moving fluidly between learning from users, defining product direction, partnering with engineering and other stakeholders to shape solutions , and driving execution to launch. You will establish the product foundation across workflow tooling, data integrations, and AI systems, while creating patterns that can scale across future products and initiatives. Much of this work sits at the intersection of applied AI, clinical guidelines, and operational workflows in a regulated setting where fidelity, auditability, and trust are non-negotiable. This is an individual contributor role today, with the opportunity to build and lead a product team over time as this business line grows.\nAdditionally, you will:\nDrive the roadmap for a zero-to-one AI initiative to improve care decisions in oncology\nPrototype, test, and ship AI powered products with engineering and other teams cross functionally\nBuild the workflow tooling and decision support surfaces clinicians and care teams need to act on AI recommendations\nOwn the evaluations, guardrails, and observability standards to ensure recommendations are accurate, safe, and trusted across, auditable, and defensible to clinical, provider, and health-plan stakeholders\nPartner with engineering to shape the technical architecture around AI systems, data models, and integrations\nCommunicate tradeoffs and profess clearly to senior clinical, engineering, and business stakeholders\nLeverage AI to accelerate your own work and help decide how the team uses AI tooling to move faster and prototype more efficiently\nWHAT YOU'VE DONE\n6+ years of product management experience, including leading zero-to-one or early-stage initiatives when the problem, requirements, and path forward were not fully defined\nYou have healthcare experience, ideally building workflow, data, or integration products for enterprise contexts\nYouâre comfortable with ambiguity and defining a path forward for yourself and others\nYou have hands-on experience building or shipping AI/LLM-powered products\nYou communicate clearly and build alignment across engineering, clinical, and business stakeholders\nYou like to operate close to the technical details, such as data models, edge cases, evaluations, and impacts of implementation\nNice to haves:\nExperience in oncology, serious illness / palliative care, or chronic condition management\nHands-on experience shipping AI/LLM-powered product features, including safety guardrails, evaluation, and quality measurement\nOUR VALUES\nAt Thyme Care, our core values guide us in everything we do: Act with our members in mind, Move with purpose, and Seek diverse perspectives. They anchor our business decisions, including how we grow, the products we make, and the paths we chooseâor donât choose.\nOur salary ranges are based on paying competitively for our size and industry, and are one part of the total compensation package that also includes equity, benefits, and other opportunities at Thyme Care. Individual pay decisions are based on several factors, including qualifications, experience level, skillset, and balancing internal equity relative to other Thyme Care employees. The base salary for this role is $195,500-$230,000. The salary range could be lower or higher than this if the role is hired at another level. This position is also bonus-eligible.\nWe recognize a history of inequality in healthcare. Weâre here to challenge the status quo and create a culture of inclusion through the care we give and the company we build. We embrace and celebrate a diversity of perspectives in reflection of our members and the members we serve. We are an equal-opportunity employer.\nBe cautious of recruitment fraud , and always confirm that communications are coming from an official Thyme Care email.\nPlease mention the word **EVERLASTING** and tag RMS4yMDMuMTEwLjIz when applying to show you read the job post completely (#RMS4yMDMuMTEwLjIz). This is a beta feature to avoid spam applicants. Companies can search these words to find applicants that read this and see they're human.",
+        "jd_excerpt": "OUR MISSION\nWe exist to create a more connected, compassionate, and confident experience for people with cancer and those who care for them. We make it easier to get answers, access high-quality care quickly, and feel supported throughout treatment and beyond.\nToday, Thyme Care is a market-leading value-based oncology care enabler, partnering with national and regional health plans, providers, and",
+        "posted_at": "2026-10-13T08:00:11+00:00",
+        "collected_at": "2026-10-16T16:46:36.501527+00:00",
+        "employment_type": "UNKNOWN",
+        "tags": [
+          "product manager",
+          "exec",
+          "technical",
+          "customer support",
+          "testing",
+          "senior",
+          "ops",
+          "medical",
+          "engineer",
+          "recruiter"
+        ],
+        "dedupe_key": "1987ce099dd28cc9a0c5d7ebea712f1fcd53be88280e95ee8381a614e244b893",
+        "content_hash": "8d92f5669d7a0c6950504325e9b0339d6e31a21c0440846af44ce570855abdd6",
+        "needs_confirm": [],
+        "text": "公司：Thyme Care\n职位：Principal Product Manager Strategic Initiatives\n地点：Remote\n标签：product manager, exec, technical, customer support, testing, senior, ops, medical, engineer, recruiter\n发布时间：2026-10-13T08:00:11+00:00\n\nOUR MISSION\nWe exist to create a more connected, compassionate, and confident experience for people with cancer and those who care for them. We make it easier to get answers, access high-quality care quickly, and feel supported throughout treatment and beyond.\nToday, Thyme Care is a market-leading value-based oncology care enabler, partnering with national and regional health plans, providers, and employers to deliver better outcomes and lower costs for thousands of people across the country. Our model combines high-touch human support with powerful technology and AI to bring together everyone involved in a person's cancer journey: caregivers, oncologists, health plans, and employers.\nAs a tech-native organization, we believe technology should strengthen the human connection at the center of care. Through data science, automation, and AI, we simplify complexity, improve collaboration, and help our care team focus on what matters most: supporting people through cancer.\nLooking ahead, our vision is bold: to become a household name in cancer care, where every person diagnosed asks for Thyme Care by name. If you're inspired to make cancer care more human and to help reimagine what's possible, we'd love to meet you. Together, we can build a future where every person with cancer feels truly cared for, in every moment that matters.\nWHAT YOU'LL DO\nWe're hiring a Principal Product Manager to set the product direction for new, zero-to-one initiatives focused on applying AI to make better care decisions in oncology â helping people receive the right, evidence-based treatment at the moment it matters. Working closely with senior clinical, operations, engineering, and business leaders, you will shape the strategy, identify the highest-value opportunities, and lead the most complex and consequential product work needed to build a solution with the potential to become a category-defining platform.\nThis is a hands-on, zero-to-one role for a product leader who can operate at both the strategic and implementation levels â moving fluidly between learning from users, defining product direction, partnering with engineering and other stakeholders to shape solutions , and driving execution to launch. You will establish the product foundation across workflow tooling, data integrations, and AI systems, while creating patterns that can scale across future products and initiatives. Much of this work sits at the intersection of applied AI, clinical guidelines, and operational workflows in a regulated setting where fidelity, auditability, and trust are non-negotiable. This is an individual contributor role today, with the opportunity to build and lead a product team over time as this business line grows.\nAdditionally, you will:\nDrive the roadmap for a zero-to-one AI initiative to improve care decisions in oncology\nPrototype, test, and ship AI powered products with engineering and other teams cross functionally\nBuild the workflow tooling and decision support surfaces clinicians and care teams need to act on AI recommendations\nOwn the evaluations, guardrails, and observability standards to ensure recommendations are accurate, safe, and trusted across, auditable, and defensible to clinical, provider, and health-plan stakeholders\nPartner with engineering to shape the technical architecture around AI systems, data models, and integrations\nCommunicate tradeoffs and profess clearly to senior clinical, engineering, and business stakeholders\nLeverage AI to accelerate your own work and help decide how the team uses AI tooling to move faster and prototype more efficiently\nWHAT YOU'VE DONE\n6+ years of product management experience, including leading zero-to-one or early-stage initiatives when the problem, requirements, and path forward were not fully defined\nYou have healthcare experience, ideally building workflow, data, or integration products for enterprise contexts\nYouâre comfortable with ambiguity and defining a path forward for yourself and others\nYou have hands-on experience building or shipping AI/LLM-powered products\nYou communicate clearly and build alignment across engineering, clinical, and business stakeholders\nYou like to operate close to the technical details, such as data models, edge cases, evaluations, and impacts of implementation\nNice to haves:\nExperience in oncology, serious illness / palliative care, or chronic condition management\nHands-on experience shipping AI/LLM-powered product features, including safety guardrails, evaluation, and quality measurement\nOUR VALUES\nAt Thyme Care, our core values guide us in everything we do: Act with our members in mind, Move with purpose, and Seek diverse perspectives. They anchor our business decisions, including how we grow, the products we make, and the paths we chooseâor donât choose.\nOur salary ranges are based on paying competitively for our size and industry, and are one part of the total compensation package that also includes equity, benefits, and other opportunities at Thyme Care. Individual pay decisions are based on several factors, including qualifications, experience level, skillset, and balancing internal equity relative to other Thyme Care employees. The base salary for this role is $195,500-$230,000. The salary range could be lower or higher than this if the role is hired at another level. This position is also bonus-eligible.\nWe recognize a history of inequality in healthcare. Weâre here to challenge the status quo and create a culture of inclusion through the care we give and the company we build. We embrace and celebrate a diversity of perspectives in reflection of our members and the members we serve. We are an equal-opportunity employer.\nBe cautious of recruitment fraud , and always confirm that communications are coming from an official Thyme Care email.\nPlease mention the word **EVERLASTING** and tag RMS4yMDMuMTEwLjIz when applying to show you read the job post completely (#RMS4yMDMuMTEwLjIz). This is a beta feature to avoid spam applicants. Companies can search these words to find applicants that read this and see they're human.",
+        "raw": {
+          "remoteok_id": "1137510",
+          "salary": null
+        },
+        "match_score": 3,
+        "existing": {
+          "kind": "CANDIDATE",
+          "id": "80a242c0-b232-4db2-8799-fa910c28317a",
+          "company": "Thyme Care",
+          "role": "Principal Product Manager Strategic Initiatives",
+          "hash": "8d92f5669d7a0c6950504325e9b0339d6e31a21c0440846af44ce570855abdd6"
+        },
+        "result_status": "DUPLICATE",
+        "result_reason": "岗位库里已存在同一条（CANDIDATE），正文完全一致。"
+      },
+      {
+        "schema": "ai-career-os/job@1",
+        "source": "remoteok",
+        "source_url": "https://remoteOK.com/remote-jobs/remote-technical-account-manager-deuna-1137482",
+        "apply_url": "https://remoteOK.com/remote-jobs/remote-technical-account-manager-deuna-1137482",
+        "company": "DEUNA",
+        "role": "Technical Account Manager",
+        "location": "Ciudad de MÃ©xico, Mexico",
+        "jd": "About DEUNA ð§¡\nDEUNA is a rapidly growing startup revolutionizing global commerce with ATHIA, our AI-powered orchestration and payments platform that helps large enterprises boost approval rates, reduce costs, and unlock new revenue. Built by the team behind DEUNAâthe fastest-growing Commerce OS in Latin AmericaâATHIA combines payment intelligence, checkout optimization, and data orchestration in one powerful solution.\nWith deep integrations across 300+ PSPs and alternative payment methods, and over 20% of Mexicoâs digital economy running through our platform, we simplify global payments through a single integration and centralized reconciliation.\nWe are a rapidly growing startup expanding into the U.S. to meet the urgent needs of large retailers, marketplaces, airlines, and QSRs. Join us to shape the future of payments! ð\nVisit https://www.deuna.com/ to learn more about us!\nAbout the Role\nAs a Technical Account Manager (TAM), you will be the primary technical point of contact for our merchants after their initial go-live.\nYou will help monitor merchant technical health, support incident management, answer ongoing technical questions, and guide merchants through future technical evolutions.\nFor DEUNAâs premium and key accounts, the TAM plays a critical role in making sure merchants feel technically protected, proactively monitored, and confident operating on our platform.\nYour mission is to help ensure every merchant is operationally stable, technically satisfied, and continuously improving on DEUNA.\nResponsibilities\nProactively monitor merchant technical health\nMonitor merchant performance, transaction behavior, errors, declines, latency, and anomalies.\nIdentify potential risks before they become merchant-impacting issues.\nRaise internal flags when technical or operational risks are detected.\nHelp maintain account-specific dashboards, alerts, and health views for key merchants.\nBe the main technical contact after go-live\nAct as the primary technical point of contact for merchant questions and doubts after go-live.\nHelp merchants understand technical flows, configurations, integrations, and platform behavior.\nCoordinate internally with Product, Engineering, Support, Operations, and Account Management when merchant needs require cross-functional support.\nSupport technical incident management\nTriage merchant-reported and internally detected issues.\nEscalate issues to the appropriate on-call, Engineering, Product, or Operations teams.\nTrack resolution and ensure timely internal and external follow-up.\nHelp ensure communication with merchants is clear, factual, and timely.\nSupport post-incident follow-up, including impact explanation, corrective actions, and prevention measures when required.\nDrive merchant technical improvements\nIdentify opportunities to improve merchant performance, stability, acceptance rate, routing behavior, fraud flows, provider configuration, or processing cost.\nPartner with Account Management to support merchant expansion and long-term account growth.\nHelp merchants adopt new payment methods, providers, features, or technical capabilities after launch.\nBuild merchant health visibility\nBuild and deliver simple Merchant Health Reports periodically to Account Management and/or merchants.\nMaintain accurate technical documentation for merchant-specific configurations, customizations, providers, integrations, and known risks.\nHelp prioritize and advocate for merchantsâ technical needs internally.\nRequirements\n3+ years in Technical Account Management, Merchant Support, Solutions Engineering, Technical Customer Success, or similar roles.\nStrong technical understanding of online payment ecosystems, including APIs, SDKs, transaction flows, processors, acquirers, fraud tools, chargebacks, refunds, captures, and 3DS.\nExperience with incident management, post-launch technical operations, technical troubleshooting, and client-facing support.\nAbility to analyze logs, dashboards, error patterns, transaction behavior, and operational metrics.\nExcellent communication skills, with the ability to simplify technical concepts for non-technical stakeholders.\nStrong organization, ownership, urgency, and follow-up discipline.\nFluent in Spanish and English.\nExperience working with LatAm merchants is a must.\nStartup environment experience is a plus.\nWhat Success Looks Like\nA successful TAM helps premium merchants feel that DEUNA is actively watching over their payment operation, not simply reacting when something breaks.\nThe TAM should help ensure that:\nMerchant issues are detected and escalated quickly.\nCritical incidents are followed through with urgency and ownership.\nMerchants receive clear and timely technical communication.\nAccount Management has strong technical support to retain and expand key accounts.\nMerchants continuously improve their technical performance and payment outcomes on DEUNA.\n\\n\n\\n\nWhat will you find when you join DEUNA?\n- A multicultural team distributed throughout LATAM\n- Dynamism, agility and constant innovation\n- Being part of a high-impact solution for an entire region\n- The best tools and technology to operate\n- Being part of the startup culture.\n- We are in full expansion!\nBenefits:\nVacations and additional PTO ðï¸\nRemote work from anywhere ð»\nEconomic support for health insurance, internet and cell phone lineð± ð\nWe all own DEUNA, we offer stock options ð¸\nLearning and development platform ð\nMultidisciplinary, diverse and dynamic team ð§¡\nGrowth and career path ð\nBe part of a dynamic team that's creating the next generation payments platform.\nDEUNA is proud to be an equal opportunity employer. We value and celebrate diversity and inclusion in our workplace. All employment decisions at DEUNA are made without discrimination based on nationality, race, ethnicity, religion, gender, sexual orientation, gender identity or expression, marital status, color, disability, or any other characteristic protected by law.\nPlease mention the word **EXPERTLY** and tag RMS4yMDMuMTEwLjIz when applying to show you read the job post completely (#RMS4yMDMuMTEwLjIz). This is a beta feature to avoid spam applicants. Companies can search these words to find applicants that read this and see they're human.",
+        "jd_excerpt": "About DEUNA ð§¡\nDEUNA is a rapidly growing startup revolutionizing global commerce with ATHIA, our AI-powered orchestration and payments platform that helps large enterprises boost approval rates, reduce costs, and unlock new revenue. Built by the team behind DEUNAâthe fastest-growing Commerce OS in Latin AmericaâATHIA combines payment intelligence, checkout optimization, and data orchestrati",
+        "posted_at": "2026-10-11T00:00:05+00:00",
+        "collected_at": "2026-10-16T16:46:36.515958+00:00",
+        "employment_type": "UNKNOWN",
+        "tags": [
+          "exec",
+          "hr",
+          "technical",
+          "customer support",
+          "marketing",
+          "ops",
+          "golang",
+          "medical",
+          "engineer"
+        ],
+        "dedupe_key": "856c32307a10640a2ea0ce1aaae250e0243a6ce588ef4605eb6cdc79b491f70c",
+        "content_hash": "3e5744f6c781ce4589e4ff8adfb9efe42458531597bf5303821e16b305122dff",
+        "needs_confirm": [],
+        "text": "公司：DEUNA\n职位：Technical Account Manager\n地点：Ciudad de MÃ©xico, Mexico\n标签：exec, hr, technical, customer support, marketing, ops, golang, medical, engineer\n发布时间：2026-10-11T00:00:05+00:00\n\nAbout DEUNA ð§¡\nDEUNA is a rapidly growing startup revolutionizing global commerce with ATHIA, our AI-powered orchestration and payments platform that helps large enterprises boost approval rates, reduce costs, and unlock new revenue. Built by the team behind DEUNAâthe fastest-growing Commerce OS in Latin AmericaâATHIA combines payment intelligence, checkout optimization, and data orchestration in one powerful solution.\nWith deep integrations across 300+ PSPs and alternative payment methods, and over 20% of Mexicoâs digital economy running through our platform, we simplify global payments through a single integration and centralized reconciliation.\nWe are a rapidly growing startup expanding into the U.S. to meet the urgent needs of large retailers, marketplaces, airlines, and QSRs. Join us to shape the future of payments! ð\nVisit https://www.deuna.com/ to learn more about us!\nAbout the Role\nAs a Technical Account Manager (TAM), you will be the primary technical point of contact for our merchants after their initial go-live.\nYou will help monitor merchant technical health, support incident management, answer ongoing technical questions, and guide merchants through future technical evolutions.\nFor DEUNAâs premium and key accounts, the TAM plays a critical role in making sure merchants feel technically protected, proactively monitored, and confident operating on our platform.\nYour mission is to help ensure every merchant is operationally stable, technically satisfied, and continuously improving on DEUNA.\nResponsibilities\nProactively monitor merchant technical health\nMonitor merchant performance, transaction behavior, errors, declines, latency, and anomalies.\nIdentify potential risks before they become merchant-impacting issues.\nRaise internal flags when technical or operational risks are detected.\nHelp maintain account-specific dashboards, alerts, and health views for key merchants.\nBe the main technical contact after go-live\nAct as the primary technical point of contact for merchant questions and doubts after go-live.\nHelp merchants understand technical flows, configurations, integrations, and platform behavior.\nCoordinate internally with Product, Engineering, Support, Operations, and Account Management when merchant needs require cross-functional support.\nSupport technical incident management\nTriage merchant-reported and internally detected issues.\nEscalate issues to the appropriate on-call, Engineering, Product, or Operations teams.\nTrack resolution and ensure timely internal and external follow-up.\nHelp ensure communication with merchants is clear, factual, and timely.\nSupport post-incident follow-up, including impact explanation, corrective actions, and prevention measures when required.\nDrive merchant technical improvements\nIdentify opportunities to improve merchant performance, stability, acceptance rate, routing behavior, fraud flows, provider configuration, or processing cost.\nPartner with Account Management to support merchant expansion and long-term account growth.\nHelp merchants adopt new payment methods, providers, features, or technical capabilities after launch.\nBuild merchant health visibility\nBuild and deliver simple Merchant Health Reports periodically to Account Management and/or merchants.\nMaintain accurate technical documentation for merchant-specific configurations, customizations, providers, integrations, and known risks.\nHelp prioritize and advocate for merchantsâ technical needs internally.\nRequirements\n3+ years in Technical Account Management, Merchant Support, Solutions Engineering, Technical Customer Success, or similar roles.\nStrong technical understanding of online payment ecosystems, including APIs, SDKs, transaction flows, processors, acquirers, fraud tools, chargebacks, refunds, captures, and 3DS.\nExperience with incident management, post-launch technical operations, technical troubleshooting, and client-facing support.\nAbility to analyze logs, dashboards, error patterns, transaction behavior, and operational metrics.\nExcellent communication skills, with the ability to simplify technical concepts for non-technical stakeholders.\nStrong organization, ownership, urgency, and follow-up discipline.\nFluent in Spanish and English.\nExperience working with LatAm merchants is a must.\nStartup environment experience is a plus.\nWhat Success Looks Like\nA successful TAM helps premium merchants feel that DEUNA is actively watching over their payment operation, not simply reacting when something breaks.\nThe TAM should help ensure that:\nMerchant issues are detected and escalated quickly.\nCritical incidents are followed through with urgency and ownership.\nMerchants receive clear and timely technical communication.\nAccount Management has strong technical support to retain and expand key accounts.\nMerchants continuously improve their technical performance and payment outcomes on DEUNA.\n\\n\n\\n\nWhat will you find when you join DEUNA?\n- A multicultural team distributed throughout LATAM\n- Dynamism, agility and constant innovation\n- Being part of a high-impact solution for an entire region\n- The best tools and technology to operate\n- Being part of the startup culture.\n- We are in full expansion!\nBenefits:\nVacations and additional PTO ðï¸\nRemote work from anywhere ð»\nEconomic support for health insurance, internet and cell phone lineð± ð\nWe all own DEUNA, we offer stock options ð¸\nLearning and development platform ð\nMultidisciplinary, diverse and dynamic team ð§¡\nGrowth and career path ð\nBe part of a dynamic team that's creating the next generation payments platform.\nDEUNA is proud to be an equal opportunity employer. We value and celebrate diversity and inclusion in our workplace. All employment decisions at DEUNA are made without discrimination based on nationality, race, ethnicity, religion, gender, sexual orientation, gender identity or expression, marital status, color, disability, or any other characteristic protected by law.\nPlease mention the word **EXPERTLY** and tag RMS4yMDMuMTEwLjIz when applying to show you read the job post completely (#RMS4yMDMuMTEwLjIz). This is a beta feature to avoid spam applicants. Companies can search these words to find applicants that read this and see they're human.",
+        "raw": {
+          "remoteok_id": "1137482",
+          "salary": null
+        },
+        "match_score": 2,
+        "existing": {
+          "kind": "CANDIDATE",
+          "id": "0a772560-c905-43b9-b852-e09173abc94f",
+          "company": "DEUNA",
+          "role": "Technical Account Manager",
+          "hash": "3e5744f6c781ce4589e4ff8adfb9efe42458531597bf5303821e16b305122dff"
+        },
+        "result_status": "DUPLICATE",
+        "result_reason": "岗位库里已存在同一条（CANDIDATE），正文完全一致。"
+      },
+      {
+        "schema": "ai-career-os/job@1",
+        "source": "remoteok",
+        "source_url": "https://remoteOK.com/remote-jobs/remote-account-manager-mid-market-allego-1137528",
+        "apply_url": "https://remoteOK.com/remote-jobs/remote-account-manager-mid-market-allego-1137528",
+        "company": "Allego",
+        "role": "Account Manager Mid Market",
+        "location": "Waltham",
+        "jd": "Allego is a rapidly growing SaaS technology company in the Boston area and creator of the market-leading Revenue Enablement Platform. Our technology helps Go-To-Market teams build the skills and access the knowledge they need to succeed in every selling situation.\nAllego is the only revenue enablement platform to be named a Leader in both the Forrester Waveâ¢ and the inaugural GartnerÂ® Magic Quadrantâ¢ for Revenue Enablement Platforms.\nNot only are we growing quickly, but weâve also been recognized as a top place to work by The Boston Business Journal, The Boston Globe, and Inc. Magazine. In addition, Selling Power named Allego one of the 50 Best Companies to Sell For in both 2025 and 2026.\nWhat You'll Do at Allego:\nAllego is seeking an experienced Account Manager who will support and grow key customer relationships across a range of industries and sizes. As an Account Manager at Allego, youâll define, develop and implement customer strategies and management plans that expand the customerâs usage of the Allego platform and create customer evangelists of Allego among their Sales, Marketing, Enablement and Operational leadership. Through your partnership with our customers, youâll help transform the way ideas are shared, learning happens, and sales are brokered. By acting as a trusted advisor, you will provide consultation, expertise, thought leadership, and responsiveness that creates a differentiated buying experience for Allego prospects and customers. Your contributions will help drive business and revenue growth and accelerate customer expansion.\nThe compensation package include\nPlease mention the word **VIRTUOUS** and tag RMS4yMDMuMTEwLjIz when applying to show you read the job post completely (#RMS4yMDMuMTEwLjIz). This is a beta feature to avoid spam applicants. Companies can search these words to find applicants that read this and see they're human.",
+        "jd_excerpt": "Allego is a rapidly growing SaaS technology company in the Boston area and creator of the market-leading Revenue Enablement Platform. Our technology helps Go-To-Market teams build the skills and access the knowledge they need to succeed in every selling situation.\nAllego is the only revenue enablement platform to be named a Leader in both the Forrester Waveâ¢ and the inaugural GartnerÂ® Magic Qua",
+        "posted_at": "2026-10-15T16:00:21+00:00",
+        "collected_at": "2026-10-16T16:46:36.489476+00:00",
+        "employment_type": "UNKNOWN",
+        "tags": [
+          "exec",
+          "saas",
+          "customer support",
+          "marketing",
+          "ops",
+          "sales",
+          "golang"
+        ],
+        "dedupe_key": "6ff9e74d3cb65ddbafc12484697d960a85b3789d526214f7682c6ca416472f38",
+        "content_hash": "fdf334c74a78b5245fe436b8c451a7ecb856701d2cba3a1f00047fc3088c5a5b",
+        "needs_confirm": [],
+        "text": "公司：Allego\n职位：Account Manager Mid Market\n地点：Waltham\n标签：exec, saas, customer support, marketing, ops, sales, golang\n发布时间：2026-10-15T16:00:21+00:00\n\nAllego is a rapidly growing SaaS technology company in the Boston area and creator of the market-leading Revenue Enablement Platform. Our technology helps Go-To-Market teams build the skills and access the knowledge they need to succeed in every selling situation.\nAllego is the only revenue enablement platform to be named a Leader in both the Forrester Waveâ¢ and the inaugural GartnerÂ® Magic Quadrantâ¢ for Revenue Enablement Platforms.\nNot only are we growing quickly, but weâve also been recognized as a top place to work by The Boston Business Journal, The Boston Globe, and Inc. Magazine. In addition, Selling Power named Allego one of the 50 Best Companies to Sell For in both 2025 and 2026.\nWhat You'll Do at Allego:\nAllego is seeking an experienced Account Manager who will support and grow key customer relationships across a range of industries and sizes. As an Account Manager at Allego, youâll define, develop and implement customer strategies and management plans that expand the customerâs usage of the Allego platform and create customer evangelists of Allego among their Sales, Marketing, Enablement and Operational leadership. Through your partnership with our customers, youâll help transform the way ideas are shared, learning happens, and sales are brokered. By acting as a trusted advisor, you will provide consultation, expertise, thought leadership, and responsiveness that creates a differentiated buying experience for Allego prospects and customers. Your contributions will help drive business and revenue growth and accelerate customer expansion.\nThe compensation package include\nPlease mention the word **VIRTUOUS** and tag RMS4yMDMuMTEwLjIz when applying to show you read the job post completely (#RMS4yMDMuMTEwLjIz). This is a beta feature to avoid spam applicants. Companies can search these words to find applicants that read this and see they're human.",
+        "raw": {
+          "remoteok_id": "1137528",
+          "salary": null
+        },
+        "match_score": 1,
+        "existing": {
+          "kind": "CANDIDATE",
+          "id": "4e99f560-6691-4e57-981a-eebf5e2fe436",
+          "company": "Allego",
+          "role": "Account Manager Mid Market",
+          "hash": "fdf334c74a78b5245fe436b8c451a7ecb856701d2cba3a1f00047fc3088c5a5b"
+        },
+        "result_status": "DUPLICATE",
+        "result_reason": "岗位库里已存在同一条（CANDIDATE），正文完全一致。"
+      },
+      {
+        "schema": "ai-career-os/job@1",
+        "source": "remoteok",
+        "source_url": "https://remoteOK.com/remote-jobs/remote-contracts-manager-federal-akicita-federal-llc-1137522",
+        "apply_url": "https://remoteOK.com/remote-jobs/remote-contracts-manager-federal-akicita-federal-llc-1137522",
+        "company": "Akicita Federal, LLC",
+        "role": "Contracts Manager Federal",
+        "location": "Remote",
+        "jd": "\\n\n\\n\n$100,000 - $120,000 a year\nAkicita Federal, LLC is a growing 8(a) small business that delivers healthcare, professional, and administrative services to federal agencies. We're adding a contracts manager to help us grow beyond our current work. The job is to find opportunities, write winning proposals quickly, and build lasting relationships with agencies and teaming partners.\nWhat you'll do\nFind and respond to federal opportunities, focusing on small business and 8(a) set-asides\nWrite, assemble, and submit proposals at high volume, often turning one around in a day or two\nManage contracts after award: point of contact for agencies, modifications, compliance, and reporting\nSpend about a quarter of your time on teaming and partnership outreach to other small businesses\nWork with our recruiting team to staff new awards\nUse AI tools to work faster. We expect speed and don't want proposals built by hand from scratch.\nWhat you bring\n3+ years in federal contracting: contracts management, proposal writing, capture, or program management\nSolid understanding of the FAR, set-aside programs, and the federal procurement process\nAn existing network of agency or contractor relationships is a strong plus\nYou're comfortable with AI tools, or eager to become a power user\nYou'd rather submit ten good proposals than polish one forever\n\\n\nPlease mention the word **PORTABLE** and tag RMS4yMDMuMTEwLjIz when applying to show you read the job post completely (#RMS4yMDMuMTEwLjIz). This is a beta feature to avoid spam applicants. Companies can search these words to find applicants that read this and see they're human.",
+        "jd_excerpt": "\\n\n\\n\n$100,000 - $120,000 a year\nAkicita Federal, LLC is a growing 8(a) small business that delivers healthcare, professional, and administrative services to federal agencies. We're adding a contracts manager to help us grow beyond our current work. The job is to find opportunities, write winning proposals quickly, and build lasting relationships with agencies and teaming partners.\nWhat you'll do\n",
+        "posted_at": "2026-10-15T00:00:13+00:00",
+        "collected_at": "2026-10-16T16:46:36.497593+00:00",
+        "employment_type": "UNKNOWN",
+        "tags": [
+          "exec",
+          "medical",
+          "recruiter"
+        ],
+        "dedupe_key": "87c2b6f743f4d385851ab23ee6e93d20653c62a4adee6abc0c7fdbceab29d1c0",
+        "content_hash": "ac6396021cdf6b93cc8bf26b684db24e0f04e367f3ce1691257d1012526c82b0",
+        "needs_confirm": [],
+        "text": "公司：Akicita Federal, LLC\n职位：Contracts Manager Federal\n地点：Remote\n标签：exec, medical, recruiter\n发布时间：2026-10-15T00:00:13+00:00\n\n\\n\n\\n\n$100,000 - $120,000 a year\nAkicita Federal, LLC is a growing 8(a) small business that delivers healthcare, professional, and administrative services to federal agencies. We're adding a contracts manager to help us grow beyond our current work. The job is to find opportunities, write winning proposals quickly, and build lasting relationships with agencies and teaming partners.\nWhat you'll do\nFind and respond to federal opportunities, focusing on small business and 8(a) set-asides\nWrite, assemble, and submit proposals at high volume, often turning one around in a day or two\nManage contracts after award: point of contact for agencies, modifications, compliance, and reporting\nSpend about a quarter of your time on teaming and partnership outreach to other small businesses\nWork with our recruiting team to staff new awards\nUse AI tools to work faster. We expect speed and don't want proposals built by hand from scratch.\nWhat you bring\n3+ years in federal contracting: contracts management, proposal writing, capture, or program management\nSolid understanding of the FAR, set-aside programs, and the federal procurement process\nAn existing network of agency or contractor relationships is a strong plus\nYou're comfortable with AI tools, or eager to become a power user\nYou'd rather submit ten good proposals than polish one forever\n\\n\nPlease mention the word **PORTABLE** and tag RMS4yMDMuMTEwLjIz when applying to show you read the job post completely (#RMS4yMDMuMTEwLjIz). This is a beta feature to avoid spam applicants. Companies can search these words to find applicants that read this and see they're human.",
+        "raw": {
+          "remoteok_id": "1137522",
+          "salary": null
+        },
+        "match_score": 1,
+        "existing": {
+          "kind": "CANDIDATE",
+          "id": "80180923-ebe5-499f-9917-896ada1d31e7",
+          "company": "Akicita Federal, LLC",
+          "role": "Contracts Manager Federal",
+          "hash": "ac6396021cdf6b93cc8bf26b684db24e0f04e367f3ce1691257d1012526c82b0"
+        },
+        "result_status": "DUPLICATE",
+        "result_reason": "岗位库里已存在同一条（CANDIDATE），正文完全一致。"
+      },
+      {
+        "schema": "ai-career-os/job@1",
+        "source": "remoteok",
+        "source_url": "https://remoteOK.com/remote-jobs/remote-federal-account-manager-client-relationships-akicita-federal-llc-1137521",
+        "apply_url": "https://remoteOK.com/remote-jobs/remote-federal-account-manager-client-relationships-akicita-federal-llc-1137521",
+        "company": "Akicita Federal, LLC",
+        "role": "Federal Account Manager Client Relationships",
+        "location": "Remote",
+        "jd": "\\n\n\\n\n$100,000 - $120,000 a year\nAkicita Federal, LLC is a growing 8(a) small business serving federal agencies. We're looking for someone who has been the go-to contact for a federal client: the person the agency calls first, who knows the program, the people, and what's coming next.\nWhat you'll do\nOwn relationships with agency program offices, contracting officers, and prime contractors\nSpot upcoming requirements, recompetes, and expansion opportunities early\nBring warm opportunities into our pipeline and help shape our responses\nServe as the main point of contact on awarded contracts, keeping clients happy and performance strong\nPartner with our proposal and recruiting teams to win and staff new work\nWhat you bring\n5+ years as a program manager, account manager, contracts manager, or similar client-facing role on federal contracts\nEstablished, good-standing relationships with one or more federal agencies. Tell us which ones.\nExperience with 8(a) or small business contracting\nMid-career and ready to build something bigger at a smaller, faster company\nComfortable using AI tools to work efficiently\n\\n\nPlease mention the word **SUCCES** and tag RMS4yMDMuMTEwLjIz when applying to show you read the job post completely (#RMS4yMDMuMTEwLjIz). This is a beta feature to avoid spam applicants. Companies can search these words to find applicants that read this and see they're human.",
+        "jd_excerpt": "\\n\n\\n\n$100,000 - $120,000 a year\nAkicita Federal, LLC is a growing 8(a) small business serving federal agencies. We're looking for someone who has been the go-to contact for a federal client: the person the agency calls first, who knows the program, the people, and what's coming next.\nWhat you'll do\nOwn relationships with agency program offices, contracting officers, and prime contractors\nSpot upc",
+        "posted_at": "2026-10-15T00:00:05+00:00",
+        "collected_at": "2026-10-16T16:46:36.497982+00:00",
+        "employment_type": "UNKNOWN",
+        "tags": [
+          "exec",
+          "golang",
+          "recruiter"
+        ],
+        "dedupe_key": "b6d8c0e9af88a17ee2bc9452d1c9974b75494ca2ecb26e34eb241d2b23028903",
+        "content_hash": "ea943d0590159f61776eef64a7a91d78d63326b70209fc1fd841430d87601382",
+        "needs_confirm": [],
+        "text": "公司：Akicita Federal, LLC\n职位：Federal Account Manager Client Relationships\n地点：Remote\n标签：exec, golang, recruiter\n发布时间：2026-10-15T00:00:05+00:00\n\n\\n\n\\n\n$100,000 - $120,000 a year\nAkicita Federal, LLC is a growing 8(a) small business serving federal agencies. We're looking for someone who has been the go-to contact for a federal client: the person the agency calls first, who knows the program, the people, and what's coming next.\nWhat you'll do\nOwn relationships with agency program offices, contracting officers, and prime contractors\nSpot upcoming requirements, recompetes, and expansion opportunities early\nBring warm opportunities into our pipeline and help shape our responses\nServe as the main point of contact on awarded contracts, keeping clients happy and performance strong\nPartner with our proposal and recruiting teams to win and staff new work\nWhat you bring\n5+ years as a program manager, account manager, contracts manager, or similar client-facing role on federal contracts\nEstablished, good-standing relationships with one or more federal agencies. Tell us which ones.\nExperience with 8(a) or small business contracting\nMid-career and ready to build something bigger at a smaller, faster company\nComfortable using AI tools to work efficiently\n\\n\nPlease mention the word **SUCCES** and tag RMS4yMDMuMTEwLjIz when applying to show you read the job post completely (#RMS4yMDMuMTEwLjIz). This is a beta feature to avoid spam applicants. Companies can search these words to find applicants that read this and see they're human.",
+        "raw": {
+          "remoteok_id": "1137521",
+          "salary": null
+        },
+        "match_score": 1,
+        "existing": {
+          "kind": "CANDIDATE",
+          "id": "990ec257-da72-47b3-a98e-46430a5b5426",
+          "company": "Akicita Federal, LLC",
+          "role": "Federal Account Manager Client Relationships",
+          "hash": "ea943d0590159f61776eef64a7a91d78d63326b70209fc1fd841430d87601382"
+        },
+        "result_status": "DUPLICATE",
+        "result_reason": "岗位库里已存在同一条（CANDIDATE），正文完全一致。"
+      },
+      {
+        "schema": "ai-career-os/job@1",
+        "source": "remoteok",
+        "source_url": "https://remoteOK.com/remote-jobs/remote-product-design-director-midnite-1137497",
+        "apply_url": "https://remoteOK.com/remote-jobs/remote-product-design-director-midnite-1137497",
+        "company": "Midnite",
+        "role": "Product Design Director",
+        "location": "United Kingdom",
+        "jd": "ð Why Midnite?\nMidnite is a next-generation sports betting and gaming platform built for a new wave of players.\nWe combine sharp product thinking, bold brand, and fast execution to create experiences that feel modern, intuitive, and built for how people actually play today.\nOver 400,000 players have already made the move, and weâre only just getting started.\nWeâre a high-performance team operating at pace. High ownership. Constant iteration. No hiding behind processes. We move quickly, test relentlessly, and turn ambitious ideas into real impact. If youâre driven, creative, and thrive in fast-moving environments where you can shape meaningful outcomes - keep reading.\nNot your grandadâs bookie.\nð The Role\nTitle: Product Design Director\nTeam: Design\nLocation: Remote, UK\nExperience quality is one of the clearest ways Midnite differentiates in a category that too often settles for functional and familiar. As a Product Design Director, you will ensure craft, quality and ambition remain central to how we build, as we scale. You will lead Product Design, shape company wide experience direction, and embed Design in the most important product decisions. This is a role with real influence, accountable for how Midnite feels across every surface and responsible for raising the bar as we grow.\nYou will:\nLead and develop our Product Design team, line managing five designers and setting a clear standard for craft, judgement and ownership.\nDefine and uphold the experience bar across all product surfaces, from customer facing native and web to back office platforms.\nEnsure coherence across squads and journeys so Midnite feels like one joined up system rather than a collection of features.\nShape the long term experience direction and codify principles that guide teams toward a shared north star.\nMature and drive adoption of our design systems to enable both speed and consistency at scale.\nPartner closely with Product and Engineering leadership on strategy, early problem framing and complex trade offs.\nContribute hands on to Midniteâs most complex and high impact initiatives, elevating outcomes through strong visual and interaction design.\nCollaborate with Brand, Creative, Growth, CRM and Games to ensure the end to end customer experience is cohesive and well crafted.\nExplore and integrate emerging technologies, including AI, where they meaningfully improve how we design and build.\nStrengthen the structures and standards that allow experience quality to scale as the company grows\nThe next Midniter:\nSets and defends a high bar for visual and interaction design, with exceptional taste and strong product instincts.\nHas operated at scale, shaping design direction across multiple teams and surfaces.\nHas built or matured design systems that improve consistency and enable teams to move faster without sacrificing quality.\nBrings hands on craft capability and is comfortable directly contributing to high stakes initiatives.\nIs a trusted strategic partner to Product and Engineering leaders, contributing meaningfully to roadmap direction and key decisions.\nDevelops designers through thoughtful feedback, coaching and hiring, steadily raising overall team capability.\nCommunicates clearly and practically, influencing across disciplines and levels of seniority.\nIs curious about emerging technologies, including AI, and thoughtful about where they add real value.\nCares deeply about building well designed digital products, from simplifying complex systems to refining interaction, motion and hierarchy.\nð° Winnings\nPrivate health insurance with zero excess, including optical cover and optional dental.\nIncome protection to protect your earnings and give you peace of mind.\nTenure holiday policy. After three years you receive an extra two days leave, increasing to 30 days annually after five years.\nFlexible working and a fully supported home office setup so you can do your best work from home.\nNursery salary sacrifice scheme helping parents save thousands each year on nursery fees.\nSalary sacrifice schemes for tech and holidays so you can spread the cost of the things you want.\nRetail discounts and subscription perks across a wide range of brands.\nQuarterly team socials to connect, celebrate and have fun together.\nAt Midnite, we are committed to creating equal opportunities for everyone. We actively strive to build balanced teams that reflect the diversity of our communities, including ethnic minorities, people with disabilities, the LGBTQIA+ community, and all genders.\nWe aim to provide an inclusive and supportive interview experience for all candidates. If you require any reasonable adjustments, please let us know in advance so we can ensure you feel comfortable and set up for success.\nPlease mention the word **FANTASTICALLY** and tag RMS4yMDMuMTEwLjIz when applying to show you read the job post completely (#RMS4yMDMuMTEwLjIz). This is a beta feature to avoid spam applicants. Companies can search these words to find applicants that read this and see they're human.",
+        "jd_excerpt": "ð Why Midnite?\nMidnite is a next-generation sports betting and gaming platform built for a new wave of players.\nWe combine sharp product thinking, bold brand, and fast execution to create experiences that feel modern, intuitive, and built for how people actually play today.\nOver 400,000 players have already made the move, and weâre only just getting started.\nWeâre a high-performance team op",
+        "posted_at": "2026-10-11T16:00:03+00:00",
+        "collected_at": "2026-10-16T16:46:36.513028+00:00",
+        "employment_type": "UNKNOWN",
+        "tags": [
+          "design",
+          "exec",
+          "sys admin",
+          "game dev",
+          "testing",
+          "marketing",
+          "web dev",
+          "scheme",
+          "medical",
+          "engineer",
+          "digital nomad"
+        ],
+        "dedupe_key": "edf52c39a65aec078565f82c5e3d0a9ed0fa27d86b47994dd77f5f0eb877a3ff",
+        "content_hash": "9d6d0b0057dabaca55992bcd627a758128975b2f38d1e90067d1031d642b1c7c",
+        "needs_confirm": [],
+        "text": "公司：Midnite\n职位：Product Design Director\n地点：United Kingdom\n标签：design, exec, sys admin, game dev, testing, marketing, web dev, scheme, medical, engineer, digital nomad\n发布时间：2026-10-11T16:00:03+00:00\n\nð Why Midnite?\nMidnite is a next-generation sports betting and gaming platform built for a new wave of players.\nWe combine sharp product thinking, bold brand, and fast execution to create experiences that feel modern, intuitive, and built for how people actually play today.\nOver 400,000 players have already made the move, and weâre only just getting started.\nWeâre a high-performance team operating at pace. High ownership. Constant iteration. No hiding behind processes. We move quickly, test relentlessly, and turn ambitious ideas into real impact. If youâre driven, creative, and thrive in fast-moving environments where you can shape meaningful outcomes - keep reading.\nNot your grandadâs bookie.\nð The Role\nTitle: Product Design Director\nTeam: Design\nLocation: Remote, UK\nExperience quality is one of the clearest ways Midnite differentiates in a category that too often settles for functional and familiar. As a Product Design Director, you will ensure craft, quality and ambition remain central to how we build, as we scale. You will lead Product Design, shape company wide experience direction, and embed Design in the most important product decisions. This is a role with real influence, accountable for how Midnite feels across every surface and responsible for raising the bar as we grow.\nYou will:\nLead and develop our Product Design team, line managing five designers and setting a clear standard for craft, judgement and ownership.\nDefine and uphold the experience bar across all product surfaces, from customer facing native and web to back office platforms.\nEnsure coherence across squads and journeys so Midnite feels like one joined up system rather than a collection of features.\nShape the long term experience direction and codify principles that guide teams toward a shared north star.\nMature and drive adoption of our design systems to enable both speed and consistency at scale.\nPartner closely with Product and Engineering leadership on strategy, early problem framing and complex trade offs.\nContribute hands on to Midniteâs most complex and high impact initiatives, elevating outcomes through strong visual and interaction design.\nCollaborate with Brand, Creative, Growth, CRM and Games to ensure the end to end customer experience is cohesive and well crafted.\nExplore and integrate emerging technologies, including AI, where they meaningfully improve how we design and build.\nStrengthen the structures and standards that allow experience quality to scale as the company grows\nThe next Midniter:\nSets and defends a high bar for visual and interaction design, with exceptional taste and strong product instincts.\nHas operated at scale, shaping design direction across multiple teams and surfaces.\nHas built or matured design systems that improve consistency and enable teams to move faster without sacrificing quality.\nBrings hands on craft capability and is comfortable directly contributing to high stakes initiatives.\nIs a trusted strategic partner to Product and Engineering leaders, contributing meaningfully to roadmap direction and key decisions.\nDevelops designers through thoughtful feedback, coaching and hiring, steadily raising overall team capability.\nCommunicates clearly and practically, influencing across disciplines and levels of seniority.\nIs curious about emerging technologies, including AI, and thoughtful about where they add real value.\nCares deeply about building well designed digital products, from simplifying complex systems to refining interaction, motion and hierarchy.\nð° Winnings\nPrivate health insurance with zero excess, including optical cover and optional dental.\nIncome protection to protect your earnings and give you peace of mind.\nTenure holiday policy. After three years you receive an extra two days leave, increasing to 30 days annually after five years.\nFlexible working and a fully supported home office setup so you can do your best work from home.\nNursery salary sacrifice scheme helping parents save thousands each year on nursery fees.\nSalary sacrifice schemes for tech and holidays so you can spread the cost of the things you want.\nRetail discounts and subscription perks across a wide range of brands.\nQuarterly team socials to connect, celebrate and have fun together.\nAt Midnite, we are committed to creating equal opportunities for everyone. We actively strive to build balanced teams that reflect the diversity of our communities, including ethnic minorities, people with disabilities, the LGBTQIA+ community, and all genders.\nWe aim to provide an inclusive and supportive interview experience for all candidates. If you require any reasonable adjustments, please let us know in advance so we can ensure you feel comfortable and set up for success.\nPlease mention the word **FANTASTICALLY** and tag RMS4yMDMuMTEwLjIz when applying to show you read the job post completely (#RMS4yMDMuMTEwLjIz). This is a beta feature to avoid spam applicants. Companies can search these words to find applicants that read this and see they're human.",
+        "raw": {
+          "remoteok_id": "1137497",
+          "salary": null
+        },
+        "match_score": 1,
+        "existing": {
+          "kind": "CANDIDATE",
+          "id": "81388b07-9156-40b4-9a3d-74c415fd44c5",
+          "company": "Midnite",
+          "role": "Product Design Director",
+          "hash": "9d6d0b0057dabaca55992bcd627a758128975b2f38d1e90067d1031d642b1c7c"
+        },
+        "result_status": "DUPLICATE",
+        "result_reason": "岗位库里已存在同一条（CANDIDATE），正文完全一致。"
+      }
+    ],
+    "duplicates": [],
+    "totals": {
+      "returned": 6,
+      "fetched": 8,
+      "filtered_out": 0,
+      "cross_source_duplicates": 0,
+      "sources_total": 2,
+      "sources_ok": 2,
+      "sources_failed": 0,
+      "sources_empty": 0,
+      "sources_cancelled": 0,
+      "sources_timeout": 0,
+      "new": 0,
+      "duplicate": 6,
+      "updated": 0,
+      "needs_review": 0,
+      "failed": 0,
+      "saveable": 0
+    },
+    "task_id": "task-cec9834ea427"
+  },
+  "error": null
+}

@@ -7,21 +7,28 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { readCurrentProfileId } from "../career-hub.ts";
 import { missionHref } from "../missions.ts";
 import {
+  cancelCollectRun,
   collectBrowserPage,
   collectJobs,
   extractJobFile,
   fetchJobUrl,
+  healthCheckSource,
   importCandidateJob,
   parseCandidateJobs,
   readBridgeStatus,
+  readCollectRun,
   readJobLibrary,
   readJobSources,
   saveCollectedJobs,
+  startCollectRun,
   type BridgeStatus,
   type BrowserCapture,
   type CollectedJob,
   type CollectFilter,
   type CollectResult,
+  type CollectResultStatus,
+  type CollectTaskSnapshot,
+  type CollectTaskStatus,
   type JobSource,
   type LibraryItem,
 } from "../jobs.ts";
@@ -35,6 +42,16 @@ const MODE_LABEL: Record<IntakeMode, string> = {
 };
 
 const KEYWORD_PRESETS = ["AI 产品经理", "Agent 产品经理", "AI PM 实习", "product manager", "intern"];
+
+const SOURCE_LABELS: Record<string, string> = {
+  remoteok: "RemoteOK",
+  remotive: "Remotive",
+  greenhouse: "Greenhouse",
+  lever: "Lever",
+  browser: "当前网页",
+  paste: "粘贴",
+  file: "文件",
+};
 
 const EMPLOYMENT_LABEL: Record<string, string> = {
   INTERN: "实习",
@@ -55,6 +72,31 @@ const POSTED_OPTIONS: Array<{ value: number; label: string }> = [
   { value: 30, label: "30 天内" },
   { value: 90, label: "90 天内" },
 ];
+
+const RESULT_STATUS_LABEL: Record<CollectResultStatus, { label: string; tone: string; hint: string }> = {
+  NEW: { label: "新增", tone: "filled", hint: "岗位库里还没有这条，可以直接保存。" },
+  DUPLICATE: { label: "已存在", tone: "muted", hint: "库里已有同一岗位且正文一致，保存会自动跳过。" },
+  UPDATED: { label: "有更新", tone: "warn", hint: "库里已有同一岗位，但 JD 正文变化了，可勾选「同时更新已有岗位」覆盖。" },
+  NEEDS_REVIEW: { label: "待确认", tone: "warn", hint: "关键字段缺失或置信度低，保存后需要补齐才能进入 JD 分析。" },
+  FAILED: { label: "不可用", tone: "danger", hint: "结构化字段不足，无法入库。" },
+};
+
+const TASK_STATUS_LABEL: Record<CollectTaskStatus, string> = {
+  IDLE: "待开始",
+  RUNNING: "采集中",
+  COMPLETED: "采集完成",
+  PARTIAL: "部分来源失败",
+  FAILED: "采集失败",
+  CANCELLED: "已取消",
+};
+
+const SOURCE_STATUS_LABEL: Record<string, string> = {
+  OK: "成功",
+  EMPTY: "无命中",
+  ERROR: "失败",
+  TIMEOUT: "超时",
+  CANCELLED: "已取消",
+};
 
 function jobKey(job: CollectedJob): string {
   return job.dedupe_key || `${job.source}|${job.source_url}|${job.company}|${job.role}`;
@@ -79,15 +121,20 @@ export default function JobsPage() {
   const [pickedSources, setPickedSources] = useState<string[]>(["remoteok"]);
   const [postedDays, setPostedDays] = useState(0);
   const [limit, setLimit] = useState(20);
+  const [collectTimeout, setCollectTimeout] = useState(90);
   const [boards, setBoards] = useState("");
   const [leverSlugs, setLeverSlugs] = useState("");
   const [collecting, setCollecting] = useState(false);
+  const [task, setTask] = useState<CollectTaskSnapshot | null>(null);
   const [collectProgress, setCollectProgress] = useState<string[]>([]);
   const [collectResult, setCollectResult] = useState<CollectResult | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   const [rowBusy, setRowBusy] = useState("");
+  const [updateDuplicates, setUpdateDuplicates] = useState(false);
+  const [health, setHealth] = useState<Record<string, { status: string; note: string; latency_ms?: number }>>({});
+  const [healthBusy, setHealthBusy] = useState("");
 
   // ---- 浏览器采集
   const [bridge, setBridge] = useState<BridgeStatus | null>(null);
@@ -165,6 +212,48 @@ export default function JobsPage() {
     setKeywords((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]));
   }, []);
 
+  const buildCollectPayload = useCallback(
+    (): CollectFilter => ({
+      keywords,
+      sources: pickedSources,
+      location: city.trim() || undefined,
+      employment_type: employment === "ANY" ? undefined : employment,
+      posted_within_days: postedDays || undefined,
+      limit,
+      greenhouse_boards: boards
+        .split(/[,，\s]+/)
+        .map((item) => item.trim())
+        .filter(Boolean),
+      lever_companies: leverSlugs
+        .split(/[,，\s]+/)
+        .map((item) => item.trim())
+        .filter(Boolean),
+      timeout_seconds: collectTimeout || null,
+    }),
+    [boards, city, collectTimeout, employment, keywords, leverSlugs, limit, pickedSources, postedDays],
+  );
+
+  const summarizeResult = useCallback((result: CollectResult, logs: string[]) => {
+    setCollectProgress(
+      logs.length
+        ? logs
+        : result.reports.map(
+            (report) =>
+              `${SOURCE_LABELS[report.source] ?? report.source}：${SOURCE_STATUS_LABEL[report.status] ?? report.status}` +
+              `（抓到 ${report.fetched ?? report.count} 条 → 筛选后 ${report.count} 条` +
+              `${report.filtered_out ? `，本地排除 ${report.filtered_out} 条` : ""}` +
+              `${report.latency_ms !== undefined ? `，耗时 ${report.latency_ms}ms` : ""}` +
+              `${report.note ? `，${report.note}` : ""}）`,
+          ),
+    );
+    const failed = result.reports.filter((item) => item.status === "ERROR" || item.status === "TIMEOUT");
+    if (!result.jobs.length && failed.length) {
+      setError(`采集失败：${failed.map((item) => `${item.source} — ${item.note}`).join("；")}`);
+    } else if (!result.jobs.length) {
+      setInfo("采集完成，但没有岗位命中当前筛选条件。可以放宽关键词或时间范围再试。");
+    }
+  }, []);
+
   const handleCollect = useCallback(async () => {
     setError("");
     setInfo("");
@@ -175,44 +264,94 @@ export default function JobsPage() {
     setCollecting(true);
     setCollectProgress([]);
     setCollectResult(null);
+    setTask(null);
     setSelected(new Set());
-    try {
-      const payload: CollectFilter = {
-        keywords,
-        sources: pickedSources,
-        location: city.trim() || undefined,
-        employment_type: employment === "ANY" ? undefined : employment,
-        posted_within_days: postedDays || undefined,
-        limit,
-        greenhouse_boards: boards
-          .split(/[,，\s]+/)
-          .map((item) => item.trim())
-          .filter(Boolean),
-        lever_companies: leverSlugs
-          .split(/[,，\s]+/)
-          .map((item) => item.trim())
-          .filter(Boolean),
-      };
-      const result = await collectJobs(payload);
-      setCollectResult(result);
-      setSelected(new Set(result.jobs.map(jobKey)));
-      setCollectProgress(
-        result.reports.map(
-          (report) => `${report.source}：${report.status}（命中 ${report.count} 条${report.note ? `，${report.note}` : ""}）`,
-        ),
-      );
-      const failed = result.reports.filter((item) => item.status === "ERROR");
-      if (!result.jobs.length && failed.length) {
-        setError(`采集失败：${failed.map((item) => `${item.source} — ${item.note}`).join("；")}`);
-      } else if (!result.jobs.length) {
-        setInfo("采集完成，但没有岗位命中当前筛选条件。可以放宽关键词或时间范围再试。");
+    setHealth({});
+    const payload = buildCollectPayload();
+
+    // 没有档案时无法与岗位库比对，退回到不带结果状态的同步接口，但结果一样是真实采集。
+    if (!profileId) {
+      try {
+        const result = await collectJobs(payload);
+        setCollectResult(result);
+        setSelected(new Set(result.jobs.map(jobKey)));
+        summarizeResult(result, []);
+        setInfo("未选择简历档案，结果未与岗位库比对（不会显示新增/已存在）。");
+      } catch (caught) {
+        setError(caught instanceof Error ? caught.message : "采集失败。");
+      } finally {
+        setCollecting(false);
       }
+      return;
+    }
+
+    try {
+      const snapshot = await startCollectRun(profileId, payload);
+      setTask(snapshot);
+      let current = snapshot;
+      const deadline = Date.now() + 180_000;
+      while (current.status === "RUNNING" && Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, 700));
+        current = await readCollectRun(snapshot.task_id);
+        setTask(current);
+      }
+      if (current.status === "RUNNING") {
+        await cancelCollectRun(snapshot.task_id).catch(() => undefined);
+        setError("采集超过 3 分钟仍未结束，已自动取消。请减少来源或缩小条数后重试。");
+      }
+      if (current.result) {
+        setCollectResult(current.result);
+        setSelected(
+          new Set(
+            current.result.jobs
+              .filter((job) => job.result_status !== "DUPLICATE" && job.result_status !== "FAILED")
+              .map(jobKey),
+          ),
+        );
+        const logs = current.progress
+          .filter((event) => event.type === "SOURCE_FINISHED")
+          .map((event) => `${event.source}：已完成（抓到 ${event.fetched} 条，保留 ${event.kept} 条）`);
+        summarizeResult(current.result, logs);
+      }
+      if (current.error) setError(current.error);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "采集失败。");
     } finally {
       setCollecting(false);
     }
-  }, [boards, city, employment, keywords, leverSlugs, limit, pickedSources, postedDays]);
+  }, [buildCollectPayload, pickedSources, profileId, summarizeResult]);
+
+  const handleCancelCollect = useCallback(async () => {
+    if (!task) return;
+    try {
+      await cancelCollectRun(task.task_id);
+      setInfo("已请求取消，任务会在当前来源结束后停止。");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "取消失败。");
+    }
+  }, [task]);
+
+  const runHealthCheck = useCallback(
+    async (sourceId: string) => {
+      setHealthBusy(sourceId);
+      setError("");
+      try {
+        const report = await healthCheckSource(sourceId, {
+          greenhouse_boards: boards.split(/[,，\s]+/).map((item) => item.trim()).filter(Boolean),
+          lever_companies: leverSlugs.split(/[,，\s]+/).map((item) => item.trim()).filter(Boolean),
+        });
+        setHealth((prev) => ({ ...prev, [sourceId]: { status: report.status, note: report.note, latency_ms: report.latency_ms } }));
+      } catch (caught) {
+        setHealth((prev) => ({
+          ...prev,
+          [sourceId]: { status: "ERROR", note: caught instanceof Error ? caught.message : "自检失败" },
+        }));
+      } finally {
+        setHealthBusy("");
+      }
+    },
+    [boards, leverSlugs],
+  );
 
   const handleSaveSelected = useCallback(async () => {
     if (!requireProfile() || !collectResult) return;
@@ -224,15 +363,17 @@ export default function JobsPage() {
     setSaving(true);
     setError("");
     try {
-      const result = await saveCollectedJobs(profileId, jobs);
-      setInfo(`保存 ${result.saved_count} 条，跳过 ${result.skipped_count} 条${result.skipped_count ? `（重复岗位已自动跳过）` : ""}。`);
+      const result = await saveCollectedJobs(profileId, jobs, updateDuplicates);
+      const parts = [`新增保存 ${result.saved_count} 条`, `跳过 ${result.skipped_count} 条`];
+      if (result.updated_count) parts.push(`更新已有岗位 ${result.updated_count} 条`);
+      setInfo(`${parts.join("，")}。${result.skipped_count ? "（已存在且正文一致的岗位不会重复入库）" : ""}`);
       applyFilters();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "保存失败。");
     } finally {
       setSaving(false);
     }
-  }, [applyFilters, collectResult, profileId, selected]);
+  }, [applyFilters, collectResult, profileId, selected, updateDuplicates]);
 
   /** 保存 → 导入正式岗位 → 跳到对应 Mission 页签。 */
   const openMissionFor = useCallback(
@@ -247,10 +388,18 @@ export default function JobsPage() {
           if (!job) throw new Error("没有可导入的岗位。");
           const saved = await saveCollectedJobs(profileId, [job]);
           if (!saved.saved_count) {
-            const reason = (saved.skipped[0] as { reason?: string } | undefined)?.reason;
-            throw new Error(reason === "DUPLICATE" ? "这个岗位已经在岗位库里了，请到下方岗位库打开它。" : "保存失败，未返回候选岗位。");
+            // 已经在库里：直接复用已有候选草稿，不要让用户再困惑地重找一遍。
+            const skipped = saved.skipped[0] as { reason?: string; matches?: Array<{ kind: string; id: string }> } | undefined;
+            const existing = skipped?.matches?.find((item) => item.kind === "CANDIDATE");
+            if (!existing) {
+              throw new Error(
+                skipped?.reason === "DUPLICATE" ? "这个岗位已经在岗位库里了，但没找到可复用的草稿，请到下方岗位库刷新后打开。" : "保存失败，未返回候选岗位。",
+              );
+            }
+            id = existing.id;
+          } else {
+            id = saved.saved[0].candidate_ids[0];
           }
-          id = saved.saved[0].candidate_ids[0];
         }
         const imported = await importCandidateJob(id);
         applyFilters();
@@ -517,25 +666,85 @@ export default function JobsPage() {
             style={{ maxWidth: "7rem" }}
             aria-label="最多返回条数"
           />
+          <input
+            type="number"
+            min={10}
+            max={300}
+            value={collectTimeout}
+            onChange={(event) => setCollectTimeout(Number(event.target.value) || 90)}
+            style={{ maxWidth: "8rem" }}
+            aria-label="整轮采集时间上限（秒）"
+            title="达到上限后，剩余来源不再请求，任务标记为 PARTIAL"
+          />
         </div>
+        <p className="app-card-meta">
+          城市 / 实习 / 发布时间属于**采集后本地过滤**：目前所有公开来源都不支持按这些条件在服务端检索，
+          所以「抓到 N 条」不等于「符合筛选条件 N 条」，下方统计条会把两者分开显示。
+        </p>
 
         <div className="app-field-block">
           <label className="app-field-label">采集来源</label>
           <div className="app-chip-row">
-            {adapterSources.map((item) => (
+          {adapterSources.map((item) => (
+            <span className="app-chip-row" key={item.id} style={{ gap: "0.35rem" }}>
               <button
                 type="button"
-                key={item.id}
                 className={`app-chip${pickedSources.includes(item.id) ? " active" : ""}`}
                 onClick={() =>
                   setPickedSources((prev) =>
                     prev.includes(item.id) ? prev.filter((value) => value !== item.id) : [...prev, item.id],
                   )
                 }
+                title={item.note}
               >
                 {item.label}
+                {item.filter_mode === "local" ? <em className="app-chip-note">本地过滤</em> : null}
               </button>
-            ))}
+              {item.has_collect ? (
+                <button
+                  type="button"
+                  className="app-btn subtle"
+                  disabled={healthBusy === item.id}
+                  onClick={() => void runHealthCheck(item.id)}
+                  title="真实请求一次该来源的健康检查接口"
+                >
+                  {healthBusy === item.id ? "自检中…" : "自检"}
+                </button>
+              ) : null}
+            </span>
+          ))}
+          {Object.entries(health).map(([sourceId, report]) => (
+            <p className="app-card-meta" key={`health-${sourceId}`}>
+              自检结果 · {SOURCE_LABELS[sourceId] ?? sourceId}：
+              <strong>{report.status}</strong>
+              {report.latency_ms !== undefined ? `（${report.latency_ms}ms）` : ""}
+              {report.note ? ` — ${report.note}` : ""}
+            </p>
+          ))}
+          {adapterSources.filter((item) => item.presets?.length).map((item) => (
+            <div className="app-chip-row" key={`presets-${item.id}`}>
+              <span className="app-muted">{item.label} 已验证标识（点击填入）：</span>
+              {item.presets?.map((preset) => (
+                <button
+                  type="button"
+                  key={preset}
+                  className="app-chip ghost"
+                  onClick={() => {
+                    const value = item.config_key === "lever_companies" ? leverSlugs : boards;
+                    const next = value
+                      .split(/[,，\s]+/)
+                      .map((entry) => entry.trim())
+                      .filter(Boolean);
+                    if (!next.includes(preset)) next.push(preset);
+                    if (item.config_key === "lever_companies") setLeverSlugs(next.join(","));
+                    else setBoards(next.join(","));
+                  }}
+                >
+                  + {preset}
+                </button>
+              ))}
+            </div>
+          ))}
           </div>
           {pickedSources.includes("greenhouse") ? (
             <div className="app-row">
@@ -566,7 +775,26 @@ export default function JobsPage() {
           <button type="button" className="app-btn primary" disabled={collecting} onClick={() => void handleCollect()}>
             {collecting ? "采集中…" : "开始采集"}
           </button>
-          <span className="app-muted">采集过程会逐个来源请求官方公开接口，失败会如实展示。</span>
+          <button
+            type="button"
+            className="app-btn"
+            disabled={!collecting || !task}
+            onClick={() => void handleCancelCollect()}
+          >
+            取消采集
+          </button>
+          {task ? (
+            <span className={`app-badge${task.status === "FAILED" ? " warn" : task.status === "CANCELLED" ? " warn" : " filled"}`}>
+              任务状态：{TASK_STATUS_LABEL[task.status] ?? task.status}
+            </span>
+          ) : null}
+          {task?.current_source && task.status === "RUNNING" ? (
+            <span className="app-muted">正在请求：{SOURCE_LABELS[task.current_source] ?? task.current_source}</span>
+          ) : null}
+          {task?.elapsed_seconds !== null && task?.elapsed_seconds !== undefined ? (
+            <span className="app-muted">耗时 {task.elapsed_seconds}s</span>
+          ) : null}
+          <span className="app-muted">走任务接口：可轮询进度、可取消、结果会与岗位库比对。</span>
         </div>
 
         {collectProgress.length > 0 ? (
@@ -579,12 +807,21 @@ export default function JobsPage() {
 
         {collectResult ? (
           <div className="app-stat-row">
-            <span className="app-badge filled">返回 {collectResult.totals.returned}</span>
+            <span className="app-badge muted">抓到 {collectResult.totals.fetched ?? collectResult.totals.returned}</span>
+            <span className="app-badge muted">筛选后 {collectResult.totals.returned}</span>
+            <span className="app-badge filled">新增 {collectResult.totals.new ?? 0}</span>
+            <span className="app-badge muted">已存在 {collectResult.totals.duplicate ?? 0}</span>
+            <span className="app-badge warn">有更新 {collectResult.totals.updated ?? 0}</span>
+            <span className="app-badge warn">待确认 {collectResult.totals.needs_review ?? 0}</span>
+            <span className="app-badge danger">不可用 {collectResult.totals.failed ?? 0}</span>
+            <span className="app-badge filled">可保存 {collectResult.totals.saveable ?? collectResult.jobs.length}</span>
             <span className="app-badge muted">来源成功 {collectResult.totals.sources_ok}</span>
-            <span className="app-badge muted">来源为空 {collectResult.totals.sources_empty}</span>
             <span className="app-badge warn">来源失败 {collectResult.totals.sources_failed}</span>
             <span className="app-badge warn">跨来源重复 {collectResult.totals.cross_source_duplicates}</span>
           </div>
+        ) : null}
+        {collectResult?.warnings?.length ? (
+          <p className="app-card-meta">警告：{collectResult.warnings.join("；")}</p>
         ) : null}
       </section>
 
@@ -596,6 +833,7 @@ export default function JobsPage() {
               <thead>
                 <tr>
                   <th> </th>
+                  <th>结果状态</th>
                   <th>岗位</th>
                   <th>企业</th>
                   <th>地点</th>
@@ -609,12 +847,16 @@ export default function JobsPage() {
                 {collectResult.jobs.map((job) => {
                   const key = jobKey(job);
                   const open = expanded.has(key);
+                  const status = job.result_status
+                    ? RESULT_STATUS_LABEL[job.result_status]
+                    : { label: "未比对", tone: "muted", hint: "未选择简历档案，尚未与岗位库比对。" };
                   return (
                     <tr key={key}>
                       <td>
                         <input
                           type="checkbox"
                           checked={selected.has(key)}
+                          disabled={job.result_status === "DUPLICATE" && !updateDuplicates}
                           onChange={(event) =>
                             setSelected((prev) => {
                               const next = new Set(prev);
@@ -625,6 +867,11 @@ export default function JobsPage() {
                           }
                           aria-label={`选择 ${job.company} ${job.role}`}
                         />
+                      </td>
+                      <td>
+                        <span className={`app-badge ${status.tone}`} title={job.result_reason ?? status.hint}>
+                          {status.label}
+                        </span>
                       </td>
                       <td className="cell-title-link">{job.role || "—"}</td>
                       <td>
@@ -682,7 +929,17 @@ export default function JobsPage() {
             <button type="button" className="app-btn primary" disabled={saving} onClick={() => void handleSaveSelected()}>
               {saving ? "保存中…" : `批量导入选中岗位（${selected.size}）`}
             </button>
-            <span className="app-muted">重复岗位会自动跳过并说明原因；「匹配分析 / 生成定向简历」会先入库再打开岗位工作台。</span>
+            <label className="app-check-inline">
+              <input
+                type="checkbox"
+                checked={updateDuplicates}
+                onChange={(event) => setUpdateDuplicates(event.target.checked)}
+              />
+              同时更新「有更新」的已有岗位
+            </label>
+            <span className="app-muted">
+              抓到 ≠ 新增：已存在（正文一致）不会重复入库；「有更新」勾选上面这项后才会用新 JD 覆盖旧记录。
+            </span>
           </div>
         </section>
       ) : null}

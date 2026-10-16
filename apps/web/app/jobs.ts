@@ -6,6 +6,14 @@ export type JobSource = {
   mode: string;
   auto_collect: boolean;
   note: string;
+  capabilities?: Record<string, boolean>;
+  filter_mode?: "server" | "local";
+  requires_config?: boolean;
+  config_key?: string | null;
+  config_placeholder?: string | null;
+  presets?: string[];
+  preset_verified_at?: string | null;
+  has_collect?: boolean;
 };
 
 export type FetchedJob = {
@@ -17,6 +25,8 @@ export type FetchedJob = {
   note: string;
   fetched_at: string;
 };
+
+export type CollectResultStatus = "NEW" | "DUPLICATE" | "UPDATED" | "NEEDS_REVIEW" | "FAILED";
 
 export type CollectedJob = {
   schema?: string;
@@ -34,22 +44,32 @@ export type CollectedJob = {
   collected_at: string;
   employment_type?: "INTERN" | "FULLTIME" | "UNKNOWN";
   dedupe_key?: string;
+  content_hash?: string;
   needs_confirm?: string[];
+  match_score?: number;
+  result_status?: CollectResultStatus;
+  result_reason?: string;
+  existing?: { kind: string; id: string; company: string | null; role: string | null; hash?: string | null };
   raw?: Record<string, unknown>;
   text: string;
 };
 
 export type SourceReport = {
   source: string;
-  status: "OK" | "EMPTY" | "ERROR";
+  status: "OK" | "EMPTY" | "ERROR" | "TIMEOUT" | "CANCELLED";
   fetched?: number;
   count: number;
   filtered_out?: number;
   note: string;
   errors?: string[];
+  filter_mode?: "server" | "local";
+  capabilities?: Record<string, boolean>;
+  latency_ms?: number;
 };
 
 export type CollectResult = {
+  status?: CollectTaskStatus;
+  task_id?: string;
   run_id: string;
   started_at: string;
   finished_at: string;
@@ -57,7 +77,44 @@ export type CollectResult = {
   reports: SourceReport[];
   jobs: CollectedJob[];
   duplicates: Array<{ company: string | null; role: string | null; reason: string; kept_source: string; dropped_source: string }>;
-  totals: { returned: number; cross_source_duplicates: number; sources_ok: number; sources_failed: number; sources_empty: number };
+  totals: {
+    returned: number;
+    fetched?: number;
+    filtered_out?: number;
+    new?: number;
+    duplicate?: number;
+    updated?: number;
+    needs_review?: number;
+    failed?: number;
+    saveable?: number;
+    cross_source_duplicates: number;
+    sources_ok: number;
+    sources_failed: number;
+    sources_empty: number;
+    sources_total?: number;
+    sources_cancelled?: number;
+    sources_timeout?: number;
+  };
+  warnings?: string[];
+};
+
+export type CollectTaskStatus = "IDLE" | "RUNNING" | "COMPLETED" | "PARTIAL" | "FAILED" | "CANCELLED";
+
+export type CollectTaskSnapshot = {
+  task_id: string;
+  profile_id: string;
+  status: CollectTaskStatus;
+  stage: string;
+  current_source: string | null;
+  fetched: number;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+  elapsed_seconds: number | null;
+  request: Record<string, unknown>;
+  progress: Array<Record<string, unknown> & { type?: string; source?: string; at?: string }>;
+  result: CollectResult | null;
+  error: string | null;
 };
 
 export type CollectFilter = {
@@ -69,6 +126,7 @@ export type CollectFilter = {
   limit: number;
   greenhouse_boards: string[];
   lever_companies: string[];
+  timeout_seconds?: number | null;
 };
 
 export type BridgeStatus = {
@@ -168,6 +226,34 @@ export function collectJobs(filter: CollectFilter): Promise<CollectResult> {
   });
 }
 
+/** 启动一次采集任务：立即返回 task_id，前端轮询进度、可中途取消。 */
+export function startCollectRun(profileId: string, filter: CollectFilter): Promise<CollectTaskSnapshot> {
+  return json(`/api/v1/profiles/${encodeURIComponent(profileId)}/job-ingest/collect-runs`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(filter),
+  });
+}
+
+export function readCollectRun(taskId: string): Promise<CollectTaskSnapshot> {
+  return json(`/api/v1/job-ingest/collect-runs/${encodeURIComponent(taskId)}`);
+}
+
+export function cancelCollectRun(taskId: string): Promise<CollectTaskSnapshot> {
+  return json(`/api/v1/job-ingest/collect-runs/${encodeURIComponent(taskId)}/cancel`, { method: "POST" });
+}
+
+export function healthCheckSource(
+  sourceId: string,
+  config: { greenhouse_boards?: string[]; lever_companies?: string[] } = {},
+): Promise<{ source: string; status: string; note: string; latency_ms?: number; checked?: string[] }> {
+  return json(`/api/v1/job-ingest/adapters/${encodeURIComponent(sourceId)}/health-check`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ greenhouse_boards: config.greenhouse_boards ?? [], lever_companies: config.lever_companies ?? [] }),
+  });
+}
+
 export function readBridgeStatus(): Promise<BridgeStatus> {
   return json("/api/v1/job-ingest/bridge-status");
 }
@@ -190,11 +276,19 @@ export type SavedCollected = {
 export function saveCollectedJobs(
   profileId: string,
   jobs: CollectedJob[],
-): Promise<{ saved: SavedCollected[]; skipped: Array<Record<string, unknown>>; saved_count: number; skipped_count: number }> {
+  updateDuplicates = false,
+): Promise<{
+  saved: SavedCollected[];
+  updated: Array<{ company: string | null; role: string | null; reason: string; targets: Array<Record<string, string>> }>;
+  skipped: Array<Record<string, unknown>>;
+  saved_count: number;
+  updated_count: number;
+  skipped_count: number;
+}> {
   return json(`/api/v1/profiles/${encodeURIComponent(profileId)}/job-ingest/save-collected`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jobs }),
+    body: JSON.stringify({ jobs, update_duplicates: updateDuplicates }),
   });
 }
 
