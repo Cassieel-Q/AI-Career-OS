@@ -185,6 +185,16 @@ export type ApplicationRead = {
   applied_at: string | null;
   next_action: string | null;
   notes: string | null;
+  jd_source: string | null;
+  /** 投递版本绑定：回答「我当初投的是哪份简历」 */
+  resume_version_id: string | null;
+  resume_version: number | null;
+  studio_revision: number | null;
+  pdf_snapshot_path: string | null;
+  has_pdf_snapshot: boolean;
+  /** 打招呼话术（系统生成草稿，可编辑；不自动发送） */
+  greeting_short: string | null;
+  greeting_long: string | null;
   created_at: string | null;
   updated_at: string | null;
 };
@@ -266,6 +276,9 @@ export type ApplicationInput = {
   applied_at?: string | null;
   next_action?: string | null;
   notes?: string | null;
+  jd_source?: string | null;
+  greeting_short?: string | null;
+  greeting_long?: string | null;
 };
 
 export async function createApplication(
@@ -302,6 +315,71 @@ export async function deleteApplication(
   request: MissionRequester = fetch,
 ): Promise<void> {
   await request(`${apiUrl}/api/v1/applications/${encodeURIComponent(applicationId)}`, { method: "DELETE" });
+}
+
+// ---------------------------------------------------------------------------
+// 求职管理补齐（M3）：投递版本绑定 / 打招呼话术 / 求职看板
+// ---------------------------------------------------------------------------
+
+/** 把一份已确认的岗位定向简历（含 Studio 修订号 + PDF 快照）绑定到投递记录。 */
+export async function bindApplicationResume(
+  applicationId: string,
+  body: { resume_version_id?: string | null; mission_id?: string | null } = {},
+  apiUrl = MISSION_API_BASE_URL,
+  request: MissionRequester = fetch,
+): Promise<ApplicationRead> {
+  const response = await request(`${apiUrl}/api/v1/applications/${encodeURIComponent(applicationId)}/bind-resume`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return readApiPayload<ApplicationRead>(response);
+}
+
+/** 生成简洁版 + 详细版打招呼话术草稿（只引用真实事实；不自动发送）。 */
+export async function generateApplicationGreeting(
+  applicationId: string,
+  apiUrl = MISSION_API_BASE_URL,
+  request: MissionRequester = fetch,
+): Promise<ApplicationRead> {
+  const response = await request(`${apiUrl}/api/v1/applications/${encodeURIComponent(applicationId)}/greeting`, {
+    method: "POST",
+  });
+  return readApiPayload<ApplicationRead>(response);
+}
+
+export type ApplicationBoard = {
+  total: number;
+  columns: Record<string, { count: number; applications: ApplicationRead[] }>;
+  version_usage: {
+    resume_version_id: string;
+    resume_version: number | null;
+    studio_revision: number | null;
+    used_by: { application_id: string; company: string; role: string; status: string }[];
+  }[];
+  recent_interviews: {
+    id: string;
+    company: string;
+    role: string;
+    interviewed_on: string | null;
+    interview_round: string;
+    status: string;
+    notes: string;
+  }[];
+  reminders: { id: string; title: string; due_at: string | null }[];
+  reminder_note: string;
+};
+
+/** 求职看板聚合（复用投递/面试/提醒既有数据，不建第二套事实来源）。 */
+export async function fetchApplicationBoard(
+  profileId: string,
+  apiUrl = MISSION_API_BASE_URL,
+  request: MissionRequester = fetch,
+): Promise<ApplicationBoard> {
+  const response = await request(
+    `${apiUrl}/api/v1/profiles/${encodeURIComponent(profileId)}/applications/board`,
+  );
+  return readApiPayload<ApplicationBoard>(response);
 }
 
 // ---------------------------------------------------------------------------

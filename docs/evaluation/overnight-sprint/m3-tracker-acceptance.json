@@ -1,0 +1,1109 @@
+{
+  "started_at": "2026-10-16T18:14:20.351163+00:00",
+  "base_url": "http://127.0.0.1:8100",
+  "steps": [
+    {
+      "step": "1-draft-profile",
+      "ok": true,
+      "result": {
+        "profile_id": "988d0228-2444-4bb0-902f-b9990072f760",
+        "status": "DRAFT",
+        "full_name": null,
+        "phone": null,
+        "email": null,
+        "city": null,
+        "created_at": "2026-10-16T18:14:20",
+        "updated_at": "2026-10-16T18:14:20",
+        "education": [],
+        "skills": [],
+        "experiences": [],
+        "certifications": [],
+        "preferences": null
+      }
+    },
+    {
+      "step": "2-accept-bullets",
+      "ok": true,
+      "result": {
+        "version": 1,
+        "accepted": 1,
+        "skipped": 0
+      }
+    },
+    {
+      "step": "3-confirm-target-resume",
+      "ok": true,
+      "result": {
+        "id": "5f54acaf-6abe-46cc-84fb-d49dd6da3e75",
+        "profile_id": "988d0228-2444-4bb0-902f-b9990072f760",
+        "target_job_id": "e856fb65-4642-470a-8750-01484fdb490e",
+        "display_name": "数据运营专员",
+        "company": "UNKNOWN",
+        "role": "数据运营专员",
+        "role_family": "运营",
+        "seniority": "UNKNOWN",
+        "location": "杭州",
+        "status": "RESUME_PREP",
+        "workflow_state": "TARGET_RESUME_CONFIRMED",
+        "resume_source": {
+          "mode": "paste",
+          "bound_at": "2026-10-16T18:14:30.412513+00:00",
+          "isolation": "mission_local",
+          "bound_profile_id": "bea2b839-7c53-4da7-84c6-6f030434420b",
+          "master_profile_id": "988d0228-2444-4bb0-902f-b9990072f760",
+          "filename": null,
+          "content_hash": "250818db8e6a2e85bae70f6858e030944bf088c86831fca08babf1cf4fb79777",
+          "section_order": [
+            "education",
+            "experience",
+            "skills"
+          ],
+          "optimization_reset_at": "2026-10-16T18:14:30.377953+00:00"
+        },
+        "warnings": [
+          "company_intel_unavailable"
+        ],
+        "analysis_error": null,
+        "parsed_jd": {
+          "company": "UNKNOWN",
+          "role": "数据运营专员",
+          "role_family": "运营",
+          "seniority": "UNKNOWN",
+          "location": "杭州",
+          "education_requirements": [
+            "本科及以上学历"
+          ],
+          "responsibilities": [],
+          "requirements": [
+            {
+              "id": "REQ1",
+              "text": "本科及以上学历，专业不限",
+              "category": "must_have",
+              "evidence_text": "本科及以上学历，专业不限"
+            },
+            {
+              "id": "REQ2",
+              "text": "熟练使用 SQL 与 Excel",
+              "category": "must_have",
+              "evidence_text": "熟练使用 SQL 与 Excel"
+            }
+          ],
+          "preferred_requirements": [
+            {
+              "id": "PREF1",
+              "text": "做事细致，有文档习惯者优先",
+              "category": "nice_to_have",
+              "evidence_text": "做事细致，有文档习惯者优先"
+            }
+          ],
+          "capabilities": [
+            "经营数据监控",
+            "报表维护",
+            "SQL",
+            "Excel",
+            "数据抽取",
+            "效果复盘",
+            "运营流程文档维护"
+          ],
+          "keywords": [
+            "数据运营",
+            "SQL",
+            "Excel",
+            "报表",
+            "经营数据",
+            "数据抽取",
+            "效果复盘",
+            "文档",
+            "本科及以上"
+          ]
+        },
+        "what_matters": {
+          "core_capabilities": [
+            {
+              "name": "SQL 数据处理",
+              "why": "岗位要求熟练使用 SQL，是完成数据抽取与经营数据监控的核心工具。",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "name": "Excel 报表处理",
+              "why": "岗位要求熟练使用 Excel，用于日常经营数据报表维护与效果复盘。",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "name": "经营数据监控与报表维护",
+              "why": "岗位职责明确负责日常经营数据的监控与报表维护。",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "name": "数据抽取与效果复盘",
+              "why": "岗位职责要求配合运营活动进行数据抽取与效果复盘。",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "name": "运营流程文档维护",
+              "why": "岗位职责要求维护运营流程文档以提升协作效率。",
+              "evidence_refs": [
+                "PREF1"
+              ]
+            }
+          ],
+          "high_importance_requirements": [
+            {
+              "text": "本科及以上学历，专业不限",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "REQ1"
+              ]
+            },
+            {
+              "text": "熟练使用 SQL 与 Excel",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "text": "做事细致，有文档习惯者优先",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "PREF1"
+              ]
+            }
+          ],
+          "evidence_expected": [
+            "使用 SQL 进行数据抽取、查询与处理的实例",
+            "使用 Excel 制作与维护报表的实例",
+            "日常经营数据监控与报表维护的工作记录",
+            "配合运营活动做数据抽取与效果复盘的案例",
+            "维护运营流程文档、提升协作效率的文档样例"
+          ],
+          "likely_success_signals": [
+            "能独立完成 SQL 查询与数据抽取",
+            "能熟练用 Excel 维护日常报表",
+            "对经营数据变化敏感并按时监控",
+            "复盘输出结构化、有结论",
+            "有良好的文档习惯，流程文档清晰"
+          ],
+          "bonus_capabilities": [
+            "文档习惯",
+            "做事细致"
+          ],
+          "potential_interview_focus": [
+            "SQL 查询与数据处理的实际操作经验",
+            "Excel 报表制作与维护经验",
+            "经营数据监控与异常发现的处理方式",
+            "运营活动效果复盘的方法与产出",
+            "运营流程文档维护与协作效率提升的实践"
+          ],
+          "confidence": 0.55,
+          "jd_evidence_refs": [
+            "REQ1",
+            "REQ2",
+            "PREF1"
+          ]
+        },
+        "resume_strategy": {
+          "positioning_statement": "聚焦数据运营岗位，突出本科信息管理背景、SQL 与 Excel 技能，以及电商数据运营实习中维护商品运营日报、覆盖 GMV 与转化率等 12 个核心指标的真实经验，定位为能承担经营数据监控、报表维护与效果复盘的入门级候选人。",
+          "recommended_experience_order": [
+            "47312f10-850e-45f2-848c-632a782b2f2c"
+          ],
+          "experience_guidance": [
+            {
+              "experience_id": "47312f10-850e-45f2-848c-632a782b2f2c",
+              "role_in_story": "作为核心实习经历，证明已具备经营数据监控与报表维护的实际操作基础，直接对应 SQL/Excel 与数据运营职责。",
+              "what_to_highlight": [
+                "在「某电商公司」担任「数据运营实习」（2023.07 - 2023.12）期间，维护商品运营日报，覆盖 GMV、转化率等 12 个核心指标；结合已具备的 SQL、Python、数据看板、Excel 技能，说明如何支撑日常数据提取与报表更新。"
+              ],
+              "what_to_avoid": [
+                "不要声称主导经营数据监控体系、从 0 到 1 搭建报表，或编造未提供的效率提升比例、自动化覆盖率等数字；不要将实习角色拔高为正式数据运营专员。"
+              ],
+              "target_capabilities": [
+                "SQL 数据处理",
+                "Excel 报表处理",
+                "经营数据监控与报表维护",
+                "数据抽取与效果复盘",
+                "运营流程文档维护"
+              ],
+              "evidence_refs": [
+                "47312f10-850e-45f2-848c-632a782b2f2c",
+                "d9c55c0e-54ba-4548-99df-c62e1fd3025b",
+                "9a6796ac-9873-4151-b4d6-57391cedab0d",
+                "0d243954-45bd-411f-b3cf-f29c34f4e328",
+                "5e384d3c-d46a-46a0-b0fe-78567822acb7"
+              ],
+              "interview_risk_notes": [
+                "实习时间仅 2023.07 - 2023.12，需准备说明日报维护的具体频率、使用 SQL 与 Excel 的实际场景与范围；避免夸大独立负责程度，重点陈述参与维护商品运营日报的真实职责边界。"
+              ]
+            }
+          ]
+        },
+        "interview_intel": [],
+        "created_at": "2026-10-16T18:14:28",
+        "updated_at": "2026-10-16T18:14:47.683307"
+      }
+    },
+    {
+      "step": "4-confirm-studio",
+      "ok": true,
+      "result": {
+        "id": "b9e46acd-548c-4388-9204-37bc6bc0d08b",
+        "mission_id": "5f54acaf-6abe-46cc-84fb-d49dd6da3e75",
+        "source_target_resume_id": "d3b2f9ba-21c6-483f-a318-8ec9fd773b8a",
+        "schema_version": 1,
+        "revision": 1,
+        "confirmed_revision": 1,
+        "language": "zh",
+        "template_id": "zh-classic",
+        "layout_config": {
+          "template": "zh-classic",
+          "page_limit": 1,
+          "font_scale": 1.0,
+          "line_height": 1.5,
+          "section_gap": 12,
+          "columns": 1,
+          "accent_color": "#111111",
+          "photo_enabled": false,
+          "section_order": [
+            "education",
+            "experience",
+            "projects",
+            "honors",
+            "skills"
+          ]
+        },
+        "document": {
+          "schema_version": 1,
+          "basics": {
+            "name": {
+              "id": "74b2c028-42b1-4d3b-94b1-f9a8613a73d8",
+              "text": "赵六",
+              "source_kind": "profile",
+              "source_id": "bea2b839-7c53-4da7-84c6-6f030434420b",
+              "evidence_refs": [],
+              "risk_level": "HIGH",
+              "claim_status": "CONFIRMED"
+            },
+            "phone": {
+              "id": "4e587493-89f2-4c53-99ef-ada92ab10943",
+              "text": "13600000000",
+              "source_kind": "profile",
+              "source_id": "bea2b839-7c53-4da7-84c6-6f030434420b",
+              "evidence_refs": [],
+              "risk_level": "HIGH",
+              "claim_status": "CONFIRMED"
+            },
+            "email": {
+              "id": "8ebb3825-7cf8-44aa-b0f6-bbaa692bcfba",
+              "text": "zhaoliu@example.com",
+              "source_kind": "profile",
+              "source_id": "bea2b839-7c53-4da7-84c6-6f030434420b",
+              "evidence_refs": [],
+              "risk_level": "HIGH",
+              "claim_status": "CONFIRMED"
+            },
+            "location": {
+              "id": "9f4e4e90-19bf-49f8-9e36-1bad8c45684a",
+              "text": "杭州",
+              "source_kind": "profile",
+              "source_id": "bea2b839-7c53-4da7-84c6-6f030434420b",
+              "evidence_refs": [],
+              "risk_level": "LOW",
+              "claim_status": "CONFIRMED"
+            }
+          },
+          "sections": [
+            {
+              "id": "11db6b9e-f51b-4aff-a1ef-3bcdf541f45b",
+              "kind": "education",
+              "title": {
+                "id": "62482b60-e474-45a3-bd72-ae3863468497",
+                "text": "教育经历",
+                "source_kind": "system",
+                "source_id": null,
+                "evidence_refs": [],
+                "risk_level": "LOW",
+                "claim_status": "CONFIRMED"
+              },
+              "entries": [
+                {
+                  "id": "afe8538c-63da-45e1-92c7-b19eef17d627",
+                  "status": "INCLUDED",
+                  "title": {
+                    "id": "b97f6cb8-e180-4944-8fb0-8b482649f058",
+                    "text": "某大学",
+                    "source_kind": "profile",
+                    "source_id": "afe8538c-63da-45e1-92c7-b19eef17d627",
+                    "evidence_refs": [
+                      "afe8538c-63da-45e1-92c7-b19eef17d627"
+                    ],
+                    "risk_level": "HIGH",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "subtitle": {
+                    "id": "c2a8fca4-3508-4d36-b2ee-926dc1a959de",
+                    "text": "本科 · 信息管理",
+                    "source_kind": "profile",
+                    "source_id": "afe8538c-63da-45e1-92c7-b19eef17d627",
+                    "evidence_refs": [
+                      "afe8538c-63da-45e1-92c7-b19eef17d627"
+                    ],
+                    "risk_level": "HIGH",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "date": {
+                    "id": "0d513af2-172c-483f-8fe2-03e1ad134519",
+                    "text": "2020.09 - 2024.06",
+                    "source_kind": "profile",
+                    "source_id": "afe8538c-63da-45e1-92c7-b19eef17d627",
+                    "evidence_refs": [
+                      "afe8538c-63da-45e1-92c7-b19eef17d627"
+                    ],
+                    "risk_level": "HIGH",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "location": {
+                    "id": "18ced20b-db1a-44f4-a948-a6be0de12d5d",
+                    "text": "",
+                    "source_kind": "profile",
+                    "source_id": "afe8538c-63da-45e1-92c7-b19eef17d627",
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "bullets": []
+                }
+              ]
+            },
+            {
+              "id": "568dc55f-3f03-471d-a791-2a0cb9e095a3",
+              "kind": "experience",
+              "title": {
+                "id": "aace2f07-2924-495f-8763-c0da3f929a48",
+                "text": "工作与项目经历",
+                "source_kind": "system",
+                "source_id": null,
+                "evidence_refs": [],
+                "risk_level": "LOW",
+                "claim_status": "CONFIRMED"
+              },
+              "entries": [
+                {
+                  "id": "47312f10-850e-45f2-848c-632a782b2f2c",
+                  "status": "INCLUDED",
+                  "title": {
+                    "id": "0e3b855c-819e-45e0-95c6-efec4a8ef6b4",
+                    "text": "数据运营实习",
+                    "source_kind": "experience",
+                    "source_id": "47312f10-850e-45f2-848c-632a782b2f2c",
+                    "evidence_refs": [
+                      "47312f10-850e-45f2-848c-632a782b2f2c"
+                    ],
+                    "risk_level": "HIGH",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "subtitle": {
+                    "id": "5fbb0aad-a2f3-425e-a165-d86b0b64d070",
+                    "text": "某电商公司",
+                    "source_kind": "experience",
+                    "source_id": "47312f10-850e-45f2-848c-632a782b2f2c",
+                    "evidence_refs": [
+                      "47312f10-850e-45f2-848c-632a782b2f2c"
+                    ],
+                    "risk_level": "HIGH",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "date": {
+                    "id": "12b388c9-160b-4926-890e-653e0e354bd7",
+                    "text": "2023.07 - 2023.12",
+                    "source_kind": "experience",
+                    "source_id": "47312f10-850e-45f2-848c-632a782b2f2c",
+                    "evidence_refs": [
+                      "47312f10-850e-45f2-848c-632a782b2f2c"
+                    ],
+                    "risk_level": "HIGH",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "location": {
+                    "id": "a940ec42-d130-4343-b1f4-0fb85f3a6dfd",
+                    "text": "",
+                    "source_kind": "experience",
+                    "source_id": "47312f10-850e-45f2-848c-632a782b2f2c",
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "bullets": [
+                    {
+                      "id": "c9253e7e-36ba-489b-885c-cf9978584df4",
+                      "text": "维护商品运营日报，覆盖 GMV、转化率等 12 个核心指标，按日更新并在指标异动时同步相关运营同学",
+                      "source_kind": "target_bullet",
+                      "source_id": "c9253e7e-36ba-489b-885c-cf9978584df4",
+                      "evidence_refs": [
+                        "47312f10-850e-45f2-848c-632a782b2f2c",
+                        "d9c55c0e-54ba-4548-99df-c62e1fd3025b",
+                        "5e384d3c-d46a-46a0-b0fe-78567822acb7"
+                      ],
+                      "risk_level": "HIGH",
+                      "claim_status": "CONFIRMED"
+                    },
+                    {
+                      "id": "967aeb51-1c06-4cb5-8859-91f3a71c8c38",
+                      "text": "维护商品运营日报，覆盖 GMV、转化率等 12 个核心指标，使用 SQL 从业务库抽取并按 Excel 整理成日报",
+                      "source_kind": "target_bullet",
+                      "source_id": "c9253e7e-36ba-489b-885c-cf9978584df4",
+                      "evidence_refs": [
+                        "47312f10-850e-45f2-848c-632a782b2f2c",
+                        "d9c55c0e-54ba-4548-99df-c62e1fd3025b",
+                        "5e384d3c-d46a-46a0-b0fe-78567822acb7"
+                      ],
+                      "risk_level": "HIGH",
+                      "claim_status": "CONFIRMED"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "cd7ae534-e494-47ea-8692-f6b10928dacd",
+              "kind": "skills",
+              "title": {
+                "id": "c790dde3-d509-46af-aea2-92fa137af0c5",
+                "text": "技能",
+                "source_kind": "system",
+                "source_id": null,
+                "evidence_refs": [],
+                "risk_level": "LOW",
+                "claim_status": "CONFIRMED"
+              },
+              "entries": [
+                {
+                  "id": "d9c55c0e-54ba-4548-99df-c62e1fd3025b",
+                  "status": "INCLUDED",
+                  "title": {
+                    "id": "7f735349-d1e8-4344-b622-b436b7ed1742",
+                    "text": "SQL",
+                    "source_kind": "profile",
+                    "source_id": "d9c55c0e-54ba-4548-99df-c62e1fd3025b",
+                    "evidence_refs": [
+                      "d9c55c0e-54ba-4548-99df-c62e1fd3025b"
+                    ],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "subtitle": {
+                    "id": "0a89ff2f-83e8-48b1-b15a-82354b5ad66d",
+                    "text": "",
+                    "source_kind": "profile",
+                    "source_id": "d9c55c0e-54ba-4548-99df-c62e1fd3025b",
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "date": {
+                    "id": "00aedc91-b827-4342-8ee7-a0bb9d2a2f02",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "location": {
+                    "id": "0643cd56-ce8c-4427-afa9-f0bf4cbc3aef",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "bullets": []
+                },
+                {
+                  "id": "9a6796ac-9873-4151-b4d6-57391cedab0d",
+                  "status": "INCLUDED",
+                  "title": {
+                    "id": "bc16d9d7-bf27-47e5-8eca-a7eaefa9d594",
+                    "text": "Python",
+                    "source_kind": "profile",
+                    "source_id": "9a6796ac-9873-4151-b4d6-57391cedab0d",
+                    "evidence_refs": [
+                      "9a6796ac-9873-4151-b4d6-57391cedab0d"
+                    ],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "subtitle": {
+                    "id": "8ac7dd21-a5d7-4b4e-a3d1-564f9f864eac",
+                    "text": "",
+                    "source_kind": "profile",
+                    "source_id": "9a6796ac-9873-4151-b4d6-57391cedab0d",
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "date": {
+                    "id": "8305ec0a-a8a3-4f53-b2d2-0da567bc7ddc",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "location": {
+                    "id": "d40adb0c-0ef9-48ed-bd6e-5eefeb3518a3",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "bullets": []
+                },
+                {
+                  "id": "0d243954-45bd-411f-b3cf-f29c34f4e328",
+                  "status": "INCLUDED",
+                  "title": {
+                    "id": "6cfe5daf-8b58-425c-b852-6ccb439eeb88",
+                    "text": "数据看板",
+                    "source_kind": "profile",
+                    "source_id": "0d243954-45bd-411f-b3cf-f29c34f4e328",
+                    "evidence_refs": [
+                      "0d243954-45bd-411f-b3cf-f29c34f4e328"
+                    ],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "subtitle": {
+                    "id": "02168a91-e105-4807-ad94-3813261670aa",
+                    "text": "",
+                    "source_kind": "profile",
+                    "source_id": "0d243954-45bd-411f-b3cf-f29c34f4e328",
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "date": {
+                    "id": "f7bdfd8f-edd8-4abd-a0e6-6be0c0b6fd29",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "location": {
+                    "id": "ff7f1ab2-3152-45fd-8b6e-6db8d632cab1",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "bullets": []
+                },
+                {
+                  "id": "5e384d3c-d46a-46a0-b0fe-78567822acb7",
+                  "status": "INCLUDED",
+                  "title": {
+                    "id": "de047641-f6a1-47a2-b38f-70f3443bfc09",
+                    "text": "Excel",
+                    "source_kind": "profile",
+                    "source_id": "5e384d3c-d46a-46a0-b0fe-78567822acb7",
+                    "evidence_refs": [
+                      "5e384d3c-d46a-46a0-b0fe-78567822acb7"
+                    ],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "subtitle": {
+                    "id": "d73cf06a-9423-42d4-8f79-1847f9596372",
+                    "text": "",
+                    "source_kind": "profile",
+                    "source_id": "5e384d3c-d46a-46a0-b0fe-78567822acb7",
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "date": {
+                    "id": "61f548ac-1594-4604-9913-b563a703ad09",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "location": {
+                    "id": "c0737384-347a-4be3-bb52-a7e1968a673f",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "bullets": []
+                }
+              ]
+            },
+            {
+              "id": "8281d6c0-e60b-4b42-98ba-5c5c7c231025",
+              "kind": "certifications",
+              "title": {
+                "id": "f594c0bc-d277-4567-bc04-6c37e9015620",
+                "text": "证书",
+                "source_kind": "system",
+                "source_id": null,
+                "evidence_refs": [],
+                "risk_level": "LOW",
+                "claim_status": "CONFIRMED"
+              },
+              "entries": []
+            }
+          ]
+        },
+        "page_count": 1,
+        "checks": []
+      }
+    },
+    {
+      "step": "5-create-application",
+      "ok": true,
+      "result": {
+        "id": "73b812d6-09bf-4888-8f7e-7838bc1de247",
+        "profile_id": "988d0228-2444-4bb0-902f-b9990072f760",
+        "mission_id": "5f54acaf-6abe-46cc-84fb-d49dd6da3e75",
+        "company": "某电商集团",
+        "role": "数据运营专员",
+        "location": "杭州",
+        "channel": "招聘网站",
+        "status": "PENDING",
+        "stage": "PREPARING",
+        "applied_at": null,
+        "next_action": null,
+        "notes": null,
+        "jd_source": "粘贴 JD",
+        "resume_version_id": null,
+        "resume_version": null,
+        "studio_revision": null,
+        "pdf_snapshot_path": null,
+        "has_pdf_snapshot": false,
+        "greeting_short": null,
+        "greeting_long": null,
+        "created_at": "2026-10-16T18:14:53",
+        "updated_at": "2026-10-16T18:14:53"
+      }
+    },
+    {
+      "step": "6-bind-resume",
+      "ok": true,
+      "result": {
+        "id": "73b812d6-09bf-4888-8f7e-7838bc1de247",
+        "profile_id": "988d0228-2444-4bb0-902f-b9990072f760",
+        "mission_id": "5f54acaf-6abe-46cc-84fb-d49dd6da3e75",
+        "company": "某电商集团",
+        "role": "数据运营专员",
+        "location": "杭州",
+        "channel": "招聘网站",
+        "status": "PENDING",
+        "stage": "PREPARING",
+        "applied_at": null,
+        "next_action": null,
+        "notes": null,
+        "jd_source": "粘贴 JD",
+        "resume_version_id": "d3b2f9ba-21c6-483f-a318-8ec9fd773b8a",
+        "resume_version": 1,
+        "studio_revision": 1,
+        "pdf_snapshot_path": "C:\\Users\\覆水\\AppData\\Local\\AICareerOS\\pdf_snapshots\\73b812d6-09bf-4888-8f7e-7838bc1de247.pdf",
+        "has_pdf_snapshot": true,
+        "greeting_short": null,
+        "greeting_long": null,
+        "created_at": "2026-10-16T18:14:53",
+        "updated_at": "2026-10-17T02:14:53.528551"
+      }
+    },
+    {
+      "step": "7-bind-records-version-and-revision",
+      "ok": true,
+      "result": {
+        "id": "73b812d6-09bf-4888-8f7e-7838bc1de247",
+        "profile_id": "988d0228-2444-4bb0-902f-b9990072f760",
+        "mission_id": "5f54acaf-6abe-46cc-84fb-d49dd6da3e75",
+        "company": "某电商集团",
+        "role": "数据运营专员",
+        "location": "杭州",
+        "channel": "招聘网站",
+        "status": "PENDING",
+        "stage": "PREPARING",
+        "applied_at": null,
+        "next_action": null,
+        "notes": null,
+        "jd_source": "粘贴 JD",
+        "resume_version_id": "d3b2f9ba-21c6-483f-a318-8ec9fd773b8a",
+        "resume_version": 1,
+        "studio_revision": 1,
+        "pdf_snapshot_path": "C:\\Users\\覆水\\AppData\\Local\\AICareerOS\\pdf_snapshots\\73b812d6-09bf-4888-8f7e-7838bc1de247.pdf",
+        "has_pdf_snapshot": true,
+        "greeting_short": null,
+        "greeting_long": null,
+        "created_at": "2026-10-16T18:14:53",
+        "updated_at": "2026-10-17T02:14:53.528551"
+      }
+    },
+    {
+      "step": "8-download-snapshot",
+      "ok": true,
+      "result": {
+        "bytes": 57654
+      }
+    },
+    {
+      "step": "9-generate-greeting",
+      "ok": true,
+      "result": {
+        "id": "73b812d6-09bf-4888-8f7e-7838bc1de247",
+        "profile_id": "988d0228-2444-4bb0-902f-b9990072f760",
+        "mission_id": "5f54acaf-6abe-46cc-84fb-d49dd6da3e75",
+        "company": "某电商集团",
+        "role": "数据运营专员",
+        "location": "杭州",
+        "channel": "招聘网站",
+        "status": "PENDING",
+        "stage": "PREPARING",
+        "applied_at": null,
+        "next_action": null,
+        "notes": null,
+        "jd_source": "粘贴 JD",
+        "resume_version_id": "d3b2f9ba-21c6-483f-a318-8ec9fd773b8a",
+        "resume_version": 1,
+        "studio_revision": 1,
+        "pdf_snapshot_path": "C:\\Users\\覆水\\AppData\\Local\\AICareerOS\\pdf_snapshots\\73b812d6-09bf-4888-8f7e-7838bc1de247.pdf",
+        "has_pdf_snapshot": true,
+        "greeting_short": "您好，我是赵六，正在应聘数据运营专员岗位。我的相关经历：维护商品运营日报，覆盖 GMV、转化率等 12 个核心指标…。这与岗位要求的「本科及以上学历，专业不限」「熟练使用 SQL 与 Excel」可以直接对应，期待有机会进一步沟通。",
+        "greeting_long": "您好：我是赵六，对贵司「某电商集团」的数据运营专员岗位很感兴趣。简要介绍我的相关经历：维护商品运营日报，覆盖 GMV、转化率等 12 个核心指标，按日更新并在指标异动时同步相关运营同学\n维护商品运营日报…。从岗位描述看，这个岗位需要：本科及以上学历，专业不限；熟练使用 SQL 与 Excel。以上经历与这些要求能直接对应，具体细节可以当面或电话沟通。工作地点（杭州）与我符合。期待能获得进一步沟通的机会，谢谢！",
+        "created_at": "2026-10-16T18:14:53",
+        "updated_at": "2026-10-17T02:14:53.635573"
+      }
+    },
+    {
+      "step": "10-greeting-grounded",
+      "ok": true,
+      "result": {
+        "short_len": 116,
+        "long_len": 206,
+        "short_head": "您好，我是赵六，正在应聘数据运营专员岗位。我的相关经历：维护商品运营日报，覆盖 GMV、转化率等 12 个核心指标…。这与岗位要求的「本科及以上学历，专业不限」"
+      }
+    },
+    {
+      "step": "11-edit-greeting",
+      "ok": true,
+      "result": {
+        "id": "73b812d6-09bf-4888-8f7e-7838bc1de247",
+        "profile_id": "988d0228-2444-4bb0-902f-b9990072f760",
+        "mission_id": "5f54acaf-6abe-46cc-84fb-d49dd6da3e75",
+        "company": "某电商集团",
+        "role": "数据运营专员",
+        "location": "杭州",
+        "channel": "招聘网站",
+        "status": "PENDING",
+        "stage": "PREPARING",
+        "applied_at": null,
+        "next_action": null,
+        "notes": null,
+        "jd_source": "粘贴 JD",
+        "resume_version_id": "d3b2f9ba-21c6-483f-a318-8ec9fd773b8a",
+        "resume_version": 1,
+        "studio_revision": 1,
+        "pdf_snapshot_path": "C:\\Users\\覆水\\AppData\\Local\\AICareerOS\\pdf_snapshots\\73b812d6-09bf-4888-8f7e-7838bc1de247.pdf",
+        "has_pdf_snapshot": true,
+        "greeting_short": "您好，我对数据运营专员岗位很感兴趣，简历已附上，期待沟通。",
+        "greeting_long": "您好：我是赵六，对贵司「某电商集团」的数据运营专员岗位很感兴趣。简要介绍我的相关经历：维护商品运营日报，覆盖 GMV、转化率等 12 个核心指标，按日更新并在指标异动时同步相关运营同学\n维护商品运营日报…。从岗位描述看，这个岗位需要：本科及以上学历，专业不限；熟练使用 SQL 与 Excel。以上经历与这些要求能直接对应，具体细节可以当面或电话沟通。工作地点（杭州）与我符合。期待能获得进一步沟通的机会，谢谢！",
+        "created_at": "2026-10-16T18:14:53",
+        "updated_at": "2026-10-17T02:14:53.681369"
+      }
+    },
+    {
+      "step": "11b-edit-saved",
+      "ok": true,
+      "result": {
+        "id": "73b812d6-09bf-4888-8f7e-7838bc1de247",
+        "profile_id": "988d0228-2444-4bb0-902f-b9990072f760",
+        "mission_id": "5f54acaf-6abe-46cc-84fb-d49dd6da3e75",
+        "company": "某电商集团",
+        "role": "数据运营专员",
+        "location": "杭州",
+        "channel": "招聘网站",
+        "status": "PENDING",
+        "stage": "PREPARING",
+        "applied_at": null,
+        "next_action": null,
+        "notes": null,
+        "jd_source": "粘贴 JD",
+        "resume_version_id": "d3b2f9ba-21c6-483f-a318-8ec9fd773b8a",
+        "resume_version": 1,
+        "studio_revision": 1,
+        "pdf_snapshot_path": "C:\\Users\\覆水\\AppData\\Local\\AICareerOS\\pdf_snapshots\\73b812d6-09bf-4888-8f7e-7838bc1de247.pdf",
+        "has_pdf_snapshot": true,
+        "greeting_short": "您好，我对数据运营专员岗位很感兴趣，简历已附上，期待沟通。",
+        "greeting_long": "您好：我是赵六，对贵司「某电商集团」的数据运营专员岗位很感兴趣。简要介绍我的相关经历：维护商品运营日报，覆盖 GMV、转化率等 12 个核心指标，按日更新并在指标异动时同步相关运营同学\n维护商品运营日报…。从岗位描述看，这个岗位需要：本科及以上学历，专业不限；熟练使用 SQL 与 Excel。以上经历与这些要求能直接对应，具体细节可以当面或电话沟通。工作地点（杭州）与我符合。期待能获得进一步沟通的机会，谢谢！",
+        "created_at": "2026-10-16T18:14:53",
+        "updated_at": "2026-10-17T02:14:53.681369"
+      }
+    },
+    {
+      "step": "12-advance-status",
+      "ok": true,
+      "result": {
+        "id": "73b812d6-09bf-4888-8f7e-7838bc1de247",
+        "profile_id": "988d0228-2444-4bb0-902f-b9990072f760",
+        "mission_id": "5f54acaf-6abe-46cc-84fb-d49dd6da3e75",
+        "company": "某电商集团",
+        "role": "数据运营专员",
+        "location": "杭州",
+        "channel": "招聘网站",
+        "status": "APPLIED",
+        "stage": "APPLIED",
+        "applied_at": null,
+        "next_action": null,
+        "notes": null,
+        "jd_source": "粘贴 JD",
+        "resume_version_id": "d3b2f9ba-21c6-483f-a318-8ec9fd773b8a",
+        "resume_version": 1,
+        "studio_revision": 1,
+        "pdf_snapshot_path": "C:\\Users\\覆水\\AppData\\Local\\AICareerOS\\pdf_snapshots\\73b812d6-09bf-4888-8f7e-7838bc1de247.pdf",
+        "has_pdf_snapshot": true,
+        "greeting_short": "您好，我对数据运营专员岗位很感兴趣，简历已附上，期待沟通。",
+        "greeting_long": "您好：我是赵六，对贵司「某电商集团」的数据运营专员岗位很感兴趣。简要介绍我的相关经历：维护商品运营日报，覆盖 GMV、转化率等 12 个核心指标，按日更新并在指标异动时同步相关运营同学\n维护商品运营日报…。从岗位描述看，这个岗位需要：本科及以上学历，专业不限；熟练使用 SQL 与 Excel。以上经历与这些要求能直接对应，具体细节可以当面或电话沟通。工作地点（杭州）与我符合。期待能获得进一步沟通的机会，谢谢！",
+        "created_at": "2026-10-16T18:14:53",
+        "updated_at": "2026-10-17T02:14:53.718955"
+      }
+    },
+    {
+      "step": "12b-retreat-status",
+      "ok": true,
+      "result": {
+        "id": "73b812d6-09bf-4888-8f7e-7838bc1de247",
+        "profile_id": "988d0228-2444-4bb0-902f-b9990072f760",
+        "mission_id": "5f54acaf-6abe-46cc-84fb-d49dd6da3e75",
+        "company": "某电商集团",
+        "role": "数据运营专员",
+        "location": "杭州",
+        "channel": "招聘网站",
+        "status": "PENDING",
+        "stage": "PREPARING",
+        "applied_at": null,
+        "next_action": null,
+        "notes": null,
+        "jd_source": "粘贴 JD",
+        "resume_version_id": "d3b2f9ba-21c6-483f-a318-8ec9fd773b8a",
+        "resume_version": 1,
+        "studio_revision": 1,
+        "pdf_snapshot_path": "C:\\Users\\覆水\\AppData\\Local\\AICareerOS\\pdf_snapshots\\73b812d6-09bf-4888-8f7e-7838bc1de247.pdf",
+        "has_pdf_snapshot": true,
+        "greeting_short": "您好，我对数据运营专员岗位很感兴趣，简历已附上，期待沟通。",
+        "greeting_long": "您好：我是赵六，对贵司「某电商集团」的数据运营专员岗位很感兴趣。简要介绍我的相关经历：维护商品运营日报，覆盖 GMV、转化率等 12 个核心指标，按日更新并在指标异动时同步相关运营同学\n维护商品运营日报…。从岗位描述看，这个岗位需要：本科及以上学历，专业不限；熟练使用 SQL 与 Excel。以上经历与这些要求能直接对应，具体细节可以当面或电话沟通。工作地点（杭州）与我符合。期待能获得进一步沟通的机会，谢谢！",
+        "created_at": "2026-10-16T18:14:53",
+        "updated_at": "2026-10-17T02:14:53.755025"
+      }
+    },
+    {
+      "step": "13-create-reminder",
+      "ok": true,
+      "result": {
+        "id": "bb23cba2-211c-4a80-8753-4b6ea560e878",
+        "title": "跟进某电商集团 HR",
+        "due_at": "2026-10-25T09:00:00",
+        "status": "PENDING",
+        "created_at": "2026-10-16T18:14:53"
+      }
+    },
+    {
+      "step": "14-create-interview-record",
+      "ok": true,
+      "result": {
+        "id": "0227e6ae-84c5-4eea-a4dc-899816e1123f",
+        "profile_id": "988d0228-2444-4bb0-902f-b9990072f760",
+        "mission_id": null,
+        "company": "某电商集团",
+        "role": "数据运营专员",
+        "interview_round": "一面",
+        "interviewed_on": "2026-10-18",
+        "notes": "SQL 手写题 + 数据看板项目复盘",
+        "status": "DRAFT",
+        "strong_points": [],
+        "weak_points": [],
+        "gap_type": null,
+        "gap_why": null,
+        "recommended_next_action": null,
+        "coaching": null,
+        "items": [
+          {
+            "id": "b8fabe5f-a2d1-4d04-bcf8-77a44c3d1dc9",
+            "record_id": "0227e6ae-84c5-4eea-a4dc-899816e1123f",
+            "sort_order": 0,
+            "question": "写一个 SQL：查每个品类近 30 天的销量 Top3 商品",
+            "context": null,
+            "my_answer": "用窗口函数 row_number() over (partition by 品类 order by 销量 desc) 取前 3",
+            "evaluation": null,
+            "created_at": "2026-10-16T18:14:53"
+          },
+          {
+            "id": "99ad3ee5-4e93-4e16-a324-3af4cc220d1e",
+            "record_id": "0227e6ae-84c5-4eea-a4dc-899816e1123f",
+            "sort_order": 1,
+            "question": "讲一个你维护数据看板的例子",
+            "context": null,
+            "my_answer": "维护商品运营日报，覆盖 GMV、转化率等 12 个核心指标",
+            "evaluation": null,
+            "created_at": "2026-10-16T18:14:53"
+          }
+        ],
+        "created_at": "2026-10-16T18:14:53",
+        "updated_at": "2026-10-16T18:14:53",
+        "evaluated": false
+      }
+    },
+    {
+      "step": "15-board",
+      "ok": true,
+      "result": {
+        "total": 1,
+        "columns": {
+          "PENDING": {
+            "count": 0,
+            "applications": []
+          },
+          "APPLIED": {
+            "count": 1,
+            "applications": [
+              {
+                "id": "73b812d6-09bf-4888-8f7e-7838bc1de247",
+                "profile_id": "988d0228-2444-4bb0-902f-b9990072f760",
+                "mission_id": "5f54acaf-6abe-46cc-84fb-d49dd6da3e75",
+                "company": "某电商集团",
+                "role": "数据运营专员",
+                "location": "杭州",
+                "channel": "招聘网站",
+                "status": "APPLIED",
+                "stage": "APPLIED",
+                "applied_at": null,
+                "next_action": null,
+                "notes": null,
+                "jd_source": "粘贴 JD",
+                "resume_version_id": "d3b2f9ba-21c6-483f-a318-8ec9fd773b8a",
+                "resume_version": 1,
+                "studio_revision": 1,
+                "pdf_snapshot_path": "C:\\Users\\覆水\\AppData\\Local\\AICareerOS\\pdf_snapshots\\73b812d6-09bf-4888-8f7e-7838bc1de247.pdf",
+                "has_pdf_snapshot": true,
+                "greeting_short": "您好，我对数据运营专员岗位很感兴趣，简历已附上，期待沟通。",
+                "greeting_long": "您好：我是赵六，对贵司「某电商集团」的数据运营专员岗位很感兴趣。简要介绍我的相关经历：维护商品运营日报，覆盖 GMV、转化率等 12 个核心指标，按日更新并在指标异动时同步相关运营同学\n维护商品运营日报…。从岗位描述看，这个岗位需要：本科及以上学历，专业不限；熟练使用 SQL 与 Excel。以上经历与这些要求能直接对应，具体细节可以当面或电话沟通。工作地点（杭州）与我符合。期待能获得进一步沟通的机会，谢谢！",
+                "created_at": "2026-10-16T18:14:53",
+                "updated_at": "2026-10-17T02:14:53.793083"
+              }
+            ]
+          },
+          "SCREENING": {
+            "count": 0,
+            "applications": []
+          },
+          "ASSESSMENT": {
+            "count": 0,
+            "applications": []
+          },
+          "INTERVIEW": {
+            "count": 0,
+            "applications": []
+          },
+          "OFFER": {
+            "count": 0,
+            "applications": []
+          },
+          "CLOSED": {
+            "count": 0,
+            "applications": []
+          }
+        },
+        "version_usage": [
+          {
+            "resume_version_id": "d3b2f9ba-21c6-483f-a318-8ec9fd773b8a",
+            "resume_version": 1,
+            "studio_revision": 1,
+            "used_by": [
+              {
+                "application_id": "73b812d6-09bf-4888-8f7e-7838bc1de247",
+                "company": "某电商集团",
+                "role": "数据运营专员",
+                "status": "APPLIED"
+              }
+            ]
+          }
+        ],
+        "recent_interviews": [
+          {
+            "id": "0227e6ae-84c5-4eea-a4dc-899816e1123f",
+            "company": "某电商集团",
+            "role": "数据运营专员",
+            "interviewed_on": "2026-10-18",
+            "interview_round": "一面",
+            "status": "DRAFT",
+            "notes": "SQL 手写题 + 数据看板项目复盘"
+          }
+        ],
+        "reminders": [
+          {
+            "id": "bb23cba2-211c-4a80-8753-4b6ea560e878",
+            "title": "跟进某电商集团 HR",
+            "due_at": "2026-10-25T09:00:00"
+          }
+        ],
+        "reminder_note": "提醒仅在应用内展示，不会发送系统推送。"
+      }
+    },
+    {
+      "step": "16-board-assertions",
+      "ok": true,
+      "result": {
+        "total": 1,
+        "applied_count": 1,
+        "version_usage": [
+          {
+            "resume_version_id": "d3b2f9ba-21c6-483f-a318-8ec9fd773b8a",
+            "resume_version": 1,
+            "studio_revision": 1,
+            "used_by": [
+              {
+                "application_id": "73b812d6-09bf-4888-8f7e-7838bc1de247",
+                "company": "某电商集团",
+                "role": "数据运营专员",
+                "status": "APPLIED"
+              }
+            ]
+          }
+        ],
+        "reminders": [
+          {
+            "id": "bb23cba2-211c-4a80-8753-4b6ea560e878",
+            "title": "跟进某电商集团 HR",
+            "due_at": "2026-10-25T09:00:00"
+          }
+        ],
+        "reminder_note": "提醒仅在应用内展示，不会发送系统推送。"
+      }
+    }
+  ],
+  "finished_at": "2026-10-16T18:14:53.938395+00:00",
+  "mission_id": "5f54acaf-6abe-46cc-84fb-d49dd6da3e75",
+  "application_id": "73b812d6-09bf-4888-8f7e-7838bc1de247"
+}

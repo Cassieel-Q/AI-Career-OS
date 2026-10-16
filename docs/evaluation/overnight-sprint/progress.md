@@ -109,3 +109,47 @@ cd apps\web; $env:NODE_PATH="C:\Users\覆水\.workbuddy\binaries\node\workspace\
 `test_claim_provider` / `test_gap_analysis` / `test_market_profile` / `test_priorities` /
 `test_resume_reliability` / `test_roadmap` / `test_target_jobs` 共 7 个，与 M1 基线完全一致，
 不依赖本轮改动（多为 LLM 输出不确定性相关的断言）。当前全量：**825 passed / 7 failed（基线）/ 5 skipped**。
+
+## M3 · 求职管理补齐（版本绑定 / 打招呼话术 / 看板 / 提醒）
+
+状态：**DONE_VERIFIED**（真实服务验收 18 步 0 失败 + 浏览器 E2E 14/14 + 后端测试 8 项全绿）
+
+### 本轮新增
+
+- **投递版本绑定**（迁移 `027_application_binding`，job_applications 补六列，全部可空）：
+  `resume_version_id` + `studio_revision` + `pdf_snapshot_path` + `jd_source` +
+  `greeting_short`/`greeting_long`。
+  - `POST /applications/{id}/bind-resume`：绑定**最新已确认**岗位定向简历，
+    渲染 PDF 快照存 `%LOCALAPPDATA%\AICareerOS\pdf_snapshots\`；
+    Studio 未确认当前修订版时 409（投出去的必须是用户确认过的内容）。
+  - `GET /applications/{id}/resume-snapshot`：随时下载投递时的 PDF 快照——
+    直接回答「我当初投的是哪份简历」。
+- **打招呼话术**（`greeting_service.py`，确定性模板、不调用模型）：
+  - `POST /applications/{id}/greeting` 生成简洁版 + 详细版草稿；
+  - **只引用真实事实**：姓名来自档案、经历要点来自用户已确认（ACCEPTED/EDITED）的定向简历、
+    JD 要求来自 `parsed_jd`；没有简历事实时如实降级（只保留姓名+岗位+附件指引），**不编造**；
+  - 可编辑（PATCH 保存）、可复制（前端一键复制）；系统只生成草稿，**不自动发送**。
+- **求职看板** `GET /profiles/{id}/applications/board`：
+  按状态分列（阶段数量）+ **简历版本使用记录**（哪版简历投过哪些岗位）+
+  最近面试（复用 InterviewRecord）+ 待办提醒（复用 Reminder）——**不建第二套事实来源**。
+- **提醒 CRUD**：`GET/POST /profiles/{id}/reminders`、`POST /reminders/{id}/complete`；
+  界面明确标注「提醒仅在应用内展示，不会发送系统推送」。
+- 前端投递页：状态/渠道/关键词筛选、绑定按钮、投递版本显示（vN + rM + 快照下载）、
+  话术生成/编辑/复制面板、看板三卡（版本使用/最近面试/待办提醒）。
+
+### 证据
+
+- `docs/evaluation/overnight-sprint/m3-tracker-acceptance.json`（18 步：建档→改写→确认 Studio→
+  建投递（mission+JD 来源）→ 绑定版本（版本 ID+修订号+快照一致）→ 下载快照 57,654 字节真实 PDF →
+  话术生成（含姓名/岗位、不编造）→ 编辑保存 → 推进/退回 → 提醒/面试记录 → 看板断言）
+- `docs/screenshots/overnight-m3/01..05.png` + `e2e-result.json`（浏览器 E2E 14/14）
+- `docs/evaluation/overnight-sprint/m3-delivery-snapshot.pdf`（投递快照样例）
+- 测试：`tests/test_application_binding.py`（8 项：绑定记录版本+修订+快照、未确认 Studio 拒绝绑定、
+  无确认简历拒绝、话术只引用真实事实、无简历降级、看板聚合、JD 来源、提醒 CRUD）
+
+### 复现命令
+
+```powershell
+cd apps\api; .venv\Scripts\python scripts\tracker_acceptance.py http://127.0.0.1:8100
+cd apps\web; $env:NODE_PATH="C:\Users\覆水\.workbuddy\binaries\node\workspace\node_modules"; node scripts\e2e-overnight-m3.cjs
+```

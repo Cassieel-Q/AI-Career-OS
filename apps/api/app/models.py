@@ -940,11 +940,22 @@ class JobApplication(Base):
     applied_at: Mapped[date | None] = mapped_column(Date, nullable=True)
     next_action: Mapped[str | None] = mapped_column(Text, nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # --- M3 投递版本绑定：回答「我当初投的是哪份简历」---
+    jd_source: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    resume_version_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("target_resumes.id", ondelete="SET NULL"), nullable=True
+    )
+    studio_revision: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    pdf_snapshot_path: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    # --- M3 打招呼话术（简洁/详细，可编辑；系统只生成草稿，不自动发送）---
+    greeting_short: Mapped[str | None] = mapped_column(Text, nullable=True)
+    greeting_long: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
     profile: Mapped[UserProfile] = relationship("UserProfile", back_populates="applications")
     mission: Mapped[JobMission | None] = relationship("JobMission")
+    resume_version: Mapped["TargetResume | None"] = relationship("TargetResume")
 
 
 class CandidateJob(Base):

@@ -6,15 +6,17 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from pathlib import Path
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from . import models
 from .database import get_db
+from .greeting_service import build_greetings
 from .job_insight_service import cached_insight
 
 
@@ -98,6 +100,7 @@ class ApplicationCreate(BaseModel):
     applied_at: date | None = None
     next_action: str | None = None
     notes: str | None = None
+    jd_source: str | None = Field(default=None, max_length=512)
 
 
 class ApplicationUpdate(BaseModel):
@@ -109,6 +112,9 @@ class ApplicationUpdate(BaseModel):
     applied_at: date | None = None
     next_action: str | None = None
     notes: str | None = None
+    jd_source: str | None = Field(default=None, max_length=512)
+    greeting_short: str | None = None
+    greeting_long: str | None = None
 
 
 class ApplicationRead(BaseModel):
@@ -126,6 +132,16 @@ class ApplicationRead(BaseModel):
     applied_at: date | None = None
     next_action: str | None = None
     notes: str | None = None
+    jd_source: str | None = None
+    # --- 投递版本绑定：回答「我当初投的是哪份简历」---
+    resume_version_id: str | None = None
+    resume_version: int | None = None
+    studio_revision: int | None = None
+    pdf_snapshot_path: str | None = None
+    has_pdf_snapshot: bool = False
+    # --- 打招呼话术 ---
+    greeting_short: str | None = None
+    greeting_long: str | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
@@ -185,6 +201,7 @@ def _profile(db: Session, profile_id: UUID) -> models.UserProfile:
 
 
 def _application_read(row: models.JobApplication) -> ApplicationRead:
+    version_number = row.resume_version.version if row.resume_version is not None else None
     return ApplicationRead(
         id=str(row.id),
         profile_id=str(row.profile_id),
@@ -198,6 +215,14 @@ def _application_read(row: models.JobApplication) -> ApplicationRead:
         applied_at=row.applied_at,
         next_action=row.next_action,
         notes=row.notes,
+        jd_source=row.jd_source,
+        resume_version_id=str(row.resume_version_id) if row.resume_version_id else None,
+        resume_version=version_number,
+        studio_revision=row.studio_revision,
+        pdf_snapshot_path=row.pdf_snapshot_path,
+        has_pdf_snapshot=bool(row.pdf_snapshot_path and Path(row.pdf_snapshot_path).exists()),
+        greeting_short=row.greeting_short,
+        greeting_long=row.greeting_long,
         created_at=row.created_at,
         updated_at=row.updated_at,
     )
@@ -300,6 +325,7 @@ def create_application(profile_id: UUID, payload: ApplicationCreate, db: Session
         applied_at=payload.applied_at,
         next_action=payload.next_action,
         notes=payload.notes,
+        jd_source=payload.jd_source,
     )
     db.add(row)
     db.commit()
@@ -338,6 +364,256 @@ def delete_application(application_id: UUID, db: Session = Depends(get_db)):
     db.delete(row)
     db.commit()
     return None
+
+
+# ---------------------------------------------------------------------------
+# 投递版本绑定（M3：回答「我当初投的是哪份简历」）
+# ---------------------------------------------------------------------------
+
+
+class BindResumeRequest(BaseModel):
+    resume_version_id: UUID | None = None
+    mission_id: UUID | None = None
+
+
+def _snapshot_dir() -> Path:
+    from .local_mode import ensure_dirs
+
+    directory = ensure_dirs() / "pdf_snapshots"
+    directory.mkdir(parents=True, exist_ok=True)
+    return directory
+
+
+@router.post("/applications/{application_id}/bind-resume", response_model=ApplicationRead)
+def bind_resume(application_id: UUID, payload: BindResumeRequest, db: Session = Depends(get_db)):
+    """把一份岗位定向简历（含 Studio 修订号 + PDF 快照）绑定到投递记录。
+
+    只允许绑定 **Studio 已确认** 的版本：投出去的简历必须是用户确认过的内容。
+    快照渲染后存本地文件；之后 Studio 再怎么改，都不影响这份记录指向的证据。
+    """
+    row = db.get(models.JobApplication, application_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="投递记录不存在")
+
+    mission_id = payload.mission_id or row.mission_id
+    resume = None
+    if payload.resume_version_id:
+        resume = db.get(models.TargetResume, payload.resume_version_id)
+        if resume is None:
+            raise HTTPException(status_code=404, detail="指定的简历版本不存在")
+    elif mission_id:
+        resume = db.scalar(
+            select(models.TargetResume)
+            .where(models.TargetResume.mission_id == mission_id, models.TargetResume.status == "CONFIRMED")
+            .order_by(models.TargetResume.version.desc())
+        )
+    if resume is None:
+        raise HTTPException(status_code=409, detail="还没有可绑定的已确认岗位简历。请先在「岗位简历」页生成并确认改写稿。")
+
+    # 快照：用该简历所属 mission 的 Studio 文档渲染（必须已确认当前修订版）
+    from .resume_studio_render import ResumeRenderError, render_document
+    from .resume_studio_service import get_or_create_document
+
+    studio = get_or_create_document(db, resume.mission_id)
+    if studio.confirmed_revision != studio.revision:
+        raise HTTPException(409, "工作台最新修订版还没有确认。请先在 Studio 确认，再绑定投递版本。")
+    try:
+        rendered = render_document(
+            studio.document_json,
+            studio.template_id,
+            getattr(studio, "layout_config", None),
+        )
+    except ResumeRenderError as exc:
+        raise HTTPException(409, f"PDF 渲染失败：{exc}") from exc
+    snapshot_path = _snapshot_dir() / f"{row.id}.pdf"
+    snapshot_path.write_bytes(rendered.pdf)
+
+    row.resume_version_id = resume.id
+    row.studio_revision = studio.revision
+    row.pdf_snapshot_path = str(snapshot_path)
+    if mission_id and not row.mission_id:
+        row.mission_id = mission_id
+    row.updated_at = datetime.now()
+    db.commit()
+    db.refresh(row)
+    return _application_read(row)
+
+
+@router.get("/applications/{application_id}/resume-snapshot")
+def download_resume_snapshot(application_id: UUID, db: Session = Depends(get_db)):
+    """下载投递时的 PDF 快照——随时回答「我当初投的是哪份简历」。"""
+    row = db.get(models.JobApplication, application_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="投递记录不存在")
+    if not row.pdf_snapshot_path or not Path(row.pdf_snapshot_path).exists():
+        raise HTTPException(404, "这份投递还没有 PDF 快照。可在投递详情里绑定简历版本后自动生成。")
+    data = Path(row.pdf_snapshot_path).read_bytes()
+    filename = f"{row.company}-{row.role}-投递快照.pdf"
+    from urllib.parse import quote
+
+    ascii_fallback = "".join(char for char in filename if char.isascii() and (char.isalnum() or char in "-_ ")).strip() or "snapshot"
+    return Response(
+        data,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename={ascii_fallback}.pdf; filename*=UTF-8''{quote(filename)}.pdf"
+        },
+    )
+
+
+# ---------------------------------------------------------------------------
+# 打招呼话术（M3：生成草稿，不自动发送）
+# ---------------------------------------------------------------------------
+
+
+@router.post("/applications/{application_id}/greeting", response_model=ApplicationRead)
+def generate_greeting(application_id: UUID, db: Session = Depends(get_db)):
+    """生成简洁版 + 详细版打招呼话术草稿（覆盖已有草稿；用户可再手动编辑）。"""
+    row = db.get(models.JobApplication, application_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="投递记录不存在")
+    greetings = build_greetings(db, row)
+    row.greeting_short = greetings["short"]
+    row.greeting_long = greetings["long"]
+    row.updated_at = datetime.now()
+    db.commit()
+    db.refresh(row)
+    return _application_read(row)
+
+
+# ---------------------------------------------------------------------------
+# 求职看板（M3：复用 JobApplication 单一事实来源，不建第二套表）
+# ---------------------------------------------------------------------------
+
+
+@router.get("/profiles/{profile_id}/applications/board")
+def application_board(profile_id: UUID, db: Session = Depends(get_db)):
+    """看板聚合：按状态分列 + 阶段数量 + 版本使用记录 + 最近面试待办 + 提醒。"""
+    _profile(db, profile_id)
+    rows = list(
+        db.scalars(
+            select(models.JobApplication)
+            .where(models.JobApplication.profile_id == profile_id)
+            .order_by(models.JobApplication.updated_at.desc())
+        ).all()
+    )
+    columns = {status: [] for status in APPLICATION_STATUSES}
+    for row in rows:
+        columns.setdefault(row.status, []).append(_application_read(row))
+
+    # 版本使用记录：哪些投递绑定了哪些简历版本（同一版本被多次使用也如实列出）
+    version_usage: dict[str, dict] = {}
+    for row in rows:
+        if not row.resume_version_id:
+            continue
+        key = str(row.resume_version_id)
+        entry = version_usage.setdefault(
+            key,
+            {"resume_version_id": key, "resume_version": row.resume_version.version if row.resume_version else None, "studio_revision": row.studio_revision, "used_by": []},
+        )
+        entry["used_by"].append({"application_id": str(row.id), "company": row.company, "role": row.role, "status": row.status})
+
+    # 最近面试记录（InterviewRecord 复用既有表，不建第二套事实来源）
+    interview_rows = list(
+        db.scalars(
+            select(models.InterviewRecord)
+            .where(models.InterviewRecord.profile_id == profile_id)
+            .order_by(models.InterviewRecord.updated_at.desc())
+            .limit(5)
+        ).all()
+    )
+    interviews = [
+        {
+            "id": str(item.id),
+            "company": item.company or "",
+            "role": item.role or "",
+            "interviewed_on": item.interviewed_on.isoformat() if item.interviewed_on else None,
+            "interview_round": item.interview_round or "",
+            "status": item.status or "",
+            "notes": item.notes or "",
+        }
+        for item in interview_rows
+    ]
+
+    # 应用内提醒（明确：这是应用内提醒，不宣称系统推送）
+    reminder_rows = list(
+        db.scalars(
+            select(models.Reminder)
+            .where(models.Reminder.profile_id == profile_id, models.Reminder.status == "PENDING")
+            .order_by(models.Reminder.due_at.asc().nullslast())
+            .limit(10)
+        ).all()
+    )
+    reminders = [
+        {"id": str(item.id), "title": item.title, "due_at": item.due_at.isoformat() if item.due_at else None}
+        for item in reminder_rows
+    ]
+
+    return {
+        "total": len(rows),
+        "columns": {status: {"count": len(items), "applications": items} for status, items in columns.items()},
+        "version_usage": list(version_usage.values()),
+        "recent_interviews": interviews,
+        "reminders": reminders,
+        "reminder_note": "提醒仅在应用内展示，不会发送系统推送。",
+    }
+
+
+# ---------------------------------------------------------------------------
+# 提醒 CRUD（M3：应用内提醒，不宣称系统推送）
+# ---------------------------------------------------------------------------
+
+
+class ReminderCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    due_at: datetime | None = None
+    notes: str | None = None
+
+
+class ReminderRead(BaseModel):
+    id: str
+    title: str
+    due_at: datetime | None = None
+    status: str
+    created_at: datetime | None = None
+
+
+@router.get("/profiles/{profile_id}/reminders", response_model=list[ReminderRead])
+def list_reminders(profile_id: UUID, db: Session = Depends(get_db)):
+    _profile(db, profile_id)
+    rows = list(
+        db.scalars(
+            select(models.Reminder)
+            .where(models.Reminder.profile_id == profile_id)
+            .order_by(models.Reminder.due_at.asc().nullslast())
+        ).all()
+    )
+    return [
+        ReminderRead(id=str(row.id), title=row.title, due_at=row.due_at, status=row.status, created_at=row.created_at)
+        for row in rows
+    ]
+
+
+@router.post("/profiles/{profile_id}/reminders", response_model=ReminderRead, status_code=201)
+def create_reminder(profile_id: UUID, payload: ReminderCreate, db: Session = Depends(get_db)):
+    _profile(db, profile_id)
+    row = models.Reminder(profile_id=profile_id, title=payload.title.strip(), due_at=payload.due_at)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return ReminderRead(id=str(row.id), title=row.title, due_at=row.due_at, status=row.status, created_at=row.created_at)
+
+
+@router.post("/reminders/{reminder_id}/complete", response_model=ReminderRead)
+def complete_reminder(reminder_id: UUID, db: Session = Depends(get_db)):
+    row = db.get(models.Reminder, reminder_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="提醒不存在")
+    row.status = "DONE"
+    row.updated_at = datetime.now()
+    db.commit()
+    db.refresh(row)
+    return ReminderRead(id=str(row.id), title=row.title, due_at=row.due_at, status=row.status, created_at=row.created_at)
 
 
 # ---------------------------------------------------------------------------
