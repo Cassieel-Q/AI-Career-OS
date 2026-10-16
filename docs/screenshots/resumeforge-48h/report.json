@@ -1,0 +1,39 @@
+{
+  "capturedAt": "2026-10-16T12:29:57.878Z",
+  "webBase": "http://127.0.0.1:3000",
+  "pages": [
+    {
+      "name": "01-jobs-intake",
+      "url": "http://127.0.0.1:3000/jobs",
+      "status": 200,
+      "title": "AI Career OS",
+      "file": "..\\..\\docs\\screenshots\\resumeforge-48h\\01-jobs-intake.png",
+      "ms": 4870
+    },
+    {
+      "name": "02-webform",
+      "url": "http://127.0.0.1:3000/webform",
+      "status": 200,
+      "title": "AI Career OS",
+      "file": "..\\..\\docs\\screenshots\\resumeforge-48h\\02-webform.png",
+      "ms": 2765
+    },
+    {
+      "name": "03-settings",
+      "url": "http://127.0.0.1:3000/settings",
+      "status": 200,
+      "title": "AI Career OS",
+      "file": "..\\..\\docs\\screenshots\\resumeforge-48h\\03-settings.png",
+      "ms": 2798
+    },
+    {
+      "name": "04-webform-test-page",
+      "url": "http://127.0.0.1:3000/webform-test.html",
+      "status": 200,
+      "title": "AI Career OS · 网申填表本地测试表单",
+      "file": "..\\..\\docs\\screenshots\\resumeforge-48h\\04-webform-test-page.png",
+      "ms": 2635
+    }
+  ],
+  "consoleErrors": []
+}

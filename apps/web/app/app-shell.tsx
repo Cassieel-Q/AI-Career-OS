@@ -17,28 +17,33 @@ type NavItem = {
 const SIDEBAR_COLLAPSED_KEY = "career-os.sidebar.collapsed";
 
 /**
- * 侧栏信息架构（自研，避免与同类产品雷同）：
- * 顶部「求职」组按使用流程排列，底部「工具」组收纳辅助模块，两级平铺、不做下拉。
+ * 侧栏信息架构：主导航固定为 7 个入口（首页 / 岗位 / 简历 / 投递 / 网申 / 面试 / 设置），
+ * 底层证据系统、AI 助手、网申资料等收纳到「工具」组，不再主导主导航。
  */
 const JOURNEY_ITEMS: NavItem[] = [
-  { key: "home", label: "总览", href: "/", icon: "overview", match: (p) => p === "/" },
-  { key: "missions", label: "岗位", href: "/missions", icon: "jobs", match: (p) => p === "/missions" || p.startsWith("/missions/") },
-  { key: "resumes", label: "简历中心", href: "/resumes", icon: "resume", match: (p) => p === "/resumes" || p.startsWith("/resumes/") },
+  { key: "home", label: "首页", href: "/", icon: "overview", match: (p) => p === "/" },
+  {
+    key: "jobs",
+    label: "岗位",
+    href: "/jobs",
+    icon: "jobs",
+    match: (p) => p === "/jobs" || p.startsWith("/missions") || p === "/plaza",
+  },
+  { key: "resumes", label: "简历", href: "/resumes", icon: "resume", match: (p) => p === "/resumes" || p.startsWith("/resumes/") },
   { key: "tracker", label: "投递", href: "/tracker", icon: "tracker", match: (p) => p === "/tracker" },
-  // 「面试」与「题库」原本是两个入口但功能重叠，现已合并为「面试题库」：
-  // 题目准备与面试记录在同一页，按「公司 + 第几次面试」这个场次切换。
-  // /interview-records 保留为深链（投递页的「记面试问答」仍会用到）。
+  { key: "webform", label: "网申", href: "/webform", icon: "webform", match: (p) => p.startsWith("/webform") },
   {
     key: "interview-bank",
-    label: "面试题库",
+    label: "面试",
     href: "/question-bank",
     icon: "bank",
     match: (p) => p.startsWith("/question-bank") || p.startsWith("/interview-records"),
   },
-  { key: "assistant", label: "顺顺", href: "/assistant", icon: "assistant", match: (p) => p === "/assistant" },
+  { key: "settings", label: "设置", href: "/settings", icon: "settings", match: (p) => p.startsWith("/settings") },
 ];
 
 const TOOL_ITEMS: NavItem[] = [
+  { key: "assistant", label: "顺顺", href: "/assistant", icon: "assistant", match: (p) => p === "/assistant" },
   // 「事实核对」(/claims) 与「证据库」职责重复，已下线；证据是唯一事实来源。
   { key: "evidence", label: "证据库", href: "/evidence-os", icon: "evidence", match: (p) => p.startsWith("/evidence-os") },
   { key: "application-profile", label: "网申资料", href: "/application-profile", icon: "profile", match: (p) => p.startsWith("/application-profile") },
@@ -126,6 +131,19 @@ const ICON_PATHS: Record<string, ReactNode> = {
     <>
       <circle cx="12" cy="8" r="3.2" />
       <path d="M5.5 19.5a6.5 6.5 0 0 1 13 0" />
+    </>
+  ),
+  webform: (
+    <>
+      <rect x="4.5" y="3.5" width="15" height="17" rx="2.2" />
+      <path d="M8 8h8M8 12h8M8 16h4" />
+      <path d="m15.2 16.2 1.4 1.4 2.4-2.6" />
+    </>
+  ),
+  settings: (
+    <>
+      <circle cx="12" cy="12" r="2.6" />
+      <path d="M12 3.6v2.2M12 18.2v2.2M3.6 12h2.2M18.2 12h2.2M6.1 6.1l1.6 1.6M16.3 16.3l1.6 1.6M17.9 6.1l-1.6 1.6M7.7 16.3l-1.6 1.6" />
     </>
   ),
   panelCollapse: (

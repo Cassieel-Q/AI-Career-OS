@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Career OS · 网申填表本地测试表单</title>
+    <style>
+      :root { color-scheme: light; }
+      body { font-family: "Segoe UI", "Microsoft YaHei", sans-serif; background: #f6f5f1; color: #1f2a24; margin: 0; padding: 32px; }
+      .card { max-width: 720px; margin: 0 auto; background: #fff; border: 1px solid #e3e1d9; border-radius: 12px; padding: 28px 32px; }
+      h1 { font-size: 20px; margin: 0 0 4px; }
+      p.sub { color: #6b756e; font-size: 13px; margin: 0 0 20px; }
+      .row { margin-bottom: 16px; }
+      .row > span, .row > div.lbl { display: block; font-size: 13px; margin-bottom: 6px; color: #38443c; }
+      input[type="text"], input[type="email"], input[type="tel"], input[type="date"], select, textarea {
+        width: 100%; padding: 8px 10px; border: 1px solid #d6d4cb; border-radius: 8px; font-size: 14px; box-sizing: border-box; background: #fff;
+      }
+      .inline { display: flex; gap: 16px; align-items: center; }
+      label.opt { font-size: 14px; display: inline-flex; gap: 6px; align-items: center; }
+      button { padding: 10px 18px; border-radius: 8px; border: 1px solid #2f5d4a; background: #2f5d4a; color: #fff; font-size: 14px; cursor: pointer; }
+      .hint { font-size: 12px; color: #8a948d; margin-top: 4px; }
+      .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>模拟网申表单（本地测试页）</h1>
+      <p class="sub">这是 AI Career OS 自带的本地测试页，用于验证「读取表单 → 匹配资料 → 预览 → 填写」链路。表单不会真正提交。</p>
+
+      <form id="applyForm" onsubmit="return false;">
+        <div class="grid2">
+          <div class="row">
+            <div class="lbl">姓名</div>
+            <input type="text" name="fullName" id="fullName" placeholder="请输入姓名" required />
+          </div>
+          <div class="row">
+            <div class="lbl">手机号</div>
+            <input type="tel" name="mobile" id="mobile" placeholder="请输入手机号" required />
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="row">
+            <div class="lbl">电子邮箱</div>
+            <input type="email" name="email" id="email" placeholder="name@example.com" />
+          </div>
+          <div class="row">
+            <div class="lbl">现居城市</div>
+            <input type="text" name="city" id="city" placeholder="如：上海" />
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="row">
+            <div class="lbl">毕业院校</div>
+            <input type="text" name="school" id="school" placeholder="如：某某大学" />
+          </div>
+          <div class="row">
+            <div class="lbl">最高学历</div>
+            <select name="degree" id="degree">
+              <option value="">请选择</option>
+              <option>大专</option>
+              <option>本科</option>
+              <option>硕士</option>
+              <option>博士</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="lbl">专业</div>
+          <input type="text" name="major" id="major" placeholder="如：计算机科学与技术" />
+        </div>
+
+        <div class="row">
+          <div class="lbl">毕业时间</div>
+          <input type="date" name="graduationDate" id="graduationDate" />
+          <div class="hint">日期控件：只有能标准化为日期的资料才能自动填写。</div>
+        </div>
+
+        <div class="row">
+          <div class="lbl">求职意向</div>
+          <div class="inline">
+            <label class="opt"><input type="radio" name="jobType" value="社招" data-label="社招" /> 社招</label>
+            <label class="opt"><input type="radio" name="jobType" value="校招" data-label="校招" /> 校招</label>
+            <label class="opt"><input type="radio" name="jobType" value="实习" data-label="实习" /> 实习</label>
+          </div>
+          <div class="hint">单选框：仅当选项文本能匹配到资料中的值时才会勾选。</div>
+        </div>
+
+        <div class="row">
+          <div class="lbl">到岗时间</div>
+          <input type="text" name="availability" id="availability" placeholder="如：一个月内" />
+        </div>
+
+        <div class="row">
+          <div class="lbl">家庭情况</div>
+          <textarea name="familyInfo" id="familyInfo" rows="3" placeholder="选填"></textarea>
+        </div>
+
+        <div class="row">
+          <div class="lbl">简历附件</div>
+          <input type="file" name="resumeFile" id="resumeFile" />
+          <div class="hint">文件上传：暂不支持自动填写。</div>
+        </div>
+
+        <div class="row">
+          <div class="lbl">短信验证码</div>
+          <input type="text" name="smsCode" id="smsCode" placeholder="6 位数字" />
+          <div class="hint">验证码类字段：永不自动填写。</div>
+        </div>
+
+        <div class="row">
+          <div class="lbl">登录密码</div>
+          <input type="password" name="password" id="password" />
+          <div class="hint">密码字段：永不填写，也不记录。</div>
+        </div>
+
+        <div class="row">
+          <input type="checkbox" name="agree" id="agree" />
+          <label for="agree">我确认以上信息真实有效</label>
+        </div>
+
+        <button type="submit" id="submitBtn">提交申请（测试页不会真正提交）</button>
+      </form>
+    </div>
+  </body>
+</html>

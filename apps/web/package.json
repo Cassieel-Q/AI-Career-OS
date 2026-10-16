@@ -9,7 +9,8 @@
     "test": "node --experimental-strip-types --test tests/*.test.mts",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "format": "prettier --write \"app/**/*.{ts,tsx,css}\" \"*.{js,mjs,ts,json}\""
+    "format": "prettier --write \"app/**/*.{ts,tsx,css}\" \"*.{js,mjs,ts,json}\"",
+    "bridge": "node scripts/browser-bridge.cjs"
   },
   "dependencies": {
     "next": "15.5.24",

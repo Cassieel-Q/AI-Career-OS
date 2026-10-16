@@ -53,6 +53,9 @@ from app.resume_template_routes import router as resume_template_router
 from app.mock_interview_routes import router as mock_interview_router
 from app.overview_routes import router as overview_router
 from app.job_insight_routes import router as job_insight_router
+from app.backup_routes import router as backup_router
+from app.job_ingest_routes import router as job_ingest_router
+from app.webform_routes import router as webform_router
 from app.profile_schemas import CareerPreferencesInput, CareerPreferencesRead, ProfileRead, ProfileUpdate
 from app.profile_service import (
     confirm_profile,
@@ -2741,6 +2744,9 @@ app.include_router(resume_template_router)
 app.include_router(mock_interview_router)
 app.include_router(overview_router)
 app.include_router(job_insight_router)
+app.include_router(backup_router)
+app.include_router(job_ingest_router)
+app.include_router(webform_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_allowed_frontend_origins(),

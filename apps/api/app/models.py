@@ -981,6 +981,11 @@ class CandidateJob(Base):
     company: Mapped[str | None] = mapped_column(String(255), nullable=True)
     role: Mapped[str | None] = mapped_column(String(255), nullable=True)
     location: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # --- 026_webform_and_ingest：岗位统一入口的来源与采集元数据 ---
+    source_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    collected_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    parse_status: Mapped[str] = mapped_column(String(32), nullable=False, default="PARSED", server_default="PARSED")
+    dedupe_key: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     raw_payload: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict, server_default="{}")
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="DRAFT", server_default="DRAFT")
     imported_mission_id: Mapped[UUID | None] = mapped_column(
@@ -988,6 +993,32 @@ class CandidateJob(Base):
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
+class WebFormRecord(Base):
+    """网申填表历史（只记录字段填写，不记录密码/验证码，永不自动提交）。
+
+    一条记录 = 一次「读取表单 → 预览 → 用户确认填写」的操作。
+    ``assignments`` 保存逐字段的填写结果（含跳过项与原因）；
+    ``summary`` 保存成功/失败/待确认的数量统计。
+    """
+
+    __tablename__ = "web_form_records"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    profile_id: Mapped[UUID] = mapped_column(
+        ForeignKey("user_profiles.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    page_url: Mapped[str] = mapped_column(String(1024), nullable=False, default="", server_default="")
+    page_title: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    # PREVIEW / FILLED / FAILED / ABORTED
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="PREVIEW", server_default="PREVIEW")
+    assignments: Mapped[list] = mapped_column(JSON, nullable=False, default=list, server_default="[]")
+    summary: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict, server_default="{}")
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    profile: Mapped[UserProfile] = relationship("UserProfile")
 
 
 class AssistantConversation(Base):
