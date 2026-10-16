@@ -183,14 +183,26 @@ def test_fetch_url_text_rejects_redirect_into_private_network():
 
     from app.job_ingest_service import fetch_url_text
 
+    # fetch_url_text 用 client.stream(...) 做流式读取（带体积上限），
+    # 因此这里 mock 的是 stream 而不是 get，且 FakeResponse 要支持 with。
     class FakeResponse:
         status_code = 302
         is_redirect = True
         headers = {"location": "http://169.254.169.254/latest/meta-data/"}
         content = b""
+        charset_encoding = "utf-8"
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def iter_bytes(self, *args, **kwargs):
+            return iter(())
 
     with patch("app.url_guard.resolve_host_ips", return_value=["93.184.216.34"]):
-        with patch.object(httpx_module.Client, "get", return_value=FakeResponse()):
+        with patch.object(httpx_module.Client, "stream", return_value=FakeResponse()):
             with pytest.raises(HTTPException) as excinfo:
                 fetch_url_text("https://jobs.example.com/redirect")
             assert excinfo.value.status_code == 422

@@ -283,3 +283,62 @@ cd apps\api; $env:AI_CAREER_DATA_DIR="$env:LOCALAPPDATA\AICareerOS"
 cd apps\api; .venv\Scripts\python scripts\e2e_full_chain.py http://127.0.0.1:8100
 cd apps\api; .venv\Scripts\python -m pytest tests\test_security_boundaries.py -q
 ```
+
+## M7 · 补充任务：岗位采集真实验收与 Benchmark
+
+状态：**DONE_VERIFIED**（四个真实公开来源采集成功、去重通过、浏览器 E2E 17/17、`COLLECTION_E2E_VERIFIED = True`）
+同时标记 **`CHINESE_JOB_SITES_UNVERIFIED`**（中文招聘网站未做真实验证）。
+
+### 隔离测试数据集
+
+- 新建 `ds261017041218fd59`（复制自用户原数据集 `ds2610162021590a18`，原文件**只读未删**）
+- 所有采集/入库都写在这个副本里；验收结束已把指针切回原数据集
+
+### 测试集 `evals/job-collection-v1/`
+
+- `fixtures/`：RemoteOK / Greenhouse 结构样例、标准详情页、结构改版页、登录墙页、
+  提示词注入页、特殊字符页、空数组样例、固定去重标注样本 `dedupe_labels.jsonl`
+- `cases.jsonl` / `expected.jsonl`：15 类场景，外加 C16 手动编辑保留
+- `test_collection.py`：**27 项全绿**（15 场景 + 1 手动编辑保留 + 11 安全专项）
+- `run_live_smoke.py`：真实在线采集（RemoteOK / Remotive / Greenhouse / Lever）
+- `report.py`：6 项指标 + 报告 + 158 条人工审核清单
+
+### 真实在线采集结果（BROAD 阶段首次采集）
+
+| 来源 | 原始返回 | 解析 | 入库新增 | 重复采集新增 | 指纹一致 |
+|---|---|---|---|---|---|
+| RemoteOK | 99 | 30 | 30 | **0** | 是 |
+| Remotive | 15 | 14 | 14 | **0** | 是 |
+| Greenhouse（anthropic/figma/stripe） | 1526 | 30 | 30 | **0** | 是 |
+| Lever（palantir/leverdemo） | 320 | 30 | 30 | **0** | 是 |
+
+### 本轮修掉的真实缺陷
+
+1. **Greenhouse 去重完全失效**：适配器在 `normalize_job` 之后才把公司名从空改成招聘板标识，
+   但没重算 `dedupe_key`，库里存着用空公司名算出的 key，下次按真实公司名现算永远匹配不上，
+   同一批岗位每次重复采集都被当成「新增」。新增 `retag_company()` 修复。
+2. **保存时启发式解析覆盖来源字段**：`save_collected` 只在启发式结果为空时才用来源字段补齐，
+   RemoteOK 岗位因此被切成「Remote / Independent Contractor」（取自 JD 首行），
+   用户在岗位库里看到的是错误公司名与岗位名。改为来源字段优先。
+3. **抓取无体积上限**：`fetch_url_text` 整体读入响应体，恶意站点可用超大响应拖死进程。
+   改为流式读取 + 5 MiB 上限（可用 `AI_CAREER_COLLECT_MAX_BYTES` 调整）。
+4. **招聘板标识未过白名单**：`../..` 造成路径穿越、`?` 截断查询串。新增 `validate_board_token()`。
+5. **去重指纹漂移**：随机 token 被剥离后残留 `(# )` 空括号，同一岗位两次采集指纹仍不同。
+
+### 浏览器 E2E（15 步）
+
+`apps/web/scripts/e2e-job-collection-v1.cjs` → **17/17 通过**，15 张截图存于
+`docs/screenshots/job-collection-v1/`。
+
+### 复现命令
+
+```powershell
+cd apps\api
+$env:AICAREER_API="http://127.0.0.1:8100"
+.venv\Scripts\python -m pytest ..\..\evals\job-collection-v1\test_collection.py -q
+.venv\Scripts\python ..\..\evals\job-collection-v1\run_live_smoke.py --api http://127.0.0.1:8100
+.venv\Scripts\python ..\..\evals\job-collection-v1\report.py
+
+cd apps\web
+node scripts\e2e-job-collection-v1.cjs
+```

@@ -44,6 +44,24 @@ SOURCE_MIN_INTERVAL = float(os.environ.get("AI_CAREER_COLLECT_MIN_INTERVAL", "0.
 SOURCE_MAX_RETRIES = int(os.environ.get("AI_CAREER_COLLECT_RETRIES", "2"))
 SOURCE_BACKOFF = 0.8
 
+#: 抓取单个公开页面时的最大响应体积（字节）。超过即停止读取并如实报错，
+#: 防止恶意站点用超大响应把本地进程拖死（解压炸弹的 HTTP 版）。
+MAX_FETCH_BYTES = int(os.environ.get("AI_CAREER_COLLECT_MAX_BYTES", 5 * 1024 * 1024))
+
+#: 招聘板标识 / 企业标识白名单。这些值会被拼进官方接口 URL，
+#: 必须限制字符集，否则 ``../..`` 会造成路径穿越、``?`` 会截断查询串。
+_BOARD_TOKEN_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+
+
+def validate_board_token(token: str) -> str | None:
+    """校验招聘板/企业标识；不合法返回可读错误，返回 None 表示通过。"""
+    value = (token or "").strip()
+    if not value:
+        return "标识不能为空"
+    if not _BOARD_TOKEN_RE.match(value):
+        return f"标识「{value}」不合法：只允许字母、数字、下划线和连字符（1-64 位）"
+    return None
+
 #: 识别到这些标记时判定为「需要登录 / 有访问限制」，不做任何绕过。
 _BLOCK_MARKERS = (
     "请先登录",
@@ -120,6 +138,22 @@ def _deem_blocked(text: str) -> bool:
     return any(marker.lower() in lowered for marker in _BLOCK_MARKERS) and len(text) < 400
 
 
+def _read_capped(response) -> tuple[bytes, bool]:
+    """流式读取响应体；达到 ``MAX_FETCH_BYTES`` 就截断并如实上报。
+
+    返回 ``(bytes, 是否被截断)``。调用方必须在截断时给出明确提示，
+    不能拿半截页面冒充完整 JD。
+    """
+    chunks: list[bytes] = []
+    total = 0
+    for chunk in response.iter_bytes():
+        chunks.append(chunk)
+        total += len(chunk)
+        if total >= MAX_FETCH_BYTES:
+            return b"".join(chunks)[:MAX_FETCH_BYTES], True
+    return b"".join(chunks), False
+
+
 def fetch_url_text(url: str, *, timeout: float = 15.0) -> dict:
     """抓取公开链接正文。返回结构含 status / text / title / note。
 
@@ -150,16 +184,21 @@ def fetch_url_text(url: str, *, timeout: float = 15.0) -> dict:
             headers={"User-Agent": USER_AGENT, "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8"},
         ) as client:
             response = None
+            body = b""
+            truncated = False
             current = parsed
             for _ in range(MAX_REDIRECTS + 1):
                 assert_public_url(current)
-                response = client.get(current)
-                if response.is_redirect:
-                    next_url = safe_redirect_target(current, response.headers.get("location", ""))
-                    if next_url:
-                        current = next_url
-                        continue
-                break
+                # 流式读取 + 体积上限：恶意站点返回超大响应时不会被整体读进内存。
+                with client.stream("GET", current) as streamed:
+                    if streamed.is_redirect:
+                        next_url = safe_redirect_target(current, streamed.headers.get("location", ""))
+                        if next_url:
+                            current = next_url
+                            continue
+                    response = streamed
+                    body, truncated = _read_capped(streamed)
+                    break
             else:
                 result["note"] = "重定向次数过多，已停止抓取。"
                 return result
@@ -171,14 +210,23 @@ def fetch_url_text(url: str, *, timeout: float = 15.0) -> dict:
 
     result["content_type"] = response.headers.get("content-type", "")
     ctype = result["content_type"].lower()
+    charset = response.charset_encoding or "utf-8"
 
     if response.status_code >= 400:
         result["status"] = "BLOCKED" if response.status_code in {401, 403, 429} else "ERROR"
         result["note"] = f"服务器返回 HTTP {response.status_code}，未做任何绕过。请手动复制正文粘贴。"
         return result
 
+    if truncated:
+        result.update(
+            status="ERROR",
+            text="",
+            note=f"页面体积超过 {MAX_FETCH_BYTES // (1024 * 1024)} MiB 上限，已停止读取。请手动复制正文粘贴。",
+        )
+        return result
+
     if "application/pdf" in ctype or parsed.lower().endswith(".pdf"):
-        text = extract_pdf_text(response.content)
+        text = extract_pdf_text(body)
         result.update(status="PARSED" if text else "PARSE_EMPTY", text=text, note="来自 PDF 直链。")
         return result
 
@@ -186,7 +234,7 @@ def fetch_url_text(url: str, *, timeout: float = 15.0) -> dict:
         result.update(status="UNSUPPORTED_PAGE", text="", note="该链接返回 JSON 数据，请改用对应的采集适配器。")
         return result
 
-    raw = response.text
+    raw = body.decode(charset, errors="replace")
     title_match = _TITLE_RE.search(raw)
     result["title"] = html.unescape(title_match.group(1)).strip() if title_match else ""
     text = html_to_text(raw)
@@ -316,6 +364,19 @@ def normalize_job(
     }
 
 
+def retag_company(job: dict, company: str, *, is_board_token: bool = False) -> dict:
+    """适配器在归一化**之后**才拿到公司名时使用（Greenhouse 用招聘板标识占位）。
+
+    必须**重算 dedupe_key**：库里若存着用空公司名算出的 key，
+    下次 ``find_duplicates`` 按真实公司名现算就永远匹配不上，
+    导致同一批岗位每次重复采集都被当成「新增」。
+    """
+    job["company"] = company
+    job["company_is_board_token"] = is_board_token
+    job["dedupe_key"] = dedupe_key(company, job.get("role"), job.get("location"))
+    return job
+
+
 def content_hash(*parts: str | None) -> str:
     """岗位正文指纹（公司除外，跨来源同一岗位的公司名写法可能不同）。
 
@@ -335,6 +396,10 @@ _VOLATILE_TOKEN_RE = re.compile(
     r"(?<![\w=])(?=[A-Za-z0-9_\-]*\d)(?=[A-Za-z0-9_\-]*[A-Za-z])[A-Za-z0-9_\-]{12,}={0,2}(?![\w=])"
 )
 _WS_RE2 = re.compile(r"\s+")
+#: 随机串被剥掉后会留下 ``(# )`` / ``[ ]`` 这类空壳标点。
+#: 不同请求里来源是否插入随机串并不稳定，空壳也必须一并清掉，
+#: 否则同一岗位两次采集的指纹仍然不同，会被误判成 UPDATED。
+_EMPTY_BRACKET_RE = re.compile(r"\(\s*[#*·•\s]*\)|\[\s*[#*·•\s]*\]|\(\s*\)|\[\s*\]")
 
 
 def stable_text(value: str | None) -> str:
@@ -342,6 +407,7 @@ def stable_text(value: str | None) -> str:
     text = (value or "").lower()
     text = _URL_RE.sub(" ", text)
     text = _VOLATILE_TOKEN_RE.sub(" ", text)
+    text = _EMPTY_BRACKET_RE.sub(" ", text)
     return _WS_RE2.sub(" ", text).strip()
 
 
@@ -568,6 +634,11 @@ def collect_greenhouse(*, boards: list[str], limit: int = 20, keywords: list[str
     jobs: list[dict] = []
     errors: list[str] = []
     for board in boards:
+        # 标识会被拼进官方接口 URL：先过白名单，杜绝 ../.. 路径穿越与 ? 截断查询串。
+        invalid = validate_board_token(board)
+        if invalid:
+            errors.append(f"{board}：{invalid}")
+            continue
         payload, error = _http_json(f"https://boards-api.greenhouse.io/v1/boards/{board}/jobs?content=true", timeout=25.0)
         if error:
             errors.append(f"{board}：{error}")
@@ -598,8 +669,7 @@ def collect_greenhouse(*, boards: list[str], limit: int = 20, keywords: list[str
                 needs_confirm=["company"],
                 raw={"board": board, "greenhouse_id": item.get("id")},
             )
-            job["company"] = board
-            job["company_is_board_token"] = True
+            retag_company(job, board, is_board_token=True)
             if job_matches(job, keywords or []):
                 jobs.append(job)
             if len(jobs) >= limit:
@@ -638,6 +708,11 @@ def collect_lever(*, companies: list[str], limit: int = 20, keywords: list[str] 
     jobs: list[dict] = []
     errors: list[str] = []
     for company in companies:
+        # 同上：企业标识进 URL 前必须过白名单。
+        invalid = validate_board_token(company)
+        if invalid:
+            errors.append(f"{company}：{invalid}")
+            continue
         payload, error = _http_json(f"https://api.lever.co/v0/postings/{company}?mode=json", timeout=25.0)
         if error:
             errors.append(f"{company}：{error}")

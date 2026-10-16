@@ -1,0 +1,12 @@
+{
+  "COLLECTION_E2E_VERIFIED": true,
+  "checks": {
+    "at_least_one_real_source_collected": true,
+    "jobs_persisted_to_db": true,
+    "dedupe_passed": true,
+    "frontend_full_flow_passed": true,
+    "saved_job_enters_mission": true,
+    "evidence_saved": true
+  },
+  "generated_at": "2026-10-16T21:02:31.334881+00:00"
+}

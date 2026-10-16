@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="utf-8" /><title>登录后查看岗位 — 某招聘平台</title></head>
+<body>
+  <div class="login-wall">
+    <h1>请先登录</h1>
+    <p>该岗位需要登录后才能查看完整信息。</p>
+    <form method="post" action="/login">
+      <input type="text" name="username" placeholder="手机号 / 邮箱" />
+      <input type="password" name="password" placeholder="密码" />
+      <div class="captcha"><img src="/captcha.png" alt="验证码" /><input name="captcha" /></div>
+      <button type="submit">登录</button>
+    </form>
+  </div>
+</body>
+</html>

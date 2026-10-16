@@ -1,0 +1,12 @@
+{"pair_id":"D01","a":{"kind":"remoteok","id":"rk-1001","occurrence":0},"b":{"kind":"remoteok","id":"rk-1001","occurrence":1},"is_duplicate":true,"reason":"同一岗位重复出现，第二条 JD 里多了来源随机 token"}
+{"pair_id":"D02","a":{"kind":"remoteok","id":"rk-1001","occurrence":0},"b":{"kind":"remoteok","id":"rk-1002","occurrence":0},"is_duplicate":false,"reason":"同公司不同岗位，不得合并"}
+{"pair_id":"D03","a":{"kind":"remoteok","id":"rk-1001","occurrence":0},"b":{"kind":"remoteok","id":"rk-1003","occurrence":0},"is_duplicate":false,"reason":"同岗位名不同公司，不得合并"}
+{"pair_id":"D04","a":{"kind":"remoteok","id":"rk-1002","occurrence":0},"b":{"kind":"remoteok","id":"rk-1003","occurrence":0},"is_duplicate":false,"reason":"公司岗位都不同"}
+{"pair_id":"D05","a":{"kind":"remoteok","id":"rk-1004","occurrence":0},"b":{"kind":"remoteok","id":"rk-1001","occurrence":0},"is_duplicate":false,"reason":"实习岗与正式岗，不得合并"}
+{"pair_id":"D06","a":{"kind":"greenhouse","index":0},"b":{"kind":"greenhouse","index":0},"is_duplicate":true,"reason":"同一条岗位与自身"}
+{"pair_id":"D07","a":{"kind":"greenhouse","index":0},"b":{"kind":"greenhouse","index":1},"is_duplicate":false,"reason":"同公司同岗位名但地点不同（SF vs Austin），不得随意合并"}
+{"pair_id":"D08","a":{"kind":"greenhouse","index":0},"b":{"kind":"greenhouse","index":2},"is_duplicate":false,"reason":"同公司不同岗位"}
+{"pair_id":"D09","a":{"kind":"greenhouse","index":1},"b":{"kind":"greenhouse","index":3},"is_duplicate":false,"reason":"不同岗位不同地点"}
+{"pair_id":"D10","a":{"kind":"greenhouse","index":3},"b":{"kind":"greenhouse","index":3},"is_duplicate":true,"reason":"同一条实习岗与自身"}
+{"pair_id":"D11","a":{"kind":"remoteok","id":"rk-1004","occurrence":0},"b":{"kind":"greenhouse","index":3},"is_duplicate":false,"reason":"跨来源的不同岗位（实习岗分属不同公司与平台）"}
+{"pair_id":"D12","a":{"kind":"remoteok","id":"rk-1005","occurrence":0},"b":{"kind":"remoteok","id":"rk-1001","occurrence":0},"is_duplicate":false,"reason":"完全不同岗位"}

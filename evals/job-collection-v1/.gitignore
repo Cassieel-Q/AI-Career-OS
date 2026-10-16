@@ -1,0 +1,8 @@
+# 运行记录体积较大（每份含完整 JD，约 3 MB）：只保留最近一次作为验收证据，
+# 其余可由 `run_live_smoke.py` 重新生成，不入库。
+runs/*.json
+!runs/live-20261016T205156Z.json
+runs/latest.json
+
+__pycache__/
+*.pyc

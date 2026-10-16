@@ -281,12 +281,13 @@ def save_collected(profile_id: UUID, payload: SaveCollectedRequest, db: Session 
             row.collected_at = _now()
             row.parse_status = "NEEDS_CONFIRM" if needs_confirm else "PARSED"
             row.dedupe_key = source_key
-            if not (row.company or "").strip():
-                row.company = job.get("company") or None
-            if not (row.role or "").strip():
-                row.role = job.get("role") or None
-            if not (row.location or "").strip():
-                row.location = job.get("location") or None
+            # 采集结构里的公司/岗位/地点比启发式切分更可信：来源给了就用来源的。
+            # 旧实现只在启发式结果为空时才补齐，结果 RemoteOK 岗位被启发式切成
+            # 「Remote / Independent Contractor」（取自 JD 首行）并一路带进岗位库，
+            # 用户在库里看到的是错误公司名与岗位名。
+            row.company = (job.get("company") or "").strip() or row.company
+            row.role = (job.get("role") or "").strip() or row.role
+            row.location = (job.get("location") or "").strip() or row.location
             # 保留来源原文与结构化字段，便于回溯与「待确认」字段后续补齐。
             row.raw_payload = {
                 "source": job.get("source"),

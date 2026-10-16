@@ -1,0 +1,15 @@
+{"id":"C01","jd_nonempty":true,"script_stripped":true,"text_contains":["Northwind Analytics","AI 产品经理","北京"],"employment_type":"INTERN"}
+{"id":"C02","same_content_hash":true,"verdict":"DUPLICATE","distinct_records":1}
+{"id":"C03","same_company":true,"distinct_dedupe_keys":2}
+{"id":"C04","same_role":true,"distinct_dedupe_keys":2}
+{"id":"C05","location_empty":true,"needs_confirm_includes":"location","no_fabricated_salary":true}
+{"id":"C06","job_count":0,"no_demo_data":true}
+{"id":"C07","no_exception":true,"status_in":["PARSED","PARSE_EMPTY"],"never_crash":true}
+{"id":"C08","status":"EMPTY","count":0,"jobs_len":0}
+{"id":"C09","status_in":["ERROR","BLOCKED","PARSE_EMPTY","UNSUPPORTED_PAGE"],"text_empty_or_short":true}
+{"id":"C10","script_stripped":true,"entity_unescaped":true,"special_chars_preserved":true}
+{"id":"C11","text_preserved_as_data":true,"no_secret_leak":true,"no_override":true}
+{"id":"C12","status":"BLOCKED","text_empty":true,"no_password_capture":true}
+{"id":"C13","matches":false}
+{"id":"C14","excluded_by_city":true,"excluded_by_intern":true,"server_filter_supported":false}
+{"id":"C15","second_run_new_less_than_first":true,"updated_when_changed_only":true}

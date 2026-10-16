@@ -1,0 +1,74 @@
+[
+  {
+    "_comment": "RemoteOK 公开接口第一条是法律声明，不是岗位，解析器必须跳过",
+    "legal": "At Remote OK, we do our absolute best to ensure all jobs are legitimate."
+  },
+  {
+    "id": "rk-1001",
+    "company": "Northwind Analytics",
+    "position": "AI Product Manager",
+    "location": "Remote / US",
+    "description": "<p>Own the roadmap for our <b>AI</b> platform.</p><ul><li>Define product requirements</li><li>Partner with engineering</li></ul>",
+    "tags": ["product", "ai", "manager"],
+    "date": "2026-09-30",
+    "url": "https://remoteok.example/remote-jobs/rk-1001",
+    "apply_url": "https://remoteok.example/remote-jobs/rk-1001",
+    "salary_min": 120000
+  },
+  {
+    "id": "rk-1001",
+    "company": "Northwind Analytics",
+    "position": "AI Product Manager",
+    "location": "Remote / US",
+    "description": "<p>Own the roadmap for our <b>AI</b> platform.</p><ul><li>Define product requirements</li><li>Partner with engineering</li></ul><p>(#RMS4yMDMuMTEwLjE1Ng==)</p>",
+    "tags": ["product", "ai", "manager"],
+    "date": "2026-09-30",
+    "url": "https://remoteok.example/remote-jobs/rk-1001",
+    "apply_url": "https://remoteok.example/remote-jobs/rk-1001",
+    "salary_min": 120000
+  },
+  {
+    "id": "rk-1002",
+    "company": "Northwind Analytics",
+    "position": "Data Engineer",
+    "location": "Remote / EU",
+    "description": "<p>Build pipelines for our analytics warehouse.</p>",
+    "tags": ["data", "engineer"],
+    "date": "2026-10-01",
+    "url": "https://remoteok.example/remote-jobs/rk-1002",
+    "apply_url": "https://remoteok.example/remote-jobs/rk-1002"
+  },
+  {
+    "id": "rk-1003",
+    "company": "Lumen Robotics",
+    "position": "AI Product Manager",
+    "location": "Remote / Worldwide",
+    "description": "<p>Lead <b>AI</b> agent product lines from 0 to 1.</p>",
+    "tags": ["product", "ai"],
+    "date": "2026-10-02",
+    "url": "https://remoteok.example/remote-jobs/rk-1003",
+    "apply_url": "https://remoteok.example/remote-jobs/rk-1003"
+  },
+  {
+    "id": "rk-1004",
+    "company": "Cobalt Labs",
+    "position": "AI Product Management Intern",
+    "location": "Remote / US",
+    "description": "<p>Summer <b>internship</b> for an AI product team. Current students only.</p>",
+    "tags": ["product", "ai", "intern"],
+    "date": "2026-10-03",
+    "url": "https://remoteok.example/remote-jobs/rk-1004",
+    "apply_url": "https://remoteok.example/remote-jobs/rk-1004"
+  },
+  {
+    "id": "rk-1005",
+    "company": "Vertex Health",
+    "position": "Compliance Lead",
+    "location": "",
+    "description": "<p>Own HIPAA compliance documentation.</p><script>alert('x')</script>",
+    "tags": ["legal"],
+    "date": null,
+    "url": "https://remoteok.example/remote-jobs/rk-1005",
+    "apply_url": ""
+  }
+]

@@ -1,0 +1,444 @@
+{
+  "ran_at": "2026-10-16T20:50:22.212Z",
+  "web": "http://127.0.0.1:3000",
+  "api": "http://127.0.0.1:8100",
+  "profile_id": "a540bbe8-de8c-4a47-8d49-d2ef63c9b4f0",
+  "keywords": [
+    "ai",
+    "product"
+  ],
+  "source": "RemoteOK",
+  "total": 17,
+  "passed": 17,
+  "failed": 0,
+  "results": [
+    {
+      "step": "setup",
+      "name": "创建隔离测试档案",
+      "ok": true,
+      "detail": "profile=a540bbe8"
+    },
+    {
+      "step": 1,
+      "name": "打开岗位广场",
+      "ok": true,
+      "detail": "岗位广场"
+    },
+    {
+      "step": 2,
+      "name": "进入「一键采集岗位」区块",
+      "ok": true,
+      "detail": "1 · 一键采集岗位"
+    },
+    {
+      "step": 3,
+      "name": "输入关键词",
+      "ok": true,
+      "detail": "ai / product"
+    },
+    {
+      "step": 4,
+      "name": "选择公开来源",
+      "ok": true,
+      "detail": "来源=RemoteOK 选中态=true"
+    },
+    {
+      "step": 5,
+      "name": "点击开始采集",
+      "ok": true,
+      "detail": "任务状态：采集中"
+    },
+    {
+      "step": 6,
+      "name": "等待任务结束",
+      "ok": true,
+      "detail": "任务状态：采集完成"
+    },
+    {
+      "step": 7,
+      "name": "真实采集结果非空",
+      "ok": true,
+      "detail": "20 行 | "
+    },
+    {
+      "step": 8,
+      "name": "勾选符合条件的岗位",
+      "ok": true,
+      "detail": "勾选 5 条，首条=iMerit Technology / AI Trainer"
+    },
+    {
+      "step": 9,
+      "name": "批量保存写入岗位库",
+      "ok": true,
+      "detail": "新增保存 20 条"
+    },
+    {
+      "step": 10,
+      "name": "刷新后保存结果仍在",
+      "ok": true,
+      "detail": "岗位库 20 条"
+    },
+    {
+      "step": 11,
+      "name": "重复采集去重正常（已存在计数 > 0）",
+      "ok": true,
+      "detail": "已存在 20 条（不再新增）"
+    },
+    {
+      "step": 12,
+      "name": "打开新导入的岗位（含原始链接）",
+      "ok": true,
+      "detail": "iMerit Technology / AI Trainer → https://remoteOK.com/remote-jobs/remote-ai-trainer-imerit-technology-1"
+    },
+    {
+      "step": 13,
+      "name": "可查看完整 JD 正文",
+      "ok": true,
+      "detail": "JD 正文 1976 字"
+    },
+    {
+      "step": 14,
+      "name": "点击匹配分析跳转",
+      "ok": true,
+      "detail": "http://127.0.0.1:3000/missions/a4c1c421-0242-4e1a-a4ca-b9ff25b53a06/role"
+    },
+    {
+      "step": 15,
+      "name": "岗位已进入 Mission 链路",
+      "ok": true,
+      "detail": "http://127.0.0.1:3000/missions/a4c1c421-0242-4e1a-a4ca-b9ff25b53a06/role"
+    },
+    {
+      "step": "db",
+      "name": "数据库读取验证（岗位库 API）",
+      "ok": true,
+      "detail": "{\"http_status\":200,\"item_count\":21,\"sample\":[{\"kind\":\"CANDIDATE\",\"company\":\"iMerit Technology\",\"role\":\"AI Trainer\",\"location\":\"US, UK, Canada, Australia + 35 other countries\",\"source_url\":\"https://rem"
+    }
+  ],
+  "api_log": [
+    {
+      "step": "setup",
+      "method": "POST",
+      "path": "/api/v1/profiles/draft",
+      "status": 201
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-ingest/sources",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/profiles/a540bbe8-de8c-4a47-8d49-d2ef63c9b4f0/job-ingest/library",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-ingest/bridge-status",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-ingest/sources",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/profiles/a540bbe8-de8c-4a47-8d49-d2ef63c9b4f0/job-ingest/library",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-ingest/bridge-status",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "POST",
+      "path": "/api/v1/profiles/a540bbe8-de8c-4a47-8d49-d2ef63c9b4f0/job-ingest/collect-runs",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-ingest/collect-runs/task-62860f863823",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-ingest/collect-runs/task-62860f863823",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-ingest/collect-runs/task-62860f863823",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-ingest/collect-runs/task-62860f863823",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "POST",
+      "path": "/api/v1/profiles/a540bbe8-de8c-4a47-8d49-d2ef63c9b4f0/job-ingest/save-collected",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/profiles/a540bbe8-de8c-4a47-8d49-d2ef63c9b4f0/job-ingest/library",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-ingest/sources",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/profiles/a540bbe8-de8c-4a47-8d49-d2ef63c9b4f0/job-ingest/library",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-ingest/bridge-status",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "POST",
+      "path": "/api/v1/profiles/a540bbe8-de8c-4a47-8d49-d2ef63c9b4f0/job-ingest/collect-runs",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-ingest/collect-runs/task-781543316981",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-ingest/collect-runs/task-781543316981",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-ingest/collect-runs/task-781543316981",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-ingest/collect-runs/task-781543316981",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "POST",
+      "path": "/api/v1/profiles/a540bbe8-de8c-4a47-8d49-d2ef63c9b4f0/job-ingest/save-collected",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "POST",
+      "path": "/api/v1/candidate-jobs/59b88657-762e-4168-980c-f1eeba8cfd76/import",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/profiles/a540bbe8-de8c-4a47-8d49-d2ef63c9b4f0/job-ingest/library",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-missions/a4c1c421-0242-4e1a-a4ca-b9ff25b53a06",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-missions/a4c1c421-0242-4e1a-a4ca-b9ff25b53a06",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-missions/a4c1c421-0242-4e1a-a4ca-b9ff25b53a06/target-resumes",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-missions/a4c1c421-0242-4e1a-a4ca-b9ff25b53a06/experience-selection",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/profiles/a540bbe8-de8c-4a47-8d49-d2ef63c9b4f0",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/target-jobs/5f4115f1-e54b-466e-8c02-7d0f7acb9ee1",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-missions/a4c1c421-0242-4e1a-a4ca-b9ff25b53a06/match-analysis",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-missions/a4c1c421-0242-4e1a-a4ca-b9ff25b53a06/target-resumes",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-missions/a4c1c421-0242-4e1a-a4ca-b9ff25b53a06/readiness",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/profiles/a540bbe8-de8c-4a47-8d49-d2ef63c9b4f0",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-missions/a4c1c421-0242-4e1a-a4ca-b9ff25b53a06/red-team",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-missions/a4c1c421-0242-4e1a-a4ca-b9ff25b53a06/experience-selection",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-missions/a4c1c421-0242-4e1a-a4ca-b9ff25b53a06/interview-pack",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-missions/a4c1c421-0242-4e1a-a4ca-b9ff25b53a06/proof-snapshot",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-missions/a4c1c421-0242-4e1a-a4ca-b9ff25b53a06/proof",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-missions/a4c1c421-0242-4e1a-a4ca-b9ff25b53a06/match-analysis",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-missions/a4c1c421-0242-4e1a-a4ca-b9ff25b53a06/red-team",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-missions/a4c1c421-0242-4e1a-a4ca-b9ff25b53a06/readiness",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-missions/a4c1c421-0242-4e1a-a4ca-b9ff25b53a06/interview-pack",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-missions/a4c1c421-0242-4e1a-a4ca-b9ff25b53a06/proof-snapshot",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-missions/a4c1c421-0242-4e1a-a4ca-b9ff25b53a06/proof",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-missions/a4c1c421-0242-4e1a-a4ca-b9ff25b53a06/job-analysis",
+      "status": 200
+    },
+    {
+      "step": "browser",
+      "method": "GET",
+      "path": "/api/v1/job-missions/a4c1c421-0242-4e1a-a4ca-b9ff25b53a06/job-analysis",
+      "status": 200
+    },
+    {
+      "step": "db-verify",
+      "method": "GET",
+      "path": "/api/v1/profiles/a540bbe8-de8c-4a47-8d49-d2ef63c9b4f0/job-ingest/library",
+      "status": 200
+    }
+  ],
+  "db_check": {
+    "http_status": 200,
+    "item_count": 21,
+    "sample": [
+      {
+        "kind": "CANDIDATE",
+        "company": "iMerit Technology",
+        "role": "AI Trainer",
+        "location": "US, UK, Canada, Australia + 35 other countries",
+        "source_url": "https://remoteOK.com/remote-jobs/remote-ai-trainer-imerit-technology-1137513",
+        "parse_status": "PARSED"
+      },
+      {
+        "kind": "CANDIDATE",
+        "company": "Thyme Care",
+        "role": "Principal Product Manager Strategic Initiatives",
+        "location": "Remote",
+        "source_url": "https://remoteOK.com/remote-jobs/remote-principal-product-manager-strategic-initiatives-thyme-care-1137510",
+        "parse_status": "PARSED"
+      },
+      {
+        "kind": "CANDIDATE",
+        "company": "Midnite",
+        "role": "Product Design Director",
+        "location": "United Kingdom",
+        "source_url": "https://remoteOK.com/remote-jobs/remote-product-design-director-midnite-1137497",
+        "parse_status": "PARSED"
+      }
+    ]
+  }
+}
