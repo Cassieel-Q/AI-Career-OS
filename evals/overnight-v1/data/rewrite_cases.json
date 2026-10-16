@@ -1,0 +1,1200 @@
+[
+  {
+    "id": "rw-001",
+    "pair_id": "pr-001",
+    "resume_id": "rs-01",
+    "jd_id": "jd-001",
+    "bullet_index": 0,
+    "original_bullet": "负责智能客服机器人的需求拆解与迭代排期，跟进 3 个版本上线",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-002",
+    "pair_id": "pr-001",
+    "resume_id": "rs-01",
+    "jd_id": "jd-001",
+    "bullet_index": 1,
+    "original_bullet": "搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-003",
+    "pair_id": "pr-001",
+    "resume_id": "rs-01",
+    "jd_id": "jd-001",
+    "bullet_index": 2,
+    "original_bullet": "通过埋点分析定位回复质量下降原因，推动 prompt 优化后问题解决率提升",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-004",
+    "pair_id": "pr-002",
+    "resume_id": "rs-02",
+    "jd_id": "jd-011",
+    "bullet_index": 0,
+    "original_bullet": "搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-005",
+    "pair_id": "pr-002",
+    "resume_id": "rs-02",
+    "jd_id": "jd-011",
+    "bullet_index": 1,
+    "original_bullet": "设计 A/B 实验评估流程，完成 15 组营销活动的效果归因与复盘",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-006",
+    "pair_id": "pr-002",
+    "resume_id": "rs-02",
+    "jd_id": "jd-011",
+    "bullet_index": 2,
+    "original_bullet": "用 SQL 与 Python 清洗订单数据，将报表出数时间从 2 天压缩到 4 小时",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-007",
+    "pair_id": "pr-003",
+    "resume_id": "rs-03",
+    "jd_id": "jd-016",
+    "bullet_index": 0,
+    "original_bullet": "负责小红书内容排期与选题库维护，累计产出 60 篇笔记",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-008",
+    "pair_id": "pr-003",
+    "resume_id": "rs-03",
+    "jd_id": "jd-016",
+    "bullet_index": 1,
+    "original_bullet": "联动 3 个达人完成新品测评合作，曝光量 12 万",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-009",
+    "pair_id": "pr-003",
+    "resume_id": "rs-03",
+    "jd_id": "jd-016",
+    "bullet_index": 2,
+    "original_bullet": "整理投放复盘模板，团队复用 5 次",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-010",
+    "pair_id": "pr-004",
+    "resume_id": "rs-04",
+    "jd_id": "jd-006",
+    "bullet_index": 0,
+    "original_bullet": "参与订单服务重构，把下单接口平均响应时间从 480ms 降到 210ms",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-011",
+    "pair_id": "pr-004",
+    "resume_id": "rs-04",
+    "jd_id": "jd-006",
+    "bullet_index": 1,
+    "original_bullet": "搭建灰度发布与回滚流程，覆盖 6 个核心服务",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-012",
+    "pair_id": "pr-004",
+    "resume_id": "rs-04",
+    "jd_id": "jd-006",
+    "bullet_index": 2,
+    "original_bullet": "补齐单元测试与 CI 卡点，主分支回归缺陷数下降约 40%",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-013",
+    "pair_id": "pr-005",
+    "resume_id": "rs-05",
+    "jd_id": "jd-021",
+    "bullet_index": 0,
+    "original_bullet": "参与中后台设计规范组件整理，输出 40+ 个组件",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-014",
+    "pair_id": "pr-005",
+    "resume_id": "rs-05",
+    "jd_id": "jd-021",
+    "bullet_index": 1,
+    "original_bullet": "独立完成 2 个运营活动页设计，上线后点击率提升 18%",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-015",
+    "pair_id": "pr-005",
+    "resume_id": "rs-05",
+    "jd_id": "jd-021",
+    "bullet_index": 2,
+    "original_bullet": "协助维护 Figma 组件库与切图交付流程",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-016",
+    "pair_id": "pr-006",
+    "resume_id": "rs-06",
+    "jd_id": "jd-025",
+    "bullet_index": 0,
+    "original_bullet": "负责教育行业 KA 客户开发与续约，年度回款完成率 108%",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-017",
+    "pair_id": "pr-006",
+    "resume_id": "rs-06",
+    "jd_id": "jd-025",
+    "bullet_index": 1,
+    "original_bullet": "主导 3 个百万级客单的投标与谈判，平均销售周期 4 个月",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-018",
+    "pair_id": "pr-006",
+    "resume_id": "rs-06",
+    "jd_id": "jd-025",
+    "bullet_index": 2,
+    "original_bullet": "搭建客户分层跟进机制，重点客户季度拜访覆盖率 100%",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-019",
+    "pair_id": "pr-007",
+    "resume_id": "rs-07",
+    "jd_id": "jd-029",
+    "bullet_index": 0,
+    "original_bullet": "负责工程师岗位全流程招聘，年均入职 35 人",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-020",
+    "pair_id": "pr-007",
+    "resume_id": "rs-07",
+    "jd_id": "jd-029",
+    "bullet_index": 1,
+    "original_bullet": "重建技术岗面试评估表，面试通过率与入职一年留存同步提升",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-021",
+    "pair_id": "pr-007",
+    "resume_id": "rs-07",
+    "jd_id": "jd-029",
+    "bullet_index": 2,
+    "original_bullet": "管理 4 家招聘渠道供应商并季度复盘",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-022",
+    "pair_id": "pr-008",
+    "resume_id": "rs-08",
+    "jd_id": "jd-026",
+    "bullet_index": 0,
+    "original_bullet": "负责 60 家存量客户的续费与增购，续费率 91%",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-023",
+    "pair_id": "pr-008",
+    "resume_id": "rs-08",
+    "jd_id": "jd-026",
+    "bullet_index": 1,
+    "original_bullet": "搭建客户健康分模型，提前 60 天识别流失风险客户",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-024",
+    "pair_id": "pr-008",
+    "resume_id": "rs-08",
+    "jd_id": "jd-026",
+    "bullet_index": 2,
+    "original_bullet": "组织 12 场线上客户培训，NPS 提升 9 分",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-025",
+    "pair_id": "pr-009",
+    "resume_id": "rs-09",
+    "jd_id": "jd-007",
+    "bullet_index": 0,
+    "original_bullet": "设计并落地服务网格流量治理方案，线上故障平均恢复时间缩短 60%",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-026",
+    "pair_id": "pr-009",
+    "resume_id": "rs-09",
+    "jd_id": "jd-007",
+    "bullet_index": 1,
+    "original_bullet": "开发配置中心与任务调度中间件，支撑 200+ 微服务",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-027",
+    "pair_id": "pr-009",
+    "resume_id": "rs-09",
+    "jd_id": "jd-007",
+    "bullet_index": 2,
+    "original_bullet": "主导技术方案评审流程，输出团队技术雷达",
+    "ground_truth": {
+      "expected_decision": "KEEP_AND_HIGHLIGHT",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-028",
+    "pair_id": "pr-010",
+    "resume_id": "rs-10",
+    "jd_id": "jd-030",
+    "bullet_index": 0,
+    "original_bullet": "协助校园招聘宣讲会执行 8 场，收集简历 1500+ 份",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-029",
+    "pair_id": "pr-010",
+    "resume_id": "rs-10",
+    "jd_id": "jd-030",
+    "bullet_index": 1,
+    "original_bullet": "维护招聘进度看板，候选人跟进时效从 5 天缩短到 2 天",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-030",
+    "pair_id": "pr-011",
+    "resume_id": "rs-01",
+    "jd_id": "jd-005",
+    "bullet_index": 0,
+    "original_bullet": "负责智能客服机器人的需求拆解与迭代排期，跟进 3 个版本上线",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-031",
+    "pair_id": "pr-011",
+    "resume_id": "rs-01",
+    "jd_id": "jd-005",
+    "bullet_index": 1,
+    "original_bullet": "搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-032",
+    "pair_id": "pr-011",
+    "resume_id": "rs-01",
+    "jd_id": "jd-005",
+    "bullet_index": 2,
+    "original_bullet": "通过埋点分析定位回复质量下降原因，推动 prompt 优化后问题解决率提升",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-033",
+    "pair_id": "pr-012",
+    "resume_id": "rs-02",
+    "jd_id": "jd-012",
+    "bullet_index": 0,
+    "original_bullet": "搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-034",
+    "pair_id": "pr-012",
+    "resume_id": "rs-02",
+    "jd_id": "jd-012",
+    "bullet_index": 1,
+    "original_bullet": "设计 A/B 实验评估流程，完成 15 组营销活动的效果归因与复盘",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-035",
+    "pair_id": "pr-012",
+    "resume_id": "rs-02",
+    "jd_id": "jd-012",
+    "bullet_index": 2,
+    "original_bullet": "用 SQL 与 Python 清洗订单数据，将报表出数时间从 2 天压缩到 4 小时",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-036",
+    "pair_id": "pr-013",
+    "resume_id": "rs-02",
+    "jd_id": "jd-014",
+    "bullet_index": 0,
+    "original_bullet": "搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-037",
+    "pair_id": "pr-013",
+    "resume_id": "rs-02",
+    "jd_id": "jd-014",
+    "bullet_index": 1,
+    "original_bullet": "设计 A/B 实验评估流程，完成 15 组营销活动的效果归因与复盘",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-038",
+    "pair_id": "pr-013",
+    "resume_id": "rs-02",
+    "jd_id": "jd-014",
+    "bullet_index": 2,
+    "original_bullet": "用 SQL 与 Python 清洗订单数据，将报表出数时间从 2 天压缩到 4 小时",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-039",
+    "pair_id": "pr-014",
+    "resume_id": "rs-03",
+    "jd_id": "jd-018",
+    "bullet_index": 0,
+    "original_bullet": "负责小红书内容排期与选题库维护，累计产出 60 篇笔记",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-040",
+    "pair_id": "pr-014",
+    "resume_id": "rs-03",
+    "jd_id": "jd-018",
+    "bullet_index": 1,
+    "original_bullet": "联动 3 个达人完成新品测评合作，曝光量 12 万",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-041",
+    "pair_id": "pr-014",
+    "resume_id": "rs-03",
+    "jd_id": "jd-018",
+    "bullet_index": 2,
+    "original_bullet": "整理投放复盘模板，团队复用 5 次",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-042",
+    "pair_id": "pr-015",
+    "resume_id": "rs-04",
+    "jd_id": "jd-008",
+    "bullet_index": 0,
+    "original_bullet": "参与订单服务重构，把下单接口平均响应时间从 480ms 降到 210ms",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-043",
+    "pair_id": "pr-015",
+    "resume_id": "rs-04",
+    "jd_id": "jd-008",
+    "bullet_index": 1,
+    "original_bullet": "搭建灰度发布与回滚流程，覆盖 6 个核心服务",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-044",
+    "pair_id": "pr-015",
+    "resume_id": "rs-04",
+    "jd_id": "jd-008",
+    "bullet_index": 2,
+    "original_bullet": "补齐单元测试与 CI 卡点，主分支回归缺陷数下降约 40%",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-045",
+    "pair_id": "pr-016",
+    "resume_id": "rs-05",
+    "jd_id": "jd-022",
+    "bullet_index": 0,
+    "original_bullet": "参与中后台设计规范组件整理，输出 40+ 个组件",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-046",
+    "pair_id": "pr-016",
+    "resume_id": "rs-05",
+    "jd_id": "jd-022",
+    "bullet_index": 1,
+    "original_bullet": "独立完成 2 个运营活动页设计，上线后点击率提升 18%",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-047",
+    "pair_id": "pr-016",
+    "resume_id": "rs-05",
+    "jd_id": "jd-022",
+    "bullet_index": 2,
+    "original_bullet": "协助维护 Figma 组件库与切图交付流程",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-048",
+    "pair_id": "pr-017",
+    "resume_id": "rs-06",
+    "jd_id": "jd-027",
+    "bullet_index": 0,
+    "original_bullet": "负责教育行业 KA 客户开发与续约，年度回款完成率 108%",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-049",
+    "pair_id": "pr-017",
+    "resume_id": "rs-06",
+    "jd_id": "jd-027",
+    "bullet_index": 1,
+    "original_bullet": "主导 3 个百万级客单的投标与谈判，平均销售周期 4 个月",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-050",
+    "pair_id": "pr-017",
+    "resume_id": "rs-06",
+    "jd_id": "jd-027",
+    "bullet_index": 2,
+    "original_bullet": "搭建客户分层跟进机制，重点客户季度拜访覆盖率 100%",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-051",
+    "pair_id": "pr-018",
+    "resume_id": "rs-08",
+    "jd_id": "jd-025",
+    "bullet_index": 0,
+    "original_bullet": "负责 60 家存量客户的续费与增购，续费率 91%",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-052",
+    "pair_id": "pr-018",
+    "resume_id": "rs-08",
+    "jd_id": "jd-025",
+    "bullet_index": 1,
+    "original_bullet": "搭建客户健康分模型，提前 60 天识别流失风险客户",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-053",
+    "pair_id": "pr-018",
+    "resume_id": "rs-08",
+    "jd_id": "jd-025",
+    "bullet_index": 2,
+    "original_bullet": "组织 12 场线上客户培训，NPS 提升 9 分",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-054",
+    "pair_id": "pr-019",
+    "resume_id": "rs-09",
+    "jd_id": "jd-009",
+    "bullet_index": 0,
+    "original_bullet": "设计并落地服务网格流量治理方案，线上故障平均恢复时间缩短 60%",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-055",
+    "pair_id": "pr-019",
+    "resume_id": "rs-09",
+    "jd_id": "jd-009",
+    "bullet_index": 1,
+    "original_bullet": "开发配置中心与任务调度中间件，支撑 200+ 微服务",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-056",
+    "pair_id": "pr-019",
+    "resume_id": "rs-09",
+    "jd_id": "jd-009",
+    "bullet_index": 2,
+    "original_bullet": "主导技术方案评审流程，输出团队技术雷达",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-057",
+    "pair_id": "pr-020",
+    "resume_id": "rs-10",
+    "jd_id": "jd-029",
+    "bullet_index": 0,
+    "original_bullet": "协助校园招聘宣讲会执行 8 场，收集简历 1500+ 份",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-058",
+    "pair_id": "pr-020",
+    "resume_id": "rs-10",
+    "jd_id": "jd-029",
+    "bullet_index": 1,
+    "original_bullet": "维护招聘进度看板，候选人跟进时效从 5 天缩短到 2 天",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-059",
+    "pair_id": "pr-021",
+    "resume_id": "rs-07",
+    "jd_id": "jd-030",
+    "bullet_index": 0,
+    "original_bullet": "负责工程师岗位全流程招聘，年均入职 35 人",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-060",
+    "pair_id": "pr-021",
+    "resume_id": "rs-07",
+    "jd_id": "jd-030",
+    "bullet_index": 1,
+    "original_bullet": "重建技术岗面试评估表，面试通过率与入职一年留存同步提升",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-061",
+    "pair_id": "pr-021",
+    "resume_id": "rs-07",
+    "jd_id": "jd-030",
+    "bullet_index": 2,
+    "original_bullet": "管理 4 家招聘渠道供应商并季度复盘",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-062",
+    "pair_id": "pr-022",
+    "resume_id": "rs-03",
+    "jd_id": "jd-017",
+    "bullet_index": 0,
+    "original_bullet": "负责小红书内容排期与选题库维护，累计产出 60 篇笔记",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-063",
+    "pair_id": "pr-022",
+    "resume_id": "rs-03",
+    "jd_id": "jd-017",
+    "bullet_index": 1,
+    "original_bullet": "联动 3 个达人完成新品测评合作，曝光量 12 万",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-064",
+    "pair_id": "pr-022",
+    "resume_id": "rs-03",
+    "jd_id": "jd-017",
+    "bullet_index": 2,
+    "original_bullet": "整理投放复盘模板，团队复用 5 次",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-065",
+    "pair_id": "pr-023",
+    "resume_id": "rs-05",
+    "jd_id": "jd-011",
+    "bullet_index": 0,
+    "original_bullet": "参与中后台设计规范组件整理，输出 40+ 个组件",
+    "ground_truth": {
+      "expected_decision": "DEEMPHASIZE",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-066",
+    "pair_id": "pr-023",
+    "resume_id": "rs-05",
+    "jd_id": "jd-011",
+    "bullet_index": 1,
+    "original_bullet": "独立完成 2 个运营活动页设计，上线后点击率提升 18%",
+    "ground_truth": {
+      "expected_decision": "OMIT",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": [
+        "任何把被省略要点改写成强相关的表述"
+      ]
+    }
+  },
+  {
+    "id": "rw-067",
+    "pair_id": "pr-023",
+    "resume_id": "rs-05",
+    "jd_id": "jd-011",
+    "bullet_index": 2,
+    "original_bullet": "协助维护 Figma 组件库与切图交付流程",
+    "ground_truth": {
+      "expected_decision": "OMIT",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": [
+        "任何把被省略要点改写成强相关的表述"
+      ]
+    }
+  },
+  {
+    "id": "rw-068",
+    "pair_id": "pr-024",
+    "resume_id": "rs-06",
+    "jd_id": "jd-030",
+    "bullet_index": 0,
+    "original_bullet": "负责教育行业 KA 客户开发与续约，年度回款完成率 108%",
+    "ground_truth": {
+      "expected_decision": "DEEMPHASIZE",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-069",
+    "pair_id": "pr-024",
+    "resume_id": "rs-06",
+    "jd_id": "jd-030",
+    "bullet_index": 1,
+    "original_bullet": "主导 3 个百万级客单的投标与谈判，平均销售周期 4 个月",
+    "ground_truth": {
+      "expected_decision": "OMIT",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": [
+        "任何把被省略要点改写成强相关的表述"
+      ]
+    }
+  },
+  {
+    "id": "rw-070",
+    "pair_id": "pr-024",
+    "resume_id": "rs-06",
+    "jd_id": "jd-030",
+    "bullet_index": 2,
+    "original_bullet": "搭建客户分层跟进机制，重点客户季度拜访覆盖率 100%",
+    "ground_truth": {
+      "expected_decision": "OMIT",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": [
+        "任何把被省略要点改写成强相关的表述"
+      ]
+    }
+  },
+  {
+    "id": "rw-071",
+    "pair_id": "pr-025",
+    "resume_id": "rs-04",
+    "jd_id": "jd-025",
+    "bullet_index": 0,
+    "original_bullet": "参与订单服务重构，把下单接口平均响应时间从 480ms 降到 210ms",
+    "ground_truth": {
+      "expected_decision": "DEEMPHASIZE",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-072",
+    "pair_id": "pr-025",
+    "resume_id": "rs-04",
+    "jd_id": "jd-025",
+    "bullet_index": 1,
+    "original_bullet": "搭建灰度发布与回滚流程，覆盖 6 个核心服务",
+    "ground_truth": {
+      "expected_decision": "OMIT",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": [
+        "任何把被省略要点改写成强相关的表述"
+      ]
+    }
+  },
+  {
+    "id": "rw-073",
+    "pair_id": "pr-025",
+    "resume_id": "rs-04",
+    "jd_id": "jd-025",
+    "bullet_index": 2,
+    "original_bullet": "补齐单元测试与 CI 卡点，主分支回归缺陷数下降约 40%",
+    "ground_truth": {
+      "expected_decision": "OMIT",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": [
+        "任何把被省略要点改写成强相关的表述"
+      ]
+    }
+  },
+  {
+    "id": "rw-074",
+    "pair_id": "pr-026",
+    "resume_id": "rs-02",
+    "jd_id": "jd-006",
+    "bullet_index": 0,
+    "original_bullet": "搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标",
+    "ground_truth": {
+      "expected_decision": "DEEMPHASIZE",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-075",
+    "pair_id": "pr-026",
+    "resume_id": "rs-02",
+    "jd_id": "jd-006",
+    "bullet_index": 1,
+    "original_bullet": "设计 A/B 实验评估流程，完成 15 组营销活动的效果归因与复盘",
+    "ground_truth": {
+      "expected_decision": "OMIT",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": [
+        "任何把被省略要点改写成强相关的表述"
+      ]
+    }
+  },
+  {
+    "id": "rw-076",
+    "pair_id": "pr-026",
+    "resume_id": "rs-02",
+    "jd_id": "jd-006",
+    "bullet_index": 2,
+    "original_bullet": "用 SQL 与 Python 清洗订单数据，将报表出数时间从 2 天压缩到 4 小时",
+    "ground_truth": {
+      "expected_decision": "OMIT",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": [
+        "任何把被省略要点改写成强相关的表述"
+      ]
+    }
+  },
+  {
+    "id": "rw-077",
+    "pair_id": "pr-027",
+    "resume_id": "rs-07",
+    "jd_id": "jd-026",
+    "bullet_index": 0,
+    "original_bullet": "负责工程师岗位全流程招聘，年均入职 35 人",
+    "ground_truth": {
+      "expected_decision": "DEEMPHASIZE",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-078",
+    "pair_id": "pr-027",
+    "resume_id": "rs-07",
+    "jd_id": "jd-026",
+    "bullet_index": 1,
+    "original_bullet": "重建技术岗面试评估表，面试通过率与入职一年留存同步提升",
+    "ground_truth": {
+      "expected_decision": "OMIT",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": [
+        "任何把被省略要点改写成强相关的表述"
+      ]
+    }
+  },
+  {
+    "id": "rw-079",
+    "pair_id": "pr-027",
+    "resume_id": "rs-07",
+    "jd_id": "jd-026",
+    "bullet_index": 2,
+    "original_bullet": "管理 4 家招聘渠道供应商并季度复盘",
+    "ground_truth": {
+      "expected_decision": "OMIT",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": [
+        "任何把被省略要点改写成强相关的表述"
+      ]
+    }
+  },
+  {
+    "id": "rw-080",
+    "pair_id": "pr-028",
+    "resume_id": "rs-01",
+    "jd_id": "jd-021",
+    "bullet_index": 0,
+    "original_bullet": "负责智能客服机器人的需求拆解与迭代排期，跟进 3 个版本上线",
+    "ground_truth": {
+      "expected_decision": "DEEMPHASIZE",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-081",
+    "pair_id": "pr-028",
+    "resume_id": "rs-01",
+    "jd_id": "jd-021",
+    "bullet_index": 1,
+    "original_bullet": "搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检",
+    "ground_truth": {
+      "expected_decision": "OMIT",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": [
+        "任何把被省略要点改写成强相关的表述"
+      ]
+    }
+  },
+  {
+    "id": "rw-082",
+    "pair_id": "pr-028",
+    "resume_id": "rs-01",
+    "jd_id": "jd-021",
+    "bullet_index": 2,
+    "original_bullet": "通过埋点分析定位回复质量下降原因，推动 prompt 优化后问题解决率提升",
+    "ground_truth": {
+      "expected_decision": "OMIT",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": [
+        "任何把被省略要点改写成强相关的表述"
+      ]
+    }
+  },
+  {
+    "id": "rw-083",
+    "pair_id": "pr-029",
+    "resume_id": "rs-09",
+    "jd_id": "jd-010",
+    "bullet_index": 0,
+    "original_bullet": "设计并落地服务网格流量治理方案，线上故障平均恢复时间缩短 60%",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-084",
+    "pair_id": "pr-029",
+    "resume_id": "rs-09",
+    "jd_id": "jd-010",
+    "bullet_index": 1,
+    "original_bullet": "开发配置中心与任务调度中间件，支撑 200+ 微服务",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-085",
+    "pair_id": "pr-029",
+    "resume_id": "rs-09",
+    "jd_id": "jd-010",
+    "bullet_index": 2,
+    "original_bullet": "主导技术方案评审流程，输出团队技术雷达",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-086",
+    "pair_id": "pr-030",
+    "resume_id": "rs-08",
+    "jd_id": "jd-014",
+    "bullet_index": 0,
+    "original_bullet": "负责 60 家存量客户的续费与增购，续费率 91%",
+    "ground_truth": {
+      "expected_decision": "DEEMPHASIZE",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-087",
+    "pair_id": "pr-030",
+    "resume_id": "rs-08",
+    "jd_id": "jd-014",
+    "bullet_index": 1,
+    "original_bullet": "搭建客户健康分模型，提前 60 天识别流失风险客户",
+    "ground_truth": {
+      "expected_decision": "OMIT",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": [
+        "任何把被省略要点改写成强相关的表述"
+      ]
+    }
+  },
+  {
+    "id": "rw-088",
+    "pair_id": "pr-030",
+    "resume_id": "rs-08",
+    "jd_id": "jd-014",
+    "bullet_index": 2,
+    "original_bullet": "组织 12 场线上客户培训，NPS 提升 9 分",
+    "ground_truth": {
+      "expected_decision": "OMIT",
+      "fact_status": "NEEDS_CONFIRMATION",
+      "forbidden": [
+        "任何把被省略要点改写成强相关的表述"
+      ]
+    }
+  },
+  {
+    "id": "rw-089",
+    "pair_id": "pr-001",
+    "resume_id": "rs-01",
+    "jd_id": "jd-001",
+    "bullet_index": 3,
+    "original_bullet": "担任产品负责人，完成从需求调研到上线的完整闭环，累计注册用户 800+",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  },
+  {
+    "id": "rw-090",
+    "pair_id": "pr-002",
+    "resume_id": "rs-02",
+    "jd_id": "jd-011",
+    "bullet_index": 3,
+    "original_bullet": "基于历史行为特征建立流失预警模型，召回率 0.72",
+    "ground_truth": {
+      "expected_decision": "KEEP",
+      "fact_status": "SUPPORTED",
+      "forbidden": []
+    }
+  }
+]

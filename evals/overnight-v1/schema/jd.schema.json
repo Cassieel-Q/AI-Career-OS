@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Overnight Benchmark JD",
+  "type": "object",
+  "required": ["id", "source", "title", "company_type", "city", "seniority", "responsibilities", "requirements", "differentiators"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {"type": "string", "pattern": "^jd-[0-9]{3}$"},
+    "source": {"enum": ["REAL_AUTHORIZED", "PUBLIC_SOURCE", "SYNTHETIC", "DEMO"]},
+    "source_note": {"type": "string"},
+    "title": {"type": "string", "minLength": 2},
+    "category": {"enum": ["AI_PRODUCT", "BACKEND", "DATA_ANALYST", "CONTENT_OPS", "UI_DESIGN", "SALES_CS", "HR"]},
+    "company_type": {"type": "string"},
+    "city": {"type": "string"},
+    "seniority": {"enum": ["INTERN", "JUNIOR", "MID", "SENIOR"]},
+    "responsibilities": {"type": "array", "minItems": 3, "maxItems": 8, "items": {"type": "string", "minLength": 6}},
+    "requirements": {"type": "array", "minItems": 3, "maxItems": 8, "items": {"type": "string", "minLength": 4}},
+    "differentiators": {
+      "type": "array",
+      "minItems": 1,
+      "description": "本 JD 与同类别其它 JD 的明显差别（评测必须能区分）",
+      "items": {"type": "string"}
+    },
+    "raw_text": {"type": "string", "minLength": 40, "description": "完整 JD 原文（喂给被测系统的输入）"}
+  }
+}

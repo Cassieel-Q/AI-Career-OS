@@ -1,0 +1,291 @@
+[
+  {
+    "id": "pr-001",
+    "resume_id": "rs-01",
+    "jd_id": "jd-001",
+    "expected_fit": "STRONG",
+    "expected_focus": [
+      "智能客服实习 KEEP_AND_HIGHLIGHT",
+      "校园项目 KEEP"
+    ]
+  },
+  {
+    "id": "pr-002",
+    "resume_id": "rs-02",
+    "jd_id": "jd-011",
+    "expected_fit": "STRONG",
+    "expected_focus": [
+      "数据分析岗 KEEP_AND_HIGHLIGHT",
+      "流失模型项目 KEEP_AND_HIGHLIGHT"
+    ]
+  },
+  {
+    "id": "pr-003",
+    "resume_id": "rs-03",
+    "jd_id": "jd-016",
+    "expected_fit": "STRONG",
+    "expected_focus": [
+      "小红书实习 KEEP_AND_HIGHLIGHT"
+    ]
+  },
+  {
+    "id": "pr-004",
+    "resume_id": "rs-04",
+    "jd_id": "jd-006",
+    "expected_fit": "STRONG",
+    "expected_focus": [
+      "订单服务重构 KEEP_AND_HIGHLIGHT",
+      "调度器项目 KEEP_AND_HIGHLIGHT"
+    ]
+  },
+  {
+    "id": "pr-005",
+    "resume_id": "rs-05",
+    "jd_id": "jd-021",
+    "expected_fit": "STRONG",
+    "expected_focus": [
+      "中后台组件实习 KEEP_AND_HIGHLIGHT"
+    ]
+  },
+  {
+    "id": "pr-006",
+    "resume_id": "rs-06",
+    "jd_id": "jd-025",
+    "expected_fit": "STRONG",
+    "expected_focus": [
+      "KA 销售经历 KEEP_AND_HIGHLIGHT"
+    ]
+  },
+  {
+    "id": "pr-007",
+    "resume_id": "rs-07",
+    "jd_id": "jd-029",
+    "expected_fit": "STRONG",
+    "expected_focus": [
+      "工程师招聘经历 KEEP_AND_HIGHLIGHT"
+    ]
+  },
+  {
+    "id": "pr-008",
+    "resume_id": "rs-08",
+    "jd_id": "jd-026",
+    "expected_fit": "STRONG",
+    "expected_focus": [
+      "客户成功经历 KEEP_AND_HIGHLIGHT"
+    ]
+  },
+  {
+    "id": "pr-009",
+    "resume_id": "rs-09",
+    "jd_id": "jd-007",
+    "expected_fit": "STRONG",
+    "expected_focus": [
+      "服务网格/中间件 KEEP_AND_HIGHLIGHT",
+      "开源库 KEEP_AND_HIGHLIGHT"
+    ]
+  },
+  {
+    "id": "pr-010",
+    "resume_id": "rs-10",
+    "jd_id": "jd-030",
+    "expected_fit": "PARTIAL",
+    "expected_focus": [
+      "校园招聘协助 KEEP"
+    ]
+  },
+  {
+    "id": "pr-011",
+    "resume_id": "rs-01",
+    "jd_id": "jd-005",
+    "expected_fit": "PARTIAL",
+    "expected_focus": [
+      "埋点分析 KEEP",
+      "客服质检 KEEP",
+      "项目 OMIT 倾向弱"
+    ]
+  },
+  {
+    "id": "pr-012",
+    "resume_id": "rs-02",
+    "jd_id": "jd-012",
+    "expected_fit": "PARTIAL",
+    "expected_focus": [
+      "看板 KEEP",
+      "流失模型 KEEP",
+      "A/B 实验 KEEP"
+    ]
+  },
+  {
+    "id": "pr-013",
+    "resume_id": "rs-02",
+    "jd_id": "jd-014",
+    "expected_fit": "PARTIAL",
+    "expected_focus": [
+      "报表 KEEP",
+      "模型项目 DEEMPHASIZE（过度设计）"
+    ]
+  },
+  {
+    "id": "pr-014",
+    "resume_id": "rs-03",
+    "jd_id": "jd-018",
+    "expected_fit": "PARTIAL",
+    "expected_focus": [
+      "内容实习 KEEP"
+    ]
+  },
+  {
+    "id": "pr-015",
+    "resume_id": "rs-04",
+    "jd_id": "jd-008",
+    "expected_fit": "PARTIAL",
+    "expected_focus": [
+      "实习经历 KEEP"
+    ]
+  },
+  {
+    "id": "pr-016",
+    "resume_id": "rs-05",
+    "jd_id": "jd-022",
+    "expected_fit": "PARTIAL",
+    "expected_focus": [
+      "活动页设计 KEEP_AND_HIGHLIGHT",
+      "组件整理 KEEP"
+    ]
+  },
+  {
+    "id": "pr-017",
+    "resume_id": "rs-06",
+    "jd_id": "jd-027",
+    "expected_fit": "PARTIAL",
+    "expected_focus": [
+      "CRM 数据 KEEP",
+      "投标谈判 DEEMPHASIZE"
+    ]
+  },
+  {
+    "id": "pr-018",
+    "resume_id": "rs-08",
+    "jd_id": "jd-025",
+    "expected_fit": "PARTIAL",
+    "expected_focus": [
+      "客户沟通 KEEP",
+      "续费 KEEP"
+    ]
+  },
+  {
+    "id": "pr-019",
+    "resume_id": "rs-09",
+    "jd_id": "jd-009",
+    "expected_fit": "PARTIAL",
+    "expected_focus": [
+      "全栈能力 KEEP（前端经验缺口）"
+    ]
+  },
+  {
+    "id": "pr-020",
+    "resume_id": "rs-10",
+    "jd_id": "jd-029",
+    "expected_fit": "PARTIAL",
+    "expected_focus": [
+      "校招协助 KEEP"
+    ]
+  },
+  {
+    "id": "pr-021",
+    "resume_id": "rs-07",
+    "jd_id": "jd-030",
+    "expected_fit": "PARTIAL",
+    "expected_focus": [
+      "评估表重建 KEEP"
+    ]
+  },
+  {
+    "id": "pr-022",
+    "resume_id": "rs-03",
+    "jd_id": "jd-017",
+    "expected_fit": "PARTIAL",
+    "expected_focus": [
+      "内容排期 KEEP",
+      "图文转视频为缺口"
+    ]
+  },
+  {
+    "id": "pr-023",
+    "resume_id": "rs-05",
+    "jd_id": "jd-011",
+    "expected_fit": "WEAK",
+    "expected_focus": [
+      "点击率数据 KEEP 但不夸大",
+      "设计经历 OMIT"
+    ]
+  },
+  {
+    "id": "pr-024",
+    "resume_id": "rs-06",
+    "jd_id": "jd-030",
+    "expected_fit": "WEAK",
+    "expected_focus": [
+      "团队协作 KEEP",
+      "销售业绩 OMIT"
+    ]
+  },
+  {
+    "id": "pr-025",
+    "resume_id": "rs-04",
+    "jd_id": "jd-025",
+    "expected_fit": "WEAK",
+    "expected_focus": [
+      "跨部门协作 KEEP",
+      "后端技术 OMIT"
+    ]
+  },
+  {
+    "id": "pr-026",
+    "resume_id": "rs-02",
+    "jd_id": "jd-006",
+    "expected_fit": "WEAK",
+    "expected_focus": [
+      "SQL 清洗 KEEP",
+      "分析经验 OMIT"
+    ]
+  },
+  {
+    "id": "pr-027",
+    "resume_id": "rs-07",
+    "jd_id": "jd-026",
+    "expected_fit": "WEAK",
+    "expected_focus": [
+      "客户沟通迁移 KEEP"
+    ]
+  },
+  {
+    "id": "pr-028",
+    "resume_id": "rs-01",
+    "jd_id": "jd-021",
+    "expected_fit": "WEAK",
+    "expected_focus": [
+      "原型设计 KEEP",
+      "产品经历 OMIT"
+    ]
+  },
+  {
+    "id": "pr-029",
+    "resume_id": "rs-09",
+    "jd_id": "jd-010",
+    "expected_fit": "PARTIAL",
+    "expected_focus": [
+      "基础设施 KEEP",
+      "风控经验缺口"
+    ]
+  },
+  {
+    "id": "pr-030",
+    "resume_id": "rs-08",
+    "jd_id": "jd-014",
+    "expected_fit": "WEAK",
+    "expected_focus": [
+      "健康分 KEEP"
+    ]
+  }
+]

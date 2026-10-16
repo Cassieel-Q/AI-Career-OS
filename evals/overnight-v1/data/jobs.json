@@ -1,0 +1,733 @@
+[
+  {
+    "id": "jd-001",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "AI 产品经理（大模型应用）",
+    "category": "AI_PRODUCT",
+    "company_type": "合成公司",
+    "city": "北京",
+    "seniority": "MID",
+    "responsibilities": [
+      "负责基于大模型的客服机器人功能设计与 PRD 落地",
+      "定义模型效果评测集与质量标准",
+      "与算法/工程协作推进模型迭代",
+      "分析用户反馈优化对话体验"
+    ],
+    "requirements": [
+      "本科及以上",
+      "有大模型应用产品经验",
+      "熟悉评测集构建与 prompt 设计",
+      "能独立完成需求拆解"
+    ],
+    "differentiators": [
+      "强调评测集与质量标准——必须有评测经验才匹配"
+    ],
+    "raw_text": "AI 产品经理（大模型应用）（北京）\n岗位职责：\n1. 负责基于大模型的客服机器人功能设计与 PRD 落地\n2. 定义模型效果评测集与质量标准\n3. 与算法/工程协作推进模型迭代\n4. 分析用户反馈优化对话体验\n任职要求：\n1. 本科及以上\n2. 有大模型应用产品经验\n3. 熟悉评测集构建与 prompt 设计\n4. 能独立完成需求拆解"
+  },
+  {
+    "id": "jd-002",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "AI 产品经理（数据平台方向）",
+    "category": "AI_PRODUCT",
+    "company_type": "合成公司",
+    "city": "上海",
+    "seniority": "MID",
+    "responsibilities": [
+      "负责数据标注平台的产品规划",
+      "设计标注质量抽检流程",
+      "协调外包团队完成数据生产",
+      "输出平台数据看板"
+    ],
+    "requirements": [
+      "本科及以上",
+      "有 B 端数据产品经验",
+      "有外包/供应商管理经验",
+      "熟悉数据看板工具"
+    ],
+    "differentiators": [
+      "B 端平台 + 外包管理——与面向 C 端对话产品完全不同"
+    ],
+    "raw_text": "AI 产品经理（数据平台方向）（上海）\n岗位职责：\n1. 负责数据标注平台的产品规划\n2. 设计标注质量抽检流程\n3. 协调外包团队完成数据生产\n4. 输出平台数据看板\n任职要求：\n1. 本科及以上\n2. 有 B 端数据产品经验\n3. 有外包/供应商管理经验\n4. 熟悉数据看板工具"
+  },
+  {
+    "id": "jd-003",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "AI 产品实习生（校园招聘）",
+    "category": "AI_PRODUCT",
+    "company_type": "合成公司",
+    "city": "深圳",
+    "seniority": "INTERN",
+    "responsibilities": [
+      "协助撰写 PRD 与竞品分析",
+      "跟进功能灰度与用户反馈整理",
+      "参与模型效果人工评估"
+    ],
+    "requirements": [
+      "本科在读",
+      "每周实习 4 天以上",
+      "逻辑清晰会用 Axure/Figma"
+    ],
+    "differentiators": [
+      "实习岗：重潜力与时间投入，不要求大模型落地经验"
+    ],
+    "raw_text": "AI 产品实习生（校园招聘）（深圳）\n岗位职责：\n1. 协助撰写 PRD 与竞品分析\n2. 跟进功能灰度与用户反馈整理\n3. 参与模型效果人工评估\n任职要求：\n1. 本科在读\n2. 每周实习 4 天以上\n3. 逻辑清晰会用 Axure/Figma"
+  },
+  {
+    "id": "jd-004",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "对话式 AI 产品负责人",
+    "category": "AI_PRODUCT",
+    "company_type": "合成公司",
+    "city": "北京",
+    "seniority": "SENIOR",
+    "responsibilities": [
+      "负责对话式 AI 产品线的整体规划",
+      "搭建 0→1 团队与协作流程",
+      "对留存与付费转化指标负责"
+    ],
+    "requirements": [
+      "5 年以上产品经验",
+      "有 0→1 产品线经验",
+      "带过 5 人以上团队",
+      "有对话类产品商业化经验"
+    ],
+    "differentiators": [
+      "管理岗：要求带团队与商业化，与执行层完全不同"
+    ],
+    "raw_text": "对话式 AI 产品负责人（北京）\n岗位职责：\n1. 负责对话式 AI 产品线的整体规划\n2. 搭建 0→1 团队与协作流程\n3. 对留存与付费转化指标负责\n任职要求：\n1. 5 年以上产品经验\n2. 有 0→1 产品线经验\n3. 带过 5 人以上团队\n4. 有对话类产品商业化经验"
+  },
+  {
+    "id": "jd-005",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "AI 产品运营（模型效果方向）",
+    "category": "AI_PRODUCT",
+    "company_type": "合成公司",
+    "city": "杭州",
+    "seniority": "JUNIOR",
+    "responsibilities": [
+      "运营模型效果评估社区与用户反馈渠道",
+      "整理 bad case 并分类归档",
+      "组织人工评估活动"
+    ],
+    "requirements": [
+      "本科及以上",
+      "有运营经验",
+      "文案表达清晰",
+      "对 AI 产品有兴趣"
+    ],
+    "differentiators": [
+      "偏运营与社区——不要求产品设计与 PRD 能力"
+    ],
+    "raw_text": "AI 产品运营（模型效果方向）（杭州）\n岗位职责：\n1. 运营模型效果评估社区与用户反馈渠道\n2. 整理 bad case 并分类归档\n3. 组织人工评估活动\n任职要求：\n1. 本科及以上\n2. 有运营经验\n3. 文案表达清晰\n4. 对 AI 产品有兴趣"
+  },
+  {
+    "id": "jd-006",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "后端开发工程师（Java/订单方向）",
+    "category": "BACKEND",
+    "company_type": "合成公司",
+    "city": "深圳",
+    "seniority": "MID",
+    "responsibilities": [
+      "负责订单服务设计与开发",
+      "保障接口性能与稳定性",
+      "建设发布与监控流程"
+    ],
+    "requirements": [
+      "本科及以上",
+      "熟悉 Java 与并发",
+      "有高并发订单系统经验",
+      "重视测试与代码质量"
+    ],
+    "differentiators": [
+      "Java 订单方向——要求高并发交易经验"
+    ],
+    "raw_text": "后端开发工程师（Java/订单方向）（深圳）\n岗位职责：\n1. 负责订单服务设计与开发\n2. 保障接口性能与稳定性\n3. 建设发布与监控流程\n任职要求：\n1. 本科及以上\n2. 熟悉 Java 与并发\n3. 有高并发订单系统经验\n4. 重视测试与代码质量"
+  },
+  {
+    "id": "jd-007",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "后端开发工程师（Go/基础设施）",
+    "category": "BACKEND",
+    "company_type": "合成公司",
+    "city": "北京",
+    "seniority": "SENIOR",
+    "responsibilities": [
+      "设计与实现内部基础设施服务",
+      "优化服务网格与可观测性",
+      "指导初中级工程师"
+    ],
+    "requirements": [
+      "本科及以上",
+      "精通 Go",
+      "有服务网格/中间件开发经验",
+      "有技术方案评审经验"
+    ],
+    "differentiators": [
+      "Go 基础设施——不涉业务订单，要求中间件深度"
+    ],
+    "raw_text": "后端开发工程师（Go/基础设施）（北京）\n岗位职责：\n1. 设计与实现内部基础设施服务\n2. 优化服务网格与可观测性\n3. 指导初中级工程师\n任职要求：\n1. 本科及以上\n2. 精通 Go\n3. 有服务网格/中间件开发经验\n4. 有技术方案评审经验"
+  },
+  {
+    "id": "jd-008",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "后端开发实习生",
+    "category": "BACKEND",
+    "company_type": "合成公司",
+    "city": "成都",
+    "seniority": "INTERN",
+    "responsibilities": [
+      "参与业务需求开发与测试",
+      "编写单元测试与文档",
+      "修复线上小问题"
+    ],
+    "requirements": [
+      "本科在读",
+      "熟悉任一后端语言",
+      "每周实习 3 天以上"
+    ],
+    "differentiators": [
+      "实习：语言不限，重学习意愿与时间"
+    ],
+    "raw_text": "后端开发实习生（成都）\n岗位职责：\n1. 参与业务需求开发与测试\n2. 编写单元测试与文档\n3. 修复线上小问题\n任职要求：\n1. 本科在读\n2. 熟悉任一后端语言\n3. 每周实习 3 天以上"
+  },
+  {
+    "id": "jd-009",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "全栈工程师（独立产品线）",
+    "category": "BACKEND",
+    "company_type": "合成公司",
+    "city": "远程",
+    "seniority": "MID",
+    "responsibilities": [
+      "独立完成前端页面与后端接口开发",
+      "部署与运维自有服务",
+      "直接对接用户反馈"
+    ],
+    "requirements": [
+      "有 React 经验",
+      "有任一后端语言经验",
+      "能独立部署与排障",
+      "自我管理能力强"
+    ],
+    "differentiators": [
+      "全栈 + 远程独立作战——不要求大团队协作经验"
+    ],
+    "raw_text": "全栈工程师（独立产品线）（远程）\n岗位职责：\n1. 独立完成前端页面与后端接口开发\n2. 部署与运维自有服务\n3. 直接对接用户反馈\n任职要求：\n1. 有 React 经验\n2. 有任一后端语言经验\n3. 能独立部署与排障\n4. 自我管理能力强"
+  },
+  {
+    "id": "jd-010",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "资深后端（风控反欺诈）",
+    "category": "BACKEND",
+    "company_type": "合成公司",
+    "city": "上海",
+    "seniority": "SENIOR",
+    "responsibilities": [
+      "设计实时风控规则引擎",
+      "对接设备指纹与黑产对抗数据",
+      "对资损指标负责"
+    ],
+    "requirements": [
+      "熟悉规则引擎与流式计算",
+      "有反欺诈对抗经验",
+      "对资损/拦截率指标负责过"
+    ],
+    "differentiators": [
+      "风控对抗方向——要求黑产对抗与资损经验"
+    ],
+    "raw_text": "资深后端（风控反欺诈）（上海）\n岗位职责：\n1. 设计实时风控规则引擎\n2. 对接设备指纹与黑产对抗数据\n3. 对资损指标负责\n任职要求：\n1. 熟悉规则引擎与流式计算\n2. 有反欺诈对抗经验\n3. 对资损/拦截率指标负责过"
+  },
+  {
+    "id": "jd-011",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "数据分析师（经营分析）",
+    "category": "DATA_ANALYST",
+    "company_type": "合成公司",
+    "city": "上海",
+    "seniority": "MID",
+    "responsibilities": [
+      "搭建经营指标体系与看板",
+      "设计 A/B 实验并归因",
+      "向业务输出可执行结论"
+    ],
+    "requirements": [
+      "统计/数学相关本科",
+      "熟练 SQL 与 Python",
+      "有 A/B 实验经验",
+      "能把结论讲给非技术同事"
+    ],
+    "differentiators": [
+      "经营分析：重 A/B 实验与指标体系"
+    ],
+    "raw_text": "数据分析师（经营分析）（上海）\n岗位职责：\n1. 搭建经营指标体系与看板\n2. 设计 A/B 实验并归因\n3. 向业务输出可执行结论\n任职要求：\n1. 统计/数学相关本科\n2. 熟练 SQL 与 Python\n3. 有 A/B 实验经验\n4. 能把结论讲给非技术同事"
+  },
+  {
+    "id": "jd-012",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "数据分析师（用户增长）",
+    "category": "DATA_ANALYST",
+    "company_type": "合成公司",
+    "city": "北京",
+    "seniority": "JUNIOR",
+    "responsibilities": [
+      "分析渠道投放与转化漏斗",
+      "搭建留存预警监控",
+      "支持增长团队的日常取数"
+    ],
+    "requirements": [
+      "本科及以上",
+      "熟练 SQL",
+      "有增长/漏斗分析经验",
+      "Excel 熟练"
+    ],
+    "differentiators": [
+      "增长方向：渠道与漏斗，不做实验归因深挖"
+    ],
+    "raw_text": "数据分析师（用户增长）（北京）\n岗位职责：\n1. 分析渠道投放与转化漏斗\n2. 搭建留存预警监控\n3. 支持增长团队的日常取数\n任职要求：\n1. 本科及以上\n2. 熟练 SQL\n3. 有增长/漏斗分析经验\n4. Excel 熟练"
+  },
+  {
+    "id": "jd-013",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "商业分析师（战略方向）",
+    "category": "DATA_ANALYST",
+    "company_type": "合成公司",
+    "city": "上海",
+    "seniority": "SENIOR",
+    "responsibilities": [
+      "支持管理层战略决策分析",
+      "输出行业与竞品研究",
+      "搭建财务与业务联合模型"
+    ],
+    "requirements": [
+      "有咨询或战略分析背景",
+      "结构化表达出色",
+      "能独立主持高管汇报"
+    ],
+    "differentiators": [
+      "战略/咨询路线——与取数型分析师完全不同"
+    ],
+    "raw_text": "商业分析师（战略方向）（上海）\n岗位职责：\n1. 支持管理层战略决策分析\n2. 输出行业与竞品研究\n3. 搭建财务与业务联合模型\n任职要求：\n1. 有咨询或战略分析背景\n2. 结构化表达出色\n3. 能独立主持高管汇报"
+  },
+  {
+    "id": "jd-014",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "数据运营专员",
+    "category": "DATA_ANALYST",
+    "company_type": "合成公司",
+    "city": "杭州",
+    "seniority": "JUNIOR",
+    "responsibilities": [
+      "维护日常经营报表",
+      "配合活动做数据抽取",
+      "维护运营流程文档"
+    ],
+    "requirements": [
+      "本科及以上",
+      "熟练 SQL 与 Excel",
+      "做事细致有文档习惯"
+    ],
+    "differentiators": [
+      "偏执行：报表与文档，不要求建模与实验设计"
+    ],
+    "raw_text": "数据运营专员（杭州）\n岗位职责：\n1. 维护日常经营报表\n2. 配合活动做数据抽取\n3. 维护运营流程文档\n任职要求：\n1. 本科及以上\n2. 熟练 SQL 与 Excel\n3. 做事细致有文档习惯"
+  },
+  {
+    "id": "jd-015",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "数据科学工程师（建模）",
+    "category": "DATA_ANALYST",
+    "company_type": "合成公司",
+    "city": "深圳",
+    "seniority": "SENIOR",
+    "responsibilities": [
+      "开发流失预警/推荐等模型",
+      "建设特征平台与评估流程",
+      "推动模型上线"
+    ],
+    "requirements": [
+      "熟练 Python 建模",
+      "有 ML 项目落地经验",
+      "熟悉特征工程与离线在线一致性"
+    ],
+    "differentiators": [
+      "建模工程师——要求 ML 落地，不是报表分析"
+    ],
+    "raw_text": "数据科学工程师（建模）（深圳）\n岗位职责：\n1. 开发流失预警/推荐等模型\n2. 建设特征平台与评估流程\n3. 推动模型上线\n任职要求：\n1. 熟练 Python 建模\n2. 有 ML 项目落地经验\n3. 熟悉特征工程与离线在线一致性"
+  },
+  {
+    "id": "jd-016",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "内容运营（小红书方向）",
+    "category": "CONTENT_OPS",
+    "company_type": "合成公司",
+    "city": "成都",
+    "seniority": "JUNIOR",
+    "responsibilities": [
+      "负责小红书选题与排期",
+      "对接达人推进合作",
+      "沉淀运营模板"
+    ],
+    "requirements": [
+      "有内容平台运营经验",
+      "文案清晰",
+      "有复盘习惯"
+    ],
+    "differentiators": [
+      "小红书图文种草方向"
+    ],
+    "raw_text": "内容运营（小红书方向）（成都）\n岗位职责：\n1. 负责小红书选题与排期\n2. 对接达人推进合作\n3. 沉淀运营模板\n任职要求：\n1. 有内容平台运营经验\n2. 文案清晰\n3. 有复盘习惯"
+  },
+  {
+    "id": "jd-017",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "短视频内容运营（抖音）",
+    "category": "CONTENT_OPS",
+    "company_type": "合成公司",
+    "city": "杭州",
+    "seniority": "MID",
+    "responsibilities": [
+      "策划短视频脚本与拍摄排期",
+      "复盘完播与转化数据",
+      "管理 MCN 合作"
+    ],
+    "requirements": [
+      "有短视频运营经验",
+      "懂完播率与投流逻辑",
+      "有 MCN 对接经验"
+    ],
+    "differentiators": [
+      "短视频与投流——与图文运营要求不同"
+    ],
+    "raw_text": "短视频内容运营（抖音）（杭州）\n岗位职责：\n1. 策划短视频脚本与拍摄排期\n2. 复盘完播与转化数据\n3. 管理 MCN 合作\n任职要求：\n1. 有短视频运营经验\n2. 懂完播率与投流逻辑\n3. 有 MCN 对接经验"
+  },
+  {
+    "id": "jd-018",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "内容运营实习生",
+    "category": "CONTENT_OPS",
+    "company_type": "合成公司",
+    "city": "广州",
+    "seniority": "INTERN",
+    "responsibilities": [
+      "协助选题库维护",
+      "整理评论区反馈",
+      "参与活动策划"
+    ],
+    "requirements": [
+      "本科在读",
+      "爱刷内容平台",
+      "每周 4 天以上"
+    ],
+    "differentiators": [
+      "实习：重网感与时间投入"
+    ],
+    "raw_text": "内容运营实习生（广州）\n岗位职责：\n1. 协助选题库维护\n2. 整理评论区反馈\n3. 参与活动策划\n任职要求：\n1. 本科在读\n2. 爱刷内容平台\n3. 每周 4 天以上"
+  },
+  {
+    "id": "jd-019",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "社区内容运营（技术社区）",
+    "category": "CONTENT_OPS",
+    "company_type": "合成公司",
+    "city": "北京",
+    "seniority": "MID",
+    "responsibilities": [
+      "运营开发者社区内容生态",
+      "策划技术征文与直播",
+      "建设社区激励体系"
+    ],
+    "requirements": [
+      "懂技术人群语境",
+      "有社区运营经验",
+      "有活动策划经验"
+    ],
+    "differentiators": [
+      "技术社区——需要懂开发者文化"
+    ],
+    "raw_text": "社区内容运营（技术社区）（北京）\n岗位职责：\n1. 运营开发者社区内容生态\n2. 策划技术征文与直播\n3. 建设社区激励体系\n任职要求：\n1. 懂技术人群语境\n2. 有社区运营经验\n3. 有活动策划经验"
+  },
+  {
+    "id": "jd-020",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "品牌内容经理",
+    "category": "CONTENT_OPS",
+    "company_type": "合成公司",
+    "city": "上海",
+    "seniority": "SENIOR",
+    "responsibilities": [
+      "主导品牌年度内容规划",
+      "管理内容供应商与预算",
+      "对品牌心智指标负责"
+    ],
+    "requirements": [
+      "有品牌内容经验",
+      "有预算与供应商管理经验",
+      "能对品牌指标负责"
+    ],
+    "differentiators": [
+      "品牌管理岗——预算与指标责任"
+    ],
+    "raw_text": "品牌内容经理（上海）\n岗位职责：\n1. 主导品牌年度内容规划\n2. 管理内容供应商与预算\n3. 对品牌心智指标负责\n任职要求：\n1. 有品牌内容经验\n2. 有预算与供应商管理经验\n3. 能对品牌指标负责"
+  },
+  {
+    "id": "jd-021",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "UI 设计师（B 端中后台）",
+    "category": "UI_DESIGN",
+    "company_type": "合成公司",
+    "city": "深圳",
+    "seniority": "MID",
+    "responsibilities": [
+      "负责中后台界面设计与组件库维护",
+      "与前端协作落地设计规范",
+      "输出交互文档"
+    ],
+    "requirements": [
+      "有 B 端设计经验",
+      "熟悉 Figma 组件体系",
+      "有设计规范落地经验"
+    ],
+    "differentiators": [
+      "B 端中后台——组件化与信息密度设计"
+    ],
+    "raw_text": "UI 设计师（B 端中后台）（深圳）\n岗位职责：\n1. 负责中后台界面设计与组件库维护\n2. 与前端协作落地设计规范\n3. 输出交互文档\n任职要求：\n1. 有 B 端设计经验\n2. 熟悉 Figma 组件体系\n3. 有设计规范落地经验"
+  },
+  {
+    "id": "jd-022",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "UI 设计师（C 端增长）",
+    "category": "UI_DESIGN",
+    "company_type": "合成公司",
+    "city": "杭州",
+    "seniority": "MID",
+    "responsibilities": [
+      "负责活动页与增长实验的视觉设计",
+      "A/B 设计方案并复盘数据",
+      "维护品牌视觉语言"
+    ],
+    "requirements": [
+      "有 C 端增长设计经验",
+      "做过 A/B 设计实验",
+      "视觉表达出色"
+    ],
+    "differentiators": [
+      "C 端增长——活动页与数据驱动设计"
+    ],
+    "raw_text": "UI 设计师（C 端增长）（杭州）\n岗位职责：\n1. 负责活动页与增长实验的视觉设计\n2. A/B 设计方案并复盘数据\n3. 维护品牌视觉语言\n任职要求：\n1. 有 C 端增长设计经验\n2. 做过 A/B 设计实验\n3. 视觉表达出色"
+  },
+  {
+    "id": "jd-023",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "UI 设计实习生",
+    "category": "UI_DESIGN",
+    "company_type": "合成公司",
+    "city": "北京",
+    "seniority": "INTERN",
+    "responsibilities": [
+      "协助 icon 与插画绘制",
+      "整理设计素材库",
+      "参与评审"
+    ],
+    "requirements": [
+      "本科在读",
+      "作品集完整",
+      "每周 4 天以上"
+    ],
+    "differentiators": [
+      "实习：重作品集与时间"
+    ],
+    "raw_text": "UI 设计实习生（北京）\n岗位职责：\n1. 协助 icon 与插画绘制\n2. 整理设计素材库\n3. 参与评审\n任职要求：\n1. 本科在读\n2. 作品集完整\n3. 每周 4 天以上"
+  },
+  {
+    "id": "jd-024",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "体验设计专家",
+    "category": "UI_DESIGN",
+    "company_type": "合成公司",
+    "city": "上海",
+    "seniority": "SENIOR",
+    "responsibilities": [
+      "主导产品级体验重构",
+      "建立体验度量体系",
+      "跨团队推动设计策略"
+    ],
+    "requirements": [
+      "8 年以上设计经验",
+      "有体验度量方法",
+      "推动过跨团队设计项目"
+    ],
+    "differentiators": [
+      "专家岗：度量体系与跨团队影响力"
+    ],
+    "raw_text": "体验设计专家（上海）\n岗位职责：\n1. 主导产品级体验重构\n2. 建立体验度量体系\n3. 跨团队推动设计策略\n任职要求：\n1. 8 年以上设计经验\n2. 有体验度量方法\n3. 推动过跨团队设计项目"
+  },
+  {
+    "id": "jd-025",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "大客户销售（SaaS）",
+    "category": "SALES_CS",
+    "company_type": "合成公司",
+    "city": "北京",
+    "seniority": "MID",
+    "responsibilities": [
+      "负责 KA 客户的整单销售",
+      "协调售前与交付资源",
+      "对回款指标负责"
+    ],
+    "requirements": [
+      "有 SaaS 销售经验",
+      "有百万级客单经验",
+      "抗压能力强"
+    ],
+    "differentiators": [
+      "KA 整单销售——客单价与回款责任"
+    ],
+    "raw_text": "大客户销售（SaaS）（北京）\n岗位职责：\n1. 负责 KA 客户的整单销售\n2. 协调售前与交付资源\n3. 对回款指标负责\n任职要求：\n1. 有 SaaS 销售经验\n2. 有百万级客单经验\n3. 抗压能力强"
+  },
+  {
+    "id": "jd-026",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "客户成功经理",
+    "category": "SALES_CS",
+    "company_type": "合成公司",
+    "city": "上海",
+    "seniority": "JUNIOR",
+    "responsibilities": [
+      "负责存量客户续费与增购",
+      "搭建客户健康分体系",
+      "组织客户培训"
+    ],
+    "requirements": [
+      "有客户成功或客服经验",
+      "沟通耐心",
+      "有数据意识"
+    ],
+    "differentiators": [
+      "客户成功——续费与健康度，不是新签"
+    ],
+    "raw_text": "客户成功经理（上海）\n岗位职责：\n1. 负责存量客户续费与增购\n2. 搭建客户健康分体系\n3. 组织客户培训\n任职要求：\n1. 有客户成功或客服经验\n2. 沟通耐心\n3. 有数据意识"
+  },
+  {
+    "id": "jd-027",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "销售运营专员",
+    "category": "SALES_CS",
+    "company_type": "合成公司",
+    "city": "深圳",
+    "seniority": "JUNIOR",
+    "responsibilities": [
+      "维护销售 CRM 数据",
+      "输出销售周报与漏斗分析",
+      "支持销售流程优化"
+    ],
+    "requirements": [
+      "Excel 熟练",
+      "有数据意识",
+      "做事有条理"
+    ],
+    "differentiators": [
+      "销售运营——后台数据支持，不直接背业绩"
+    ],
+    "raw_text": "销售运营专员（深圳）\n岗位职责：\n1. 维护销售 CRM 数据\n2. 输出销售周报与漏斗分析\n3. 支持销售流程优化\n任职要求：\n1. Excel 熟练\n2. 有数据意识\n3. 做事有条理"
+  },
+  {
+    "id": "jd-028",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "渠道销售（区域代理）",
+    "category": "SALES_CS",
+    "company_type": "合成公司",
+    "city": "成都",
+    "seniority": "JUNIOR",
+    "responsibilities": [
+      "开拓区域代理商",
+      "支持代理商完成销售目标",
+      "维护渠道关系"
+    ],
+    "requirements": [
+      "有渠道招商经验",
+      "能适应出差",
+      "本地资源丰富者优先"
+    ],
+    "differentiators": [
+      "渠道/代理模式——外出开拓，不是办公室坐席"
+    ],
+    "raw_text": "渠道销售（区域代理）（成都）\n岗位职责：\n1. 开拓区域代理商\n2. 支持代理商完成销售目标\n3. 维护渠道关系\n任职要求：\n1. 有渠道招商经验\n2. 能适应出差\n3. 本地资源丰富者优先"
+  },
+  {
+    "id": "jd-029",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "招聘经理（技术岗）",
+    "category": "HR",
+    "company_type": "合成公司",
+    "city": "北京",
+    "seniority": "MID",
+    "responsibilities": [
+      "负责技术岗全流程招聘",
+      "搭建候选人评估标准",
+      "管理招聘渠道供应商"
+    ],
+    "requirements": [
+      "有技术岗招聘经验",
+      "了解工程师能力模型",
+      "有渠道管理经验"
+    ],
+    "differentiators": [
+      "技术招聘——要懂工程师能力评估"
+    ],
+    "raw_text": "招聘经理（技术岗）（北京）\n岗位职责：\n1. 负责技术岗全流程招聘\n2. 搭建候选人评估标准\n3. 管理招聘渠道供应商\n任职要求：\n1. 有技术岗招聘经验\n2. 了解工程师能力模型\n3. 有渠道管理经验"
+  },
+  {
+    "id": "jd-030",
+    "source": "SYNTHETIC",
+    "source_note": "合成 JD：公司化名，要求按 7 类岗位设计并带 differentiators",
+    "title": "HRBP（研发团队）",
+    "category": "HR",
+    "company_type": "合成公司",
+    "city": "深圳",
+    "seniority": "SENIOR",
+    "responsibilities": [
+      "支持研发团队的组织与人才发展",
+      "推动绩效与晋升机制落地",
+      "处理组织诊断与员工关系"
+    ],
+    "requirements": [
+      "有 HRBP 经验",
+      "服务过研发团队",
+      "有组织发展方法论"
+    ],
+    "differentiators": [
+      "HRBP——组织发展，不是执行招聘"
+    ],
+    "raw_text": "HRBP（研发团队）（深圳）\n岗位职责：\n1. 支持研发团队的组织与人才发展\n2. 推动绩效与晋升机制落地\n3. 处理组织诊断与员工关系\n任职要求：\n1. 有 HRBP 经验\n2. 服务过研发团队\n3. 有组织发展方法论"
+  }
+]

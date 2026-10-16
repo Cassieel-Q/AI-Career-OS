@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Overnight Benchmark Pair（简历 × JD）",
+  "type": "object",
+  "required": ["id", "resume_id", "jd_id", "expected_fit", "expected_focus"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {"type": "string", "pattern": "^pr-[0-9]{3}$"},
+    "resume_id": {"type": "string", "pattern": "^rs-[0-9]{2}$"},
+    "jd_id": {"type": "string", "pattern": "^jd-[0-9]{3}$"},
+    "expected_fit": {"enum": ["STRONG", "PARTIAL", "WEAK"], "description": "人工预先判定的匹配档位；改写不应把 WEAK 说成 STRONG"},
+    "expected_focus": {
+      "type": "array",
+      "minItems": 1,
+      "description": "该配对下四分类的期望倾向（人工标注），如 KEEP_AND_HIGHLIGHT 的经历 id 列表或说明",
+      "items": {"type": "string"}
+    },
+    "notes": {"type": "string"}
+  }
+}

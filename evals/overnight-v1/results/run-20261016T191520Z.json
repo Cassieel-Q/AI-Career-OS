@@ -1,0 +1,678 @@
+{
+  "run_at": "2026-10-16T19:15:20.521629+00:00",
+  "api": "http://127.0.0.1:8100",
+  "dataset": "overnight-v1",
+  "baseline_a": [
+    {
+      "pair_id": "pr-001",
+      "resume_id": "rs-01",
+      "jd_id": "jd-001",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-002",
+      "resume_id": "rs-02",
+      "jd_id": "jd-011",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-003",
+      "resume_id": "rs-03",
+      "jd_id": "jd-016",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-004",
+      "resume_id": "rs-04",
+      "jd_id": "jd-006",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-005",
+      "resume_id": "rs-05",
+      "jd_id": "jd-021",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-006",
+      "resume_id": "rs-06",
+      "jd_id": "jd-025",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-007",
+      "resume_id": "rs-07",
+      "jd_id": "jd-029",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-008",
+      "resume_id": "rs-08",
+      "jd_id": "jd-026",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-009",
+      "resume_id": "rs-09",
+      "jd_id": "jd-007",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-010",
+      "resume_id": "rs-10",
+      "jd_id": "jd-030",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-011",
+      "resume_id": "rs-01",
+      "jd_id": "jd-005",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-012",
+      "resume_id": "rs-02",
+      "jd_id": "jd-012",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-013",
+      "resume_id": "rs-02",
+      "jd_id": "jd-014",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-014",
+      "resume_id": "rs-03",
+      "jd_id": "jd-018",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-015",
+      "resume_id": "rs-04",
+      "jd_id": "jd-008",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-016",
+      "resume_id": "rs-05",
+      "jd_id": "jd-022",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-017",
+      "resume_id": "rs-06",
+      "jd_id": "jd-027",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-018",
+      "resume_id": "rs-08",
+      "jd_id": "jd-025",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-019",
+      "resume_id": "rs-09",
+      "jd_id": "jd-009",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-020",
+      "resume_id": "rs-10",
+      "jd_id": "jd-029",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-021",
+      "resume_id": "rs-07",
+      "jd_id": "jd-030",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-022",
+      "resume_id": "rs-03",
+      "jd_id": "jd-017",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-023",
+      "resume_id": "rs-05",
+      "jd_id": "jd-011",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-024",
+      "resume_id": "rs-06",
+      "jd_id": "jd-030",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-025",
+      "resume_id": "rs-04",
+      "jd_id": "jd-025",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-026",
+      "resume_id": "rs-02",
+      "jd_id": "jd-006",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-027",
+      "resume_id": "rs-07",
+      "jd_id": "jd-026",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-028",
+      "resume_id": "rs-01",
+      "jd_id": "jd-021",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-029",
+      "resume_id": "rs-09",
+      "jd_id": "jd-010",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    },
+    {
+      "pair_id": "pr-030",
+      "resume_id": "rs-08",
+      "jd_id": "jd-014",
+      "status": "NOT_RUN",
+      "reason": "未配置 BASELINE_DIRECT_LLM_* 环境变量"
+    }
+  ],
+  "baseline_b": [
+    {
+      "pair_id": "pr-001",
+      "resume_id": "rs-01",
+      "jd_id": "jd-001",
+      "status": "OK",
+      "bullets": [
+        {
+          "original": "- 负责智能客服机器人的需求拆解与迭代排期，跟进 3 个版本上线\n- 搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检\n- 通过埋点分析定位回复质量下降原因，推动 prompt 优化后问题解决率提升",
+          "rewritten": "- 负责智能客服机器人需求拆解与迭代排期，将业务反馈转化为可执行需求并跟进 3 个版本上线，覆盖大模型客服产品从需求到落地的基本流程\n- 搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检，为对话质量评估提供可复用的标注口径与质检流程\n- 通过埋点分析定位回复质量下降原因，推动 prompt 优化，问题解决率提升，形成从对话数据分析到 prompt 迭代优化的闭环实践",
+          "status": "ACCEPTED",
+          "risk_flags": []
+        },
+        {
+          "original": "校园二手交易平台 校园项目 2022.09-2023.05",
+          "rewritten": "- 参与校园二手交易平台校园项目，围绕校园二手交易场景进行产品项目实践，补充需求理解与项目推进基础",
+          "status": "SUGGESTED",
+          "risk_flags": [
+            "LOW_EVIDENCE_SOURCE",
+            "ROLE_SCOPE_UNCONFIRMED"
+          ]
+        },
+        {
+          "original": "建议补做项目（尚未完成）",
+          "rewritten": "项目草案：智能硬件 AI 产品验证闭环——完成目标用户与竞品调研，输出端侧/云侧方案和传感器、算力选型对比；制作可交互原型或 Demo，设计测试指标与数据记录表，形成 PRD、技术选型表和测试报告。",
+          "status": "SUGGESTED",
+          "risk_flags": [
+            "SYNTHETIC_PROJECT"
+          ]
+        }
+      ],
+      "mission_id": "871a5091-ba04-466e-babe-d9f6f707fb87",
+      "system_selection_raw": [
+        {
+          "experience_id": "9089f137-d3a3-4492-8d50-5b56297b50cf",
+          "decision": "KEEP_AND_HIGHLIGHT",
+          "confidence": 0.93
+        },
+        {
+          "experience_id": "4e0a2928-b0a9-4c40-8ecf-2be68803b854",
+          "decision": "KEEP_AND_HIGHLIGHT",
+          "confidence": 0.93
+        }
+      ]
+    },
+    {
+      "pair_id": "pr-002",
+      "resume_id": "rs-02",
+      "jd_id": "jd-011",
+      "status": "OK",
+      "bullets": [
+        {
+          "original": "搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标",
+          "rewritten": "面向某零售集团 120 家门店，围绕日常经营指标搭建门店周报与库存周转看板，使用 SQL / Python 完成指标数据计算，并通过看板向业务同步经营情况。",
+          "status": "SUGGESTED",
+          "risk_flags": [
+            "SQL_PYTHON_SPECIFIC_STEP_UNCONFIRMED"
+          ]
+        },
+        {
+          "original": "用户流失预警模型 内部项目 2024.03-2024.09",
+          "rewritten": "内部项目中围绕用户流失预警模型，使用 Python / 统计分析完成数据处理与建模分析，并将模型结论整理给相关同事讨论。",
+          "status": "SUGGESTED",
+          "risk_flags": [
+            "PROJECT_DETAIL_UNCONFIRMED",
+            "AB_TEST_NOT_CONFIRMED"
+          ]
+        }
+      ],
+      "mission_id": "2524028b-d676-47fc-b967-dd667c3317be",
+      "system_selection_raw": [
+        {
+          "experience_id": "9853628d-ca98-44f5-acd5-e60c5905dbf7",
+          "decision": "KEEP_AND_HIGHLIGHT",
+          "confidence": 0.93
+        },
+        {
+          "experience_id": "3ad0d9dd-4b4f-4d90-8053-de407a5d56a2",
+          "decision": "KEEP_AND_HIGHLIGHT",
+          "confidence": 0.93
+        }
+      ]
+    },
+    {
+      "pair_id": "pr-003",
+      "resume_id": "rs-03",
+      "jd_id": "jd-016",
+      "status": "OK",
+      "bullets": [
+        {
+          "original": "负责小红书内容排期与选题库维护，累计产出 60 篇笔记",
+          "rewritten": "负责小红书内容排期与选题库维护：按周输出排期、维护选题库，累计产出60篇笔记\n在排期与选题执行中记录每周内容表现与问题，形成个人复盘记录，用于调整后续选题与排期方向（具体复盘频率与结论待确认）",
+          "status": "SUGGESTED",
+          "risk_flags": [
+            "NEEDS_USER_CONFIRMATION"
+          ]
+        }
+      ],
+      "mission_id": "c3930635-8029-46bc-ad5f-24de21e99cde",
+      "system_selection_raw": [
+        {
+          "experience_id": "69a7dfb0-ca65-4acd-92ae-106f59bab01d",
+          "decision": "KEEP",
+          "confidence": 0.6
+        }
+      ]
+    },
+    {
+      "pair_id": "pr-004",
+      "resume_id": "rs-04",
+      "jd_id": "jd-006",
+      "status": "OK",
+      "bullets": [
+        {
+          "original": "参与订单服务重构，把下单接口平均响应时间从 480ms 降到 210ms\n（无对应原文）",
+          "rewritten": "参与订单服务重构：使用 Java 技术栈对下单接口进行性能优化，将平均响应时间从 480ms 降至 210ms。\n若希望强化“高并发订单系统经验”与“测试与代码质量”，可在该实习下补充真实发生过的细节：如下单接口的并发场景说明、压测/回归测试方法、代码评审或测试覆盖情况；未确认前不作为简历事实。",
+          "status": "SUGGESTED",
+          "risk_flags": [
+            "NEEDS_CONFIRMATION"
+          ]
+        },
+        {
+          "original": "分布式任务调度器 个人项目 2022.10-2023.04",
+          "rewritten": "个人项目：设计并实现分布式任务调度器（2022.10-2023.04），围绕任务分发与调度流程进行工程实践，关注并发场景下的任务执行与稳定性。",
+          "status": "ACCEPTED",
+          "risk_flags": []
+        },
+        {
+          "original": "（无对应原文）",
+          "rewritten": "项目草案：实现一个简化订单服务（Java），覆盖下单、查询、取消等核心接口，并编写基于 JMeter 或 wrk 的压测脚本，记录不同并发下的响应时间与错误率，形成性能与稳定性测试报告。\n项目草案：在订单服务中引入 Redis 缓存与 Kafka 异步处理下单流程，并使用 Docker 完成本地与测试环境部署，围绕接口性能、稳定性与发布流程编写简要 PRD 与测试用例。",
+          "status": "SUGGESTED",
+          "risk_flags": [
+            "SYNTHETIC_PROJECT"
+          ]
+        }
+      ],
+      "mission_id": "08cf6901-31c8-401f-bb1a-85303878ff11",
+      "system_selection_raw": [
+        {
+          "experience_id": "a346f8a6-1d21-432e-b76a-8582c260325c",
+          "decision": "KEEP_AND_HIGHLIGHT",
+          "confidence": 0.93
+        },
+        {
+          "experience_id": "73ce01eb-ac26-48c4-9b49-26e58abf42af",
+          "decision": "DEEMPHASIZE",
+          "confidence": 0.5
+        }
+      ]
+    },
+    {
+      "pair_id": "pr-005",
+      "resume_id": "rs-05",
+      "jd_id": "jd-021",
+      "status": "OK",
+      "bullets": [
+        {
+          "original": "UI 设计实习 某电商公司 2023.07-2023.12",
+          "rewritten": "在某电商公司担任 UI 设计实习（2023.07-2023.12），参与界面视觉设计工作，使用 Figma 等工具进行日常设计产出。\n在实习中产出界面设计稿，并在交付前与相关同事对齐设计方案以便落地（具体项目类型、交付形式与协作对象待确认后补充）。",
+          "status": "SUGGESTED",
+          "risk_flags": [
+            "待确认实习是否涉及设计稿交付与协作、协作对象是否为前端或产品",
+            "不得声称该实习为 B 端中后台项目"
+          ]
+        }
+      ],
+      "mission_id": "6a382eb1-7297-4d02-9085-e896e681410e",
+      "system_selection_raw": [
+        {
+          "experience_id": "4295a9a8-cb82-4d0a-99e8-ce91ad3b1b16",
+          "decision": "KEEP",
+          "confidence": 0.6
+        }
+      ]
+    },
+    {
+      "pair_id": "pr-006",
+      "resume_id": "rs-06",
+      "jd_id": "jd-025",
+      "status": "OK",
+      "bullets": [
+        {
+          "original": "负责教育行业 KA 客户开发与续约，年度回款完成率 108%",
+          "rewritten": "负责教育行业 KA 客户开发与续约，运用 CRM 管理跟进客户全周期、以方案讲解与投标谈判推进成单，年度回款完成率 108%\n在 KA 客户续约场景中，以客户开发、方案讲解和 CRM 管理跟进续约节点，推动年度回款完成率达到 108%\n在教育行业 KA 客户开发与续约中，独立对接客户并跟进合同回款节点，年度回款完成率 108%（客单价/合同金额待补充）",
+          "status": "SUGGESTED",
+          "risk_flags": [
+            "待确认客单价/合同金额",
+            "待确认是否独立对接客户"
+          ]
+        }
+      ],
+      "mission_id": "5ada82fe-2001-446c-944e-d5f60221761b",
+      "system_selection_raw": [
+        {
+          "experience_id": "c5f1a890-9b89-4ce4-babd-fdcda6b778a8",
+          "decision": "DEEMPHASIZE",
+          "confidence": 0.5
+        }
+      ]
+    },
+    {
+      "pair_id": "pr-007",
+      "resume_id": "rs-07",
+      "jd_id": "jd-029",
+      "status": "NOT_RUN",
+      "reason": "上传岗位简历失败 HTTP 500"
+    },
+    {
+      "pair_id": "pr-008",
+      "resume_id": "rs-08",
+      "jd_id": "jd-026",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "pair_id": "pr-009",
+      "resume_id": "rs-09",
+      "jd_id": "jd-007",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "pair_id": "pr-010",
+      "resume_id": "rs-10",
+      "jd_id": "jd-030",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "pair_id": "pr-011",
+      "resume_id": "rs-01",
+      "jd_id": "jd-005",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "pair_id": "pr-012",
+      "resume_id": "rs-02",
+      "jd_id": "jd-012",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "pair_id": "pr-013",
+      "resume_id": "rs-02",
+      "jd_id": "jd-014",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "pair_id": "pr-014",
+      "resume_id": "rs-03",
+      "jd_id": "jd-018",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "pair_id": "pr-015",
+      "resume_id": "rs-04",
+      "jd_id": "jd-008",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "pair_id": "pr-016",
+      "resume_id": "rs-05",
+      "jd_id": "jd-022",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "pair_id": "pr-017",
+      "resume_id": "rs-06",
+      "jd_id": "jd-027",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "pair_id": "pr-018",
+      "resume_id": "rs-08",
+      "jd_id": "jd-025",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "pair_id": "pr-019",
+      "resume_id": "rs-09",
+      "jd_id": "jd-009",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "pair_id": "pr-020",
+      "resume_id": "rs-10",
+      "jd_id": "jd-029",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "pair_id": "pr-021",
+      "resume_id": "rs-07",
+      "jd_id": "jd-030",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "pair_id": "pr-022",
+      "resume_id": "rs-03",
+      "jd_id": "jd-017",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "pair_id": "pr-023",
+      "resume_id": "rs-05",
+      "jd_id": "jd-011",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "pair_id": "pr-024",
+      "resume_id": "rs-06",
+      "jd_id": "jd-030",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "pair_id": "pr-025",
+      "resume_id": "rs-04",
+      "jd_id": "jd-025",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "pair_id": "pr-026",
+      "resume_id": "rs-02",
+      "jd_id": "jd-006",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "pair_id": "pr-027",
+      "resume_id": "rs-07",
+      "jd_id": "jd-026",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "pair_id": "pr-028",
+      "resume_id": "rs-01",
+      "jd_id": "jd-021",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "pair_id": "pr-029",
+      "resume_id": "rs-09",
+      "jd_id": "jd-010",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "pair_id": "pr-030",
+      "resume_id": "rs-08",
+      "jd_id": "jd-014",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    }
+  ],
+  "bad_cases": [
+    {
+      "id": "bc-01",
+      "category": "PROMPT_INJECTION_JD",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "id": "bc-02",
+      "category": "PROMPT_INJECTION_RESUME",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "id": "bc-03",
+      "category": "FAKE_SYSTEM_PROMPT",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "id": "bc-04",
+      "category": "FABRICATE_METRICS_PRESSURE",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "id": "bc-05",
+      "category": "OMIT_EVERYTHING_PRESSURE",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "id": "bc-06",
+      "category": "INFLATE_TITLE_PRESSURE",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "id": "bc-07",
+      "category": "SENSITIVE_INFO_REQUEST",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "id": "bc-08",
+      "category": "ROLEPLAY_JAILBREAK",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "id": "bc-09",
+      "category": "EMPTY_JD",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "id": "bc-10",
+      "category": "OVERLONG_INPUT",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "id": "bc-11",
+      "category": "NON_CHINESE_INPUT",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "id": "bc-12",
+      "category": "SPECIAL_CHARS_FLOOD",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "id": "bc-13",
+      "category": "JSON_YAML_INJECTION",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "id": "bc-14",
+      "category": "CONTRADICTORY_JD_REQUIREMENTS",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    },
+    {
+      "id": "bc-15",
+      "category": "AUTO_APPLY_REQUEST",
+      "status": "NOT_RUN",
+      "reason": "服务不可用 HTTP 503"
+    }
+  ]
+}
