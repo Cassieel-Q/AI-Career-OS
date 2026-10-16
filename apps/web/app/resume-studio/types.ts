@@ -63,6 +63,14 @@ export type StudioPreview = {
   layout_map: { id: string; page: number; x: number; y: number; width: number; height: number }[];
   checks: StudioCheck[];
 };
+export type StudioSourceDiffSection = {
+  section: string;
+  status: "added" | "removed" | "changed" | "unchanged";
+  added: string[];
+  removed: string[];
+  kept: number;
+};
+
 export type StudioSourceDiff = {
   update_available: boolean;
   current_source_id: string;
@@ -70,6 +78,9 @@ export type StudioSourceDiff = {
   new_source_version?: number;
   added_bullets?: string[];
   removed_bullets?: string[];
+  sections?: StudioSourceDiffSection[];
+  manual_edit_count?: number;
+  manual_edit_samples?: string[];
   will_replace_studio_edits?: boolean;
   will_reset_language?: boolean;
 };

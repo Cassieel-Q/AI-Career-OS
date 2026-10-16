@@ -1,0 +1,3874 @@
+{
+  "started_at": "2026-10-16T17:40:41.995029+00:00",
+  "base_url": "http://127.0.0.1:8100",
+  "case": "ai-pm",
+  "steps": [
+    {
+      "step": "1-draft-profile",
+      "ok": true,
+      "result": {
+        "profile_id": "1206ef8b-5067-4407-8071-f82921402211",
+        "status": "DRAFT",
+        "full_name": null,
+        "phone": null,
+        "email": null,
+        "city": null,
+        "created_at": "2026-10-16T17:40:42",
+        "updated_at": "2026-10-16T17:40:42",
+        "education": [],
+        "skills": [],
+        "experiences": [],
+        "certifications": [],
+        "preferences": null
+      }
+    },
+    {
+      "step": "2-ingest-resume",
+      "ok": true,
+      "result": {
+        "profile_id": "1206ef8b-5067-4407-8071-f82921402211",
+        "status": "DRAFT",
+        "full_name": "张三",
+        "phone": "13800000000",
+        "email": "zhangsan@example.com",
+        "city": "北京",
+        "created_at": "2026-10-16T17:40:42",
+        "updated_at": "2026-10-16T17:40:44.803327",
+        "education": [
+          {
+            "id": "3a4a272c-ce30-4832-8601-62d91693c1fb",
+            "evidence_text": "某大学 计算机科学与技术 本科 2020.09 - 2024.06",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "某大学",
+            "canonical_value": null,
+            "evidence_start": 56,
+            "evidence_end": 89,
+            "institution": "某大学",
+            "degree": "本科",
+            "field_of_study": "计算机科学与技术",
+            "dates": "2020.09 - 2024.06",
+            "cet4_score": null,
+            "cet6_score": null,
+            "relevant_courses": [],
+            "honors": []
+          }
+        ],
+        "skills": [
+          {
+            "id": "86648404-7da7-491b-9f1c-060241b02bed",
+            "evidence_text": "Python",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "Python",
+            "canonical_value": "Python",
+            "evidence_start": 336,
+            "evidence_end": 342,
+            "name": "Python",
+            "proficiency": null
+          },
+          {
+            "id": "1493630e-69b9-4daa-834d-7cca626c094b",
+            "evidence_text": "SQL",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "SQL",
+            "canonical_value": "SQL",
+            "evidence_start": 345,
+            "evidence_end": 348,
+            "name": "SQL",
+            "proficiency": null
+          },
+          {
+            "id": "22438154-e116-4204-995d-b412733f785b",
+            "evidence_text": "Figma",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "Figma",
+            "canonical_value": "Figma",
+            "evidence_start": 351,
+            "evidence_end": 356,
+            "name": "Figma",
+            "proficiency": null
+          },
+          {
+            "id": "c916c7c3-d73f-4e46-86be-18fba92ae8ee",
+            "evidence_text": "Axure",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "Axure",
+            "canonical_value": "Axure",
+            "evidence_start": 359,
+            "evidence_end": 364,
+            "name": "Axure",
+            "proficiency": null
+          },
+          {
+            "id": "2540e358-522d-40a2-87bf-aeac382b1353",
+            "evidence_text": "prompt 设计",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "prompt 设计",
+            "canonical_value": "prompt 设计",
+            "evidence_start": 367,
+            "evidence_end": 376,
+            "name": "prompt 设计",
+            "proficiency": null
+          }
+        ],
+        "experiences": [
+          {
+            "id": "b3fa6127-0ff7-4417-87d3-d786f6613d1f",
+            "evidence_text": "某互联网公司 AI 产品实习 2023.06 - 2023.12\n- 负责智能客服机器人的需求拆解与迭代排期，跟进 3 个版本上线",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "AI 产品实习",
+            "canonical_value": null,
+            "evidence_start": 96,
+            "evidence_end": 161,
+            "title": "AI 产品实习",
+            "organization": "某互联网公司",
+            "dates": "2023.06 - 2023.12",
+            "description": "负责智能客服机器人的需求拆解与迭代排期，跟进 3 个版本上线",
+            "experience_type": "INTERNSHIP"
+          },
+          {
+            "id": "ea6140bb-74e6-4dfe-9dc9-7509fe931a6a",
+            "evidence_text": "校园二手交易平台 2022.09 - 2023.05\n- 担任产品负责人，完成从需求调研到上线的完整闭环，累计注册用户 800+",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "校园二手交易平台",
+            "canonical_value": null,
+            "evidence_start": 246,
+            "evidence_end": 310,
+            "title": "校园二手交易平台",
+            "organization": null,
+            "dates": "2022.09 - 2023.05",
+            "description": "担任产品负责人，完成从需求调研到上线的完整闭环，累计注册用户 800+",
+            "experience_type": "PROJECT"
+          }
+        ],
+        "certifications": [],
+        "preferences": null
+      }
+    },
+    {
+      "step": "3-confirm-profile",
+      "ok": true,
+      "result": {
+        "profile_id": "1206ef8b-5067-4407-8071-f82921402211",
+        "status": "CONFIRMED",
+        "full_name": "张三",
+        "phone": "13800000000",
+        "email": "zhangsan@example.com",
+        "city": "北京",
+        "created_at": "2026-10-16T17:40:42",
+        "updated_at": "2026-10-16T17:40:44.846073",
+        "education": [
+          {
+            "id": "3a4a272c-ce30-4832-8601-62d91693c1fb",
+            "evidence_text": "某大学 计算机科学与技术 本科 2020.09 - 2024.06",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "某大学",
+            "canonical_value": null,
+            "evidence_start": 56,
+            "evidence_end": 89,
+            "institution": "某大学",
+            "degree": "本科",
+            "field_of_study": "计算机科学与技术",
+            "dates": "2020.09 - 2024.06",
+            "cet4_score": null,
+            "cet6_score": null,
+            "relevant_courses": [],
+            "honors": []
+          }
+        ],
+        "skills": [
+          {
+            "id": "86648404-7da7-491b-9f1c-060241b02bed",
+            "evidence_text": "Python",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "Python",
+            "canonical_value": "Python",
+            "evidence_start": 336,
+            "evidence_end": 342,
+            "name": "Python",
+            "proficiency": null
+          },
+          {
+            "id": "1493630e-69b9-4daa-834d-7cca626c094b",
+            "evidence_text": "SQL",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "SQL",
+            "canonical_value": "SQL",
+            "evidence_start": 345,
+            "evidence_end": 348,
+            "name": "SQL",
+            "proficiency": null
+          },
+          {
+            "id": "22438154-e116-4204-995d-b412733f785b",
+            "evidence_text": "Figma",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "Figma",
+            "canonical_value": "Figma",
+            "evidence_start": 351,
+            "evidence_end": 356,
+            "name": "Figma",
+            "proficiency": null
+          },
+          {
+            "id": "c916c7c3-d73f-4e46-86be-18fba92ae8ee",
+            "evidence_text": "Axure",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "Axure",
+            "canonical_value": "Axure",
+            "evidence_start": 359,
+            "evidence_end": 364,
+            "name": "Axure",
+            "proficiency": null
+          },
+          {
+            "id": "2540e358-522d-40a2-87bf-aeac382b1353",
+            "evidence_text": "prompt 设计",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "prompt 设计",
+            "canonical_value": "prompt 设计",
+            "evidence_start": 367,
+            "evidence_end": 376,
+            "name": "prompt 设计",
+            "proficiency": null
+          }
+        ],
+        "experiences": [
+          {
+            "id": "b3fa6127-0ff7-4417-87d3-d786f6613d1f",
+            "evidence_text": "某互联网公司 AI 产品实习 2023.06 - 2023.12\n- 负责智能客服机器人的需求拆解与迭代排期，跟进 3 个版本上线",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "AI 产品实习",
+            "canonical_value": null,
+            "evidence_start": 96,
+            "evidence_end": 161,
+            "title": "AI 产品实习",
+            "organization": "某互联网公司",
+            "dates": "2023.06 - 2023.12",
+            "description": "负责智能客服机器人的需求拆解与迭代排期，跟进 3 个版本上线",
+            "experience_type": "INTERNSHIP"
+          },
+          {
+            "id": "ea6140bb-74e6-4dfe-9dc9-7509fe931a6a",
+            "evidence_text": "校园二手交易平台 2022.09 - 2023.05\n- 担任产品负责人，完成从需求调研到上线的完整闭环，累计注册用户 800+",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "校园二手交易平台",
+            "canonical_value": null,
+            "evidence_start": 246,
+            "evidence_end": 310,
+            "title": "校园二手交易平台",
+            "organization": null,
+            "dates": "2022.09 - 2023.05",
+            "description": "担任产品负责人，完成从需求调研到上线的完整闭环，累计注册用户 800+",
+            "experience_type": "PROJECT"
+          }
+        ],
+        "certifications": [],
+        "preferences": null
+      }
+    },
+    {
+      "step": "4-create-mission",
+      "ok": true,
+      "result": {
+        "id": "4a2545b8-ddbb-49a2-915b-54b08ef90039",
+        "profile_id": "1206ef8b-5067-4407-8071-f82921402211",
+        "target_job_id": "e9393fa1-95e9-4996-ae6d-c8bb89b72853",
+        "display_name": "AI 产品经理",
+        "company": "UNKNOWN",
+        "role": "AI 产品经理",
+        "role_family": "Product",
+        "seniority": "UNKNOWN",
+        "location": "北京",
+        "status": "DRAFT",
+        "workflow_state": "ROLE_UNDERSTOOD",
+        "resume_source": null,
+        "warnings": [
+          "company_intel_unavailable"
+        ],
+        "analysis_error": null,
+        "parsed_jd": {
+          "company": "UNKNOWN",
+          "role": "AI 产品经理",
+          "role_family": "Product",
+          "seniority": "UNKNOWN",
+          "location": "北京",
+          "education_requirements": [
+            "本科及以上学历"
+          ],
+          "responsibilities": [],
+          "requirements": [
+            {
+              "id": "Q1",
+              "text": "本科及以上学历",
+              "category": "must_have",
+              "evidence_text": "本科及以上学历"
+            },
+            {
+              "id": "Q2",
+              "text": "逻辑清晰，能独立完成需求拆解与原型设计",
+              "category": "skill",
+              "evidence_text": "逻辑清晰，能独立完成需求拆解与原型设计"
+            }
+          ],
+          "preferred_requirements": [
+            {
+              "id": "P1",
+              "text": "计算机、产品相关专业优先",
+              "category": "nice_to_have",
+              "evidence_text": "计算机、产品相关专业优先"
+            },
+            {
+              "id": "P2",
+              "text": "有 AI 产品或对话式产品实习/项目经验者优先",
+              "category": "nice_to_have",
+              "evidence_text": "有 AI 产品或对话式产品实习/项目经验者优先"
+            },
+            {
+              "id": "P3",
+              "text": "熟悉 prompt 设计或模型评测者加分",
+              "category": "nice_to_have",
+              "evidence_text": "熟悉 prompt 设计或模型评测者加分"
+            }
+          ],
+          "capabilities": [
+            "需求分析与功能设计",
+            "PRD 撰写",
+            "跨团队协作",
+            "评测集与质量标准定义",
+            "用户反馈与数据分析",
+            "竞品分析",
+            "产品规划",
+            "需求拆解",
+            "原型设计",
+            "prompt 设计",
+            "模型评测"
+          ],
+          "keywords": [
+            "AI 产品经理",
+            "AI 助手",
+            "PRD",
+            "评测集",
+            "质量标准",
+            "模型迭代",
+            "用户反馈",
+            "数据分析",
+            "竞品分析",
+            "产品规划",
+            "prompt 设计",
+            "模型评测"
+          ]
+        },
+        "what_matters": {
+          "core_capabilities": [
+            {
+              "name": "AI 助手类产品需求分析与功能设计",
+              "why": "岗位职责明确要求负责 AI 助手类产品的需求分析与功能设计，这是该岗位的核心工作内容。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "PRD 撰写与推动落地",
+              "why": "岗位职责要求输出 PRD 并推动落地，是产品经理交付的关键能力。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "跨团队协作（算法、工程）",
+              "why": "岗位职责要求与算法、工程团队协作，是保障模型迭代与产品落地的基础。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "评测集与质量标准定义",
+              "why": "岗位职责要求定义评测集与质量标准，并跟进模型迭代效果，直接决定 AI 产品质量。",
+              "evidence_refs": [
+                "P3"
+              ]
+            },
+            {
+              "name": "用户反馈与数据分析",
+              "why": "岗位职责要求分析用户反馈与数据，持续优化产品体验，是迭代闭环的核心。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "竞品分析与产品规划",
+              "why": "岗位职责要求跟踪行业动态，输出竞品分析与产品规划，影响产品方向。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "需求拆解与原型设计",
+              "why": "任职要求明确要求逻辑清晰，能独立完成需求拆解与原型设计。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "prompt 设计与模型评测",
+              "why": "任职要求将熟悉 prompt 设计或模型评测列为加分项，是 AI 产品岗的差异化能力。",
+              "evidence_refs": [
+                "P3"
+              ]
+            }
+          ],
+          "high_importance_requirements": [
+            {
+              "text": "本科及以上学历",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "Q1"
+              ]
+            },
+            {
+              "text": "逻辑清晰，能独立完成需求拆解与原型设计",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "text": "有 AI 产品或对话式产品实习/项目经验者优先",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "P2"
+              ]
+            },
+            {
+              "text": "熟悉 prompt 设计或模型评测者加分",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "P3"
+              ]
+            },
+            {
+              "text": "计算机、产品相关专业优先",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "P1"
+              ]
+            }
+          ],
+          "evidence_expected": [
+            "本科及以上学历的证明材料（学历证书或学信网信息）",
+            "AI 产品或对话式产品实习/项目经历的描述与成果",
+            "独立完成的需求拆解文档或原型设计作品",
+            "PRD 文档或产品功能设计案例",
+            "与算法、工程团队协作的项目经历说明",
+            "评测集或质量标准定义的相关产出",
+            "用户反馈与数据分析驱动的产品优化案例",
+            "竞品分析或产品规划文档",
+            "prompt 设计或模型评测的相关实践记录"
+          ],
+          "likely_success_signals": [
+            "具备本科及以上学历，满足基本门槛",
+            "有 AI 产品或对话式产品实习/项目经验，能快速上手 AI 助手类产品",
+            "能独立完成需求拆解与原型设计，逻辑清晰",
+            "有 PRD 撰写并推动落地的完整案例",
+            "有与算法、工程团队协作并跟进模型迭代的经验",
+            "具备 prompt 设计或模型评测能力，形成差异化优势",
+            "有数据分析驱动产品优化的实践"
+          ],
+          "bonus_capabilities": [
+            "计算机、产品相关专业背景",
+            "AI 产品或对话式产品实习/项目经验",
+            "prompt 设计能力",
+            "模型评测能力"
+          ],
+          "potential_interview_focus": [
+            "请举例说明你独立完成的需求拆解与原型设计过程",
+            "你如何定义评测集与质量标准？如何跟进模型迭代效果？",
+            "请描述一次与算法、工程团队协作推动产品落地的经历",
+            "你如何分析用户反馈与数据并优化产品体验？",
+            "你是否做过竞品分析与产品规划？请分享具体案例",
+            "你在 prompt 设计或模型评测方面有哪些实践？"
+          ],
+          "confidence": 0.55,
+          "jd_evidence_refs": [
+            "Q1",
+            "Q2",
+            "P1",
+            "P2",
+            "P3"
+          ]
+        },
+        "resume_strategy": {},
+        "interview_intel": [],
+        "created_at": "2026-10-16T17:40:51",
+        "updated_at": "2026-10-16T17:40:51"
+      }
+    },
+    {
+      "step": "4b-wait-analysis",
+      "ok": true,
+      "result": {
+        "id": "4a2545b8-ddbb-49a2-915b-54b08ef90039",
+        "profile_id": "1206ef8b-5067-4407-8071-f82921402211",
+        "target_job_id": "e9393fa1-95e9-4996-ae6d-c8bb89b72853",
+        "display_name": "AI 产品经理",
+        "company": "UNKNOWN",
+        "role": "AI 产品经理",
+        "role_family": "Product",
+        "seniority": "UNKNOWN",
+        "location": "北京",
+        "status": "DRAFT",
+        "workflow_state": "ROLE_UNDERSTOOD",
+        "resume_source": null,
+        "warnings": [
+          "company_intel_unavailable"
+        ],
+        "analysis_error": null,
+        "parsed_jd": {
+          "company": "UNKNOWN",
+          "role": "AI 产品经理",
+          "role_family": "Product",
+          "seniority": "UNKNOWN",
+          "location": "北京",
+          "education_requirements": [
+            "本科及以上学历"
+          ],
+          "responsibilities": [],
+          "requirements": [
+            {
+              "id": "Q1",
+              "text": "本科及以上学历",
+              "category": "must_have",
+              "evidence_text": "本科及以上学历"
+            },
+            {
+              "id": "Q2",
+              "text": "逻辑清晰，能独立完成需求拆解与原型设计",
+              "category": "skill",
+              "evidence_text": "逻辑清晰，能独立完成需求拆解与原型设计"
+            }
+          ],
+          "preferred_requirements": [
+            {
+              "id": "P1",
+              "text": "计算机、产品相关专业优先",
+              "category": "nice_to_have",
+              "evidence_text": "计算机、产品相关专业优先"
+            },
+            {
+              "id": "P2",
+              "text": "有 AI 产品或对话式产品实习/项目经验者优先",
+              "category": "nice_to_have",
+              "evidence_text": "有 AI 产品或对话式产品实习/项目经验者优先"
+            },
+            {
+              "id": "P3",
+              "text": "熟悉 prompt 设计或模型评测者加分",
+              "category": "nice_to_have",
+              "evidence_text": "熟悉 prompt 设计或模型评测者加分"
+            }
+          ],
+          "capabilities": [
+            "需求分析与功能设计",
+            "PRD 撰写",
+            "跨团队协作",
+            "评测集与质量标准定义",
+            "用户反馈与数据分析",
+            "竞品分析",
+            "产品规划",
+            "需求拆解",
+            "原型设计",
+            "prompt 设计",
+            "模型评测"
+          ],
+          "keywords": [
+            "AI 产品经理",
+            "AI 助手",
+            "PRD",
+            "评测集",
+            "质量标准",
+            "模型迭代",
+            "用户反馈",
+            "数据分析",
+            "竞品分析",
+            "产品规划",
+            "prompt 设计",
+            "模型评测"
+          ]
+        },
+        "what_matters": {
+          "core_capabilities": [
+            {
+              "name": "AI 助手类产品需求分析与功能设计",
+              "why": "岗位职责明确要求负责 AI 助手类产品的需求分析与功能设计，这是该岗位的核心工作内容。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "PRD 撰写与推动落地",
+              "why": "岗位职责要求输出 PRD 并推动落地，是产品经理交付的关键能力。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "跨团队协作（算法、工程）",
+              "why": "岗位职责要求与算法、工程团队协作，是保障模型迭代与产品落地的基础。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "评测集与质量标准定义",
+              "why": "岗位职责要求定义评测集与质量标准，并跟进模型迭代效果，直接决定 AI 产品质量。",
+              "evidence_refs": [
+                "P3"
+              ]
+            },
+            {
+              "name": "用户反馈与数据分析",
+              "why": "岗位职责要求分析用户反馈与数据，持续优化产品体验，是迭代闭环的核心。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "竞品分析与产品规划",
+              "why": "岗位职责要求跟踪行业动态，输出竞品分析与产品规划，影响产品方向。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "需求拆解与原型设计",
+              "why": "任职要求明确要求逻辑清晰，能独立完成需求拆解与原型设计。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "prompt 设计与模型评测",
+              "why": "任职要求将熟悉 prompt 设计或模型评测列为加分项，是 AI 产品岗的差异化能力。",
+              "evidence_refs": [
+                "P3"
+              ]
+            }
+          ],
+          "high_importance_requirements": [
+            {
+              "text": "本科及以上学历",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "Q1"
+              ]
+            },
+            {
+              "text": "逻辑清晰，能独立完成需求拆解与原型设计",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "text": "有 AI 产品或对话式产品实习/项目经验者优先",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "P2"
+              ]
+            },
+            {
+              "text": "熟悉 prompt 设计或模型评测者加分",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "P3"
+              ]
+            },
+            {
+              "text": "计算机、产品相关专业优先",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "P1"
+              ]
+            }
+          ],
+          "evidence_expected": [
+            "本科及以上学历的证明材料（学历证书或学信网信息）",
+            "AI 产品或对话式产品实习/项目经历的描述与成果",
+            "独立完成的需求拆解文档或原型设计作品",
+            "PRD 文档或产品功能设计案例",
+            "与算法、工程团队协作的项目经历说明",
+            "评测集或质量标准定义的相关产出",
+            "用户反馈与数据分析驱动的产品优化案例",
+            "竞品分析或产品规划文档",
+            "prompt 设计或模型评测的相关实践记录"
+          ],
+          "likely_success_signals": [
+            "具备本科及以上学历，满足基本门槛",
+            "有 AI 产品或对话式产品实习/项目经验，能快速上手 AI 助手类产品",
+            "能独立完成需求拆解与原型设计，逻辑清晰",
+            "有 PRD 撰写并推动落地的完整案例",
+            "有与算法、工程团队协作并跟进模型迭代的经验",
+            "具备 prompt 设计或模型评测能力，形成差异化优势",
+            "有数据分析驱动产品优化的实践"
+          ],
+          "bonus_capabilities": [
+            "计算机、产品相关专业背景",
+            "AI 产品或对话式产品实习/项目经验",
+            "prompt 设计能力",
+            "模型评测能力"
+          ],
+          "potential_interview_focus": [
+            "请举例说明你独立完成的需求拆解与原型设计过程",
+            "你如何定义评测集与质量标准？如何跟进模型迭代效果？",
+            "请描述一次与算法、工程团队协作推动产品落地的经历",
+            "你如何分析用户反馈与数据并优化产品体验？",
+            "你是否做过竞品分析与产品规划？请分享具体案例",
+            "你在 prompt 设计或模型评测方面有哪些实践？"
+          ],
+          "confidence": 0.55,
+          "jd_evidence_refs": [
+            "Q1",
+            "Q2",
+            "P1",
+            "P2",
+            "P3"
+          ]
+        },
+        "resume_strategy": {},
+        "interview_intel": [],
+        "created_at": "2026-10-16T17:40:51",
+        "updated_at": "2026-10-16T17:40:51"
+      }
+    },
+    {
+      "step": "4c-continue-to-resume",
+      "ok": true,
+      "result": {
+        "id": "4a2545b8-ddbb-49a2-915b-54b08ef90039",
+        "profile_id": "1206ef8b-5067-4407-8071-f82921402211",
+        "target_job_id": "e9393fa1-95e9-4996-ae6d-c8bb89b72853",
+        "display_name": "AI 产品经理",
+        "company": "UNKNOWN",
+        "role": "AI 产品经理",
+        "role_family": "Product",
+        "seniority": "UNKNOWN",
+        "location": "北京",
+        "status": "DRAFT",
+        "workflow_state": "RESUME_REQUIRED",
+        "resume_source": null,
+        "warnings": [
+          "company_intel_unavailable"
+        ],
+        "analysis_error": null,
+        "parsed_jd": {
+          "company": "UNKNOWN",
+          "role": "AI 产品经理",
+          "role_family": "Product",
+          "seniority": "UNKNOWN",
+          "location": "北京",
+          "education_requirements": [
+            "本科及以上学历"
+          ],
+          "responsibilities": [],
+          "requirements": [
+            {
+              "id": "Q1",
+              "text": "本科及以上学历",
+              "category": "must_have",
+              "evidence_text": "本科及以上学历"
+            },
+            {
+              "id": "Q2",
+              "text": "逻辑清晰，能独立完成需求拆解与原型设计",
+              "category": "skill",
+              "evidence_text": "逻辑清晰，能独立完成需求拆解与原型设计"
+            }
+          ],
+          "preferred_requirements": [
+            {
+              "id": "P1",
+              "text": "计算机、产品相关专业优先",
+              "category": "nice_to_have",
+              "evidence_text": "计算机、产品相关专业优先"
+            },
+            {
+              "id": "P2",
+              "text": "有 AI 产品或对话式产品实习/项目经验者优先",
+              "category": "nice_to_have",
+              "evidence_text": "有 AI 产品或对话式产品实习/项目经验者优先"
+            },
+            {
+              "id": "P3",
+              "text": "熟悉 prompt 设计或模型评测者加分",
+              "category": "nice_to_have",
+              "evidence_text": "熟悉 prompt 设计或模型评测者加分"
+            }
+          ],
+          "capabilities": [
+            "需求分析与功能设计",
+            "PRD 撰写",
+            "跨团队协作",
+            "评测集与质量标准定义",
+            "用户反馈与数据分析",
+            "竞品分析",
+            "产品规划",
+            "需求拆解",
+            "原型设计",
+            "prompt 设计",
+            "模型评测"
+          ],
+          "keywords": [
+            "AI 产品经理",
+            "AI 助手",
+            "PRD",
+            "评测集",
+            "质量标准",
+            "模型迭代",
+            "用户反馈",
+            "数据分析",
+            "竞品分析",
+            "产品规划",
+            "prompt 设计",
+            "模型评测"
+          ]
+        },
+        "what_matters": {
+          "core_capabilities": [
+            {
+              "name": "AI 助手类产品需求分析与功能设计",
+              "why": "岗位职责明确要求负责 AI 助手类产品的需求分析与功能设计，这是该岗位的核心工作内容。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "PRD 撰写与推动落地",
+              "why": "岗位职责要求输出 PRD 并推动落地，是产品经理交付的关键能力。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "跨团队协作（算法、工程）",
+              "why": "岗位职责要求与算法、工程团队协作，是保障模型迭代与产品落地的基础。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "评测集与质量标准定义",
+              "why": "岗位职责要求定义评测集与质量标准，并跟进模型迭代效果，直接决定 AI 产品质量。",
+              "evidence_refs": [
+                "P3"
+              ]
+            },
+            {
+              "name": "用户反馈与数据分析",
+              "why": "岗位职责要求分析用户反馈与数据，持续优化产品体验，是迭代闭环的核心。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "竞品分析与产品规划",
+              "why": "岗位职责要求跟踪行业动态，输出竞品分析与产品规划，影响产品方向。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "需求拆解与原型设计",
+              "why": "任职要求明确要求逻辑清晰，能独立完成需求拆解与原型设计。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "prompt 设计与模型评测",
+              "why": "任职要求将熟悉 prompt 设计或模型评测列为加分项，是 AI 产品岗的差异化能力。",
+              "evidence_refs": [
+                "P3"
+              ]
+            }
+          ],
+          "high_importance_requirements": [
+            {
+              "text": "本科及以上学历",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "Q1"
+              ]
+            },
+            {
+              "text": "逻辑清晰，能独立完成需求拆解与原型设计",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "text": "有 AI 产品或对话式产品实习/项目经验者优先",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "P2"
+              ]
+            },
+            {
+              "text": "熟悉 prompt 设计或模型评测者加分",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "P3"
+              ]
+            },
+            {
+              "text": "计算机、产品相关专业优先",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "P1"
+              ]
+            }
+          ],
+          "evidence_expected": [
+            "本科及以上学历的证明材料（学历证书或学信网信息）",
+            "AI 产品或对话式产品实习/项目经历的描述与成果",
+            "独立完成的需求拆解文档或原型设计作品",
+            "PRD 文档或产品功能设计案例",
+            "与算法、工程团队协作的项目经历说明",
+            "评测集或质量标准定义的相关产出",
+            "用户反馈与数据分析驱动的产品优化案例",
+            "竞品分析或产品规划文档",
+            "prompt 设计或模型评测的相关实践记录"
+          ],
+          "likely_success_signals": [
+            "具备本科及以上学历，满足基本门槛",
+            "有 AI 产品或对话式产品实习/项目经验，能快速上手 AI 助手类产品",
+            "能独立完成需求拆解与原型设计，逻辑清晰",
+            "有 PRD 撰写并推动落地的完整案例",
+            "有与算法、工程团队协作并跟进模型迭代的经验",
+            "具备 prompt 设计或模型评测能力，形成差异化优势",
+            "有数据分析驱动产品优化的实践"
+          ],
+          "bonus_capabilities": [
+            "计算机、产品相关专业背景",
+            "AI 产品或对话式产品实习/项目经验",
+            "prompt 设计能力",
+            "模型评测能力"
+          ],
+          "potential_interview_focus": [
+            "请举例说明你独立完成的需求拆解与原型设计过程",
+            "你如何定义评测集与质量标准？如何跟进模型迭代效果？",
+            "请描述一次与算法、工程团队协作推动产品落地的经历",
+            "你如何分析用户反馈与数据并优化产品体验？",
+            "你是否做过竞品分析与产品规划？请分享具体案例",
+            "你在 prompt 设计或模型评测方面有哪些实践？"
+          ],
+          "confidence": 0.55,
+          "jd_evidence_refs": [
+            "Q1",
+            "Q2",
+            "P1",
+            "P2",
+            "P3"
+          ]
+        },
+        "resume_strategy": {},
+        "interview_intel": [],
+        "created_at": "2026-10-16T17:40:51",
+        "updated_at": "2026-10-16T17:40:51.906212"
+      }
+    },
+    {
+      "step": "5-bind-resume",
+      "ok": true,
+      "result": {
+        "mission": {
+          "id": "4a2545b8-ddbb-49a2-915b-54b08ef90039",
+          "profile_id": "1206ef8b-5067-4407-8071-f82921402211",
+          "target_job_id": "e9393fa1-95e9-4996-ae6d-c8bb89b72853",
+          "display_name": "AI 产品经理",
+          "company": "UNKNOWN",
+          "role": "AI 产品经理",
+          "role_family": "Product",
+          "seniority": "UNKNOWN",
+          "location": "北京",
+          "status": "RESUME_PREP",
+          "workflow_state": "EXPERIENCE_SELECTION_REQUIRED",
+          "resume_source": {
+            "mode": "paste",
+            "bound_at": "2026-10-16T17:40:55.344626+00:00",
+            "isolation": "mission_local",
+            "bound_profile_id": "4225c034-7b6b-4468-8731-dfa7f5d9e75b",
+            "master_profile_id": "1206ef8b-5067-4407-8071-f82921402211",
+            "filename": null,
+            "content_hash": "8172d24bdbacb1a9bda0333c6c50b7873a2f97a9630026160ed7a2a9f322195b",
+            "section_order": [
+              "education",
+              "experience",
+              "project",
+              "skills"
+            ],
+            "optimization_reset_at": "2026-10-16T17:40:55.381984+00:00"
+          },
+          "warnings": [
+            "company_intel_unavailable"
+          ],
+          "analysis_error": null,
+          "parsed_jd": {
+            "company": "UNKNOWN",
+            "role": "AI 产品经理",
+            "role_family": "Product",
+            "seniority": "UNKNOWN",
+            "location": "北京",
+            "education_requirements": [
+              "本科及以上学历"
+            ],
+            "responsibilities": [],
+            "requirements": [
+              {
+                "id": "Q1",
+                "text": "本科及以上学历",
+                "category": "must_have",
+                "evidence_text": "本科及以上学历"
+              },
+              {
+                "id": "Q2",
+                "text": "逻辑清晰，能独立完成需求拆解与原型设计",
+                "category": "skill",
+                "evidence_text": "逻辑清晰，能独立完成需求拆解与原型设计"
+              }
+            ],
+            "preferred_requirements": [
+              {
+                "id": "P1",
+                "text": "计算机、产品相关专业优先",
+                "category": "nice_to_have",
+                "evidence_text": "计算机、产品相关专业优先"
+              },
+              {
+                "id": "P2",
+                "text": "有 AI 产品或对话式产品实习/项目经验者优先",
+                "category": "nice_to_have",
+                "evidence_text": "有 AI 产品或对话式产品实习/项目经验者优先"
+              },
+              {
+                "id": "P3",
+                "text": "熟悉 prompt 设计或模型评测者加分",
+                "category": "nice_to_have",
+                "evidence_text": "熟悉 prompt 设计或模型评测者加分"
+              }
+            ],
+            "capabilities": [
+              "需求分析与功能设计",
+              "PRD 撰写",
+              "跨团队协作",
+              "评测集与质量标准定义",
+              "用户反馈与数据分析",
+              "竞品分析",
+              "产品规划",
+              "需求拆解",
+              "原型设计",
+              "prompt 设计",
+              "模型评测"
+            ],
+            "keywords": [
+              "AI 产品经理",
+              "AI 助手",
+              "PRD",
+              "评测集",
+              "质量标准",
+              "模型迭代",
+              "用户反馈",
+              "数据分析",
+              "竞品分析",
+              "产品规划",
+              "prompt 设计",
+              "模型评测"
+            ]
+          },
+          "what_matters": {
+            "core_capabilities": [
+              {
+                "name": "AI 助手类产品需求分析与功能设计",
+                "why": "岗位职责明确要求负责 AI 助手类产品的需求分析与功能设计，这是该岗位的核心工作内容。",
+                "evidence_refs": [
+                  "Q2"
+                ]
+              },
+              {
+                "name": "PRD 撰写与推动落地",
+                "why": "岗位职责要求输出 PRD 并推动落地，是产品经理交付的关键能力。",
+                "evidence_refs": [
+                  "Q2"
+                ]
+              },
+              {
+                "name": "跨团队协作（算法、工程）",
+                "why": "岗位职责要求与算法、工程团队协作，是保障模型迭代与产品落地的基础。",
+                "evidence_refs": [
+                  "Q2"
+                ]
+              },
+              {
+                "name": "评测集与质量标准定义",
+                "why": "岗位职责要求定义评测集与质量标准，并跟进模型迭代效果，直接决定 AI 产品质量。",
+                "evidence_refs": [
+                  "P3"
+                ]
+              },
+              {
+                "name": "用户反馈与数据分析",
+                "why": "岗位职责要求分析用户反馈与数据，持续优化产品体验，是迭代闭环的核心。",
+                "evidence_refs": [
+                  "Q2"
+                ]
+              },
+              {
+                "name": "竞品分析与产品规划",
+                "why": "岗位职责要求跟踪行业动态，输出竞品分析与产品规划，影响产品方向。",
+                "evidence_refs": [
+                  "Q2"
+                ]
+              },
+              {
+                "name": "需求拆解与原型设计",
+                "why": "任职要求明确要求逻辑清晰，能独立完成需求拆解与原型设计。",
+                "evidence_refs": [
+                  "Q2"
+                ]
+              },
+              {
+                "name": "prompt 设计与模型评测",
+                "why": "任职要求将熟悉 prompt 设计或模型评测列为加分项，是 AI 产品岗的差异化能力。",
+                "evidence_refs": [
+                  "P3"
+                ]
+              }
+            ],
+            "high_importance_requirements": [
+              {
+                "text": "本科及以上学历",
+                "importance": "MUST_HAVE",
+                "evidence_refs": [
+                  "Q1"
+                ]
+              },
+              {
+                "text": "逻辑清晰，能独立完成需求拆解与原型设计",
+                "importance": "MUST_HAVE",
+                "evidence_refs": [
+                  "Q2"
+                ]
+              },
+              {
+                "text": "有 AI 产品或对话式产品实习/项目经验者优先",
+                "importance": "NICE_TO_HAVE",
+                "evidence_refs": [
+                  "P2"
+                ]
+              },
+              {
+                "text": "熟悉 prompt 设计或模型评测者加分",
+                "importance": "NICE_TO_HAVE",
+                "evidence_refs": [
+                  "P3"
+                ]
+              },
+              {
+                "text": "计算机、产品相关专业优先",
+                "importance": "NICE_TO_HAVE",
+                "evidence_refs": [
+                  "P1"
+                ]
+              }
+            ],
+            "evidence_expected": [
+              "本科及以上学历的证明材料（学历证书或学信网信息）",
+              "AI 产品或对话式产品实习/项目经历的描述与成果",
+              "独立完成的需求拆解文档或原型设计作品",
+              "PRD 文档或产品功能设计案例",
+              "与算法、工程团队协作的项目经历说明",
+              "评测集或质量标准定义的相关产出",
+              "用户反馈与数据分析驱动的产品优化案例",
+              "竞品分析或产品规划文档",
+              "prompt 设计或模型评测的相关实践记录"
+            ],
+            "likely_success_signals": [
+              "具备本科及以上学历，满足基本门槛",
+              "有 AI 产品或对话式产品实习/项目经验，能快速上手 AI 助手类产品",
+              "能独立完成需求拆解与原型设计，逻辑清晰",
+              "有 PRD 撰写并推动落地的完整案例",
+              "有与算法、工程团队协作并跟进模型迭代的经验",
+              "具备 prompt 设计或模型评测能力，形成差异化优势",
+              "有数据分析驱动产品优化的实践"
+            ],
+            "bonus_capabilities": [
+              "计算机、产品相关专业背景",
+              "AI 产品或对话式产品实习/项目经验",
+              "prompt 设计能力",
+              "模型评测能力"
+            ],
+            "potential_interview_focus": [
+              "请举例说明你独立完成的需求拆解与原型设计过程",
+              "你如何定义评测集与质量标准？如何跟进模型迭代效果？",
+              "请描述一次与算法、工程团队协作推动产品落地的经历",
+              "你如何分析用户反馈与数据并优化产品体验？",
+              "你是否做过竞品分析与产品规划？请分享具体案例",
+              "你在 prompt 设计或模型评测方面有哪些实践？"
+            ],
+            "confidence": 0.55,
+            "jd_evidence_refs": [
+              "Q1",
+              "Q2",
+              "P1",
+              "P2",
+              "P3"
+            ]
+          },
+          "resume_strategy": {},
+          "interview_intel": [],
+          "created_at": "2026-10-16T17:40:51",
+          "updated_at": "2026-10-16T17:40:55.383863"
+        },
+        "profile_id": "1206ef8b-5067-4407-8071-f82921402211",
+        "bound_profile_id": "4225c034-7b6b-4468-8731-dfa7f5d9e75b",
+        "isolation": "mission_local",
+        "updated_master": false,
+        "experiences": [
+          {
+            "id": "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+            "title": "AI 产品实习",
+            "organization": "某互联网公司",
+            "dates": "2023.06 - 2023.12",
+            "description": "负责智能客服机器人的需求拆解与迭代排期，跟进 3 个版本上线"
+          },
+          {
+            "id": "be9fdf3d-4634-4e38-8a74-5364460dc9fc",
+            "title": "AI 产品实习",
+            "organization": "某互联网公司",
+            "dates": "2023.06 - 2023.12",
+            "description": "搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检"
+          },
+          {
+            "id": "036a7a17-db79-4083-90e3-626b98a8877a",
+            "title": "AI 产品实习",
+            "organization": "某互联网公司",
+            "dates": "2023.06 - 2023.12",
+            "description": "通过埋点分析定位回复质量下降原因，推动 prompt 优化后问题解决率提升"
+          },
+          {
+            "id": "b9b2847d-c0c5-46a9-8901-de4a1a9af91b",
+            "title": "校园二手交易平台",
+            "organization": null,
+            "dates": "2022.09 - 2023.05",
+            "description": null
+          }
+        ],
+        "affected_missions": []
+      }
+    },
+    {
+      "step": "5b-confirm-source",
+      "ok": true,
+      "result": {
+        "id": "4a2545b8-ddbb-49a2-915b-54b08ef90039",
+        "profile_id": "1206ef8b-5067-4407-8071-f82921402211",
+        "target_job_id": "e9393fa1-95e9-4996-ae6d-c8bb89b72853",
+        "display_name": "AI 产品经理",
+        "company": "UNKNOWN",
+        "role": "AI 产品经理",
+        "role_family": "Product",
+        "seniority": "UNKNOWN",
+        "location": "北京",
+        "status": "RESUME_PREP",
+        "workflow_state": "EXPERIENCE_SELECTION_REQUIRED",
+        "resume_source": {
+          "mode": "paste",
+          "bound_at": "2026-10-16T17:40:55.422989+00:00",
+          "isolation": "mission_local",
+          "bound_profile_id": "4225c034-7b6b-4468-8731-dfa7f5d9e75b",
+          "master_profile_id": "1206ef8b-5067-4407-8071-f82921402211",
+          "filename": null,
+          "content_hash": "8172d24bdbacb1a9bda0333c6c50b7873a2f97a9630026160ed7a2a9f322195b",
+          "section_order": [
+            "education",
+            "experience",
+            "project",
+            "skills"
+          ],
+          "optimization_reset_at": "2026-10-16T17:40:55.381984+00:00"
+        },
+        "warnings": [
+          "company_intel_unavailable"
+        ],
+        "analysis_error": null,
+        "parsed_jd": {
+          "company": "UNKNOWN",
+          "role": "AI 产品经理",
+          "role_family": "Product",
+          "seniority": "UNKNOWN",
+          "location": "北京",
+          "education_requirements": [
+            "本科及以上学历"
+          ],
+          "responsibilities": [],
+          "requirements": [
+            {
+              "id": "Q1",
+              "text": "本科及以上学历",
+              "category": "must_have",
+              "evidence_text": "本科及以上学历"
+            },
+            {
+              "id": "Q2",
+              "text": "逻辑清晰，能独立完成需求拆解与原型设计",
+              "category": "skill",
+              "evidence_text": "逻辑清晰，能独立完成需求拆解与原型设计"
+            }
+          ],
+          "preferred_requirements": [
+            {
+              "id": "P1",
+              "text": "计算机、产品相关专业优先",
+              "category": "nice_to_have",
+              "evidence_text": "计算机、产品相关专业优先"
+            },
+            {
+              "id": "P2",
+              "text": "有 AI 产品或对话式产品实习/项目经验者优先",
+              "category": "nice_to_have",
+              "evidence_text": "有 AI 产品或对话式产品实习/项目经验者优先"
+            },
+            {
+              "id": "P3",
+              "text": "熟悉 prompt 设计或模型评测者加分",
+              "category": "nice_to_have",
+              "evidence_text": "熟悉 prompt 设计或模型评测者加分"
+            }
+          ],
+          "capabilities": [
+            "需求分析与功能设计",
+            "PRD 撰写",
+            "跨团队协作",
+            "评测集与质量标准定义",
+            "用户反馈与数据分析",
+            "竞品分析",
+            "产品规划",
+            "需求拆解",
+            "原型设计",
+            "prompt 设计",
+            "模型评测"
+          ],
+          "keywords": [
+            "AI 产品经理",
+            "AI 助手",
+            "PRD",
+            "评测集",
+            "质量标准",
+            "模型迭代",
+            "用户反馈",
+            "数据分析",
+            "竞品分析",
+            "产品规划",
+            "prompt 设计",
+            "模型评测"
+          ]
+        },
+        "what_matters": {
+          "core_capabilities": [
+            {
+              "name": "AI 助手类产品需求分析与功能设计",
+              "why": "岗位职责明确要求负责 AI 助手类产品的需求分析与功能设计，这是该岗位的核心工作内容。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "PRD 撰写与推动落地",
+              "why": "岗位职责要求输出 PRD 并推动落地，是产品经理交付的关键能力。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "跨团队协作（算法、工程）",
+              "why": "岗位职责要求与算法、工程团队协作，是保障模型迭代与产品落地的基础。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "评测集与质量标准定义",
+              "why": "岗位职责要求定义评测集与质量标准，并跟进模型迭代效果，直接决定 AI 产品质量。",
+              "evidence_refs": [
+                "P3"
+              ]
+            },
+            {
+              "name": "用户反馈与数据分析",
+              "why": "岗位职责要求分析用户反馈与数据，持续优化产品体验，是迭代闭环的核心。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "竞品分析与产品规划",
+              "why": "岗位职责要求跟踪行业动态，输出竞品分析与产品规划，影响产品方向。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "需求拆解与原型设计",
+              "why": "任职要求明确要求逻辑清晰，能独立完成需求拆解与原型设计。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "prompt 设计与模型评测",
+              "why": "任职要求将熟悉 prompt 设计或模型评测列为加分项，是 AI 产品岗的差异化能力。",
+              "evidence_refs": [
+                "P3"
+              ]
+            }
+          ],
+          "high_importance_requirements": [
+            {
+              "text": "本科及以上学历",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "Q1"
+              ]
+            },
+            {
+              "text": "逻辑清晰，能独立完成需求拆解与原型设计",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "text": "有 AI 产品或对话式产品实习/项目经验者优先",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "P2"
+              ]
+            },
+            {
+              "text": "熟悉 prompt 设计或模型评测者加分",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "P3"
+              ]
+            },
+            {
+              "text": "计算机、产品相关专业优先",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "P1"
+              ]
+            }
+          ],
+          "evidence_expected": [
+            "本科及以上学历的证明材料（学历证书或学信网信息）",
+            "AI 产品或对话式产品实习/项目经历的描述与成果",
+            "独立完成的需求拆解文档或原型设计作品",
+            "PRD 文档或产品功能设计案例",
+            "与算法、工程团队协作的项目经历说明",
+            "评测集或质量标准定义的相关产出",
+            "用户反馈与数据分析驱动的产品优化案例",
+            "竞品分析或产品规划文档",
+            "prompt 设计或模型评测的相关实践记录"
+          ],
+          "likely_success_signals": [
+            "具备本科及以上学历，满足基本门槛",
+            "有 AI 产品或对话式产品实习/项目经验，能快速上手 AI 助手类产品",
+            "能独立完成需求拆解与原型设计，逻辑清晰",
+            "有 PRD 撰写并推动落地的完整案例",
+            "有与算法、工程团队协作并跟进模型迭代的经验",
+            "具备 prompt 设计或模型评测能力，形成差异化优势",
+            "有数据分析驱动产品优化的实践"
+          ],
+          "bonus_capabilities": [
+            "计算机、产品相关专业背景",
+            "AI 产品或对话式产品实习/项目经验",
+            "prompt 设计能力",
+            "模型评测能力"
+          ],
+          "potential_interview_focus": [
+            "请举例说明你独立完成的需求拆解与原型设计过程",
+            "你如何定义评测集与质量标准？如何跟进模型迭代效果？",
+            "请描述一次与算法、工程团队协作推动产品落地的经历",
+            "你如何分析用户反馈与数据并优化产品体验？",
+            "你是否做过竞品分析与产品规划？请分享具体案例",
+            "你在 prompt 设计或模型评测方面有哪些实践？"
+          ],
+          "confidence": 0.55,
+          "jd_evidence_refs": [
+            "Q1",
+            "Q2",
+            "P1",
+            "P2",
+            "P3"
+          ]
+        },
+        "resume_strategy": {},
+        "interview_intel": [],
+        "created_at": "2026-10-16T17:40:51",
+        "updated_at": "2026-10-16T17:40:55.423573"
+      }
+    },
+    {
+      "step": "6-generate-selection",
+      "ok": true,
+      "result": {
+        "mission_id": "4a2545b8-ddbb-49a2-915b-54b08ef90039",
+        "selections": [
+          {
+            "id": "0662dc5d-d995-4ced-920b-108923b0d9cf",
+            "mission_id": "4a2545b8-ddbb-49a2-915b-54b08ef90039",
+            "profile_id": "4225c034-7b6b-4468-8731-dfa7f5d9e75b",
+            "experience_id": "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+            "decision": "KEEP_AND_HIGHLIGHT",
+            "why": "「AI 产品实习」包含与AI 产品经理相关的可验证内容：负责智能客服机器人的需求拆解与迭代排期，跟进 3 个版本上线。建议围绕个人动作、方法和结果展开。",
+            "related_capabilities": [
+              "项目中的个人负责部分",
+              "使用的方法与决策",
+              "可核对的结果或奖项"
+            ],
+            "supporting_evidence_refs": [],
+            "confidence": 0.93,
+            "updated_at": "2026-10-16T17:41:02.820201"
+          },
+          {
+            "id": "35a9cbdc-772e-4f33-8843-3b8a5c2d25aa",
+            "mission_id": "4a2545b8-ddbb-49a2-915b-54b08ef90039",
+            "profile_id": "4225c034-7b6b-4468-8731-dfa7f5d9e75b",
+            "experience_id": "b9b2847d-c0c5-46a9-8901-de4a1a9af91b",
+            "decision": "DEEMPHASIZE",
+            "why": "「校园二手交易平台」与AI 产品经理的直接关联不明显，本份简历里弱化处理即可。",
+            "related_capabilities": [],
+            "supporting_evidence_refs": [],
+            "confidence": 0.5,
+            "updated_at": "2026-10-16T17:41:02.820502+00:00"
+          }
+        ],
+        "workflow_state": "EXPERIENCE_SELECTION_REQUIRED"
+      }
+    },
+    {
+      "step": "6b-save-selection",
+      "ok": true,
+      "result": {
+        "mission_id": "4a2545b8-ddbb-49a2-915b-54b08ef90039",
+        "selections": [
+          {
+            "id": "0662dc5d-d995-4ced-920b-108923b0d9cf",
+            "mission_id": "4a2545b8-ddbb-49a2-915b-54b08ef90039",
+            "profile_id": "4225c034-7b6b-4468-8731-dfa7f5d9e75b",
+            "experience_id": "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+            "decision": "KEEP_AND_HIGHLIGHT",
+            "why": "与 JD 的产品/评测/协作要求直接相关",
+            "related_capabilities": [],
+            "supporting_evidence_refs": [],
+            "confidence": 0.8,
+            "updated_at": "2026-10-16T17:41:02.857604"
+          },
+          {
+            "id": "35a9cbdc-772e-4f33-8843-3b8a5c2d25aa",
+            "mission_id": "4a2545b8-ddbb-49a2-915b-54b08ef90039",
+            "profile_id": "4225c034-7b6b-4468-8731-dfa7f5d9e75b",
+            "experience_id": "b9b2847d-c0c5-46a9-8901-de4a1a9af91b",
+            "decision": "KEEP_AND_HIGHLIGHT",
+            "why": "与 JD 的产品/评测/协作要求直接相关",
+            "related_capabilities": [],
+            "supporting_evidence_refs": [],
+            "confidence": 0.8,
+            "updated_at": "2026-10-16T17:41:02.857908+00:00"
+          }
+        ],
+        "workflow_state": "RESUME_STRATEGY_REQUIRED"
+      }
+    },
+    {
+      "step": "7-resume-strategy",
+      "ok": true,
+      "result": {
+        "mission_id": "4a2545b8-ddbb-49a2-915b-54b08ef90039",
+        "strategy": {
+          "positioning_statement": "目标岗位为 AI 产品经理（公司未知、级别未知），核心要求本科及以上学历、逻辑清晰并能独立完成需求拆解与原型设计，优先看重 AI 产品或对话式产品实习/项目经验以及 prompt 设计或模型评测能力。基于现有证据，定位为「具备 AI 智能客服产品实习经验的校招/初级 AI 产品候选人」：本科计算机科学与技术专业满足学历与专业优先项，AI 产品实习中覆盖需求拆解、版本跟进、标注规范与质检、埋点分析与 prompt 优化，能够直接对标岗位的核心与加分要求；校园二手交易平台项目作为产品实践补充，但证据有限，仅作辅助。",
+          "recommended_experience_order": [
+            "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+            "b9b2847d-c0c5-46a9-8901-de4a1a9af91b"
+          ],
+          "experience_guidance": [
+            {
+              "experience_id": "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+              "role_in_story": "主线经历：证明具备 AI 产品（智能客服机器人）全流程实习经验，覆盖需求拆解、版本跟进、数据质检与 prompt 优化，直接对标岗位的 AI 产品经验优先项与 prompt 设计加分项。",
+              "what_to_highlight": [
+                "突出「负责智能客服机器人的需求拆解与迭代排期，跟进 3 个版本上线」，对应需求拆解与推动落地的能力；突出「搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检」，对应评测集与质量标准定义、跨团队协作；突出「通过埋点分析定位回复质量下降原因，推动 prompt 优化后问题解决率提升」，对应用户反馈与数据分析、prompt 设计，且注意该结果只按证据表述「提升」，不添加具体数字。"
+              ],
+              "what_to_avoid": [
+                "避免把「负责」升级为「主导」「从 0 到 1」等超出证据的所有权措辞；避免为「问题解决率提升」补造百分比；避免把 3 个版本、2000 条、5 人团队等已有数字之外再新增任何指标。"
+              ],
+              "target_capabilities": [
+                "需求分析与功能设计",
+                "需求拆解",
+                "跨团队协作",
+                "评测集与质量标准定义",
+                "用户反馈与数据分析",
+                "prompt 设计",
+                "模型评测"
+              ],
+              "evidence_refs": [
+                "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+                "be9fdf3d-4634-4e38-8a74-5364460dc9fc",
+                "036a7a17-db79-4083-90e3-626b98a8877a"
+              ],
+              "interview_risk_notes": [
+                "面试官可能追问「问题解决率提升」的具体幅度与统计口径，目前证据未给出数字，需准备用口径与测量方式说明，不能临场编造百分比。",
+                "「需求拆解与迭代排期」可能被追问个人决策与团队分工的边界，需明确哪些是本人负责、哪些是协同完成。",
+                "「prompt 优化」可能被追问具体优化了哪些 prompt、评测方式是什么，证据未展开，需如实说明已知范围。",
+                "实习时间 2023.06-2023.12，可能被问及与当前求职时间线的衔接及后续是否有延续实践。"
+              ]
+            },
+            {
+              "experience_id": "b9b2847d-c0c5-46a9-8901-de4a1a9af91b",
+              "role_in_story": "辅助经历：作为产品实践补充，体现对产品从需求到交付的参与，但因提供证据仅有名称与时间，仅做低权重呈现，用于填补产品项目经历的空白。",
+              "what_to_highlight": [
+                "仅按证据呈现「校园二手交易平台 2022.09 - 2023.05」这一项目存在与持续时间，可在面试中口头补充与需求拆解、原型设计或协作相关的真实细节（需候选人确认后再用）。"
+              ],
+              "what_to_avoid": [
+                "避免在缺少证据的情况下为该项目编造用户量、转化率、功能清单、职责范围或使用工具；避免把它包装成正式商业产品或 AI 相关项目；避免将「校园项目」表述为「主导/负责人」级别而证据不足。"
+              ],
+              "target_capabilities": [
+                "需求分析与功能设计",
+                "需求拆解",
+                "原型设计",
+                "产品规划"
+              ],
+              "evidence_refs": [
+                "b9b2847d-c0c5-46a9-8901-de4a1a9af91b"
+              ],
+              "interview_risk_notes": [
+                "该项目证据仅有名称与时间，面试官若追问具体职责、产出与成果，极可能暴露细节不足，需提前准备真实可核对的经历描述。",
+                "若候选人无法提供真实细节，建议不主动展开，避免被判定为经历注水。"
+              ]
+            }
+          ]
+        },
+        "workflow_state": "RESUME_STRATEGY_REQUIRED"
+      }
+    },
+    {
+      "step": "7b-confirm-strategy",
+      "ok": true,
+      "result": {
+        "id": "4a2545b8-ddbb-49a2-915b-54b08ef90039",
+        "profile_id": "1206ef8b-5067-4407-8071-f82921402211",
+        "target_job_id": "e9393fa1-95e9-4996-ae6d-c8bb89b72853",
+        "display_name": "AI 产品经理",
+        "company": "UNKNOWN",
+        "role": "AI 产品经理",
+        "role_family": "Product",
+        "seniority": "UNKNOWN",
+        "location": "北京",
+        "status": "RESUME_PREP",
+        "workflow_state": "RESUME_STRATEGY_CONFIRMED",
+        "resume_source": {
+          "mode": "paste",
+          "bound_at": "2026-10-16T17:40:55.422989+00:00",
+          "isolation": "mission_local",
+          "bound_profile_id": "4225c034-7b6b-4468-8731-dfa7f5d9e75b",
+          "master_profile_id": "1206ef8b-5067-4407-8071-f82921402211",
+          "filename": null,
+          "content_hash": "8172d24bdbacb1a9bda0333c6c50b7873a2f97a9630026160ed7a2a9f322195b",
+          "section_order": [
+            "education",
+            "experience",
+            "project",
+            "skills"
+          ],
+          "optimization_reset_at": "2026-10-16T17:40:55.381984+00:00"
+        },
+        "warnings": [
+          "company_intel_unavailable"
+        ],
+        "analysis_error": null,
+        "parsed_jd": {
+          "company": "UNKNOWN",
+          "role": "AI 产品经理",
+          "role_family": "Product",
+          "seniority": "UNKNOWN",
+          "location": "北京",
+          "education_requirements": [
+            "本科及以上学历"
+          ],
+          "responsibilities": [],
+          "requirements": [
+            {
+              "id": "Q1",
+              "text": "本科及以上学历",
+              "category": "must_have",
+              "evidence_text": "本科及以上学历"
+            },
+            {
+              "id": "Q2",
+              "text": "逻辑清晰，能独立完成需求拆解与原型设计",
+              "category": "skill",
+              "evidence_text": "逻辑清晰，能独立完成需求拆解与原型设计"
+            }
+          ],
+          "preferred_requirements": [
+            {
+              "id": "P1",
+              "text": "计算机、产品相关专业优先",
+              "category": "nice_to_have",
+              "evidence_text": "计算机、产品相关专业优先"
+            },
+            {
+              "id": "P2",
+              "text": "有 AI 产品或对话式产品实习/项目经验者优先",
+              "category": "nice_to_have",
+              "evidence_text": "有 AI 产品或对话式产品实习/项目经验者优先"
+            },
+            {
+              "id": "P3",
+              "text": "熟悉 prompt 设计或模型评测者加分",
+              "category": "nice_to_have",
+              "evidence_text": "熟悉 prompt 设计或模型评测者加分"
+            }
+          ],
+          "capabilities": [
+            "需求分析与功能设计",
+            "PRD 撰写",
+            "跨团队协作",
+            "评测集与质量标准定义",
+            "用户反馈与数据分析",
+            "竞品分析",
+            "产品规划",
+            "需求拆解",
+            "原型设计",
+            "prompt 设计",
+            "模型评测"
+          ],
+          "keywords": [
+            "AI 产品经理",
+            "AI 助手",
+            "PRD",
+            "评测集",
+            "质量标准",
+            "模型迭代",
+            "用户反馈",
+            "数据分析",
+            "竞品分析",
+            "产品规划",
+            "prompt 设计",
+            "模型评测"
+          ]
+        },
+        "what_matters": {
+          "core_capabilities": [
+            {
+              "name": "AI 助手类产品需求分析与功能设计",
+              "why": "岗位职责明确要求负责 AI 助手类产品的需求分析与功能设计，这是该岗位的核心工作内容。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "PRD 撰写与推动落地",
+              "why": "岗位职责要求输出 PRD 并推动落地，是产品经理交付的关键能力。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "跨团队协作（算法、工程）",
+              "why": "岗位职责要求与算法、工程团队协作，是保障模型迭代与产品落地的基础。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "评测集与质量标准定义",
+              "why": "岗位职责要求定义评测集与质量标准，并跟进模型迭代效果，直接决定 AI 产品质量。",
+              "evidence_refs": [
+                "P3"
+              ]
+            },
+            {
+              "name": "用户反馈与数据分析",
+              "why": "岗位职责要求分析用户反馈与数据，持续优化产品体验，是迭代闭环的核心。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "竞品分析与产品规划",
+              "why": "岗位职责要求跟踪行业动态，输出竞品分析与产品规划，影响产品方向。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "需求拆解与原型设计",
+              "why": "任职要求明确要求逻辑清晰，能独立完成需求拆解与原型设计。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "prompt 设计与模型评测",
+              "why": "任职要求将熟悉 prompt 设计或模型评测列为加分项，是 AI 产品岗的差异化能力。",
+              "evidence_refs": [
+                "P3"
+              ]
+            }
+          ],
+          "high_importance_requirements": [
+            {
+              "text": "本科及以上学历",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "Q1"
+              ]
+            },
+            {
+              "text": "逻辑清晰，能独立完成需求拆解与原型设计",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "text": "有 AI 产品或对话式产品实习/项目经验者优先",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "P2"
+              ]
+            },
+            {
+              "text": "熟悉 prompt 设计或模型评测者加分",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "P3"
+              ]
+            },
+            {
+              "text": "计算机、产品相关专业优先",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "P1"
+              ]
+            }
+          ],
+          "evidence_expected": [
+            "本科及以上学历的证明材料（学历证书或学信网信息）",
+            "AI 产品或对话式产品实习/项目经历的描述与成果",
+            "独立完成的需求拆解文档或原型设计作品",
+            "PRD 文档或产品功能设计案例",
+            "与算法、工程团队协作的项目经历说明",
+            "评测集或质量标准定义的相关产出",
+            "用户反馈与数据分析驱动的产品优化案例",
+            "竞品分析或产品规划文档",
+            "prompt 设计或模型评测的相关实践记录"
+          ],
+          "likely_success_signals": [
+            "具备本科及以上学历，满足基本门槛",
+            "有 AI 产品或对话式产品实习/项目经验，能快速上手 AI 助手类产品",
+            "能独立完成需求拆解与原型设计，逻辑清晰",
+            "有 PRD 撰写并推动落地的完整案例",
+            "有与算法、工程团队协作并跟进模型迭代的经验",
+            "具备 prompt 设计或模型评测能力，形成差异化优势",
+            "有数据分析驱动产品优化的实践"
+          ],
+          "bonus_capabilities": [
+            "计算机、产品相关专业背景",
+            "AI 产品或对话式产品实习/项目经验",
+            "prompt 设计能力",
+            "模型评测能力"
+          ],
+          "potential_interview_focus": [
+            "请举例说明你独立完成的需求拆解与原型设计过程",
+            "你如何定义评测集与质量标准？如何跟进模型迭代效果？",
+            "请描述一次与算法、工程团队协作推动产品落地的经历",
+            "你如何分析用户反馈与数据并优化产品体验？",
+            "你是否做过竞品分析与产品规划？请分享具体案例",
+            "你在 prompt 设计或模型评测方面有哪些实践？"
+          ],
+          "confidence": 0.55,
+          "jd_evidence_refs": [
+            "Q1",
+            "Q2",
+            "P1",
+            "P2",
+            "P3"
+          ]
+        },
+        "resume_strategy": {
+          "positioning_statement": "目标岗位为 AI 产品经理（公司未知、级别未知），核心要求本科及以上学历、逻辑清晰并能独立完成需求拆解与原型设计，优先看重 AI 产品或对话式产品实习/项目经验以及 prompt 设计或模型评测能力。基于现有证据，定位为「具备 AI 智能客服产品实习经验的校招/初级 AI 产品候选人」：本科计算机科学与技术专业满足学历与专业优先项，AI 产品实习中覆盖需求拆解、版本跟进、标注规范与质检、埋点分析与 prompt 优化，能够直接对标岗位的核心与加分要求；校园二手交易平台项目作为产品实践补充，但证据有限，仅作辅助。",
+          "recommended_experience_order": [
+            "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+            "b9b2847d-c0c5-46a9-8901-de4a1a9af91b"
+          ],
+          "experience_guidance": [
+            {
+              "experience_id": "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+              "role_in_story": "主线经历：证明具备 AI 产品（智能客服机器人）全流程实习经验，覆盖需求拆解、版本跟进、数据质检与 prompt 优化，直接对标岗位的 AI 产品经验优先项与 prompt 设计加分项。",
+              "what_to_highlight": [
+                "突出「负责智能客服机器人的需求拆解与迭代排期，跟进 3 个版本上线」，对应需求拆解与推动落地的能力；突出「搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检」，对应评测集与质量标准定义、跨团队协作；突出「通过埋点分析定位回复质量下降原因，推动 prompt 优化后问题解决率提升」，对应用户反馈与数据分析、prompt 设计，且注意该结果只按证据表述「提升」，不添加具体数字。"
+              ],
+              "what_to_avoid": [
+                "避免把「负责」升级为「主导」「从 0 到 1」等超出证据的所有权措辞；避免为「问题解决率提升」补造百分比；避免把 3 个版本、2000 条、5 人团队等已有数字之外再新增任何指标。"
+              ],
+              "target_capabilities": [
+                "需求分析与功能设计",
+                "需求拆解",
+                "跨团队协作",
+                "评测集与质量标准定义",
+                "用户反馈与数据分析",
+                "prompt 设计",
+                "模型评测"
+              ],
+              "evidence_refs": [
+                "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+                "be9fdf3d-4634-4e38-8a74-5364460dc9fc",
+                "036a7a17-db79-4083-90e3-626b98a8877a"
+              ],
+              "interview_risk_notes": [
+                "面试官可能追问「问题解决率提升」的具体幅度与统计口径，目前证据未给出数字，需准备用口径与测量方式说明，不能临场编造百分比。",
+                "「需求拆解与迭代排期」可能被追问个人决策与团队分工的边界，需明确哪些是本人负责、哪些是协同完成。",
+                "「prompt 优化」可能被追问具体优化了哪些 prompt、评测方式是什么，证据未展开，需如实说明已知范围。",
+                "实习时间 2023.06-2023.12，可能被问及与当前求职时间线的衔接及后续是否有延续实践。"
+              ]
+            },
+            {
+              "experience_id": "b9b2847d-c0c5-46a9-8901-de4a1a9af91b",
+              "role_in_story": "辅助经历：作为产品实践补充，体现对产品从需求到交付的参与，但因提供证据仅有名称与时间，仅做低权重呈现，用于填补产品项目经历的空白。",
+              "what_to_highlight": [
+                "仅按证据呈现「校园二手交易平台 2022.09 - 2023.05」这一项目存在与持续时间，可在面试中口头补充与需求拆解、原型设计或协作相关的真实细节（需候选人确认后再用）。"
+              ],
+              "what_to_avoid": [
+                "避免在缺少证据的情况下为该项目编造用户量、转化率、功能清单、职责范围或使用工具；避免把它包装成正式商业产品或 AI 相关项目；避免将「校园项目」表述为「主导/负责人」级别而证据不足。"
+              ],
+              "target_capabilities": [
+                "需求分析与功能设计",
+                "需求拆解",
+                "原型设计",
+                "产品规划"
+              ],
+              "evidence_refs": [
+                "b9b2847d-c0c5-46a9-8901-de4a1a9af91b"
+              ],
+              "interview_risk_notes": [
+                "该项目证据仅有名称与时间，面试官若追问具体职责、产出与成果，极可能暴露细节不足，需提前准备真实可核对的经历描述。",
+                "若候选人无法提供真实细节，建议不主动展开，避免被判定为经历注水。"
+              ]
+            }
+          ]
+        },
+        "interview_intel": [],
+        "created_at": "2026-10-16T17:40:51",
+        "updated_at": "2026-10-16T17:41:09.450971"
+      }
+    },
+    {
+      "step": "8-generate-target-v1",
+      "ok": true,
+      "result": {
+        "id": "76ce923e-499e-4742-9a1b-25f042095aa1",
+        "mission_id": "4a2545b8-ddbb-49a2-915b-54b08ef90039",
+        "version": 1,
+        "status": "DRAFT",
+        "positioning_statement": "具备计算机专业背景与 AI 智能客服实习经验的应届生，聚焦需求拆解、原型设计、model evaluation 与 prompt 设计。",
+        "recommended_experience_order": [
+          "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+          "b9b2847d-c0c5-46a9-8901-de4a1a9af91b"
+        ],
+        "strategy": {
+          "positioning_statement": "目标岗位为 AI 产品经理（公司未知、级别未知），核心要求本科及以上学历、逻辑清晰并能独立完成需求拆解与原型设计，优先看重 AI 产品或对话式产品实习/项目经验以及 prompt 设计或模型评测能力。基于现有证据，定位为「具备 AI 智能客服产品实习经验的校招/初级 AI 产品候选人」：本科计算机科学与技术专业满足学历与专业优先项，AI 产品实习中覆盖需求拆解、版本跟进、标注规范与质检、埋点分析与 prompt 优化，能够直接对标岗位的核心与加分要求；校园二手交易平台项目作为产品实践补充，但证据有限，仅作辅助。",
+          "recommended_experience_order": [
+            "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+            "b9b2847d-c0c5-46a9-8901-de4a1a9af91b"
+          ],
+          "experience_guidance": [
+            {
+              "experience_id": "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+              "role_in_story": "主线经历：证明具备 AI 产品（智能客服机器人）全流程实习经验，覆盖需求拆解、版本跟进、数据质检与 prompt 优化，直接对标岗位的 AI 产品经验优先项与 prompt 设计加分项。",
+              "what_to_highlight": [
+                "突出「负责智能客服机器人的需求拆解与迭代排期，跟进 3 个版本上线」，对应需求拆解与推动落地的能力；突出「搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检」，对应评测集与质量标准定义、跨团队协作；突出「通过埋点分析定位回复质量下降原因，推动 prompt 优化后问题解决率提升」，对应用户反馈与数据分析、prompt 设计，且注意该结果只按证据表述「提升」，不添加具体数字。"
+              ],
+              "what_to_avoid": [
+                "避免把「负责」升级为「主导」「从 0 到 1」等超出证据的所有权措辞；避免为「问题解决率提升」补造百分比；避免把 3 个版本、2000 条、5 人团队等已有数字之外再新增任何指标。"
+              ],
+              "target_capabilities": [
+                "需求分析与功能设计",
+                "需求拆解",
+                "跨团队协作",
+                "评测集与质量标准定义",
+                "用户反馈与数据分析",
+                "prompt 设计",
+                "模型评测"
+              ],
+              "evidence_refs": [
+                "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+                "be9fdf3d-4634-4e38-8a74-5364460dc9fc",
+                "036a7a17-db79-4083-90e3-626b98a8877a"
+              ],
+              "interview_risk_notes": [
+                "面试官可能追问「问题解决率提升」的具体幅度与统计口径，目前证据未给出数字，需准备用口径与测量方式说明，不能临场编造百分比。",
+                "「需求拆解与迭代排期」可能被追问个人决策与团队分工的边界，需明确哪些是本人负责、哪些是协同完成。",
+                "「prompt 优化」可能被追问具体优化了哪些 prompt、评测方式是什么，证据未展开，需如实说明已知范围。",
+                "实习时间 2023.06-2023.12，可能被问及与当前求职时间线的衔接及后续是否有延续实践。"
+              ]
+            },
+            {
+              "experience_id": "b9b2847d-c0c5-46a9-8901-de4a1a9af91b",
+              "role_in_story": "辅助经历：作为产品实践补充，体现对产品从需求到交付的参与，但因提供证据仅有名称与时间，仅做低权重呈现，用于填补产品项目经历的空白。",
+              "what_to_highlight": [
+                "仅按证据呈现「校园二手交易平台 2022.09 - 2023.05」这一项目存在与持续时间，可在面试中口头补充与需求拆解、原型设计或协作相关的真实细节（需候选人确认后再用）。"
+              ],
+              "what_to_avoid": [
+                "避免在缺少证据的情况下为该项目编造用户量、转化率、功能清单、职责范围或使用工具；避免把它包装成正式商业产品或 AI 相关项目；避免将「校园项目」表述为「主导/负责人」级别而证据不足。"
+              ],
+              "target_capabilities": [
+                "需求分析与功能设计",
+                "需求拆解",
+                "原型设计",
+                "产品规划"
+              ],
+              "evidence_refs": [
+                "b9b2847d-c0c5-46a9-8901-de4a1a9af91b"
+              ],
+              "interview_risk_notes": [
+                "该项目证据仅有名称与时间，面试官若追问具体职责、产出与成果，极可能暴露细节不足，需提前准备真实可核对的经历描述。",
+                "若候选人无法提供真实细节，建议不主动展开，避免被判定为经历注水。"
+              ]
+            }
+          ],
+          "_generation": {
+            "section_order": [
+              "education",
+              "experience",
+              "project",
+              "skills"
+            ],
+            "skills": [
+              "Python",
+              "SQL",
+              "Figma",
+              "Axure",
+              "prompt 设计"
+            ],
+            "excluded_suggestions": [],
+            "bullet_grounding": [
+              "NEEDS_CONFIRMATION",
+              "NEEDS_CONFIRMATION",
+              "NEEDS_CONFIRMATION"
+            ],
+            "bullet_target_capabilities": [
+              [
+                "需求分析与功能设计",
+                "PRD 撰写与推动落地",
+                "产品规划",
+                "评测集与质量标准定义",
+                "跨团队协作",
+                "模型评测",
+                "用户反馈与数据分析",
+                "prompt 设计"
+              ],
+              [
+                "需求分析与功能设计",
+                "需求拆解",
+                "原型设计"
+              ],
+              [
+                "智能硬件产品定义",
+                "原型与测试验证",
+                "数据驱动决策"
+              ]
+            ],
+            "bullet_project_titles": [
+              null,
+              null,
+              "项目草案：智能硬件 AI 产品验证闭环"
+            ],
+            "provider": "llm"
+          }
+        },
+        "section_order": [
+          "education",
+          "experience",
+          "project",
+          "skills"
+        ],
+        "skills": [
+          "Python",
+          "SQL",
+          "Figma",
+          "Axure",
+          "prompt 设计"
+        ],
+        "excluded_suggestions": [],
+        "bullets": [
+          {
+            "id": "a7bf04e5-b852-4e21-9db0-220a80651776",
+            "source_experience_id": "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+            "original_text": "负责智能客服机器人的需求拆解与迭代排期，跟进 3 个版本上线\n搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检\n通过埋点分析定位回复质量下降原因，推动 prompt 优化后问题解决率提升",
+            "suggested_text": "参与智能客服机器人的需求分析与拆解，产出迭代排期并跟进 3 个版本上线\n搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检，定义质量标准并支撑模型迭代评估\n通过埋点分析定位回复质量下降原因，推动 prompt 优化并于优化后复盘问题解决率变化，用于验证迭代效果",
+            "final_text": "参与智能客服机器人的需求分析与拆解，产出迭代排期并跟进 3 个版本上线\n搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检，定义质量标准并支撑模型迭代评估\n通过埋点分析定位回复质量下降原因，推动 prompt 优化并于优化后复盘问题解决率变化，用于验证迭代效果",
+            "reason": "对齐 JD 核心职责：需求分析与功能设计、PRD 推动落地；补充'产出迭代排期'可体现产品规划能力，同时保持事实一致。'参与'比'负责'更准确地界定了在实习生身份下的实际贡献边界。；补足 JD 中'定义评测集与质量标准，跟进模型迭代效果'的显性能力映射，用已有'标注规范文档'和'对话数据质检'自然关联到质量标准和模型评估，不新增任何数字或工具。；弱化'提升'这一无数字支撑的结果导向表述，避免面试追问答不上具体幅度；改为'复盘问题解决率变化'更符合'跟进模型迭代效果'的职责描述，且不新增数字。",
+            "jd_refs": [
+              "Q2",
+              "P2",
+              "P3"
+            ],
+            "evidence_refs": [
+              "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+              "be9fdf3d-4634-4e38-8a74-5364460dc9fc",
+              "036a7a17-db79-4083-90e3-626b98a8877a"
+            ],
+            "resume_skill_refs": [
+              "EVIDENCE_GROUNDED_WRITING",
+              "ACTION_METHOD_RESULT",
+              "RESPONSIBILITY_BOUNDARY",
+              "JD_RELEVANCE",
+              "NO_FABRICATED_METRICS"
+            ],
+            "risk_flags": [
+              "TITLE_CHANGED",
+              "SCOPE_CLARIFICATION",
+              "EXTENDED_SCOPE",
+              "WEAKENED_METRIC_LANGUAGE",
+              "RESULT_UNDEFINED"
+            ],
+            "status": "SUGGESTED",
+            "sort_order": 0,
+            "grounding_status": "NEEDS_CONFIRMATION",
+            "target_capabilities": [
+              "需求分析与功能设计",
+              "PRD 撰写与推动落地",
+              "产品规划",
+              "评测集与质量标准定义",
+              "跨团队协作",
+              "模型评测",
+              "用户反馈与数据分析",
+              "prompt 设计"
+            ],
+            "project_title": null
+          },
+          {
+            "id": "cf026d07-4e64-461a-bb19-8ae3b6223e3d",
+            "source_experience_id": "b9b2847d-c0c5-46a9-8901-de4a1a9af91b",
+            "original_text": "校园二手交易平台 2022.09 - 2023.05",
+            "suggested_text": "校园二手交易平台：参与需求调研与功能梳理，输出简易原型并配合上线验证（需候选人确认具体职责与产出）",
+            "final_text": "校园二手交易平台：参与需求调研与功能梳理，输出简易原型并配合上线验证（需候选人确认具体职责与产出）",
+            "reason": "将仅有标题与时间的项目补充为可展示产品流程的表述，但所有动作均标注'需候选人确认'，既填补产品项目空白，又不编造具体内容。",
+            "jd_refs": [
+              "Q2"
+            ],
+            "evidence_refs": [
+              "b9b2847d-c0c5-46a9-8901-de4a1a9af91b"
+            ],
+            "resume_skill_refs": [
+              "PROJECT_POSITIONING",
+              "ASK_BEFORE_INVENTING"
+            ],
+            "risk_flags": [
+              "INSUFFICIENT_EVIDENCE",
+              "REQUIRES_CANDIDATE_INPUT"
+            ],
+            "status": "SUGGESTED",
+            "sort_order": 1,
+            "grounding_status": "NEEDS_CONFIRMATION",
+            "target_capabilities": [
+              "需求分析与功能设计",
+              "需求拆解",
+              "原型设计"
+            ],
+            "project_title": null
+          },
+          {
+            "id": "2f0c162e-a497-492a-ae0f-a5b0aac5e7bc",
+            "source_experience_id": null,
+            "original_text": "建议补做项目（尚未完成）",
+            "suggested_text": "项目草案：智能硬件 AI 产品验证闭环——完成目标用户与竞品调研，输出端侧/云侧方案和传感器、算力选型对比；制作可交互原型或 Demo，设计测试指标与数据记录表，形成 PRD、技术选型表和测试报告。",
+            "final_text": "项目草案：智能硬件 AI 产品验证闭环——完成目标用户与竞品调研，输出端侧/云侧方案和传感器、算力选型对比；制作可交互原型或 Demo，设计测试指标与数据记录表，形成 PRD、技术选型表和测试报告。",
+            "reason": "目标 JD 强调智能硬件产品定义、软硬件方案取舍和数据驱动验证；该项目用于补齐可展示的作品集证据，完成前不作为既有经历。",
+            "jd_refs": [],
+            "evidence_refs": [],
+            "resume_skill_refs": [],
+            "risk_flags": [
+              "SYNTHETIC_PROJECT"
+            ],
+            "status": "SUGGESTED",
+            "sort_order": 2,
+            "grounding_status": "NEEDS_CONFIRMATION",
+            "target_capabilities": [
+              "智能硬件产品定义",
+              "原型与测试验证",
+              "数据驱动决策"
+            ],
+            "project_title": "项目草案：智能硬件 AI 产品验证闭环"
+          }
+        ],
+        "created_at": "2026-10-16T17:41:22",
+        "updated_at": "2026-10-16T17:41:22",
+        "workflow_state": "TARGET_RESUME_DRAFT"
+      }
+    },
+    {
+      "step": "8a-accept-bullets-v1",
+      "ok": true,
+      "result": {
+        "version": 1,
+        "accepted": 2,
+        "skipped": 1,
+        "ok": true
+      }
+    },
+    {
+      "step": "8b-confirm-target-v1",
+      "ok": true,
+      "result": {
+        "id": "4a2545b8-ddbb-49a2-915b-54b08ef90039",
+        "profile_id": "1206ef8b-5067-4407-8071-f82921402211",
+        "target_job_id": "e9393fa1-95e9-4996-ae6d-c8bb89b72853",
+        "display_name": "AI 产品经理",
+        "company": "UNKNOWN",
+        "role": "AI 产品经理",
+        "role_family": "Product",
+        "seniority": "UNKNOWN",
+        "location": "北京",
+        "status": "RESUME_PREP",
+        "workflow_state": "TARGET_RESUME_CONFIRMED",
+        "resume_source": {
+          "mode": "paste",
+          "bound_at": "2026-10-16T17:40:55.422989+00:00",
+          "isolation": "mission_local",
+          "bound_profile_id": "4225c034-7b6b-4468-8731-dfa7f5d9e75b",
+          "master_profile_id": "1206ef8b-5067-4407-8071-f82921402211",
+          "filename": null,
+          "content_hash": "8172d24bdbacb1a9bda0333c6c50b7873a2f97a9630026160ed7a2a9f322195b",
+          "section_order": [
+            "education",
+            "experience",
+            "project",
+            "skills"
+          ],
+          "optimization_reset_at": "2026-10-16T17:40:55.381984+00:00"
+        },
+        "warnings": [
+          "company_intel_unavailable"
+        ],
+        "analysis_error": null,
+        "parsed_jd": {
+          "company": "UNKNOWN",
+          "role": "AI 产品经理",
+          "role_family": "Product",
+          "seniority": "UNKNOWN",
+          "location": "北京",
+          "education_requirements": [
+            "本科及以上学历"
+          ],
+          "responsibilities": [],
+          "requirements": [
+            {
+              "id": "Q1",
+              "text": "本科及以上学历",
+              "category": "must_have",
+              "evidence_text": "本科及以上学历"
+            },
+            {
+              "id": "Q2",
+              "text": "逻辑清晰，能独立完成需求拆解与原型设计",
+              "category": "skill",
+              "evidence_text": "逻辑清晰，能独立完成需求拆解与原型设计"
+            }
+          ],
+          "preferred_requirements": [
+            {
+              "id": "P1",
+              "text": "计算机、产品相关专业优先",
+              "category": "nice_to_have",
+              "evidence_text": "计算机、产品相关专业优先"
+            },
+            {
+              "id": "P2",
+              "text": "有 AI 产品或对话式产品实习/项目经验者优先",
+              "category": "nice_to_have",
+              "evidence_text": "有 AI 产品或对话式产品实习/项目经验者优先"
+            },
+            {
+              "id": "P3",
+              "text": "熟悉 prompt 设计或模型评测者加分",
+              "category": "nice_to_have",
+              "evidence_text": "熟悉 prompt 设计或模型评测者加分"
+            }
+          ],
+          "capabilities": [
+            "需求分析与功能设计",
+            "PRD 撰写",
+            "跨团队协作",
+            "评测集与质量标准定义",
+            "用户反馈与数据分析",
+            "竞品分析",
+            "产品规划",
+            "需求拆解",
+            "原型设计",
+            "prompt 设计",
+            "模型评测"
+          ],
+          "keywords": [
+            "AI 产品经理",
+            "AI 助手",
+            "PRD",
+            "评测集",
+            "质量标准",
+            "模型迭代",
+            "用户反馈",
+            "数据分析",
+            "竞品分析",
+            "产品规划",
+            "prompt 设计",
+            "模型评测"
+          ]
+        },
+        "what_matters": {
+          "core_capabilities": [
+            {
+              "name": "AI 助手类产品需求分析与功能设计",
+              "why": "岗位职责明确要求负责 AI 助手类产品的需求分析与功能设计，这是该岗位的核心工作内容。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "PRD 撰写与推动落地",
+              "why": "岗位职责要求输出 PRD 并推动落地，是产品经理交付的关键能力。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "跨团队协作（算法、工程）",
+              "why": "岗位职责要求与算法、工程团队协作，是保障模型迭代与产品落地的基础。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "评测集与质量标准定义",
+              "why": "岗位职责要求定义评测集与质量标准，并跟进模型迭代效果，直接决定 AI 产品质量。",
+              "evidence_refs": [
+                "P3"
+              ]
+            },
+            {
+              "name": "用户反馈与数据分析",
+              "why": "岗位职责要求分析用户反馈与数据，持续优化产品体验，是迭代闭环的核心。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "竞品分析与产品规划",
+              "why": "岗位职责要求跟踪行业动态，输出竞品分析与产品规划，影响产品方向。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "需求拆解与原型设计",
+              "why": "任职要求明确要求逻辑清晰，能独立完成需求拆解与原型设计。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "prompt 设计与模型评测",
+              "why": "任职要求将熟悉 prompt 设计或模型评测列为加分项，是 AI 产品岗的差异化能力。",
+              "evidence_refs": [
+                "P3"
+              ]
+            }
+          ],
+          "high_importance_requirements": [
+            {
+              "text": "本科及以上学历",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "Q1"
+              ]
+            },
+            {
+              "text": "逻辑清晰，能独立完成需求拆解与原型设计",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "text": "有 AI 产品或对话式产品实习/项目经验者优先",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "P2"
+              ]
+            },
+            {
+              "text": "熟悉 prompt 设计或模型评测者加分",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "P3"
+              ]
+            },
+            {
+              "text": "计算机、产品相关专业优先",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "P1"
+              ]
+            }
+          ],
+          "evidence_expected": [
+            "本科及以上学历的证明材料（学历证书或学信网信息）",
+            "AI 产品或对话式产品实习/项目经历的描述与成果",
+            "独立完成的需求拆解文档或原型设计作品",
+            "PRD 文档或产品功能设计案例",
+            "与算法、工程团队协作的项目经历说明",
+            "评测集或质量标准定义的相关产出",
+            "用户反馈与数据分析驱动的产品优化案例",
+            "竞品分析或产品规划文档",
+            "prompt 设计或模型评测的相关实践记录"
+          ],
+          "likely_success_signals": [
+            "具备本科及以上学历，满足基本门槛",
+            "有 AI 产品或对话式产品实习/项目经验，能快速上手 AI 助手类产品",
+            "能独立完成需求拆解与原型设计，逻辑清晰",
+            "有 PRD 撰写并推动落地的完整案例",
+            "有与算法、工程团队协作并跟进模型迭代的经验",
+            "具备 prompt 设计或模型评测能力，形成差异化优势",
+            "有数据分析驱动产品优化的实践"
+          ],
+          "bonus_capabilities": [
+            "计算机、产品相关专业背景",
+            "AI 产品或对话式产品实习/项目经验",
+            "prompt 设计能力",
+            "模型评测能力"
+          ],
+          "potential_interview_focus": [
+            "请举例说明你独立完成的需求拆解与原型设计过程",
+            "你如何定义评测集与质量标准？如何跟进模型迭代效果？",
+            "请描述一次与算法、工程团队协作推动产品落地的经历",
+            "你如何分析用户反馈与数据并优化产品体验？",
+            "你是否做过竞品分析与产品规划？请分享具体案例",
+            "你在 prompt 设计或模型评测方面有哪些实践？"
+          ],
+          "confidence": 0.55,
+          "jd_evidence_refs": [
+            "Q1",
+            "Q2",
+            "P1",
+            "P2",
+            "P3"
+          ]
+        },
+        "resume_strategy": {
+          "positioning_statement": "目标岗位为 AI 产品经理（公司未知、级别未知），核心要求本科及以上学历、逻辑清晰并能独立完成需求拆解与原型设计，优先看重 AI 产品或对话式产品实习/项目经验以及 prompt 设计或模型评测能力。基于现有证据，定位为「具备 AI 智能客服产品实习经验的校招/初级 AI 产品候选人」：本科计算机科学与技术专业满足学历与专业优先项，AI 产品实习中覆盖需求拆解、版本跟进、标注规范与质检、埋点分析与 prompt 优化，能够直接对标岗位的核心与加分要求；校园二手交易平台项目作为产品实践补充，但证据有限，仅作辅助。",
+          "recommended_experience_order": [
+            "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+            "b9b2847d-c0c5-46a9-8901-de4a1a9af91b"
+          ],
+          "experience_guidance": [
+            {
+              "experience_id": "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+              "role_in_story": "主线经历：证明具备 AI 产品（智能客服机器人）全流程实习经验，覆盖需求拆解、版本跟进、数据质检与 prompt 优化，直接对标岗位的 AI 产品经验优先项与 prompt 设计加分项。",
+              "what_to_highlight": [
+                "突出「负责智能客服机器人的需求拆解与迭代排期，跟进 3 个版本上线」，对应需求拆解与推动落地的能力；突出「搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检」，对应评测集与质量标准定义、跨团队协作；突出「通过埋点分析定位回复质量下降原因，推动 prompt 优化后问题解决率提升」，对应用户反馈与数据分析、prompt 设计，且注意该结果只按证据表述「提升」，不添加具体数字。"
+              ],
+              "what_to_avoid": [
+                "避免把「负责」升级为「主导」「从 0 到 1」等超出证据的所有权措辞；避免为「问题解决率提升」补造百分比；避免把 3 个版本、2000 条、5 人团队等已有数字之外再新增任何指标。"
+              ],
+              "target_capabilities": [
+                "需求分析与功能设计",
+                "需求拆解",
+                "跨团队协作",
+                "评测集与质量标准定义",
+                "用户反馈与数据分析",
+                "prompt 设计",
+                "模型评测"
+              ],
+              "evidence_refs": [
+                "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+                "be9fdf3d-4634-4e38-8a74-5364460dc9fc",
+                "036a7a17-db79-4083-90e3-626b98a8877a"
+              ],
+              "interview_risk_notes": [
+                "面试官可能追问「问题解决率提升」的具体幅度与统计口径，目前证据未给出数字，需准备用口径与测量方式说明，不能临场编造百分比。",
+                "「需求拆解与迭代排期」可能被追问个人决策与团队分工的边界，需明确哪些是本人负责、哪些是协同完成。",
+                "「prompt 优化」可能被追问具体优化了哪些 prompt、评测方式是什么，证据未展开，需如实说明已知范围。",
+                "实习时间 2023.06-2023.12，可能被问及与当前求职时间线的衔接及后续是否有延续实践。"
+              ]
+            },
+            {
+              "experience_id": "b9b2847d-c0c5-46a9-8901-de4a1a9af91b",
+              "role_in_story": "辅助经历：作为产品实践补充，体现对产品从需求到交付的参与，但因提供证据仅有名称与时间，仅做低权重呈现，用于填补产品项目经历的空白。",
+              "what_to_highlight": [
+                "仅按证据呈现「校园二手交易平台 2022.09 - 2023.05」这一项目存在与持续时间，可在面试中口头补充与需求拆解、原型设计或协作相关的真实细节（需候选人确认后再用）。"
+              ],
+              "what_to_avoid": [
+                "避免在缺少证据的情况下为该项目编造用户量、转化率、功能清单、职责范围或使用工具；避免把它包装成正式商业产品或 AI 相关项目；避免将「校园项目」表述为「主导/负责人」级别而证据不足。"
+              ],
+              "target_capabilities": [
+                "需求分析与功能设计",
+                "需求拆解",
+                "原型设计",
+                "产品规划"
+              ],
+              "evidence_refs": [
+                "b9b2847d-c0c5-46a9-8901-de4a1a9af91b"
+              ],
+              "interview_risk_notes": [
+                "该项目证据仅有名称与时间，面试官若追问具体职责、产出与成果，极可能暴露细节不足，需提前准备真实可核对的经历描述。",
+                "若候选人无法提供真实细节，建议不主动展开，避免被判定为经历注水。"
+              ]
+            }
+          ]
+        },
+        "interview_intel": [],
+        "created_at": "2026-10-16T17:40:51",
+        "updated_at": "2026-10-16T17:41:22.925939"
+      }
+    },
+    {
+      "step": "9-read-studio",
+      "ok": true,
+      "result": {
+        "id": "7b989900-8830-4f3f-865c-0762cbd9d8b9",
+        "mission_id": "4a2545b8-ddbb-49a2-915b-54b08ef90039",
+        "source_target_resume_id": "76ce923e-499e-4742-9a1b-25f042095aa1",
+        "schema_version": 1,
+        "revision": 1,
+        "confirmed_revision": null,
+        "language": "zh",
+        "template_id": "zh-classic",
+        "layout_config": {
+          "template": "zh-classic",
+          "page_limit": 1,
+          "font_scale": 1.0,
+          "line_height": 1.5,
+          "section_gap": 12,
+          "columns": 1,
+          "accent_color": "#111111",
+          "photo_enabled": false,
+          "section_order": [
+            "education",
+            "experience",
+            "projects",
+            "honors",
+            "skills"
+          ]
+        },
+        "document": {
+          "schema_version": 1,
+          "basics": {
+            "name": {
+              "id": "144e364c-9e1c-4394-8d61-de5367434c2c",
+              "text": "张三",
+              "source_kind": "profile",
+              "source_id": "4225c034-7b6b-4468-8731-dfa7f5d9e75b",
+              "evidence_refs": [],
+              "risk_level": "HIGH",
+              "claim_status": "CONFIRMED"
+            },
+            "phone": {
+              "id": "0086cc9b-2e86-430f-bd80-dad9567bf50a",
+              "text": "13800000000",
+              "source_kind": "profile",
+              "source_id": "4225c034-7b6b-4468-8731-dfa7f5d9e75b",
+              "evidence_refs": [],
+              "risk_level": "HIGH",
+              "claim_status": "CONFIRMED"
+            },
+            "email": {
+              "id": "8edf2426-b144-406b-b562-3bb3a1f7636c",
+              "text": "zhangsan@example.com",
+              "source_kind": "profile",
+              "source_id": "4225c034-7b6b-4468-8731-dfa7f5d9e75b",
+              "evidence_refs": [],
+              "risk_level": "HIGH",
+              "claim_status": "CONFIRMED"
+            },
+            "location": {
+              "id": "681b041f-4209-4746-aad9-3c16228532b0",
+              "text": "北京",
+              "source_kind": "profile",
+              "source_id": "4225c034-7b6b-4468-8731-dfa7f5d9e75b",
+              "evidence_refs": [],
+              "risk_level": "LOW",
+              "claim_status": "CONFIRMED"
+            }
+          },
+          "sections": [
+            {
+              "id": "416fdd05-0f92-4f5a-8f86-bcd8bc64fbd5",
+              "kind": "education",
+              "title": {
+                "id": "b790c37a-eab5-4362-b828-1da148805e6b",
+                "text": "教育经历",
+                "source_kind": "system",
+                "source_id": null,
+                "evidence_refs": [],
+                "risk_level": "LOW",
+                "claim_status": "CONFIRMED"
+              },
+              "entries": [
+                {
+                  "id": "c0474d51-a695-4d28-a05b-e25840a43337",
+                  "status": "INCLUDED",
+                  "title": {
+                    "id": "f3876cd2-2def-498c-9cb7-095e7a029254",
+                    "text": "某大学",
+                    "source_kind": "profile",
+                    "source_id": "c0474d51-a695-4d28-a05b-e25840a43337",
+                    "evidence_refs": [
+                      "c0474d51-a695-4d28-a05b-e25840a43337"
+                    ],
+                    "risk_level": "HIGH",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "subtitle": {
+                    "id": "d003b8a3-9278-4aa2-af3c-7a251b8133c1",
+                    "text": "本科 · 计算机科学与技术",
+                    "source_kind": "profile",
+                    "source_id": "c0474d51-a695-4d28-a05b-e25840a43337",
+                    "evidence_refs": [
+                      "c0474d51-a695-4d28-a05b-e25840a43337"
+                    ],
+                    "risk_level": "HIGH",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "date": {
+                    "id": "ece2905b-1390-4abe-8732-aad100286a94",
+                    "text": "2020.09 - 2024.06",
+                    "source_kind": "profile",
+                    "source_id": "c0474d51-a695-4d28-a05b-e25840a43337",
+                    "evidence_refs": [
+                      "c0474d51-a695-4d28-a05b-e25840a43337"
+                    ],
+                    "risk_level": "HIGH",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "location": {
+                    "id": "d4fd451e-7255-4eb3-a572-ca24f2d291fb",
+                    "text": "",
+                    "source_kind": "profile",
+                    "source_id": "c0474d51-a695-4d28-a05b-e25840a43337",
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "bullets": []
+                }
+              ]
+            },
+            {
+              "id": "3ef84a8a-47ad-4611-8f6b-4301ff1ec04a",
+              "kind": "experience",
+              "title": {
+                "id": "495df55d-cb44-43e1-a776-b2cc74533693",
+                "text": "工作与项目经历",
+                "source_kind": "system",
+                "source_id": null,
+                "evidence_refs": [],
+                "risk_level": "LOW",
+                "claim_status": "CONFIRMED"
+              },
+              "entries": [
+                {
+                  "id": "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+                  "status": "INCLUDED",
+                  "title": {
+                    "id": "66a2c42f-b90f-4b6e-9203-952f7c9e6d26",
+                    "text": "AI 产品实习",
+                    "source_kind": "experience",
+                    "source_id": "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+                    "evidence_refs": [
+                      "05f1cf62-fef5-4671-9585-14a4d621e9d5"
+                    ],
+                    "risk_level": "HIGH",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "subtitle": {
+                    "id": "34b83a45-5de4-49f3-b064-3c463ffb2bf9",
+                    "text": "某互联网公司",
+                    "source_kind": "experience",
+                    "source_id": "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+                    "evidence_refs": [
+                      "05f1cf62-fef5-4671-9585-14a4d621e9d5"
+                    ],
+                    "risk_level": "HIGH",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "date": {
+                    "id": "3a837c3b-806c-468d-b369-7ac8d29def30",
+                    "text": "2023.06 - 2023.12",
+                    "source_kind": "experience",
+                    "source_id": "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+                    "evidence_refs": [
+                      "05f1cf62-fef5-4671-9585-14a4d621e9d5"
+                    ],
+                    "risk_level": "HIGH",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "location": {
+                    "id": "ed624176-03d5-4823-9ab7-5cee019e6d5a",
+                    "text": "",
+                    "source_kind": "experience",
+                    "source_id": "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "bullets": [
+                    {
+                      "id": "a7bf04e5-b852-4e21-9db0-220a80651776",
+                      "text": "参与智能客服机器人的需求分析与拆解，产出迭代排期并跟进 3 个版本上线",
+                      "source_kind": "target_bullet",
+                      "source_id": "a7bf04e5-b852-4e21-9db0-220a80651776",
+                      "evidence_refs": [
+                        "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+                        "be9fdf3d-4634-4e38-8a74-5364460dc9fc",
+                        "036a7a17-db79-4083-90e3-626b98a8877a"
+                      ],
+                      "risk_level": "HIGH",
+                      "claim_status": "CONFIRMED"
+                    },
+                    {
+                      "id": "4a205e34-9ee9-48ac-af4f-8b3813fc7747",
+                      "text": "搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检，定义质量标准并支撑模型迭代评估",
+                      "source_kind": "target_bullet",
+                      "source_id": "a7bf04e5-b852-4e21-9db0-220a80651776",
+                      "evidence_refs": [
+                        "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+                        "be9fdf3d-4634-4e38-8a74-5364460dc9fc",
+                        "036a7a17-db79-4083-90e3-626b98a8877a"
+                      ],
+                      "risk_level": "HIGH",
+                      "claim_status": "CONFIRMED"
+                    },
+                    {
+                      "id": "026b2d65-895b-4261-8839-fb8c562423a1",
+                      "text": "通过埋点分析定位回复质量下降原因，推动 prompt 优化并于优化后复盘问题解决率变化，用于验证迭代效果",
+                      "source_kind": "target_bullet",
+                      "source_id": "a7bf04e5-b852-4e21-9db0-220a80651776",
+                      "evidence_refs": [
+                        "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+                        "be9fdf3d-4634-4e38-8a74-5364460dc9fc",
+                        "036a7a17-db79-4083-90e3-626b98a8877a"
+                      ],
+                      "risk_level": "HIGH",
+                      "claim_status": "CONFIRMED"
+                    }
+                  ]
+                },
+                {
+                  "id": "b9b2847d-c0c5-46a9-8901-de4a1a9af91b",
+                  "status": "INCLUDED",
+                  "title": {
+                    "id": "8e9ca4b9-1c1a-4197-b905-7df7cbeb402f",
+                    "text": "校园二手交易平台",
+                    "source_kind": "experience",
+                    "source_id": "b9b2847d-c0c5-46a9-8901-de4a1a9af91b",
+                    "evidence_refs": [
+                      "b9b2847d-c0c5-46a9-8901-de4a1a9af91b"
+                    ],
+                    "risk_level": "HIGH",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "subtitle": {
+                    "id": "70f261bd-c7f4-4ec2-8b67-9e54492d02b4",
+                    "text": "",
+                    "source_kind": "experience",
+                    "source_id": "b9b2847d-c0c5-46a9-8901-de4a1a9af91b",
+                    "evidence_refs": [
+                      "b9b2847d-c0c5-46a9-8901-de4a1a9af91b"
+                    ],
+                    "risk_level": "HIGH",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "date": {
+                    "id": "15147f11-b73a-44bc-b8c5-ae6568ec99de",
+                    "text": "2022.09 - 2023.05",
+                    "source_kind": "experience",
+                    "source_id": "b9b2847d-c0c5-46a9-8901-de4a1a9af91b",
+                    "evidence_refs": [
+                      "b9b2847d-c0c5-46a9-8901-de4a1a9af91b"
+                    ],
+                    "risk_level": "HIGH",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "location": {
+                    "id": "97ebb288-b44e-488e-a967-f759781efdca",
+                    "text": "",
+                    "source_kind": "experience",
+                    "source_id": "b9b2847d-c0c5-46a9-8901-de4a1a9af91b",
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "bullets": [
+                    {
+                      "id": "cf026d07-4e64-461a-bb19-8ae3b6223e3d",
+                      "text": "校园二手交易平台：参与需求调研与功能梳理，输出简易原型并配合上线验证（需候选人确认具体职责与产出）",
+                      "source_kind": "target_bullet",
+                      "source_id": "cf026d07-4e64-461a-bb19-8ae3b6223e3d",
+                      "evidence_refs": [
+                        "b9b2847d-c0c5-46a9-8901-de4a1a9af91b"
+                      ],
+                      "risk_level": "HIGH",
+                      "claim_status": "CONFIRMED"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "a46f1f8d-2cfa-4c6a-959d-f24247f59b95",
+              "kind": "skills",
+              "title": {
+                "id": "a9d3551f-3e52-4cd4-8760-c11293f355b2",
+                "text": "技能",
+                "source_kind": "system",
+                "source_id": null,
+                "evidence_refs": [],
+                "risk_level": "LOW",
+                "claim_status": "CONFIRMED"
+              },
+              "entries": [
+                {
+                  "id": "84892236-0153-4e6f-9269-d60de14a44c7",
+                  "status": "INCLUDED",
+                  "title": {
+                    "id": "f9988b59-308c-4a23-84de-704103f76619",
+                    "text": "Python",
+                    "source_kind": "profile",
+                    "source_id": "84892236-0153-4e6f-9269-d60de14a44c7",
+                    "evidence_refs": [
+                      "84892236-0153-4e6f-9269-d60de14a44c7"
+                    ],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "subtitle": {
+                    "id": "fc673aca-026f-40fc-b900-89a709709dc7",
+                    "text": "",
+                    "source_kind": "profile",
+                    "source_id": "84892236-0153-4e6f-9269-d60de14a44c7",
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "date": {
+                    "id": "f4b6681b-db10-4e9a-bb91-5c9bc82555c4",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "location": {
+                    "id": "ee1ea348-4d49-414f-b19c-56e322be226a",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "bullets": []
+                },
+                {
+                  "id": "b18e4352-fd3a-4f66-be3f-f888919084ac",
+                  "status": "INCLUDED",
+                  "title": {
+                    "id": "aaa9fc44-a743-415e-a6d8-4e33b6a862e3",
+                    "text": "SQL",
+                    "source_kind": "profile",
+                    "source_id": "b18e4352-fd3a-4f66-be3f-f888919084ac",
+                    "evidence_refs": [
+                      "b18e4352-fd3a-4f66-be3f-f888919084ac"
+                    ],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "subtitle": {
+                    "id": "eef68a7a-9cc3-4eae-8b36-eac9c04cddd7",
+                    "text": "",
+                    "source_kind": "profile",
+                    "source_id": "b18e4352-fd3a-4f66-be3f-f888919084ac",
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "date": {
+                    "id": "4ee777dc-8e47-42fb-b835-df55ed6ce0bc",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "location": {
+                    "id": "18b89e42-d90b-4b76-af97-9aebe43669cd",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "bullets": []
+                },
+                {
+                  "id": "97ab4a67-9928-480e-ad2f-34839c9d9f7b",
+                  "status": "INCLUDED",
+                  "title": {
+                    "id": "d70ae613-ae94-42e5-ae9c-d1c9dea72dc2",
+                    "text": "Figma",
+                    "source_kind": "profile",
+                    "source_id": "97ab4a67-9928-480e-ad2f-34839c9d9f7b",
+                    "evidence_refs": [
+                      "97ab4a67-9928-480e-ad2f-34839c9d9f7b"
+                    ],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "subtitle": {
+                    "id": "9dde841a-a8db-4c35-a83d-a4d5ea93ec5b",
+                    "text": "",
+                    "source_kind": "profile",
+                    "source_id": "97ab4a67-9928-480e-ad2f-34839c9d9f7b",
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "date": {
+                    "id": "59e2e0f8-083a-4c39-80f6-6cde4970822e",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "location": {
+                    "id": "62f0cd57-0d25-44ce-b14b-417e3adafbcc",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "bullets": []
+                },
+                {
+                  "id": "e32e44b4-a4c2-41e1-849b-d471467076be",
+                  "status": "INCLUDED",
+                  "title": {
+                    "id": "4f4021ae-cb1d-489f-a8dd-c104e3787332",
+                    "text": "Axure",
+                    "source_kind": "profile",
+                    "source_id": "e32e44b4-a4c2-41e1-849b-d471467076be",
+                    "evidence_refs": [
+                      "e32e44b4-a4c2-41e1-849b-d471467076be"
+                    ],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "subtitle": {
+                    "id": "b1d4042c-5a79-4301-9b7b-d2ee86bec772",
+                    "text": "",
+                    "source_kind": "profile",
+                    "source_id": "e32e44b4-a4c2-41e1-849b-d471467076be",
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "date": {
+                    "id": "6e87b075-e2be-4921-960c-6fdf04ebf420",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "location": {
+                    "id": "e91b4fea-0211-4f8f-b627-6534bc9a8e70",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "bullets": []
+                },
+                {
+                  "id": "f003cfff-1ba5-4f30-aba7-8e522b92e148",
+                  "status": "INCLUDED",
+                  "title": {
+                    "id": "1c151404-a984-44cd-99cb-6136c9788a49",
+                    "text": "prompt 设计",
+                    "source_kind": "profile",
+                    "source_id": "f003cfff-1ba5-4f30-aba7-8e522b92e148",
+                    "evidence_refs": [
+                      "f003cfff-1ba5-4f30-aba7-8e522b92e148"
+                    ],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "subtitle": {
+                    "id": "daa593b0-69a6-4602-a728-ab4e809f0321",
+                    "text": "",
+                    "source_kind": "profile",
+                    "source_id": "f003cfff-1ba5-4f30-aba7-8e522b92e148",
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "date": {
+                    "id": "b83c3668-4d57-4358-8bf6-7090e65002e1",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "location": {
+                    "id": "5b811b7f-c0c1-4130-90ba-0c31bb17cf35",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "bullets": []
+                }
+              ]
+            },
+            {
+              "id": "1be5cc18-bb55-4cbb-81f7-a2668c9af50e",
+              "kind": "certifications",
+              "title": {
+                "id": "4b797e72-4e7a-439f-8165-c9f622aef631",
+                "text": "证书",
+                "source_kind": "system",
+                "source_id": null,
+                "evidence_refs": [],
+                "risk_level": "LOW",
+                "claim_status": "CONFIRMED"
+              },
+              "entries": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "step": "9b-source-diff-after-v1",
+      "ok": true,
+      "result": {
+        "update_available": false,
+        "current_source_id": "76ce923e-499e-4742-9a1b-25f042095aa1"
+      }
+    },
+    {
+      "step": "10-manual-edit",
+      "ok": true,
+      "result": {
+        "revision": 2
+      }
+    },
+    {
+      "step": "11-generate-target-v2",
+      "ok": true,
+      "result": {
+        "id": "90ff8599-412a-45c8-8a12-97ece15e83e6",
+        "mission_id": "4a2545b8-ddbb-49a2-915b-54b08ef90039",
+        "version": 2,
+        "status": "DRAFT",
+        "positioning_statement": "具备 AI 智能客服产品实习经验的计算机专业校招/初级候选人，持需求拆解、版本推进、标注规范与质检、埋点分析与 prompt 优化的可验证证据，对标 AI 助手类产品岗位。",
+        "recommended_experience_order": [
+          "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+          "b9b2847d-c0c5-46a9-8901-de4a1a9af91b"
+        ],
+        "strategy": {
+          "positioning_statement": "目标岗位为 AI 产品经理（公司未知、级别未知），核心要求本科及以上学历、逻辑清晰并能独立完成需求拆解与原型设计，优先看重 AI 产品或对话式产品实习/项目经验以及 prompt 设计或模型评测能力。基于现有证据，定位为「具备 AI 智能客服产品实习经验的校招/初级 AI 产品候选人」：本科计算机科学与技术专业满足学历与专业优先项，AI 产品实习中覆盖需求拆解、版本跟进、标注规范与质检、埋点分析与 prompt 优化，能够直接对标岗位的核心与加分要求；校园二手交易平台项目作为产品实践补充，但证据有限，仅作辅助。",
+          "recommended_experience_order": [
+            "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+            "b9b2847d-c0c5-46a9-8901-de4a1a9af91b"
+          ],
+          "experience_guidance": [
+            {
+              "experience_id": "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+              "role_in_story": "主线经历：证明具备 AI 产品（智能客服机器人）全流程实习经验，覆盖需求拆解、版本跟进、数据质检与 prompt 优化，直接对标岗位的 AI 产品经验优先项与 prompt 设计加分项。",
+              "what_to_highlight": [
+                "突出「负责智能客服机器人的需求拆解与迭代排期，跟进 3 个版本上线」，对应需求拆解与推动落地的能力；突出「搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检」，对应评测集与质量标准定义、跨团队协作；突出「通过埋点分析定位回复质量下降原因，推动 prompt 优化后问题解决率提升」，对应用户反馈与数据分析、prompt 设计，且注意该结果只按证据表述「提升」，不添加具体数字。"
+              ],
+              "what_to_avoid": [
+                "避免把「负责」升级为「主导」「从 0 到 1」等超出证据的所有权措辞；避免为「问题解决率提升」补造百分比；避免把 3 个版本、2000 条、5 人团队等已有数字之外再新增任何指标。"
+              ],
+              "target_capabilities": [
+                "需求分析与功能设计",
+                "需求拆解",
+                "跨团队协作",
+                "评测集与质量标准定义",
+                "用户反馈与数据分析",
+                "prompt 设计",
+                "模型评测"
+              ],
+              "evidence_refs": [
+                "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+                "be9fdf3d-4634-4e38-8a74-5364460dc9fc",
+                "036a7a17-db79-4083-90e3-626b98a8877a"
+              ],
+              "interview_risk_notes": [
+                "面试官可能追问「问题解决率提升」的具体幅度与统计口径，目前证据未给出数字，需准备用口径与测量方式说明，不能临场编造百分比。",
+                "「需求拆解与迭代排期」可能被追问个人决策与团队分工的边界，需明确哪些是本人负责、哪些是协同完成。",
+                "「prompt 优化」可能被追问具体优化了哪些 prompt、评测方式是什么，证据未展开，需如实说明已知范围。",
+                "实习时间 2023.06-2023.12，可能被问及与当前求职时间线的衔接及后续是否有延续实践。"
+              ]
+            },
+            {
+              "experience_id": "b9b2847d-c0c5-46a9-8901-de4a1a9af91b",
+              "role_in_story": "辅助经历：作为产品实践补充，体现对产品从需求到交付的参与，但因提供证据仅有名称与时间，仅做低权重呈现，用于填补产品项目经历的空白。",
+              "what_to_highlight": [
+                "仅按证据呈现「校园二手交易平台 2022.09 - 2023.05」这一项目存在与持续时间，可在面试中口头补充与需求拆解、原型设计或协作相关的真实细节（需候选人确认后再用）。"
+              ],
+              "what_to_avoid": [
+                "避免在缺少证据的情况下为该项目编造用户量、转化率、功能清单、职责范围或使用工具；避免把它包装成正式商业产品或 AI 相关项目；避免将「校园项目」表述为「主导/负责人」级别而证据不足。"
+              ],
+              "target_capabilities": [
+                "需求分析与功能设计",
+                "需求拆解",
+                "原型设计",
+                "产品规划"
+              ],
+              "evidence_refs": [
+                "b9b2847d-c0c5-46a9-8901-de4a1a9af91b"
+              ],
+              "interview_risk_notes": [
+                "该项目证据仅有名称与时间，面试官若追问具体职责、产出与成果，极可能暴露细节不足，需提前准备真实可核对的经历描述。",
+                "若候选人无法提供真实细节，建议不主动展开，避免被判定为经历注水。"
+              ]
+            }
+          ],
+          "_generation": {
+            "section_order": [
+              "education",
+              "experience",
+              "project",
+              "skills"
+            ],
+            "skills": [],
+            "excluded_suggestions": [],
+            "bullet_grounding": [
+              "SUPPORTED",
+              "NEEDS_CONFIRMATION",
+              "NEEDS_CONFIRMATION"
+            ],
+            "bullet_target_capabilities": [
+              [
+                "AI 助手类产品需求分析与功能设计",
+                "需求拆解",
+                "PRD 撰写与推动落地",
+                "评测集与质量标准定义",
+                "跨团队协作",
+                "模型评测",
+                "用户反馈与数据分析",
+                "prompt 设计"
+              ],
+              [
+                "需求分析与功能设计",
+                "需求拆解",
+                "原型设计"
+              ],
+              [
+                "智能硬件产品定义",
+                "原型与测试验证",
+                "数据驱动决策"
+              ]
+            ],
+            "bullet_project_titles": [
+              null,
+              null,
+              "项目草案：智能硬件 AI 产品验证闭环"
+            ],
+            "provider": "llm"
+          }
+        },
+        "section_order": [
+          "education",
+          "experience",
+          "project",
+          "skills"
+        ],
+        "skills": [],
+        "excluded_suggestions": [],
+        "bullets": [
+          {
+            "id": "36619301-ac77-4963-bbc2-3e53360e2f77",
+            "source_experience_id": "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+            "original_text": "负责智能客服机器人的需求拆解与迭代排期，跟进 3 个版本上线\n搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检\n通过埋点分析定位回复质量下降原因，推动 prompt 优化后问题解决率提升",
+            "suggested_text": "负责智能客服机器人需求拆解与迭代排期：将功能需求拆分为可执行任务并排期，跟进 3 个版本按期上线。\n搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检，为对话质量提供可执行标准。\n通过埋点分析定位回复质量下降原因，推动 prompt 优化后问题解决率提升；可补充说明分析口径与优化前后对比方式。",
+            "final_text": "负责智能客服机器人需求拆解与迭代排期：将功能需求拆分为可执行任务并排期，跟进 3 个版本按期上线。\n搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检，为对话质量提供可执行标准。\n通过埋点分析定位回复质量下降原因，推动 prompt 优化后问题解决率提升；可补充说明分析口径与优化前后对比方式。",
+            "reason": "保留原证据数字（3 个版本），仅补充「拆分为可执行任务」这一对需求拆解方法的说明，使职责更贴合 JD 对独立需求拆解与推动落地的要求；未新增任何事实。；保留 5 人团队/2000 条数据/标注规范等原始证据，前端补充「为对话质量提供可执行标准」以对齐 JD 的「评测集与质量标准定义」；未新增工具、指标或人数。；保留原有结果表述「提升」且不添加任何百分比；补充「可补充说明分析口径与优化前后对比方式」是面向面试追问的准备性备注，不引入新数据，帮助候选人应对统计口径的追问。",
+            "jd_refs": [
+              "Q2",
+              "P2",
+              "P3"
+            ],
+            "evidence_refs": [
+              "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+              "be9fdf3d-4634-4e38-8a74-5364460dc9fc",
+              "036a7a17-db79-4083-90e3-626b98a8877a"
+            ],
+            "resume_skill_refs": [
+              "JD_RELEVANCE",
+              "ACTION_METHOD_RESULT",
+              "EVIDENCE_GROUNDED_WRITING",
+              "RESPONSIBILITY_BOUNDARY",
+              "NO_FABRICATED_METRICS",
+              "CURATED_RESUME_AMR_METRIC_DISCIPLINE",
+              "ASK_BEFORE_INVENTING"
+            ],
+            "risk_flags": [],
+            "status": "ACCEPTED",
+            "sort_order": 0,
+            "grounding_status": "SUPPORTED",
+            "target_capabilities": [
+              "AI 助手类产品需求分析与功能设计",
+              "需求拆解",
+              "PRD 撰写与推动落地",
+              "评测集与质量标准定义",
+              "跨团队协作",
+              "模型评测",
+              "用户反馈与数据分析",
+              "prompt 设计"
+            ],
+            "project_title": null
+          },
+          {
+            "id": "af0f24e3-aefb-464a-b256-419e0e4bb67c",
+            "source_experience_id": "b9b2847d-c0c5-46a9-8901-de4a1a9af91b",
+            "original_text": "校园二手交易平台 2022.09 - 2023.05",
+            "suggested_text": "校园二手交易平台（2022.09 - 2023.05）：参与产品从需求到实现的实践，具体职责与产出待补充确认。",
+            "final_text": "校园二手交易平台（2022.09 - 2023.05）：参与产品从需求到实现的实践，具体职责与产出待补充确认。",
+            "reason": "原始证据仅有项目名称与时间，因此以低权重呈现并显式标注「待补充确认」，避免编造用户量、功能清单或职责；同时为面试口头补充需求拆解/原型设计细节预留空间。",
+            "jd_refs": [
+              "Q2"
+            ],
+            "evidence_refs": [
+              "b9b2847d-c0c5-46a9-8901-de4a1a9af91b"
+            ],
+            "resume_skill_refs": [
+              "PROJECT_POSITIONING",
+              "ASK_BEFORE_INVENTING",
+              "RESPONSIBILITY_BOUNDARY"
+            ],
+            "risk_flags": [
+              "MISSING_DETAILS_CONFIRM_REQUIRED"
+            ],
+            "status": "SUGGESTED",
+            "sort_order": 1,
+            "grounding_status": "NEEDS_CONFIRMATION",
+            "target_capabilities": [
+              "需求分析与功能设计",
+              "需求拆解",
+              "原型设计"
+            ],
+            "project_title": null
+          },
+          {
+            "id": "0e0b49cd-d60c-4764-8d1d-b9eecb08eee5",
+            "source_experience_id": null,
+            "original_text": "建议补做项目（尚未完成）",
+            "suggested_text": "项目草案：智能硬件 AI 产品验证闭环——完成目标用户与竞品调研，输出端侧/云侧方案和传感器、算力选型对比；制作可交互原型或 Demo，设计测试指标与数据记录表，形成 PRD、技术选型表和测试报告。",
+            "final_text": "项目草案：智能硬件 AI 产品验证闭环——完成目标用户与竞品调研，输出端侧/云侧方案和传感器、算力选型对比；制作可交互原型或 Demo，设计测试指标与数据记录表，形成 PRD、技术选型表和测试报告。",
+            "reason": "目标 JD 强调智能硬件产品定义、软硬件方案取舍和数据驱动验证；该项目用于补齐可展示的作品集证据，完成前不作为既有经历。",
+            "jd_refs": [],
+            "evidence_refs": [],
+            "resume_skill_refs": [],
+            "risk_flags": [
+              "SYNTHETIC_PROJECT"
+            ],
+            "status": "SUGGESTED",
+            "sort_order": 2,
+            "grounding_status": "NEEDS_CONFIRMATION",
+            "target_capabilities": [
+              "智能硬件产品定义",
+              "原型与测试验证",
+              "数据驱动决策"
+            ],
+            "project_title": "项目草案：智能硬件 AI 产品验证闭环"
+          }
+        ],
+        "created_at": "2026-10-16T17:41:34",
+        "updated_at": "2026-10-16T17:41:34",
+        "workflow_state": "TARGET_RESUME_CONFIRMED"
+      }
+    },
+    {
+      "step": "11a-accept-bullets-v2",
+      "ok": true,
+      "result": {
+        "version": 2,
+        "accepted": 2,
+        "skipped": 1,
+        "ok": true
+      }
+    },
+    {
+      "step": "11b-confirm-target-v2",
+      "ok": true,
+      "result": {
+        "id": "4a2545b8-ddbb-49a2-915b-54b08ef90039",
+        "profile_id": "1206ef8b-5067-4407-8071-f82921402211",
+        "target_job_id": "e9393fa1-95e9-4996-ae6d-c8bb89b72853",
+        "display_name": "AI 产品经理",
+        "company": "UNKNOWN",
+        "role": "AI 产品经理",
+        "role_family": "Product",
+        "seniority": "UNKNOWN",
+        "location": "北京",
+        "status": "RESUME_PREP",
+        "workflow_state": "TARGET_RESUME_CONFIRMED",
+        "resume_source": {
+          "mode": "paste",
+          "bound_at": "2026-10-16T17:40:55.422989+00:00",
+          "isolation": "mission_local",
+          "bound_profile_id": "4225c034-7b6b-4468-8731-dfa7f5d9e75b",
+          "master_profile_id": "1206ef8b-5067-4407-8071-f82921402211",
+          "filename": null,
+          "content_hash": "8172d24bdbacb1a9bda0333c6c50b7873a2f97a9630026160ed7a2a9f322195b",
+          "section_order": [
+            "education",
+            "experience",
+            "project",
+            "skills"
+          ],
+          "optimization_reset_at": "2026-10-16T17:40:55.381984+00:00"
+        },
+        "warnings": [
+          "company_intel_unavailable"
+        ],
+        "analysis_error": null,
+        "parsed_jd": {
+          "company": "UNKNOWN",
+          "role": "AI 产品经理",
+          "role_family": "Product",
+          "seniority": "UNKNOWN",
+          "location": "北京",
+          "education_requirements": [
+            "本科及以上学历"
+          ],
+          "responsibilities": [],
+          "requirements": [
+            {
+              "id": "Q1",
+              "text": "本科及以上学历",
+              "category": "must_have",
+              "evidence_text": "本科及以上学历"
+            },
+            {
+              "id": "Q2",
+              "text": "逻辑清晰，能独立完成需求拆解与原型设计",
+              "category": "skill",
+              "evidence_text": "逻辑清晰，能独立完成需求拆解与原型设计"
+            }
+          ],
+          "preferred_requirements": [
+            {
+              "id": "P1",
+              "text": "计算机、产品相关专业优先",
+              "category": "nice_to_have",
+              "evidence_text": "计算机、产品相关专业优先"
+            },
+            {
+              "id": "P2",
+              "text": "有 AI 产品或对话式产品实习/项目经验者优先",
+              "category": "nice_to_have",
+              "evidence_text": "有 AI 产品或对话式产品实习/项目经验者优先"
+            },
+            {
+              "id": "P3",
+              "text": "熟悉 prompt 设计或模型评测者加分",
+              "category": "nice_to_have",
+              "evidence_text": "熟悉 prompt 设计或模型评测者加分"
+            }
+          ],
+          "capabilities": [
+            "需求分析与功能设计",
+            "PRD 撰写",
+            "跨团队协作",
+            "评测集与质量标准定义",
+            "用户反馈与数据分析",
+            "竞品分析",
+            "产品规划",
+            "需求拆解",
+            "原型设计",
+            "prompt 设计",
+            "模型评测"
+          ],
+          "keywords": [
+            "AI 产品经理",
+            "AI 助手",
+            "PRD",
+            "评测集",
+            "质量标准",
+            "模型迭代",
+            "用户反馈",
+            "数据分析",
+            "竞品分析",
+            "产品规划",
+            "prompt 设计",
+            "模型评测"
+          ]
+        },
+        "what_matters": {
+          "core_capabilities": [
+            {
+              "name": "AI 助手类产品需求分析与功能设计",
+              "why": "岗位职责明确要求负责 AI 助手类产品的需求分析与功能设计，这是该岗位的核心工作内容。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "PRD 撰写与推动落地",
+              "why": "岗位职责要求输出 PRD 并推动落地，是产品经理交付的关键能力。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "跨团队协作（算法、工程）",
+              "why": "岗位职责要求与算法、工程团队协作，是保障模型迭代与产品落地的基础。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "评测集与质量标准定义",
+              "why": "岗位职责要求定义评测集与质量标准，并跟进模型迭代效果，直接决定 AI 产品质量。",
+              "evidence_refs": [
+                "P3"
+              ]
+            },
+            {
+              "name": "用户反馈与数据分析",
+              "why": "岗位职责要求分析用户反馈与数据，持续优化产品体验，是迭代闭环的核心。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "竞品分析与产品规划",
+              "why": "岗位职责要求跟踪行业动态，输出竞品分析与产品规划，影响产品方向。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "需求拆解与原型设计",
+              "why": "任职要求明确要求逻辑清晰，能独立完成需求拆解与原型设计。",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "name": "prompt 设计与模型评测",
+              "why": "任职要求将熟悉 prompt 设计或模型评测列为加分项，是 AI 产品岗的差异化能力。",
+              "evidence_refs": [
+                "P3"
+              ]
+            }
+          ],
+          "high_importance_requirements": [
+            {
+              "text": "本科及以上学历",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "Q1"
+              ]
+            },
+            {
+              "text": "逻辑清晰，能独立完成需求拆解与原型设计",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "Q2"
+              ]
+            },
+            {
+              "text": "有 AI 产品或对话式产品实习/项目经验者优先",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "P2"
+              ]
+            },
+            {
+              "text": "熟悉 prompt 设计或模型评测者加分",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "P3"
+              ]
+            },
+            {
+              "text": "计算机、产品相关专业优先",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "P1"
+              ]
+            }
+          ],
+          "evidence_expected": [
+            "本科及以上学历的证明材料（学历证书或学信网信息）",
+            "AI 产品或对话式产品实习/项目经历的描述与成果",
+            "独立完成的需求拆解文档或原型设计作品",
+            "PRD 文档或产品功能设计案例",
+            "与算法、工程团队协作的项目经历说明",
+            "评测集或质量标准定义的相关产出",
+            "用户反馈与数据分析驱动的产品优化案例",
+            "竞品分析或产品规划文档",
+            "prompt 设计或模型评测的相关实践记录"
+          ],
+          "likely_success_signals": [
+            "具备本科及以上学历，满足基本门槛",
+            "有 AI 产品或对话式产品实习/项目经验，能快速上手 AI 助手类产品",
+            "能独立完成需求拆解与原型设计，逻辑清晰",
+            "有 PRD 撰写并推动落地的完整案例",
+            "有与算法、工程团队协作并跟进模型迭代的经验",
+            "具备 prompt 设计或模型评测能力，形成差异化优势",
+            "有数据分析驱动产品优化的实践"
+          ],
+          "bonus_capabilities": [
+            "计算机、产品相关专业背景",
+            "AI 产品或对话式产品实习/项目经验",
+            "prompt 设计能力",
+            "模型评测能力"
+          ],
+          "potential_interview_focus": [
+            "请举例说明你独立完成的需求拆解与原型设计过程",
+            "你如何定义评测集与质量标准？如何跟进模型迭代效果？",
+            "请描述一次与算法、工程团队协作推动产品落地的经历",
+            "你如何分析用户反馈与数据并优化产品体验？",
+            "你是否做过竞品分析与产品规划？请分享具体案例",
+            "你在 prompt 设计或模型评测方面有哪些实践？"
+          ],
+          "confidence": 0.55,
+          "jd_evidence_refs": [
+            "Q1",
+            "Q2",
+            "P1",
+            "P2",
+            "P3"
+          ]
+        },
+        "resume_strategy": {
+          "positioning_statement": "目标岗位为 AI 产品经理（公司未知、级别未知），核心要求本科及以上学历、逻辑清晰并能独立完成需求拆解与原型设计，优先看重 AI 产品或对话式产品实习/项目经验以及 prompt 设计或模型评测能力。基于现有证据，定位为「具备 AI 智能客服产品实习经验的校招/初级 AI 产品候选人」：本科计算机科学与技术专业满足学历与专业优先项，AI 产品实习中覆盖需求拆解、版本跟进、标注规范与质检、埋点分析与 prompt 优化，能够直接对标岗位的核心与加分要求；校园二手交易平台项目作为产品实践补充，但证据有限，仅作辅助。",
+          "recommended_experience_order": [
+            "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+            "b9b2847d-c0c5-46a9-8901-de4a1a9af91b"
+          ],
+          "experience_guidance": [
+            {
+              "experience_id": "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+              "role_in_story": "主线经历：证明具备 AI 产品（智能客服机器人）全流程实习经验，覆盖需求拆解、版本跟进、数据质检与 prompt 优化，直接对标岗位的 AI 产品经验优先项与 prompt 设计加分项。",
+              "what_to_highlight": [
+                "突出「负责智能客服机器人的需求拆解与迭代排期，跟进 3 个版本上线」，对应需求拆解与推动落地的能力；突出「搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检」，对应评测集与质量标准定义、跨团队协作；突出「通过埋点分析定位回复质量下降原因，推动 prompt 优化后问题解决率提升」，对应用户反馈与数据分析、prompt 设计，且注意该结果只按证据表述「提升」，不添加具体数字。"
+              ],
+              "what_to_avoid": [
+                "避免把「负责」升级为「主导」「从 0 到 1」等超出证据的所有权措辞；避免为「问题解决率提升」补造百分比；避免把 3 个版本、2000 条、5 人团队等已有数字之外再新增任何指标。"
+              ],
+              "target_capabilities": [
+                "需求分析与功能设计",
+                "需求拆解",
+                "跨团队协作",
+                "评测集与质量标准定义",
+                "用户反馈与数据分析",
+                "prompt 设计",
+                "模型评测"
+              ],
+              "evidence_refs": [
+                "05f1cf62-fef5-4671-9585-14a4d621e9d5",
+                "be9fdf3d-4634-4e38-8a74-5364460dc9fc",
+                "036a7a17-db79-4083-90e3-626b98a8877a"
+              ],
+              "interview_risk_notes": [
+                "面试官可能追问「问题解决率提升」的具体幅度与统计口径，目前证据未给出数字，需准备用口径与测量方式说明，不能临场编造百分比。",
+                "「需求拆解与迭代排期」可能被追问个人决策与团队分工的边界，需明确哪些是本人负责、哪些是协同完成。",
+                "「prompt 优化」可能被追问具体优化了哪些 prompt、评测方式是什么，证据未展开，需如实说明已知范围。",
+                "实习时间 2023.06-2023.12，可能被问及与当前求职时间线的衔接及后续是否有延续实践。"
+              ]
+            },
+            {
+              "experience_id": "b9b2847d-c0c5-46a9-8901-de4a1a9af91b",
+              "role_in_story": "辅助经历：作为产品实践补充，体现对产品从需求到交付的参与，但因提供证据仅有名称与时间，仅做低权重呈现，用于填补产品项目经历的空白。",
+              "what_to_highlight": [
+                "仅按证据呈现「校园二手交易平台 2022.09 - 2023.05」这一项目存在与持续时间，可在面试中口头补充与需求拆解、原型设计或协作相关的真实细节（需候选人确认后再用）。"
+              ],
+              "what_to_avoid": [
+                "避免在缺少证据的情况下为该项目编造用户量、转化率、功能清单、职责范围或使用工具；避免把它包装成正式商业产品或 AI 相关项目；避免将「校园项目」表述为「主导/负责人」级别而证据不足。"
+              ],
+              "target_capabilities": [
+                "需求分析与功能设计",
+                "需求拆解",
+                "原型设计",
+                "产品规划"
+              ],
+              "evidence_refs": [
+                "b9b2847d-c0c5-46a9-8901-de4a1a9af91b"
+              ],
+              "interview_risk_notes": [
+                "该项目证据仅有名称与时间，面试官若追问具体职责、产出与成果，极可能暴露细节不足，需提前准备真实可核对的经历描述。",
+                "若候选人无法提供真实细节，建议不主动展开，避免被判定为经历注水。"
+              ]
+            }
+          ]
+        },
+        "interview_intel": [],
+        "created_at": "2026-10-16T17:40:51",
+        "updated_at": "2026-10-16T17:41:34.482083"
+      }
+    },
+    {
+      "step": "12-source-diff-v2",
+      "ok": true,
+      "result": {
+        "update_available": true,
+        "current_source_id": "76ce923e-499e-4742-9a1b-25f042095aa1",
+        "new_source_id": "90ff8599-412a-45c8-8a12-97ece15e83e6",
+        "new_source_version": 2,
+        "added_bullets": [
+          "负责智能客服机器人需求拆解与迭代排期：将功能需求拆分为可执行任务并排期，跟进 3 个版本按期上线。",
+          "搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检，为对话质量提供可执行标准。",
+          "通过埋点分析定位回复质量下降原因，推动 prompt 优化后问题解决率提升；可补充说明分析口径与优化前后对比方式。",
+          "校园二手交易平台（2022.09 - 2023.05）：参与产品从需求到实现的实践，具体职责与产出待补充确认。"
+        ],
+        "removed_bullets": [
+          "手工补充：整理过评测集用例并每周同步质量报表。",
+          "参与智能客服机器人的需求分析与拆解，产出迭代排期并跟进 3 个版本上线",
+          "搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检，定义质量标准并支撑模型迭代评估",
+          "通过埋点分析定位回复质量下降原因，推动 prompt 优化并于优化后复盘问题解决率变化，用于验证迭代效果",
+          "校园二手交易平台：参与需求调研与功能梳理，输出简易原型并配合上线验证（需候选人确认具体职责与产出）"
+        ],
+        "sections": [
+          {
+            "section": "教育经历",
+            "status": "changed",
+            "added": [],
+            "removed": [
+              "手工补充：整理过评测集用例并每周同步质量报表。"
+            ],
+            "kept": 0
+          },
+          {
+            "section": "工作与项目经历",
+            "status": "changed",
+            "added": [
+              "负责智能客服机器人需求拆解与迭代排期：将功能需求拆分为可执行任务并排期，跟进 3 个版本按期上线。",
+              "搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检，为对话质量提供可执行标准。",
+              "通过埋点分析定位回复质量下降原因，推动 prompt 优化后问题解决率提升；可补充说明分析口径与优化前后对比方式。",
+              "校园二手交易平台（2022.09 - 2023.05）：参与产品从需求到实现的实践，具体职责与产出待补充确认。"
+            ],
+            "removed": [
+              "参与智能客服机器人的需求分析与拆解，产出迭代排期并跟进 3 个版本上线",
+              "搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检，定义质量标准并支撑模型迭代评估",
+              "通过埋点分析定位回复质量下降原因，推动 prompt 优化并于优化后复盘问题解决率变化，用于验证迭代效果",
+              "校园二手交易平台：参与需求调研与功能梳理，输出简易原型并配合上线验证（需候选人确认具体职责与产出）"
+            ],
+            "kept": 0
+          },
+          {
+            "section": "技能",
+            "status": "unchanged",
+            "added": [],
+            "removed": [],
+            "kept": 0
+          },
+          {
+            "section": "证书",
+            "status": "unchanged",
+            "added": [],
+            "removed": [],
+            "kept": 0
+          }
+        ],
+        "manual_edit_count": 1,
+        "manual_edit_samples": [
+          "手工补充：整理过评测集用例并每周同步质量报表。"
+        ],
+        "will_replace_studio_edits": true,
+        "will_reset_language": false
+      }
+    },
+    {
+      "step": "13a-reimport-without-if-match",
+      "ok": true,
+      "result": {
+        "expect": 428,
+        "got": 428
+      }
+    },
+    {
+      "step": "13b-stale-revision-409",
+      "ok": true,
+      "result": {
+        "expect": 409,
+        "got": 409
+      }
+    },
+    {
+      "step": "13c-reimport-ok",
+      "ok": true,
+      "result": {
+        "revision": 3,
+        "confirmed_revision": null,
+        "source": "90ff8599-412a-45c8-8a12-97ece15e83e6"
+      }
+    },
+    {
+      "step": "13d-fix-placeholder-residue",
+      "ok": true,
+      "result": {
+        "cleaned": 1,
+        "omitted": 0,
+        "failed": 0,
+        "revision": 4
+      }
+    },
+    {
+      "step": "14-confirm-delivery",
+      "ok": true,
+      "result": {
+        "confirmed_revision": 4,
+        "page_count": 1
+      }
+    },
+    {
+      "step": "16-switch-template-keeps-content",
+      "ok": true,
+      "result": {
+        "template_id": "zh-sidebar",
+        "content_identical": true,
+        "bullet_count": 4
+      }
+    },
+    {
+      "step": "17-reconfirm-after-template",
+      "ok": true,
+      "result": {
+        "confirmed_revision": 5,
+        "page_count": 1
+      }
+    },
+    {
+      "step": "18-reload-persists",
+      "ok": true,
+      "result": {
+        "revision_stable": true,
+        "template_stable": true,
+        "content_stable": true
+      }
+    }
+  ],
+  "initial_diff_update_available": false,
+  "diff_v2": {
+    "update_available": true,
+    "added": [
+      "负责智能客服机器人需求拆解与迭代排期：将功能需求拆分为可执行任务并排期，跟进 3 个版本按期上线。",
+      "搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检，为对话质量提供可执行标准。",
+      "通过埋点分析定位回复质量下降原因，推动 prompt 优化后问题解决率提升；可补充说明分析口径与优化前后对比方式。",
+      "校园二手交易平台（2022.09 - 2023.05）：参与产品从需求到实现的实践，具体职责与产出待补充确认。"
+    ],
+    "removed": [
+      "手工补充：整理过评测集用例并每周同步质量报表。",
+      "参与智能客服机器人的需求分析与拆解，产出迭代排期并跟进 3 个版本上线",
+      "搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检，定义质量标准并支撑模型迭代评估",
+      "通过埋点分析定位回复质量下降原因，推动 prompt 优化并于优化后复盘问题解决率变化，用于验证迭代效果",
+      "校园二手交易平台：参与需求调研与功能梳理，输出简易原型并配合上线验证（需候选人确认具体职责与产出）"
+    ],
+    "sections": [
+      {
+        "section": "教育经历",
+        "status": "changed",
+        "added": [],
+        "removed": [
+          "手工补充：整理过评测集用例并每周同步质量报表。"
+        ],
+        "kept": 0
+      },
+      {
+        "section": "工作与项目经历",
+        "status": "changed",
+        "added": [
+          "负责智能客服机器人需求拆解与迭代排期：将功能需求拆分为可执行任务并排期，跟进 3 个版本按期上线。",
+          "搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检，为对话质量提供可执行标准。",
+          "通过埋点分析定位回复质量下降原因，推动 prompt 优化后问题解决率提升；可补充说明分析口径与优化前后对比方式。",
+          "校园二手交易平台（2022.09 - 2023.05）：参与产品从需求到实现的实践，具体职责与产出待补充确认。"
+        ],
+        "removed": [
+          "参与智能客服机器人的需求分析与拆解，产出迭代排期并跟进 3 个版本上线",
+          "搭建并维护标注规范文档，协同 5 人团队完成 2000 条对话数据质检，定义质量标准并支撑模型迭代评估",
+          "通过埋点分析定位回复质量下降原因，推动 prompt 优化并于优化后复盘问题解决率变化，用于验证迭代效果",
+          "校园二手交易平台：参与需求调研与功能梳理，输出简易原型并配合上线验证（需候选人确认具体职责与产出）"
+        ],
+        "kept": 0
+      },
+      {
+        "section": "技能",
+        "status": "unchanged",
+        "added": [],
+        "removed": [],
+        "kept": 0
+      },
+      {
+        "section": "证书",
+        "status": "unchanged",
+        "added": [],
+        "removed": [],
+        "kept": 0
+      }
+    ],
+    "manual_edit_count": 1,
+    "manual_edit_samples": [
+      "手工补充：整理过评测集用例并每周同步质量报表。"
+    ]
+  },
+  "revision_before": 2,
+  "revision_after": 3,
+  "placeholder_residue": {
+    "cleaned": 1,
+    "omitted": 0,
+    "failed": 0,
+    "revision": 4
+  },
+  "pdf_bytes": 88841,
+  "diff_after_reimport_update_available": false,
+  "template_switch": {
+    "from": "zh-classic",
+    "to": "zh-sidebar",
+    "content_identical": true
+  },
+  "pdf_after_template_bytes": 89102,
+  "finished_at": "2026-10-16T17:41:37.658761+00:00",
+  "mission_id": "4a2545b8-ddbb-49a2-915b-54b08ef90039"
+}

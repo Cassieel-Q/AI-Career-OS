@@ -1,0 +1,3651 @@
+{
+  "started_at": "2026-10-16T17:41:51.878872+00:00",
+  "base_url": "http://127.0.0.1:8100",
+  "case": "data-analyst",
+  "steps": [
+    {
+      "step": "1-draft-profile",
+      "ok": true,
+      "result": {
+        "profile_id": "3128610b-55d4-40cc-9d7a-8541cf057932",
+        "status": "DRAFT",
+        "full_name": null,
+        "phone": null,
+        "email": null,
+        "city": null,
+        "created_at": "2026-10-16T17:41:51",
+        "updated_at": "2026-10-16T17:41:51",
+        "education": [],
+        "skills": [],
+        "experiences": [],
+        "certifications": [],
+        "preferences": null
+      }
+    },
+    {
+      "step": "2-ingest-resume",
+      "ok": true,
+      "result": {
+        "profile_id": "3128610b-55d4-40cc-9d7a-8541cf057932",
+        "status": "DRAFT",
+        "full_name": "李四",
+        "phone": "13900000000",
+        "email": "lisi@example.com",
+        "city": "上海",
+        "created_at": "2026-10-16T17:41:51",
+        "updated_at": "2026-10-16T17:41:55.782643",
+        "education": [
+          {
+            "id": "81cfc794-2142-47a8-ad5d-c2e11a7f6975",
+            "evidence_text": "某财经大学 统计学 本科 2019.09 - 2023.06",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "某财经大学",
+            "canonical_value": null,
+            "evidence_start": 52,
+            "evidence_end": 82,
+            "institution": "某财经大学",
+            "degree": "本科",
+            "field_of_study": "统计学",
+            "dates": "2019.09 - 2023.06",
+            "cet4_score": null,
+            "cet6_score": null,
+            "relevant_courses": [],
+            "honors": []
+          }
+        ],
+        "skills": [
+          {
+            "id": "29410042-9735-4f03-9d26-20952364240e",
+            "evidence_text": "SQL",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "SQL",
+            "canonical_value": "SQL",
+            "evidence_start": 329,
+            "evidence_end": 332,
+            "name": "SQL",
+            "proficiency": null
+          },
+          {
+            "id": "c695f9d7-389e-436d-a8b6-1d99a13a6c76",
+            "evidence_text": "Python",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "Python",
+            "canonical_value": "Python",
+            "evidence_start": 335,
+            "evidence_end": 341,
+            "name": "Python",
+            "proficiency": null
+          },
+          {
+            "id": "3a464320-59a3-4ca1-89c5-d06c32dccfd2",
+            "evidence_text": "Tableau",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "Tableau",
+            "canonical_value": "Tableau",
+            "evidence_start": 352,
+            "evidence_end": 359,
+            "name": "Tableau",
+            "proficiency": null
+          },
+          {
+            "id": "3354291b-1091-4760-8506-8b466bee9fec",
+            "evidence_text": "统计分析",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "统计分析",
+            "canonical_value": "统计分析",
+            "evidence_start": 362,
+            "evidence_end": 366,
+            "name": "统计分析",
+            "proficiency": null
+          },
+          {
+            "id": "4af9e23b-3589-47f6-bb78-0b586d81984b",
+            "evidence_text": "Excel",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "Excel",
+            "canonical_value": "Excel",
+            "evidence_start": 344,
+            "evidence_end": 349,
+            "name": "Excel",
+            "proficiency": null
+          }
+        ],
+        "experiences": [
+          {
+            "id": "d1f59445-6bf4-4dd9-9b90-349a39ab4c34",
+            "evidence_text": "某零售集团 数据分析师 2023.07 - 2025.03\n- 搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "数据分析师",
+            "canonical_value": null,
+            "evidence_start": 89,
+            "evidence_end": 152,
+            "title": "数据分析师",
+            "organization": "某零售集团",
+            "dates": "2023.07 - 2025.03",
+            "description": "搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标",
+            "experience_type": "WORK"
+          },
+          {
+            "id": "0834f21e-9c95-4d51-b167-aa010ae49d84",
+            "evidence_text": "某零售集团 数据分析师 2023.07 - 2025.03\n- 搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标\n- 设计 A/B 实验评估流程，完成 15 组营销活动的效果归因与复盘",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "数据分析师",
+            "canonical_value": null,
+            "evidence_start": 89,
+            "evidence_end": 188,
+            "title": "数据分析师",
+            "organization": "某零售集团",
+            "dates": "2023.07 - 2025.03",
+            "description": "设计 A/B 实验评估流程，完成 15 组营销活动的效果归因与复盘",
+            "experience_type": "WORK"
+          },
+          {
+            "id": "c9ee5646-46be-4865-8068-1cdcaf7862e7",
+            "evidence_text": "某零售集团 数据分析师 2023.07 - 2025.03\n- 搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标\n- 设计 A/B 实验评估流程，完成 15 组营销活动的效果归因与复盘\n- 用 SQL 与 Python 清洗订单数据，将报表出数时间从 2 天压缩到 4 小时",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "数据分析师",
+            "canonical_value": null,
+            "evidence_start": 89,
+            "evidence_end": 233,
+            "title": "数据分析师",
+            "organization": "某零售集团",
+            "dates": "2023.07 - 2025.03",
+            "description": "用 SQL 与 Python 清洗订单数据，将报表出数时间从 2 天压缩到 4 小时",
+            "experience_type": "WORK"
+          },
+          {
+            "id": "21e3be96-7779-434a-9717-8661d4444b59",
+            "evidence_text": "用户流失预警模型 2024.03 - 2024.09",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "用户流失预警模型",
+            "canonical_value": null,
+            "evidence_start": 240,
+            "evidence_end": 266,
+            "title": "用户流失预警模型",
+            "organization": null,
+            "dates": "2024.03 - 2024.09",
+            "description": null,
+            "experience_type": "PROJECT"
+          }
+        ],
+        "certifications": [],
+        "preferences": null
+      }
+    },
+    {
+      "step": "3-confirm-profile",
+      "ok": true,
+      "result": {
+        "profile_id": "3128610b-55d4-40cc-9d7a-8541cf057932",
+        "status": "CONFIRMED",
+        "full_name": "李四",
+        "phone": "13900000000",
+        "email": "lisi@example.com",
+        "city": "上海",
+        "created_at": "2026-10-16T17:41:51",
+        "updated_at": "2026-10-16T17:41:55.868370",
+        "education": [
+          {
+            "id": "81cfc794-2142-47a8-ad5d-c2e11a7f6975",
+            "evidence_text": "某财经大学 统计学 本科 2019.09 - 2023.06",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "某财经大学",
+            "canonical_value": null,
+            "evidence_start": 52,
+            "evidence_end": 82,
+            "institution": "某财经大学",
+            "degree": "本科",
+            "field_of_study": "统计学",
+            "dates": "2019.09 - 2023.06",
+            "cet4_score": null,
+            "cet6_score": null,
+            "relevant_courses": [],
+            "honors": []
+          }
+        ],
+        "skills": [
+          {
+            "id": "29410042-9735-4f03-9d26-20952364240e",
+            "evidence_text": "SQL",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "SQL",
+            "canonical_value": "SQL",
+            "evidence_start": 329,
+            "evidence_end": 332,
+            "name": "SQL",
+            "proficiency": null
+          },
+          {
+            "id": "c695f9d7-389e-436d-a8b6-1d99a13a6c76",
+            "evidence_text": "Python",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "Python",
+            "canonical_value": "Python",
+            "evidence_start": 335,
+            "evidence_end": 341,
+            "name": "Python",
+            "proficiency": null
+          },
+          {
+            "id": "3a464320-59a3-4ca1-89c5-d06c32dccfd2",
+            "evidence_text": "Tableau",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "Tableau",
+            "canonical_value": "Tableau",
+            "evidence_start": 352,
+            "evidence_end": 359,
+            "name": "Tableau",
+            "proficiency": null
+          },
+          {
+            "id": "3354291b-1091-4760-8506-8b466bee9fec",
+            "evidence_text": "统计分析",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "统计分析",
+            "canonical_value": "统计分析",
+            "evidence_start": 362,
+            "evidence_end": 366,
+            "name": "统计分析",
+            "proficiency": null
+          },
+          {
+            "id": "4af9e23b-3589-47f6-bb78-0b586d81984b",
+            "evidence_text": "Excel",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "Excel",
+            "canonical_value": "Excel",
+            "evidence_start": 344,
+            "evidence_end": 349,
+            "name": "Excel",
+            "proficiency": null
+          }
+        ],
+        "experiences": [
+          {
+            "id": "d1f59445-6bf4-4dd9-9b90-349a39ab4c34",
+            "evidence_text": "某零售集团 数据分析师 2023.07 - 2025.03\n- 搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "数据分析师",
+            "canonical_value": null,
+            "evidence_start": 89,
+            "evidence_end": 152,
+            "title": "数据分析师",
+            "organization": "某零售集团",
+            "dates": "2023.07 - 2025.03",
+            "description": "搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标",
+            "experience_type": "WORK"
+          },
+          {
+            "id": "0834f21e-9c95-4d51-b167-aa010ae49d84",
+            "evidence_text": "某零售集团 数据分析师 2023.07 - 2025.03\n- 搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标\n- 设计 A/B 实验评估流程，完成 15 组营销活动的效果归因与复盘",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "数据分析师",
+            "canonical_value": null,
+            "evidence_start": 89,
+            "evidence_end": 188,
+            "title": "数据分析师",
+            "organization": "某零售集团",
+            "dates": "2023.07 - 2025.03",
+            "description": "设计 A/B 实验评估流程，完成 15 组营销活动的效果归因与复盘",
+            "experience_type": "WORK"
+          },
+          {
+            "id": "c9ee5646-46be-4865-8068-1cdcaf7862e7",
+            "evidence_text": "某零售集团 数据分析师 2023.07 - 2025.03\n- 搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标\n- 设计 A/B 实验评估流程，完成 15 组营销活动的效果归因与复盘\n- 用 SQL 与 Python 清洗订单数据，将报表出数时间从 2 天压缩到 4 小时",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "数据分析师",
+            "canonical_value": null,
+            "evidence_start": 89,
+            "evidence_end": 233,
+            "title": "数据分析师",
+            "organization": "某零售集团",
+            "dates": "2023.07 - 2025.03",
+            "description": "用 SQL 与 Python 清洗订单数据，将报表出数时间从 2 天压缩到 4 小时",
+            "experience_type": "WORK"
+          },
+          {
+            "id": "21e3be96-7779-434a-9717-8661d4444b59",
+            "evidence_text": "用户流失预警模型 2024.03 - 2024.09",
+            "source_type": "AI_EXTRACTED",
+            "raw_value": "用户流失预警模型",
+            "canonical_value": null,
+            "evidence_start": 240,
+            "evidence_end": 266,
+            "title": "用户流失预警模型",
+            "organization": null,
+            "dates": "2024.03 - 2024.09",
+            "description": null,
+            "experience_type": "PROJECT"
+          }
+        ],
+        "certifications": [],
+        "preferences": null
+      }
+    },
+    {
+      "step": "4-create-mission",
+      "ok": true,
+      "result": {
+        "id": "25b90abe-269d-4f29-ad15-27f2387683fa",
+        "profile_id": "3128610b-55d4-40cc-9d7a-8541cf057932",
+        "target_job_id": "45a488f2-42c3-4d39-90ef-407c2ca45d9c",
+        "display_name": "数据分析师",
+        "company": "UNKNOWN",
+        "role": "数据分析师",
+        "role_family": "DATA_ANALYTICS",
+        "seniority": "UNKNOWN",
+        "location": "上海",
+        "status": "DRAFT",
+        "workflow_state": "ROLE_UNDERSTOOD",
+        "resume_source": null,
+        "warnings": [
+          "company_intel_unavailable"
+        ],
+        "analysis_error": null,
+        "parsed_jd": {
+          "company": "UNKNOWN",
+          "role": "数据分析师",
+          "role_family": "DATA_ANALYTICS",
+          "seniority": "UNKNOWN",
+          "location": "上海",
+          "education_requirements": [
+            "本科及以上学历"
+          ],
+          "responsibilities": [],
+          "requirements": [
+            {
+              "id": "REQ1",
+              "text": "本科及以上学历，统计、数学、计算机相关专业",
+              "category": "must_have",
+              "evidence_text": "本科及以上学历，统计、数学、计算机相关专业"
+            },
+            {
+              "id": "REQ2",
+              "text": "熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设",
+              "category": "must_have",
+              "evidence_text": "熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设"
+            },
+            {
+              "id": "REQ3",
+              "text": "沟通清晰，能把分析结论讲给非技术同事听",
+              "category": "沟通能力",
+              "evidence_text": "沟通清晰，能把分析结论讲给非技术同事听"
+            }
+          ],
+          "preferred_requirements": [
+            {
+              "id": "PREF1",
+              "text": "有 A/B 实验与用户分层运营经验者优先",
+              "category": "nice_to_have",
+              "evidence_text": "有 A/B 实验与用户分层运营经验者优先"
+            }
+          ],
+          "capabilities": [
+            "SQL",
+            "Python",
+            "数据清洗",
+            "指标建设",
+            "看板输出",
+            "A/B 实验",
+            "效果归因",
+            "用户流失预警建模",
+            "特征工程",
+            "用户分层运营",
+            "沟通表达"
+          ],
+          "keywords": [
+            "数据分析师",
+            "经营指标体系",
+            "报表维护",
+            "看板",
+            "A/B 实验",
+            "效果归因",
+            "用户流失预警",
+            "建模",
+            "特征",
+            "SQL",
+            "Python",
+            "数据清洗",
+            "指标建设",
+            "用户分层运营",
+            "上海"
+          ]
+        },
+        "what_matters": {
+          "core_capabilities": [
+            {
+              "name": "SQL 与 Python 数据清洗与指标建设",
+              "why": "岗位要求熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设，这是数据分析师完成日常数据工作的核心基础。",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "name": "经营指标体系搭建与看板输出",
+              "why": "岗位职责要求负责经营指标体系搭建与日常报表维护，输出可复用的看板，直接体现数据分析的交付能力。",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "name": "A/B 实验设计与效果归因",
+              "why": "岗位职责要求设计并执行 A/B 实验，完成效果归因与结论复盘，是评估业务动作效果的关键能力。",
+              "evidence_refs": [
+                "PREF1"
+              ]
+            },
+            {
+              "name": "用户流失预警建模与特征沉淀",
+              "why": "岗位职责要求参与用户流失预警等建模项目，沉淀特征与评估方法，体现建模与评估能力。",
+              "evidence_refs": [
+                "PREF1"
+              ]
+            },
+            {
+              "name": "面向非技术同事的沟通表达",
+              "why": "岗位要求沟通清晰，能把分析结论讲给非技术同事听，并转化为可执行的运营动作。",
+              "evidence_refs": [
+                "REQ3"
+              ]
+            }
+          ],
+          "high_importance_requirements": [
+            {
+              "text": "本科及以上学历，统计、数学、计算机相关专业",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "REQ1"
+              ]
+            },
+            {
+              "text": "熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "text": "沟通清晰，能把分析结论讲给非技术同事听",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "REQ3"
+              ]
+            },
+            {
+              "text": "有 A/B 实验与用户分层运营经验者优先",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "PREF1"
+              ]
+            }
+          ],
+          "evidence_expected": [
+            "SQL 与 Python 进行数据清洗、指标建设的实际项目经验",
+            "经营指标体系搭建与可复用看板/报表输出案例",
+            "A/B 实验设计、效果归因与结论复盘的完整经历",
+            "用户流失预警建模、特征工程与评估方法沉淀案例",
+            "面向非技术同事进行数据结论沟通与推动运营动作的证据"
+          ],
+          "likely_success_signals": [
+            "能独立完成从数据清洗到指标建设与看板输出的全流程",
+            "具备 A/B 实验设计与效果归因经验，能形成可复用结论",
+            "有用户分层运营或流失预警建模经验，能沉淀特征与评估方法",
+            "能将分析结论清晰讲给非技术同事并转化为运营动作"
+          ],
+          "bonus_capabilities": [
+            "用户分层运营经验",
+            "用户流失预警建模经验",
+            "特征工程与评估方法沉淀经验"
+          ],
+          "potential_interview_focus": [
+            "请说明你如何用 SQL 与 Python 独立完成数据清洗与指标建设",
+            "你搭建过哪些经营指标体系与可复用看板，如何维护",
+            "请复盘一次你设计并执行的 A/B 实验，如何做效果归因",
+            "你参与过哪些用户流失预警建模项目，沉淀了哪些特征与评估方法",
+            "你如何把分析结论讲给非技术同事听并推动运营动作"
+          ],
+          "confidence": 0.55,
+          "jd_evidence_refs": [
+            "REQ1",
+            "REQ2",
+            "REQ3",
+            "PREF1"
+          ]
+        },
+        "resume_strategy": {},
+        "interview_intel": [],
+        "created_at": "2026-10-16T17:42:01",
+        "updated_at": "2026-10-16T17:42:01"
+      }
+    },
+    {
+      "step": "4b-wait-analysis",
+      "ok": true,
+      "result": {
+        "id": "25b90abe-269d-4f29-ad15-27f2387683fa",
+        "profile_id": "3128610b-55d4-40cc-9d7a-8541cf057932",
+        "target_job_id": "45a488f2-42c3-4d39-90ef-407c2ca45d9c",
+        "display_name": "数据分析师",
+        "company": "UNKNOWN",
+        "role": "数据分析师",
+        "role_family": "DATA_ANALYTICS",
+        "seniority": "UNKNOWN",
+        "location": "上海",
+        "status": "DRAFT",
+        "workflow_state": "ROLE_UNDERSTOOD",
+        "resume_source": null,
+        "warnings": [
+          "company_intel_unavailable"
+        ],
+        "analysis_error": null,
+        "parsed_jd": {
+          "company": "UNKNOWN",
+          "role": "数据分析师",
+          "role_family": "DATA_ANALYTICS",
+          "seniority": "UNKNOWN",
+          "location": "上海",
+          "education_requirements": [
+            "本科及以上学历"
+          ],
+          "responsibilities": [],
+          "requirements": [
+            {
+              "id": "REQ1",
+              "text": "本科及以上学历，统计、数学、计算机相关专业",
+              "category": "must_have",
+              "evidence_text": "本科及以上学历，统计、数学、计算机相关专业"
+            },
+            {
+              "id": "REQ2",
+              "text": "熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设",
+              "category": "must_have",
+              "evidence_text": "熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设"
+            },
+            {
+              "id": "REQ3",
+              "text": "沟通清晰，能把分析结论讲给非技术同事听",
+              "category": "沟通能力",
+              "evidence_text": "沟通清晰，能把分析结论讲给非技术同事听"
+            }
+          ],
+          "preferred_requirements": [
+            {
+              "id": "PREF1",
+              "text": "有 A/B 实验与用户分层运营经验者优先",
+              "category": "nice_to_have",
+              "evidence_text": "有 A/B 实验与用户分层运营经验者优先"
+            }
+          ],
+          "capabilities": [
+            "SQL",
+            "Python",
+            "数据清洗",
+            "指标建设",
+            "看板输出",
+            "A/B 实验",
+            "效果归因",
+            "用户流失预警建模",
+            "特征工程",
+            "用户分层运营",
+            "沟通表达"
+          ],
+          "keywords": [
+            "数据分析师",
+            "经营指标体系",
+            "报表维护",
+            "看板",
+            "A/B 实验",
+            "效果归因",
+            "用户流失预警",
+            "建模",
+            "特征",
+            "SQL",
+            "Python",
+            "数据清洗",
+            "指标建设",
+            "用户分层运营",
+            "上海"
+          ]
+        },
+        "what_matters": {
+          "core_capabilities": [
+            {
+              "name": "SQL 与 Python 数据清洗与指标建设",
+              "why": "岗位要求熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设，这是数据分析师完成日常数据工作的核心基础。",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "name": "经营指标体系搭建与看板输出",
+              "why": "岗位职责要求负责经营指标体系搭建与日常报表维护，输出可复用的看板，直接体现数据分析的交付能力。",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "name": "A/B 实验设计与效果归因",
+              "why": "岗位职责要求设计并执行 A/B 实验，完成效果归因与结论复盘，是评估业务动作效果的关键能力。",
+              "evidence_refs": [
+                "PREF1"
+              ]
+            },
+            {
+              "name": "用户流失预警建模与特征沉淀",
+              "why": "岗位职责要求参与用户流失预警等建模项目，沉淀特征与评估方法，体现建模与评估能力。",
+              "evidence_refs": [
+                "PREF1"
+              ]
+            },
+            {
+              "name": "面向非技术同事的沟通表达",
+              "why": "岗位要求沟通清晰，能把分析结论讲给非技术同事听，并转化为可执行的运营动作。",
+              "evidence_refs": [
+                "REQ3"
+              ]
+            }
+          ],
+          "high_importance_requirements": [
+            {
+              "text": "本科及以上学历，统计、数学、计算机相关专业",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "REQ1"
+              ]
+            },
+            {
+              "text": "熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "text": "沟通清晰，能把分析结论讲给非技术同事听",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "REQ3"
+              ]
+            },
+            {
+              "text": "有 A/B 实验与用户分层运营经验者优先",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "PREF1"
+              ]
+            }
+          ],
+          "evidence_expected": [
+            "SQL 与 Python 进行数据清洗、指标建设的实际项目经验",
+            "经营指标体系搭建与可复用看板/报表输出案例",
+            "A/B 实验设计、效果归因与结论复盘的完整经历",
+            "用户流失预警建模、特征工程与评估方法沉淀案例",
+            "面向非技术同事进行数据结论沟通与推动运营动作的证据"
+          ],
+          "likely_success_signals": [
+            "能独立完成从数据清洗到指标建设与看板输出的全流程",
+            "具备 A/B 实验设计与效果归因经验，能形成可复用结论",
+            "有用户分层运营或流失预警建模经验，能沉淀特征与评估方法",
+            "能将分析结论清晰讲给非技术同事并转化为运营动作"
+          ],
+          "bonus_capabilities": [
+            "用户分层运营经验",
+            "用户流失预警建模经验",
+            "特征工程与评估方法沉淀经验"
+          ],
+          "potential_interview_focus": [
+            "请说明你如何用 SQL 与 Python 独立完成数据清洗与指标建设",
+            "你搭建过哪些经营指标体系与可复用看板，如何维护",
+            "请复盘一次你设计并执行的 A/B 实验，如何做效果归因",
+            "你参与过哪些用户流失预警建模项目，沉淀了哪些特征与评估方法",
+            "你如何把分析结论讲给非技术同事听并推动运营动作"
+          ],
+          "confidence": 0.55,
+          "jd_evidence_refs": [
+            "REQ1",
+            "REQ2",
+            "REQ3",
+            "PREF1"
+          ]
+        },
+        "resume_strategy": {},
+        "interview_intel": [],
+        "created_at": "2026-10-16T17:42:01",
+        "updated_at": "2026-10-16T17:42:01"
+      }
+    },
+    {
+      "step": "4c-continue-to-resume",
+      "ok": true,
+      "result": {
+        "id": "25b90abe-269d-4f29-ad15-27f2387683fa",
+        "profile_id": "3128610b-55d4-40cc-9d7a-8541cf057932",
+        "target_job_id": "45a488f2-42c3-4d39-90ef-407c2ca45d9c",
+        "display_name": "数据分析师",
+        "company": "UNKNOWN",
+        "role": "数据分析师",
+        "role_family": "DATA_ANALYTICS",
+        "seniority": "UNKNOWN",
+        "location": "上海",
+        "status": "DRAFT",
+        "workflow_state": "RESUME_REQUIRED",
+        "resume_source": null,
+        "warnings": [
+          "company_intel_unavailable"
+        ],
+        "analysis_error": null,
+        "parsed_jd": {
+          "company": "UNKNOWN",
+          "role": "数据分析师",
+          "role_family": "DATA_ANALYTICS",
+          "seniority": "UNKNOWN",
+          "location": "上海",
+          "education_requirements": [
+            "本科及以上学历"
+          ],
+          "responsibilities": [],
+          "requirements": [
+            {
+              "id": "REQ1",
+              "text": "本科及以上学历，统计、数学、计算机相关专业",
+              "category": "must_have",
+              "evidence_text": "本科及以上学历，统计、数学、计算机相关专业"
+            },
+            {
+              "id": "REQ2",
+              "text": "熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设",
+              "category": "must_have",
+              "evidence_text": "熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设"
+            },
+            {
+              "id": "REQ3",
+              "text": "沟通清晰，能把分析结论讲给非技术同事听",
+              "category": "沟通能力",
+              "evidence_text": "沟通清晰，能把分析结论讲给非技术同事听"
+            }
+          ],
+          "preferred_requirements": [
+            {
+              "id": "PREF1",
+              "text": "有 A/B 实验与用户分层运营经验者优先",
+              "category": "nice_to_have",
+              "evidence_text": "有 A/B 实验与用户分层运营经验者优先"
+            }
+          ],
+          "capabilities": [
+            "SQL",
+            "Python",
+            "数据清洗",
+            "指标建设",
+            "看板输出",
+            "A/B 实验",
+            "效果归因",
+            "用户流失预警建模",
+            "特征工程",
+            "用户分层运营",
+            "沟通表达"
+          ],
+          "keywords": [
+            "数据分析师",
+            "经营指标体系",
+            "报表维护",
+            "看板",
+            "A/B 实验",
+            "效果归因",
+            "用户流失预警",
+            "建模",
+            "特征",
+            "SQL",
+            "Python",
+            "数据清洗",
+            "指标建设",
+            "用户分层运营",
+            "上海"
+          ]
+        },
+        "what_matters": {
+          "core_capabilities": [
+            {
+              "name": "SQL 与 Python 数据清洗与指标建设",
+              "why": "岗位要求熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设，这是数据分析师完成日常数据工作的核心基础。",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "name": "经营指标体系搭建与看板输出",
+              "why": "岗位职责要求负责经营指标体系搭建与日常报表维护，输出可复用的看板，直接体现数据分析的交付能力。",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "name": "A/B 实验设计与效果归因",
+              "why": "岗位职责要求设计并执行 A/B 实验，完成效果归因与结论复盘，是评估业务动作效果的关键能力。",
+              "evidence_refs": [
+                "PREF1"
+              ]
+            },
+            {
+              "name": "用户流失预警建模与特征沉淀",
+              "why": "岗位职责要求参与用户流失预警等建模项目，沉淀特征与评估方法，体现建模与评估能力。",
+              "evidence_refs": [
+                "PREF1"
+              ]
+            },
+            {
+              "name": "面向非技术同事的沟通表达",
+              "why": "岗位要求沟通清晰，能把分析结论讲给非技术同事听，并转化为可执行的运营动作。",
+              "evidence_refs": [
+                "REQ3"
+              ]
+            }
+          ],
+          "high_importance_requirements": [
+            {
+              "text": "本科及以上学历，统计、数学、计算机相关专业",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "REQ1"
+              ]
+            },
+            {
+              "text": "熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "text": "沟通清晰，能把分析结论讲给非技术同事听",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "REQ3"
+              ]
+            },
+            {
+              "text": "有 A/B 实验与用户分层运营经验者优先",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "PREF1"
+              ]
+            }
+          ],
+          "evidence_expected": [
+            "SQL 与 Python 进行数据清洗、指标建设的实际项目经验",
+            "经营指标体系搭建与可复用看板/报表输出案例",
+            "A/B 实验设计、效果归因与结论复盘的完整经历",
+            "用户流失预警建模、特征工程与评估方法沉淀案例",
+            "面向非技术同事进行数据结论沟通与推动运营动作的证据"
+          ],
+          "likely_success_signals": [
+            "能独立完成从数据清洗到指标建设与看板输出的全流程",
+            "具备 A/B 实验设计与效果归因经验，能形成可复用结论",
+            "有用户分层运营或流失预警建模经验，能沉淀特征与评估方法",
+            "能将分析结论清晰讲给非技术同事并转化为运营动作"
+          ],
+          "bonus_capabilities": [
+            "用户分层运营经验",
+            "用户流失预警建模经验",
+            "特征工程与评估方法沉淀经验"
+          ],
+          "potential_interview_focus": [
+            "请说明你如何用 SQL 与 Python 独立完成数据清洗与指标建设",
+            "你搭建过哪些经营指标体系与可复用看板，如何维护",
+            "请复盘一次你设计并执行的 A/B 实验，如何做效果归因",
+            "你参与过哪些用户流失预警建模项目，沉淀了哪些特征与评估方法",
+            "你如何把分析结论讲给非技术同事听并推动运营动作"
+          ],
+          "confidence": 0.55,
+          "jd_evidence_refs": [
+            "REQ1",
+            "REQ2",
+            "REQ3",
+            "PREF1"
+          ]
+        },
+        "resume_strategy": {},
+        "interview_intel": [],
+        "created_at": "2026-10-16T17:42:01",
+        "updated_at": "2026-10-16T17:42:01.840459"
+      }
+    },
+    {
+      "step": "5-bind-resume",
+      "ok": true,
+      "result": {
+        "mission": {
+          "id": "25b90abe-269d-4f29-ad15-27f2387683fa",
+          "profile_id": "3128610b-55d4-40cc-9d7a-8541cf057932",
+          "target_job_id": "45a488f2-42c3-4d39-90ef-407c2ca45d9c",
+          "display_name": "数据分析师",
+          "company": "UNKNOWN",
+          "role": "数据分析师",
+          "role_family": "DATA_ANALYTICS",
+          "seniority": "UNKNOWN",
+          "location": "上海",
+          "status": "RESUME_PREP",
+          "workflow_state": "EXPERIENCE_SELECTION_REQUIRED",
+          "resume_source": {
+            "mode": "paste",
+            "bound_at": "2026-10-16T17:42:04.781276+00:00",
+            "isolation": "mission_local",
+            "bound_profile_id": "d1100661-3d23-438f-9cf3-79a00fa3edd3",
+            "master_profile_id": "3128610b-55d4-40cc-9d7a-8541cf057932",
+            "filename": null,
+            "content_hash": "9df8289a49e5062fd47dd19bbdae8e8ed2c56f3fb56a00fff7f4891d36c84c1f",
+            "section_order": [
+              "education",
+              "experience",
+              "project",
+              "skills"
+            ],
+            "optimization_reset_at": "2026-10-16T17:42:04.828918+00:00"
+          },
+          "warnings": [
+            "company_intel_unavailable"
+          ],
+          "analysis_error": null,
+          "parsed_jd": {
+            "company": "UNKNOWN",
+            "role": "数据分析师",
+            "role_family": "DATA_ANALYTICS",
+            "seniority": "UNKNOWN",
+            "location": "上海",
+            "education_requirements": [
+              "本科及以上学历"
+            ],
+            "responsibilities": [],
+            "requirements": [
+              {
+                "id": "REQ1",
+                "text": "本科及以上学历，统计、数学、计算机相关专业",
+                "category": "must_have",
+                "evidence_text": "本科及以上学历，统计、数学、计算机相关专业"
+              },
+              {
+                "id": "REQ2",
+                "text": "熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设",
+                "category": "must_have",
+                "evidence_text": "熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设"
+              },
+              {
+                "id": "REQ3",
+                "text": "沟通清晰，能把分析结论讲给非技术同事听",
+                "category": "沟通能力",
+                "evidence_text": "沟通清晰，能把分析结论讲给非技术同事听"
+              }
+            ],
+            "preferred_requirements": [
+              {
+                "id": "PREF1",
+                "text": "有 A/B 实验与用户分层运营经验者优先",
+                "category": "nice_to_have",
+                "evidence_text": "有 A/B 实验与用户分层运营经验者优先"
+              }
+            ],
+            "capabilities": [
+              "SQL",
+              "Python",
+              "数据清洗",
+              "指标建设",
+              "看板输出",
+              "A/B 实验",
+              "效果归因",
+              "用户流失预警建模",
+              "特征工程",
+              "用户分层运营",
+              "沟通表达"
+            ],
+            "keywords": [
+              "数据分析师",
+              "经营指标体系",
+              "报表维护",
+              "看板",
+              "A/B 实验",
+              "效果归因",
+              "用户流失预警",
+              "建模",
+              "特征",
+              "SQL",
+              "Python",
+              "数据清洗",
+              "指标建设",
+              "用户分层运营",
+              "上海"
+            ]
+          },
+          "what_matters": {
+            "core_capabilities": [
+              {
+                "name": "SQL 与 Python 数据清洗与指标建设",
+                "why": "岗位要求熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设，这是数据分析师完成日常数据工作的核心基础。",
+                "evidence_refs": [
+                  "REQ2"
+                ]
+              },
+              {
+                "name": "经营指标体系搭建与看板输出",
+                "why": "岗位职责要求负责经营指标体系搭建与日常报表维护，输出可复用的看板，直接体现数据分析的交付能力。",
+                "evidence_refs": [
+                  "REQ2"
+                ]
+              },
+              {
+                "name": "A/B 实验设计与效果归因",
+                "why": "岗位职责要求设计并执行 A/B 实验，完成效果归因与结论复盘，是评估业务动作效果的关键能力。",
+                "evidence_refs": [
+                  "PREF1"
+                ]
+              },
+              {
+                "name": "用户流失预警建模与特征沉淀",
+                "why": "岗位职责要求参与用户流失预警等建模项目，沉淀特征与评估方法，体现建模与评估能力。",
+                "evidence_refs": [
+                  "PREF1"
+                ]
+              },
+              {
+                "name": "面向非技术同事的沟通表达",
+                "why": "岗位要求沟通清晰，能把分析结论讲给非技术同事听，并转化为可执行的运营动作。",
+                "evidence_refs": [
+                  "REQ3"
+                ]
+              }
+            ],
+            "high_importance_requirements": [
+              {
+                "text": "本科及以上学历，统计、数学、计算机相关专业",
+                "importance": "MUST_HAVE",
+                "evidence_refs": [
+                  "REQ1"
+                ]
+              },
+              {
+                "text": "熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设",
+                "importance": "MUST_HAVE",
+                "evidence_refs": [
+                  "REQ2"
+                ]
+              },
+              {
+                "text": "沟通清晰，能把分析结论讲给非技术同事听",
+                "importance": "MUST_HAVE",
+                "evidence_refs": [
+                  "REQ3"
+                ]
+              },
+              {
+                "text": "有 A/B 实验与用户分层运营经验者优先",
+                "importance": "NICE_TO_HAVE",
+                "evidence_refs": [
+                  "PREF1"
+                ]
+              }
+            ],
+            "evidence_expected": [
+              "SQL 与 Python 进行数据清洗、指标建设的实际项目经验",
+              "经营指标体系搭建与可复用看板/报表输出案例",
+              "A/B 实验设计、效果归因与结论复盘的完整经历",
+              "用户流失预警建模、特征工程与评估方法沉淀案例",
+              "面向非技术同事进行数据结论沟通与推动运营动作的证据"
+            ],
+            "likely_success_signals": [
+              "能独立完成从数据清洗到指标建设与看板输出的全流程",
+              "具备 A/B 实验设计与效果归因经验，能形成可复用结论",
+              "有用户分层运营或流失预警建模经验，能沉淀特征与评估方法",
+              "能将分析结论清晰讲给非技术同事并转化为运营动作"
+            ],
+            "bonus_capabilities": [
+              "用户分层运营经验",
+              "用户流失预警建模经验",
+              "特征工程与评估方法沉淀经验"
+            ],
+            "potential_interview_focus": [
+              "请说明你如何用 SQL 与 Python 独立完成数据清洗与指标建设",
+              "你搭建过哪些经营指标体系与可复用看板，如何维护",
+              "请复盘一次你设计并执行的 A/B 实验，如何做效果归因",
+              "你参与过哪些用户流失预警建模项目，沉淀了哪些特征与评估方法",
+              "你如何把分析结论讲给非技术同事听并推动运营动作"
+            ],
+            "confidence": 0.55,
+            "jd_evidence_refs": [
+              "REQ1",
+              "REQ2",
+              "REQ3",
+              "PREF1"
+            ]
+          },
+          "resume_strategy": {},
+          "interview_intel": [],
+          "created_at": "2026-10-16T17:42:01",
+          "updated_at": "2026-10-16T17:42:04.857739"
+        },
+        "profile_id": "3128610b-55d4-40cc-9d7a-8541cf057932",
+        "bound_profile_id": "d1100661-3d23-438f-9cf3-79a00fa3edd3",
+        "isolation": "mission_local",
+        "updated_master": false,
+        "experiences": [
+          {
+            "id": "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+            "title": "数据分析师",
+            "organization": "某零售集团",
+            "dates": "2023.07 - 2025.03",
+            "description": "搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标"
+          },
+          {
+            "id": "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+            "title": "用户流失预警模型",
+            "organization": null,
+            "dates": "2024.03 - 2024.09",
+            "description": null
+          }
+        ],
+        "affected_missions": []
+      }
+    },
+    {
+      "step": "5b-confirm-source",
+      "ok": true,
+      "result": {
+        "id": "25b90abe-269d-4f29-ad15-27f2387683fa",
+        "profile_id": "3128610b-55d4-40cc-9d7a-8541cf057932",
+        "target_job_id": "45a488f2-42c3-4d39-90ef-407c2ca45d9c",
+        "display_name": "数据分析师",
+        "company": "UNKNOWN",
+        "role": "数据分析师",
+        "role_family": "DATA_ANALYTICS",
+        "seniority": "UNKNOWN",
+        "location": "上海",
+        "status": "RESUME_PREP",
+        "workflow_state": "EXPERIENCE_SELECTION_REQUIRED",
+        "resume_source": {
+          "mode": "paste",
+          "bound_at": "2026-10-16T17:42:04.935435+00:00",
+          "isolation": "mission_local",
+          "bound_profile_id": "d1100661-3d23-438f-9cf3-79a00fa3edd3",
+          "master_profile_id": "3128610b-55d4-40cc-9d7a-8541cf057932",
+          "filename": null,
+          "content_hash": "9df8289a49e5062fd47dd19bbdae8e8ed2c56f3fb56a00fff7f4891d36c84c1f",
+          "section_order": [
+            "education",
+            "experience",
+            "project",
+            "skills"
+          ],
+          "optimization_reset_at": "2026-10-16T17:42:04.828918+00:00"
+        },
+        "warnings": [
+          "company_intel_unavailable"
+        ],
+        "analysis_error": null,
+        "parsed_jd": {
+          "company": "UNKNOWN",
+          "role": "数据分析师",
+          "role_family": "DATA_ANALYTICS",
+          "seniority": "UNKNOWN",
+          "location": "上海",
+          "education_requirements": [
+            "本科及以上学历"
+          ],
+          "responsibilities": [],
+          "requirements": [
+            {
+              "id": "REQ1",
+              "text": "本科及以上学历，统计、数学、计算机相关专业",
+              "category": "must_have",
+              "evidence_text": "本科及以上学历，统计、数学、计算机相关专业"
+            },
+            {
+              "id": "REQ2",
+              "text": "熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设",
+              "category": "must_have",
+              "evidence_text": "熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设"
+            },
+            {
+              "id": "REQ3",
+              "text": "沟通清晰，能把分析结论讲给非技术同事听",
+              "category": "沟通能力",
+              "evidence_text": "沟通清晰，能把分析结论讲给非技术同事听"
+            }
+          ],
+          "preferred_requirements": [
+            {
+              "id": "PREF1",
+              "text": "有 A/B 实验与用户分层运营经验者优先",
+              "category": "nice_to_have",
+              "evidence_text": "有 A/B 实验与用户分层运营经验者优先"
+            }
+          ],
+          "capabilities": [
+            "SQL",
+            "Python",
+            "数据清洗",
+            "指标建设",
+            "看板输出",
+            "A/B 实验",
+            "效果归因",
+            "用户流失预警建模",
+            "特征工程",
+            "用户分层运营",
+            "沟通表达"
+          ],
+          "keywords": [
+            "数据分析师",
+            "经营指标体系",
+            "报表维护",
+            "看板",
+            "A/B 实验",
+            "效果归因",
+            "用户流失预警",
+            "建模",
+            "特征",
+            "SQL",
+            "Python",
+            "数据清洗",
+            "指标建设",
+            "用户分层运营",
+            "上海"
+          ]
+        },
+        "what_matters": {
+          "core_capabilities": [
+            {
+              "name": "SQL 与 Python 数据清洗与指标建设",
+              "why": "岗位要求熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设，这是数据分析师完成日常数据工作的核心基础。",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "name": "经营指标体系搭建与看板输出",
+              "why": "岗位职责要求负责经营指标体系搭建与日常报表维护，输出可复用的看板，直接体现数据分析的交付能力。",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "name": "A/B 实验设计与效果归因",
+              "why": "岗位职责要求设计并执行 A/B 实验，完成效果归因与结论复盘，是评估业务动作效果的关键能力。",
+              "evidence_refs": [
+                "PREF1"
+              ]
+            },
+            {
+              "name": "用户流失预警建模与特征沉淀",
+              "why": "岗位职责要求参与用户流失预警等建模项目，沉淀特征与评估方法，体现建模与评估能力。",
+              "evidence_refs": [
+                "PREF1"
+              ]
+            },
+            {
+              "name": "面向非技术同事的沟通表达",
+              "why": "岗位要求沟通清晰，能把分析结论讲给非技术同事听，并转化为可执行的运营动作。",
+              "evidence_refs": [
+                "REQ3"
+              ]
+            }
+          ],
+          "high_importance_requirements": [
+            {
+              "text": "本科及以上学历，统计、数学、计算机相关专业",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "REQ1"
+              ]
+            },
+            {
+              "text": "熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "text": "沟通清晰，能把分析结论讲给非技术同事听",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "REQ3"
+              ]
+            },
+            {
+              "text": "有 A/B 实验与用户分层运营经验者优先",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "PREF1"
+              ]
+            }
+          ],
+          "evidence_expected": [
+            "SQL 与 Python 进行数据清洗、指标建设的实际项目经验",
+            "经营指标体系搭建与可复用看板/报表输出案例",
+            "A/B 实验设计、效果归因与结论复盘的完整经历",
+            "用户流失预警建模、特征工程与评估方法沉淀案例",
+            "面向非技术同事进行数据结论沟通与推动运营动作的证据"
+          ],
+          "likely_success_signals": [
+            "能独立完成从数据清洗到指标建设与看板输出的全流程",
+            "具备 A/B 实验设计与效果归因经验，能形成可复用结论",
+            "有用户分层运营或流失预警建模经验，能沉淀特征与评估方法",
+            "能将分析结论清晰讲给非技术同事并转化为运营动作"
+          ],
+          "bonus_capabilities": [
+            "用户分层运营经验",
+            "用户流失预警建模经验",
+            "特征工程与评估方法沉淀经验"
+          ],
+          "potential_interview_focus": [
+            "请说明你如何用 SQL 与 Python 独立完成数据清洗与指标建设",
+            "你搭建过哪些经营指标体系与可复用看板，如何维护",
+            "请复盘一次你设计并执行的 A/B 实验，如何做效果归因",
+            "你参与过哪些用户流失预警建模项目，沉淀了哪些特征与评估方法",
+            "你如何把分析结论讲给非技术同事听并推动运营动作"
+          ],
+          "confidence": 0.55,
+          "jd_evidence_refs": [
+            "REQ1",
+            "REQ2",
+            "REQ3",
+            "PREF1"
+          ]
+        },
+        "resume_strategy": {},
+        "interview_intel": [],
+        "created_at": "2026-10-16T17:42:01",
+        "updated_at": "2026-10-16T17:42:04.936005"
+      }
+    },
+    {
+      "step": "6-generate-selection",
+      "ok": true,
+      "result": {
+        "mission_id": "25b90abe-269d-4f29-ad15-27f2387683fa",
+        "selections": [
+          {
+            "id": "e3d0818a-0f01-4d27-a4e3-a8281a538baf",
+            "mission_id": "25b90abe-269d-4f29-ad15-27f2387683fa",
+            "profile_id": "d1100661-3d23-438f-9cf3-79a00fa3edd3",
+            "experience_id": "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+            "decision": "KEEP_AND_HIGHLIGHT",
+            "why": "「数据分析师」包含与数据分析师相关的可验证内容：搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标。建议围绕个人动作、方法和结果展开。",
+            "related_capabilities": [
+              "项目中的个人负责部分",
+              "使用的方法与决策",
+              "可核对的结果或奖项"
+            ],
+            "supporting_evidence_refs": [],
+            "confidence": 0.93,
+            "updated_at": "2026-10-16T17:42:11.372998"
+          },
+          {
+            "id": "f8ba12fa-a0ee-41af-83d7-4002f9e6f5aa",
+            "mission_id": "25b90abe-269d-4f29-ad15-27f2387683fa",
+            "profile_id": "d1100661-3d23-438f-9cf3-79a00fa3edd3",
+            "experience_id": "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+            "decision": "KEEP_AND_HIGHLIGHT",
+            "why": "「用户流失预警模型」包含与数据分析师相关的可验证内容：用户流失预警模型 2024.03 - 2024.09。建议围绕个人动作、方法和结果展开。",
+            "related_capabilities": [
+              "项目中的个人负责部分",
+              "使用的方法与决策",
+              "可核对的结果或奖项"
+            ],
+            "supporting_evidence_refs": [],
+            "confidence": 0.93,
+            "updated_at": "2026-10-16T17:42:11.373309+00:00"
+          }
+        ],
+        "workflow_state": "EXPERIENCE_SELECTION_REQUIRED"
+      }
+    },
+    {
+      "step": "6b-save-selection",
+      "ok": true,
+      "result": {
+        "mission_id": "25b90abe-269d-4f29-ad15-27f2387683fa",
+        "selections": [
+          {
+            "id": "e3d0818a-0f01-4d27-a4e3-a8281a538baf",
+            "mission_id": "25b90abe-269d-4f29-ad15-27f2387683fa",
+            "profile_id": "d1100661-3d23-438f-9cf3-79a00fa3edd3",
+            "experience_id": "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+            "decision": "KEEP_AND_HIGHLIGHT",
+            "why": "与 JD 的产品/评测/协作要求直接相关",
+            "related_capabilities": [],
+            "supporting_evidence_refs": [],
+            "confidence": 0.8,
+            "updated_at": "2026-10-16T17:42:11.411263"
+          },
+          {
+            "id": "f8ba12fa-a0ee-41af-83d7-4002f9e6f5aa",
+            "mission_id": "25b90abe-269d-4f29-ad15-27f2387683fa",
+            "profile_id": "d1100661-3d23-438f-9cf3-79a00fa3edd3",
+            "experience_id": "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+            "decision": "KEEP_AND_HIGHLIGHT",
+            "why": "与 JD 的产品/评测/协作要求直接相关",
+            "related_capabilities": [],
+            "supporting_evidence_refs": [],
+            "confidence": 0.8,
+            "updated_at": "2026-10-16T17:42:11.411592+00:00"
+          }
+        ],
+        "workflow_state": "RESUME_STRATEGY_REQUIRED"
+      }
+    },
+    {
+      "step": "7-resume-strategy",
+      "ok": true,
+      "result": {
+        "mission_id": "25b90abe-269d-4f29-ad15-27f2387683fa",
+        "strategy": {
+          "positioning_statement": "以统计学本科背景为基础，具备 SQL/Python/Tableau/Excel 与统计分析能力的数据分析师，在零售场景中搭建覆盖 120 家门店的门店周报与库存周转看板，并在用户流失预警项目中参与建模，能够围绕数据清洗、指标建设、看板输出、流失预警建模以及面向非技术同事的沟通表达形成岗位匹配优势。",
+          "recommended_experience_order": [
+            "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+            "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44"
+          ],
+          "experience_guidance": [
+            {
+              "experience_id": "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+              "role_in_story": "展示在零售集团担任数据分析师期间，围绕 120 家门店搭建门店周报与库存周转看板的核心工作，直接对应岗位核心的数据清洗、指标建设与看板输出能力。",
+              "what_to_highlight": [
+                "使用 SQL、Python 与 Excel 完成数据清洗与指标建设的实际工作场景",
+                "搭建覆盖 120 家门店的门店周报与库存周转看板，体现经营指标体系搭建与可复用看板输出能力",
+                "通过 Tableau 看板输出日常经营指标，面向零售业务方进行指标维护与沟通",
+                "结合统计分析能力，将门店日常经营指标转化为可被非技术同事理解的分析结论"
+              ],
+              "what_to_avoid": [
+                "不要声称主导了零售集团层面从 0 到 1 的指标体系设计，除非有额外证据支持",
+                "不要虚构门店数量之外的数量指标、GMV、销售额或转化率提升幅度",
+                "不要将团队协作产出的看板说成完全个人独立完成，需保持责任边界",
+                "不要添加简历中未出现的 A/B 实验或效果归因经历"
+              ],
+              "target_capabilities": [
+                "SQL",
+                "Python",
+                "数据清洗",
+                "指标建设",
+                "看板输出",
+                "经营指标体系搭建",
+                "统计分析",
+                "沟通表达"
+              ],
+              "evidence_refs": [
+                "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+                "f7c11433-aee4-4eaf-a474-7ddaf77bf587",
+                "b46916fc-6489-46e6-9709-b93c515ff4cc",
+                "9b3cb9b5-6640-464b-b010-07d2a570a2c8",
+                "76ae963a-6d0c-4196-9656-613891f8821b",
+                "a48ef1cd-461d-4c79-aec2-c2661f64e6b8"
+              ],
+              "interview_risk_notes": [
+                "面试官可能追问在覆盖 120 家门店的看板搭建中，你个人负责的具体模块与交付边界",
+                "可能被要求说明 SQL 与 Python 在数据清洗与指标建设中的具体使用方式，而不仅是工具名称",
+                "可能被追问看板如何被非技术同事使用，以及你如何将数据结论转化为运营动作",
+                "如果没有实际 A/B 实验经历，需坦诚说明并聚焦已有的看板与指标建设经验"
+              ]
+            },
+            {
+              "experience_id": "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+              "role_in_story": "展示在 2024.03 - 2024.09 期间参与用户流失预警模型项目，用于呼应岗位优先项中的用户分层运营与用户流失预警建模能力。",
+              "what_to_highlight": [
+                "参与用户流失预警模型项目，体现建模项目经历与岗位优先项中的用户流失预警建模方向一致",
+                "结合统计学本科背景与 SQL、Python 能力，说明在特征处理与建模流程中的参与方式",
+                "若有涉及用户分层运营的内容，可围绕流失预警与分层运营的结合进行说明",
+                "强调从数据到模型结论的完整环节中自己实际承担的部分"
+              ],
+              "what_to_avoid": [
+                "不要声称独立主导用户流失预警模型从 0 到 1 的搭建",
+                "不要虚构模型 AUC、准确率、召回率或流失率下降等具体指标",
+                "不要将项目包装为 A/B 实验或效果归因经历，简历中未体现该内容",
+                "不要夸大特征工程或评估方法沉淀的深度，避免超出实际参与范围"
+              ],
+              "target_capabilities": [
+                "用户流失预警建模",
+                "特征工程",
+                "用户分层运营",
+                "Python",
+                "SQL",
+                "统计分析"
+              ],
+              "evidence_refs": [
+                "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+                "b46916fc-6489-46e6-9709-b93c515ff4cc",
+                "f7c11433-aee4-4eaf-a474-7ddaf77bf587",
+                "a48ef1cd-461d-4c79-aec2-c2661f64e6b8"
+              ],
+              "interview_risk_notes": [
+                "面试官可能追问项目中的具体建模方法、特征选择与评估指标，需按实际参与内容如实回答",
+                "可能被问到用户流失预警模型是否上线以及业务效果，若没有可量化的业务结果，需说明项目阶段与个人贡献边界",
+                "可能被追问是否具备 A/B 实验经验，若无则需明确区分建模项目与实验设计的不同",
+                "需避免把项目描述为端到端负责，防止责任边界被质疑"
+              ]
+            }
+          ]
+        },
+        "workflow_state": "RESUME_STRATEGY_REQUIRED"
+      }
+    },
+    {
+      "step": "7b-confirm-strategy",
+      "ok": true,
+      "result": {
+        "id": "25b90abe-269d-4f29-ad15-27f2387683fa",
+        "profile_id": "3128610b-55d4-40cc-9d7a-8541cf057932",
+        "target_job_id": "45a488f2-42c3-4d39-90ef-407c2ca45d9c",
+        "display_name": "数据分析师",
+        "company": "UNKNOWN",
+        "role": "数据分析师",
+        "role_family": "DATA_ANALYTICS",
+        "seniority": "UNKNOWN",
+        "location": "上海",
+        "status": "RESUME_PREP",
+        "workflow_state": "RESUME_STRATEGY_CONFIRMED",
+        "resume_source": {
+          "mode": "paste",
+          "bound_at": "2026-10-16T17:42:04.935435+00:00",
+          "isolation": "mission_local",
+          "bound_profile_id": "d1100661-3d23-438f-9cf3-79a00fa3edd3",
+          "master_profile_id": "3128610b-55d4-40cc-9d7a-8541cf057932",
+          "filename": null,
+          "content_hash": "9df8289a49e5062fd47dd19bbdae8e8ed2c56f3fb56a00fff7f4891d36c84c1f",
+          "section_order": [
+            "education",
+            "experience",
+            "project",
+            "skills"
+          ],
+          "optimization_reset_at": "2026-10-16T17:42:04.828918+00:00"
+        },
+        "warnings": [
+          "company_intel_unavailable"
+        ],
+        "analysis_error": null,
+        "parsed_jd": {
+          "company": "UNKNOWN",
+          "role": "数据分析师",
+          "role_family": "DATA_ANALYTICS",
+          "seniority": "UNKNOWN",
+          "location": "上海",
+          "education_requirements": [
+            "本科及以上学历"
+          ],
+          "responsibilities": [],
+          "requirements": [
+            {
+              "id": "REQ1",
+              "text": "本科及以上学历，统计、数学、计算机相关专业",
+              "category": "must_have",
+              "evidence_text": "本科及以上学历，统计、数学、计算机相关专业"
+            },
+            {
+              "id": "REQ2",
+              "text": "熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设",
+              "category": "must_have",
+              "evidence_text": "熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设"
+            },
+            {
+              "id": "REQ3",
+              "text": "沟通清晰，能把分析结论讲给非技术同事听",
+              "category": "沟通能力",
+              "evidence_text": "沟通清晰，能把分析结论讲给非技术同事听"
+            }
+          ],
+          "preferred_requirements": [
+            {
+              "id": "PREF1",
+              "text": "有 A/B 实验与用户分层运营经验者优先",
+              "category": "nice_to_have",
+              "evidence_text": "有 A/B 实验与用户分层运营经验者优先"
+            }
+          ],
+          "capabilities": [
+            "SQL",
+            "Python",
+            "数据清洗",
+            "指标建设",
+            "看板输出",
+            "A/B 实验",
+            "效果归因",
+            "用户流失预警建模",
+            "特征工程",
+            "用户分层运营",
+            "沟通表达"
+          ],
+          "keywords": [
+            "数据分析师",
+            "经营指标体系",
+            "报表维护",
+            "看板",
+            "A/B 实验",
+            "效果归因",
+            "用户流失预警",
+            "建模",
+            "特征",
+            "SQL",
+            "Python",
+            "数据清洗",
+            "指标建设",
+            "用户分层运营",
+            "上海"
+          ]
+        },
+        "what_matters": {
+          "core_capabilities": [
+            {
+              "name": "SQL 与 Python 数据清洗与指标建设",
+              "why": "岗位要求熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设，这是数据分析师完成日常数据工作的核心基础。",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "name": "经营指标体系搭建与看板输出",
+              "why": "岗位职责要求负责经营指标体系搭建与日常报表维护，输出可复用的看板，直接体现数据分析的交付能力。",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "name": "A/B 实验设计与效果归因",
+              "why": "岗位职责要求设计并执行 A/B 实验，完成效果归因与结论复盘，是评估业务动作效果的关键能力。",
+              "evidence_refs": [
+                "PREF1"
+              ]
+            },
+            {
+              "name": "用户流失预警建模与特征沉淀",
+              "why": "岗位职责要求参与用户流失预警等建模项目，沉淀特征与评估方法，体现建模与评估能力。",
+              "evidence_refs": [
+                "PREF1"
+              ]
+            },
+            {
+              "name": "面向非技术同事的沟通表达",
+              "why": "岗位要求沟通清晰，能把分析结论讲给非技术同事听，并转化为可执行的运营动作。",
+              "evidence_refs": [
+                "REQ3"
+              ]
+            }
+          ],
+          "high_importance_requirements": [
+            {
+              "text": "本科及以上学历，统计、数学、计算机相关专业",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "REQ1"
+              ]
+            },
+            {
+              "text": "熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "text": "沟通清晰，能把分析结论讲给非技术同事听",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "REQ3"
+              ]
+            },
+            {
+              "text": "有 A/B 实验与用户分层运营经验者优先",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "PREF1"
+              ]
+            }
+          ],
+          "evidence_expected": [
+            "SQL 与 Python 进行数据清洗、指标建设的实际项目经验",
+            "经营指标体系搭建与可复用看板/报表输出案例",
+            "A/B 实验设计、效果归因与结论复盘的完整经历",
+            "用户流失预警建模、特征工程与评估方法沉淀案例",
+            "面向非技术同事进行数据结论沟通与推动运营动作的证据"
+          ],
+          "likely_success_signals": [
+            "能独立完成从数据清洗到指标建设与看板输出的全流程",
+            "具备 A/B 实验设计与效果归因经验，能形成可复用结论",
+            "有用户分层运营或流失预警建模经验，能沉淀特征与评估方法",
+            "能将分析结论清晰讲给非技术同事并转化为运营动作"
+          ],
+          "bonus_capabilities": [
+            "用户分层运营经验",
+            "用户流失预警建模经验",
+            "特征工程与评估方法沉淀经验"
+          ],
+          "potential_interview_focus": [
+            "请说明你如何用 SQL 与 Python 独立完成数据清洗与指标建设",
+            "你搭建过哪些经营指标体系与可复用看板，如何维护",
+            "请复盘一次你设计并执行的 A/B 实验，如何做效果归因",
+            "你参与过哪些用户流失预警建模项目，沉淀了哪些特征与评估方法",
+            "你如何把分析结论讲给非技术同事听并推动运营动作"
+          ],
+          "confidence": 0.55,
+          "jd_evidence_refs": [
+            "REQ1",
+            "REQ2",
+            "REQ3",
+            "PREF1"
+          ]
+        },
+        "resume_strategy": {
+          "positioning_statement": "以统计学本科背景为基础，具备 SQL/Python/Tableau/Excel 与统计分析能力的数据分析师，在零售场景中搭建覆盖 120 家门店的门店周报与库存周转看板，并在用户流失预警项目中参与建模，能够围绕数据清洗、指标建设、看板输出、流失预警建模以及面向非技术同事的沟通表达形成岗位匹配优势。",
+          "recommended_experience_order": [
+            "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+            "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44"
+          ],
+          "experience_guidance": [
+            {
+              "experience_id": "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+              "role_in_story": "展示在零售集团担任数据分析师期间，围绕 120 家门店搭建门店周报与库存周转看板的核心工作，直接对应岗位核心的数据清洗、指标建设与看板输出能力。",
+              "what_to_highlight": [
+                "使用 SQL、Python 与 Excel 完成数据清洗与指标建设的实际工作场景",
+                "搭建覆盖 120 家门店的门店周报与库存周转看板，体现经营指标体系搭建与可复用看板输出能力",
+                "通过 Tableau 看板输出日常经营指标，面向零售业务方进行指标维护与沟通",
+                "结合统计分析能力，将门店日常经营指标转化为可被非技术同事理解的分析结论"
+              ],
+              "what_to_avoid": [
+                "不要声称主导了零售集团层面从 0 到 1 的指标体系设计，除非有额外证据支持",
+                "不要虚构门店数量之外的数量指标、GMV、销售额或转化率提升幅度",
+                "不要将团队协作产出的看板说成完全个人独立完成，需保持责任边界",
+                "不要添加简历中未出现的 A/B 实验或效果归因经历"
+              ],
+              "target_capabilities": [
+                "SQL",
+                "Python",
+                "数据清洗",
+                "指标建设",
+                "看板输出",
+                "经营指标体系搭建",
+                "统计分析",
+                "沟通表达"
+              ],
+              "evidence_refs": [
+                "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+                "f7c11433-aee4-4eaf-a474-7ddaf77bf587",
+                "b46916fc-6489-46e6-9709-b93c515ff4cc",
+                "9b3cb9b5-6640-464b-b010-07d2a570a2c8",
+                "76ae963a-6d0c-4196-9656-613891f8821b",
+                "a48ef1cd-461d-4c79-aec2-c2661f64e6b8"
+              ],
+              "interview_risk_notes": [
+                "面试官可能追问在覆盖 120 家门店的看板搭建中，你个人负责的具体模块与交付边界",
+                "可能被要求说明 SQL 与 Python 在数据清洗与指标建设中的具体使用方式，而不仅是工具名称",
+                "可能被追问看板如何被非技术同事使用，以及你如何将数据结论转化为运营动作",
+                "如果没有实际 A/B 实验经历，需坦诚说明并聚焦已有的看板与指标建设经验"
+              ]
+            },
+            {
+              "experience_id": "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+              "role_in_story": "展示在 2024.03 - 2024.09 期间参与用户流失预警模型项目，用于呼应岗位优先项中的用户分层运营与用户流失预警建模能力。",
+              "what_to_highlight": [
+                "参与用户流失预警模型项目，体现建模项目经历与岗位优先项中的用户流失预警建模方向一致",
+                "结合统计学本科背景与 SQL、Python 能力，说明在特征处理与建模流程中的参与方式",
+                "若有涉及用户分层运营的内容，可围绕流失预警与分层运营的结合进行说明",
+                "强调从数据到模型结论的完整环节中自己实际承担的部分"
+              ],
+              "what_to_avoid": [
+                "不要声称独立主导用户流失预警模型从 0 到 1 的搭建",
+                "不要虚构模型 AUC、准确率、召回率或流失率下降等具体指标",
+                "不要将项目包装为 A/B 实验或效果归因经历，简历中未体现该内容",
+                "不要夸大特征工程或评估方法沉淀的深度，避免超出实际参与范围"
+              ],
+              "target_capabilities": [
+                "用户流失预警建模",
+                "特征工程",
+                "用户分层运营",
+                "Python",
+                "SQL",
+                "统计分析"
+              ],
+              "evidence_refs": [
+                "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+                "b46916fc-6489-46e6-9709-b93c515ff4cc",
+                "f7c11433-aee4-4eaf-a474-7ddaf77bf587",
+                "a48ef1cd-461d-4c79-aec2-c2661f64e6b8"
+              ],
+              "interview_risk_notes": [
+                "面试官可能追问项目中的具体建模方法、特征选择与评估指标，需按实际参与内容如实回答",
+                "可能被问到用户流失预警模型是否上线以及业务效果，若没有可量化的业务结果，需说明项目阶段与个人贡献边界",
+                "可能被追问是否具备 A/B 实验经验，若无则需明确区分建模项目与实验设计的不同",
+                "需避免把项目描述为端到端负责，防止责任边界被质疑"
+              ]
+            }
+          ]
+        },
+        "interview_intel": [],
+        "created_at": "2026-10-16T17:42:01",
+        "updated_at": "2026-10-16T17:42:19.093451"
+      }
+    },
+    {
+      "step": "8-generate-target-v1",
+      "ok": true,
+      "result": {
+        "id": "5fcd1700-4616-45b1-a396-cc4caf3ca395",
+        "mission_id": "25b90abe-269d-4f29-ad15-27f2387683fa",
+        "version": 1,
+        "status": "DRAFT",
+        "positioning_statement": "以统计学本科背景与 SQL/Python/Tableau/Excel 技能为基础，具备零售场景下覆盖120家门店的门店周报与库存周转看板建设经验，并在用户流失预警建模项目中参与建模，重点呈现数据清洗、指标建设、看板输出、流失预警与面向非技术同事沟通表达的能力。",
+        "recommended_experience_order": [
+          "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+          "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44"
+        ],
+        "strategy": {
+          "positioning_statement": "以统计学本科背景为基础，具备 SQL/Python/Tableau/Excel 与统计分析能力的数据分析师，在零售场景中搭建覆盖 120 家门店的门店周报与库存周转看板，并在用户流失预警项目中参与建模，能够围绕数据清洗、指标建设、看板输出、流失预警建模以及面向非技术同事的沟通表达形成岗位匹配优势。",
+          "recommended_experience_order": [
+            "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+            "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44"
+          ],
+          "experience_guidance": [
+            {
+              "experience_id": "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+              "role_in_story": "展示在零售集团担任数据分析师期间，围绕 120 家门店搭建门店周报与库存周转看板的核心工作，直接对应岗位核心的数据清洗、指标建设与看板输出能力。",
+              "what_to_highlight": [
+                "使用 SQL、Python 与 Excel 完成数据清洗与指标建设的实际工作场景",
+                "搭建覆盖 120 家门店的门店周报与库存周转看板，体现经营指标体系搭建与可复用看板输出能力",
+                "通过 Tableau 看板输出日常经营指标，面向零售业务方进行指标维护与沟通",
+                "结合统计分析能力，将门店日常经营指标转化为可被非技术同事理解的分析结论"
+              ],
+              "what_to_avoid": [
+                "不要声称主导了零售集团层面从 0 到 1 的指标体系设计，除非有额外证据支持",
+                "不要虚构门店数量之外的数量指标、GMV、销售额或转化率提升幅度",
+                "不要将团队协作产出的看板说成完全个人独立完成，需保持责任边界",
+                "不要添加简历中未出现的 A/B 实验或效果归因经历"
+              ],
+              "target_capabilities": [
+                "SQL",
+                "Python",
+                "数据清洗",
+                "指标建设",
+                "看板输出",
+                "经营指标体系搭建",
+                "统计分析",
+                "沟通表达"
+              ],
+              "evidence_refs": [
+                "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+                "f7c11433-aee4-4eaf-a474-7ddaf77bf587",
+                "b46916fc-6489-46e6-9709-b93c515ff4cc",
+                "9b3cb9b5-6640-464b-b010-07d2a570a2c8",
+                "76ae963a-6d0c-4196-9656-613891f8821b",
+                "a48ef1cd-461d-4c79-aec2-c2661f64e6b8"
+              ],
+              "interview_risk_notes": [
+                "面试官可能追问在覆盖 120 家门店的看板搭建中，你个人负责的具体模块与交付边界",
+                "可能被要求说明 SQL 与 Python 在数据清洗与指标建设中的具体使用方式，而不仅是工具名称",
+                "可能被追问看板如何被非技术同事使用，以及你如何将数据结论转化为运营动作",
+                "如果没有实际 A/B 实验经历，需坦诚说明并聚焦已有的看板与指标建设经验"
+              ]
+            },
+            {
+              "experience_id": "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+              "role_in_story": "展示在 2024.03 - 2024.09 期间参与用户流失预警模型项目，用于呼应岗位优先项中的用户分层运营与用户流失预警建模能力。",
+              "what_to_highlight": [
+                "参与用户流失预警模型项目，体现建模项目经历与岗位优先项中的用户流失预警建模方向一致",
+                "结合统计学本科背景与 SQL、Python 能力，说明在特征处理与建模流程中的参与方式",
+                "若有涉及用户分层运营的内容，可围绕流失预警与分层运营的结合进行说明",
+                "强调从数据到模型结论的完整环节中自己实际承担的部分"
+              ],
+              "what_to_avoid": [
+                "不要声称独立主导用户流失预警模型从 0 到 1 的搭建",
+                "不要虚构模型 AUC、准确率、召回率或流失率下降等具体指标",
+                "不要将项目包装为 A/B 实验或效果归因经历，简历中未体现该内容",
+                "不要夸大特征工程或评估方法沉淀的深度，避免超出实际参与范围"
+              ],
+              "target_capabilities": [
+                "用户流失预警建模",
+                "特征工程",
+                "用户分层运营",
+                "Python",
+                "SQL",
+                "统计分析"
+              ],
+              "evidence_refs": [
+                "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+                "b46916fc-6489-46e6-9709-b93c515ff4cc",
+                "f7c11433-aee4-4eaf-a474-7ddaf77bf587",
+                "a48ef1cd-461d-4c79-aec2-c2661f64e6b8"
+              ],
+              "interview_risk_notes": [
+                "面试官可能追问项目中的具体建模方法、特征选择与评估指标，需按实际参与内容如实回答",
+                "可能被问到用户流失预警模型是否上线以及业务效果，若没有可量化的业务结果，需说明项目阶段与个人贡献边界",
+                "可能被追问是否具备 A/B 实验经验，若无则需明确区分建模项目与实验设计的不同",
+                "需避免把项目描述为端到端负责，防止责任边界被质疑"
+              ]
+            }
+          ],
+          "_generation": {
+            "section_order": [
+              "education",
+              "experience",
+              "project",
+              "skills"
+            ],
+            "skills": [],
+            "excluded_suggestions": [],
+            "bullet_grounding": [
+              "NEEDS_CONFIRMATION",
+              "NEEDS_CONFIRMATION"
+            ],
+            "bullet_target_capabilities": [
+              [
+                "SQL",
+                "Python",
+                "数据清洗",
+                "指标建设",
+                "看板输出",
+                "Tableau",
+                "沟通表达"
+              ],
+              [
+                "用户流失预警建模",
+                "特征工程",
+                "Python",
+                "SQL",
+                "统计分析"
+              ]
+            ],
+            "bullet_project_titles": [
+              null,
+              null
+            ],
+            "provider": "llm"
+          }
+        },
+        "section_order": [
+          "education",
+          "experience",
+          "project",
+          "skills"
+        ],
+        "skills": [],
+        "excluded_suggestions": [],
+        "bullets": [
+          {
+            "id": "6e8ed8d3-ad37-4af4-bd64-60eb276eddc8",
+            "source_experience_id": "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+            "original_text": "搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标",
+            "suggested_text": "基于 SQL、Python 与 Excel 完成日常经营数据清洗与指标建设，搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标，并通过 Tableau 输出可复用看板供业务方查看\n围绕门店周报与库存周转看板维护日常经营指标，面向零售业务方沟通指标口径与看板使用，支持业务团队将指标结论落地为日常运营动作",
+            "final_text": "基于 SQL、Python 与 Excel 完成日常经营数据清洗与指标建设，搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标，并通过 Tableau 输出可复用看板供业务方查看\n围绕门店周报与库存周转看板维护日常经营指标，面向零售业务方沟通指标口径与看板使用，支持业务团队将指标结论落地为日常运营动作",
+            "reason": "将原有描述拆解为 action（数据清洗与指标建设）+ method（SQL/Python/Excel/Tableau）+ result（覆盖 120 家门店周报与库存周转看板），直接呼应 REQ2 与岗位职责中的看板输出要求，同时保留所有原有事实边界；将原有经历向 REQ3 要求的沟通表达能力倾斜，突出与业务方就指标口径、看板使用的沟通，以及将结论转化为运营动作，但不虚构沟通频次或业务结果",
+            "jd_refs": [
+              "REQ2",
+              "REQ3"
+            ],
+            "evidence_refs": [
+              "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+              "f7c11433-aee4-4eaf-a474-7ddaf77bf587",
+              "b46916fc-6489-46e6-9709-b93c515ff4cc",
+              "9b3cb9b5-6640-464b-b010-07d2a570a2c8",
+              "76ae963a-6d0c-4196-9656-613891f8821b"
+            ],
+            "resume_skill_refs": [
+              "EVIDENCE_GROUNDED_WRITING",
+              "ACTION_METHOD_RESULT",
+              "JD_RELEVANCE",
+              "RESPONSIBILITY_BOUNDARY"
+            ],
+            "risk_flags": [
+              "工具使用细节（SQL/Python/Excel 分别用于何环节、Tableau 是否用于输出该看板）需候选人确认",
+              "「面向业务方沟通指标口径与看板使用」「支持业务团队落地运营动作」在简历中未明确出现，需候选人确认确有此类协作"
+            ],
+            "status": "SUGGESTED",
+            "sort_order": 0,
+            "grounding_status": "NEEDS_CONFIRMATION",
+            "target_capabilities": [
+              "SQL",
+              "Python",
+              "数据清洗",
+              "指标建设",
+              "看板输出",
+              "Tableau",
+              "沟通表达"
+            ],
+            "project_title": null
+          },
+          {
+            "id": "18594297-dd6e-4011-8604-770487d3855c",
+            "source_experience_id": "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+            "original_text": "用户流失预警模型 2024.03 - 2024.09",
+            "suggested_text": "参与用户流失预警建模项目，结合 Python 与 SQL 进行数据清洗与特征处理，沉淀与流失预警相关的特征及评估方法",
+            "final_text": "参与用户流失预警建模项目，结合 Python 与 SQL 进行数据清洗与特征处理，沉淀与流失预警相关的特征及评估方法",
+            "reason": "将仅有标题的项目展开为 action（参与建模项目）+ method（Python/SQL 数据清洗与特征处理）+ result（沉淀特征与评估方法），呼应岗位职责中的用户流失预警建模与特征沉淀，同时保持「参与」的责任边界，不声称独立主导或端到端负责",
+            "jd_refs": [
+              "PREF1"
+            ],
+            "evidence_refs": [
+              "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+              "b46916fc-6489-46e6-9709-b93c515ff4cc",
+              "f7c11433-aee4-4eaf-a474-7ddaf77bf587",
+              "a48ef1cd-461d-4c79-aec2-c2661f64e6b8"
+            ],
+            "resume_skill_refs": [
+              "PROJECT_POSITIONING",
+              "ACTION_METHOD_RESULT",
+              "NO_FABRICATED_METRICS",
+              "RESPONSIBILITY_BOUNDARY"
+            ],
+            "risk_flags": [
+              "模型方法、特征处理与评估方法细节在简历中未出现，需候选人确认实际参与内容",
+              "不得虚构 AUC、准确率、召回率或流失率下降等指标"
+            ],
+            "status": "SUGGESTED",
+            "sort_order": 1,
+            "grounding_status": "NEEDS_CONFIRMATION",
+            "target_capabilities": [
+              "用户流失预警建模",
+              "特征工程",
+              "Python",
+              "SQL",
+              "统计分析"
+            ],
+            "project_title": null
+          }
+        ],
+        "created_at": "2026-10-16T17:42:30",
+        "updated_at": "2026-10-16T17:42:30",
+        "workflow_state": "TARGET_RESUME_DRAFT"
+      }
+    },
+    {
+      "step": "8a-accept-bullets-v1",
+      "ok": true,
+      "result": {
+        "version": 1,
+        "accepted": 2,
+        "skipped": 0,
+        "ok": true
+      }
+    },
+    {
+      "step": "8b-confirm-target-v1",
+      "ok": true,
+      "result": {
+        "id": "25b90abe-269d-4f29-ad15-27f2387683fa",
+        "profile_id": "3128610b-55d4-40cc-9d7a-8541cf057932",
+        "target_job_id": "45a488f2-42c3-4d39-90ef-407c2ca45d9c",
+        "display_name": "数据分析师",
+        "company": "UNKNOWN",
+        "role": "数据分析师",
+        "role_family": "DATA_ANALYTICS",
+        "seniority": "UNKNOWN",
+        "location": "上海",
+        "status": "RESUME_PREP",
+        "workflow_state": "TARGET_RESUME_CONFIRMED",
+        "resume_source": {
+          "mode": "paste",
+          "bound_at": "2026-10-16T17:42:04.935435+00:00",
+          "isolation": "mission_local",
+          "bound_profile_id": "d1100661-3d23-438f-9cf3-79a00fa3edd3",
+          "master_profile_id": "3128610b-55d4-40cc-9d7a-8541cf057932",
+          "filename": null,
+          "content_hash": "9df8289a49e5062fd47dd19bbdae8e8ed2c56f3fb56a00fff7f4891d36c84c1f",
+          "section_order": [
+            "education",
+            "experience",
+            "project",
+            "skills"
+          ],
+          "optimization_reset_at": "2026-10-16T17:42:04.828918+00:00"
+        },
+        "warnings": [
+          "company_intel_unavailable"
+        ],
+        "analysis_error": null,
+        "parsed_jd": {
+          "company": "UNKNOWN",
+          "role": "数据分析师",
+          "role_family": "DATA_ANALYTICS",
+          "seniority": "UNKNOWN",
+          "location": "上海",
+          "education_requirements": [
+            "本科及以上学历"
+          ],
+          "responsibilities": [],
+          "requirements": [
+            {
+              "id": "REQ1",
+              "text": "本科及以上学历，统计、数学、计算机相关专业",
+              "category": "must_have",
+              "evidence_text": "本科及以上学历，统计、数学、计算机相关专业"
+            },
+            {
+              "id": "REQ2",
+              "text": "熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设",
+              "category": "must_have",
+              "evidence_text": "熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设"
+            },
+            {
+              "id": "REQ3",
+              "text": "沟通清晰，能把分析结论讲给非技术同事听",
+              "category": "沟通能力",
+              "evidence_text": "沟通清晰，能把分析结论讲给非技术同事听"
+            }
+          ],
+          "preferred_requirements": [
+            {
+              "id": "PREF1",
+              "text": "有 A/B 实验与用户分层运营经验者优先",
+              "category": "nice_to_have",
+              "evidence_text": "有 A/B 实验与用户分层运营经验者优先"
+            }
+          ],
+          "capabilities": [
+            "SQL",
+            "Python",
+            "数据清洗",
+            "指标建设",
+            "看板输出",
+            "A/B 实验",
+            "效果归因",
+            "用户流失预警建模",
+            "特征工程",
+            "用户分层运营",
+            "沟通表达"
+          ],
+          "keywords": [
+            "数据分析师",
+            "经营指标体系",
+            "报表维护",
+            "看板",
+            "A/B 实验",
+            "效果归因",
+            "用户流失预警",
+            "建模",
+            "特征",
+            "SQL",
+            "Python",
+            "数据清洗",
+            "指标建设",
+            "用户分层运营",
+            "上海"
+          ]
+        },
+        "what_matters": {
+          "core_capabilities": [
+            {
+              "name": "SQL 与 Python 数据清洗与指标建设",
+              "why": "岗位要求熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设，这是数据分析师完成日常数据工作的核心基础。",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "name": "经营指标体系搭建与看板输出",
+              "why": "岗位职责要求负责经营指标体系搭建与日常报表维护，输出可复用的看板，直接体现数据分析的交付能力。",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "name": "A/B 实验设计与效果归因",
+              "why": "岗位职责要求设计并执行 A/B 实验，完成效果归因与结论复盘，是评估业务动作效果的关键能力。",
+              "evidence_refs": [
+                "PREF1"
+              ]
+            },
+            {
+              "name": "用户流失预警建模与特征沉淀",
+              "why": "岗位职责要求参与用户流失预警等建模项目，沉淀特征与评估方法，体现建模与评估能力。",
+              "evidence_refs": [
+                "PREF1"
+              ]
+            },
+            {
+              "name": "面向非技术同事的沟通表达",
+              "why": "岗位要求沟通清晰，能把分析结论讲给非技术同事听，并转化为可执行的运营动作。",
+              "evidence_refs": [
+                "REQ3"
+              ]
+            }
+          ],
+          "high_importance_requirements": [
+            {
+              "text": "本科及以上学历，统计、数学、计算机相关专业",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "REQ1"
+              ]
+            },
+            {
+              "text": "熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "text": "沟通清晰，能把分析结论讲给非技术同事听",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "REQ3"
+              ]
+            },
+            {
+              "text": "有 A/B 实验与用户分层运营经验者优先",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "PREF1"
+              ]
+            }
+          ],
+          "evidence_expected": [
+            "SQL 与 Python 进行数据清洗、指标建设的实际项目经验",
+            "经营指标体系搭建与可复用看板/报表输出案例",
+            "A/B 实验设计、效果归因与结论复盘的完整经历",
+            "用户流失预警建模、特征工程与评估方法沉淀案例",
+            "面向非技术同事进行数据结论沟通与推动运营动作的证据"
+          ],
+          "likely_success_signals": [
+            "能独立完成从数据清洗到指标建设与看板输出的全流程",
+            "具备 A/B 实验设计与效果归因经验，能形成可复用结论",
+            "有用户分层运营或流失预警建模经验，能沉淀特征与评估方法",
+            "能将分析结论清晰讲给非技术同事并转化为运营动作"
+          ],
+          "bonus_capabilities": [
+            "用户分层运营经验",
+            "用户流失预警建模经验",
+            "特征工程与评估方法沉淀经验"
+          ],
+          "potential_interview_focus": [
+            "请说明你如何用 SQL 与 Python 独立完成数据清洗与指标建设",
+            "你搭建过哪些经营指标体系与可复用看板，如何维护",
+            "请复盘一次你设计并执行的 A/B 实验，如何做效果归因",
+            "你参与过哪些用户流失预警建模项目，沉淀了哪些特征与评估方法",
+            "你如何把分析结论讲给非技术同事听并推动运营动作"
+          ],
+          "confidence": 0.55,
+          "jd_evidence_refs": [
+            "REQ1",
+            "REQ2",
+            "REQ3",
+            "PREF1"
+          ]
+        },
+        "resume_strategy": {
+          "positioning_statement": "以统计学本科背景为基础，具备 SQL/Python/Tableau/Excel 与统计分析能力的数据分析师，在零售场景中搭建覆盖 120 家门店的门店周报与库存周转看板，并在用户流失预警项目中参与建模，能够围绕数据清洗、指标建设、看板输出、流失预警建模以及面向非技术同事的沟通表达形成岗位匹配优势。",
+          "recommended_experience_order": [
+            "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+            "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44"
+          ],
+          "experience_guidance": [
+            {
+              "experience_id": "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+              "role_in_story": "展示在零售集团担任数据分析师期间，围绕 120 家门店搭建门店周报与库存周转看板的核心工作，直接对应岗位核心的数据清洗、指标建设与看板输出能力。",
+              "what_to_highlight": [
+                "使用 SQL、Python 与 Excel 完成数据清洗与指标建设的实际工作场景",
+                "搭建覆盖 120 家门店的门店周报与库存周转看板，体现经营指标体系搭建与可复用看板输出能力",
+                "通过 Tableau 看板输出日常经营指标，面向零售业务方进行指标维护与沟通",
+                "结合统计分析能力，将门店日常经营指标转化为可被非技术同事理解的分析结论"
+              ],
+              "what_to_avoid": [
+                "不要声称主导了零售集团层面从 0 到 1 的指标体系设计，除非有额外证据支持",
+                "不要虚构门店数量之外的数量指标、GMV、销售额或转化率提升幅度",
+                "不要将团队协作产出的看板说成完全个人独立完成，需保持责任边界",
+                "不要添加简历中未出现的 A/B 实验或效果归因经历"
+              ],
+              "target_capabilities": [
+                "SQL",
+                "Python",
+                "数据清洗",
+                "指标建设",
+                "看板输出",
+                "经营指标体系搭建",
+                "统计分析",
+                "沟通表达"
+              ],
+              "evidence_refs": [
+                "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+                "f7c11433-aee4-4eaf-a474-7ddaf77bf587",
+                "b46916fc-6489-46e6-9709-b93c515ff4cc",
+                "9b3cb9b5-6640-464b-b010-07d2a570a2c8",
+                "76ae963a-6d0c-4196-9656-613891f8821b",
+                "a48ef1cd-461d-4c79-aec2-c2661f64e6b8"
+              ],
+              "interview_risk_notes": [
+                "面试官可能追问在覆盖 120 家门店的看板搭建中，你个人负责的具体模块与交付边界",
+                "可能被要求说明 SQL 与 Python 在数据清洗与指标建设中的具体使用方式，而不仅是工具名称",
+                "可能被追问看板如何被非技术同事使用，以及你如何将数据结论转化为运营动作",
+                "如果没有实际 A/B 实验经历，需坦诚说明并聚焦已有的看板与指标建设经验"
+              ]
+            },
+            {
+              "experience_id": "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+              "role_in_story": "展示在 2024.03 - 2024.09 期间参与用户流失预警模型项目，用于呼应岗位优先项中的用户分层运营与用户流失预警建模能力。",
+              "what_to_highlight": [
+                "参与用户流失预警模型项目，体现建模项目经历与岗位优先项中的用户流失预警建模方向一致",
+                "结合统计学本科背景与 SQL、Python 能力，说明在特征处理与建模流程中的参与方式",
+                "若有涉及用户分层运营的内容，可围绕流失预警与分层运营的结合进行说明",
+                "强调从数据到模型结论的完整环节中自己实际承担的部分"
+              ],
+              "what_to_avoid": [
+                "不要声称独立主导用户流失预警模型从 0 到 1 的搭建",
+                "不要虚构模型 AUC、准确率、召回率或流失率下降等具体指标",
+                "不要将项目包装为 A/B 实验或效果归因经历，简历中未体现该内容",
+                "不要夸大特征工程或评估方法沉淀的深度，避免超出实际参与范围"
+              ],
+              "target_capabilities": [
+                "用户流失预警建模",
+                "特征工程",
+                "用户分层运营",
+                "Python",
+                "SQL",
+                "统计分析"
+              ],
+              "evidence_refs": [
+                "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+                "b46916fc-6489-46e6-9709-b93c515ff4cc",
+                "f7c11433-aee4-4eaf-a474-7ddaf77bf587",
+                "a48ef1cd-461d-4c79-aec2-c2661f64e6b8"
+              ],
+              "interview_risk_notes": [
+                "面试官可能追问项目中的具体建模方法、特征选择与评估指标，需按实际参与内容如实回答",
+                "可能被问到用户流失预警模型是否上线以及业务效果，若没有可量化的业务结果，需说明项目阶段与个人贡献边界",
+                "可能被追问是否具备 A/B 实验经验，若无则需明确区分建模项目与实验设计的不同",
+                "需避免把项目描述为端到端负责，防止责任边界被质疑"
+              ]
+            }
+          ]
+        },
+        "interview_intel": [],
+        "created_at": "2026-10-16T17:42:01",
+        "updated_at": "2026-10-16T17:42:31.020077"
+      }
+    },
+    {
+      "step": "9-read-studio",
+      "ok": true,
+      "result": {
+        "id": "b5325e05-798c-486f-b4da-1c26e78b0756",
+        "mission_id": "25b90abe-269d-4f29-ad15-27f2387683fa",
+        "source_target_resume_id": "5fcd1700-4616-45b1-a396-cc4caf3ca395",
+        "schema_version": 1,
+        "revision": 1,
+        "confirmed_revision": null,
+        "language": "zh",
+        "template_id": "zh-classic",
+        "layout_config": {
+          "template": "zh-classic",
+          "page_limit": 1,
+          "font_scale": 1.0,
+          "line_height": 1.5,
+          "section_gap": 12,
+          "columns": 1,
+          "accent_color": "#111111",
+          "photo_enabled": false,
+          "section_order": [
+            "education",
+            "experience",
+            "projects",
+            "honors",
+            "skills"
+          ]
+        },
+        "document": {
+          "schema_version": 1,
+          "basics": {
+            "name": {
+              "id": "2b6b86fc-b3e7-4598-afc7-79dbdfbb7859",
+              "text": "李四",
+              "source_kind": "profile",
+              "source_id": "d1100661-3d23-438f-9cf3-79a00fa3edd3",
+              "evidence_refs": [],
+              "risk_level": "HIGH",
+              "claim_status": "CONFIRMED"
+            },
+            "phone": {
+              "id": "4e137045-86f3-40b5-80db-3fd088adc930",
+              "text": "13900000000",
+              "source_kind": "profile",
+              "source_id": "d1100661-3d23-438f-9cf3-79a00fa3edd3",
+              "evidence_refs": [],
+              "risk_level": "HIGH",
+              "claim_status": "CONFIRMED"
+            },
+            "email": {
+              "id": "16448764-1b0e-47ef-b247-fc47ecb563d2",
+              "text": "lisi@example.com",
+              "source_kind": "profile",
+              "source_id": "d1100661-3d23-438f-9cf3-79a00fa3edd3",
+              "evidence_refs": [],
+              "risk_level": "HIGH",
+              "claim_status": "CONFIRMED"
+            },
+            "location": {
+              "id": "bd8592a6-5013-4341-95ac-7a77f6e650b6",
+              "text": "上海",
+              "source_kind": "profile",
+              "source_id": "d1100661-3d23-438f-9cf3-79a00fa3edd3",
+              "evidence_refs": [],
+              "risk_level": "LOW",
+              "claim_status": "CONFIRMED"
+            }
+          },
+          "sections": [
+            {
+              "id": "c8c2d65a-3fd4-48c7-ba78-6df03b04b0ec",
+              "kind": "education",
+              "title": {
+                "id": "3a80a46f-eb05-4ec1-9095-df445c5f4106",
+                "text": "教育经历",
+                "source_kind": "system",
+                "source_id": null,
+                "evidence_refs": [],
+                "risk_level": "LOW",
+                "claim_status": "CONFIRMED"
+              },
+              "entries": [
+                {
+                  "id": "7ba1d606-069e-49fe-aad3-581b35a1229d",
+                  "status": "INCLUDED",
+                  "title": {
+                    "id": "c96f45e5-8d73-4f80-a2f2-4ce11fd2aee9",
+                    "text": "某财经大学",
+                    "source_kind": "profile",
+                    "source_id": "7ba1d606-069e-49fe-aad3-581b35a1229d",
+                    "evidence_refs": [
+                      "7ba1d606-069e-49fe-aad3-581b35a1229d"
+                    ],
+                    "risk_level": "HIGH",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "subtitle": {
+                    "id": "d3addd61-e019-4732-80ff-64ead643fd51",
+                    "text": "本科 · 统计学",
+                    "source_kind": "profile",
+                    "source_id": "7ba1d606-069e-49fe-aad3-581b35a1229d",
+                    "evidence_refs": [
+                      "7ba1d606-069e-49fe-aad3-581b35a1229d"
+                    ],
+                    "risk_level": "HIGH",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "date": {
+                    "id": "e9cb9d65-9465-4192-bbd7-2ffd5fc7691d",
+                    "text": "2019.09 - 2023.06",
+                    "source_kind": "profile",
+                    "source_id": "7ba1d606-069e-49fe-aad3-581b35a1229d",
+                    "evidence_refs": [
+                      "7ba1d606-069e-49fe-aad3-581b35a1229d"
+                    ],
+                    "risk_level": "HIGH",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "location": {
+                    "id": "b4fd77ec-d668-4512-91b8-a1e6a15b7c69",
+                    "text": "",
+                    "source_kind": "profile",
+                    "source_id": "7ba1d606-069e-49fe-aad3-581b35a1229d",
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "bullets": []
+                }
+              ]
+            },
+            {
+              "id": "2ecf2b57-9b33-4e9f-aa3d-43b226c6f349",
+              "kind": "experience",
+              "title": {
+                "id": "2e19652d-8beb-4b30-bddf-0f0b58f87f1b",
+                "text": "工作与项目经历",
+                "source_kind": "system",
+                "source_id": null,
+                "evidence_refs": [],
+                "risk_level": "LOW",
+                "claim_status": "CONFIRMED"
+              },
+              "entries": [
+                {
+                  "id": "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+                  "status": "INCLUDED",
+                  "title": {
+                    "id": "3e5b9e62-4ba0-4afc-bb08-8556b0fe15c0",
+                    "text": "数据分析师",
+                    "source_kind": "experience",
+                    "source_id": "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+                    "evidence_refs": [
+                      "a003285c-fc49-47d4-8d4e-deba7ecfdfca"
+                    ],
+                    "risk_level": "HIGH",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "subtitle": {
+                    "id": "a5cacaf6-a639-4422-8471-767039c595a4",
+                    "text": "某零售集团",
+                    "source_kind": "experience",
+                    "source_id": "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+                    "evidence_refs": [
+                      "a003285c-fc49-47d4-8d4e-deba7ecfdfca"
+                    ],
+                    "risk_level": "HIGH",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "date": {
+                    "id": "a92b02a2-b755-4abe-9b24-1b41076159df",
+                    "text": "2023.07 - 2025.03",
+                    "source_kind": "experience",
+                    "source_id": "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+                    "evidence_refs": [
+                      "a003285c-fc49-47d4-8d4e-deba7ecfdfca"
+                    ],
+                    "risk_level": "HIGH",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "location": {
+                    "id": "1e10768c-c8b4-4116-93f1-27f70179e7e2",
+                    "text": "",
+                    "source_kind": "experience",
+                    "source_id": "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "bullets": [
+                    {
+                      "id": "6e8ed8d3-ad37-4af4-bd64-60eb276eddc8",
+                      "text": "基于 SQL、Python 与 Excel 完成日常经营数据清洗与指标建设，搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标，并通过 Tableau 输出可复用看板供业务方查看",
+                      "source_kind": "target_bullet",
+                      "source_id": "6e8ed8d3-ad37-4af4-bd64-60eb276eddc8",
+                      "evidence_refs": [
+                        "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+                        "f7c11433-aee4-4eaf-a474-7ddaf77bf587",
+                        "b46916fc-6489-46e6-9709-b93c515ff4cc",
+                        "9b3cb9b5-6640-464b-b010-07d2a570a2c8",
+                        "76ae963a-6d0c-4196-9656-613891f8821b"
+                      ],
+                      "risk_level": "HIGH",
+                      "claim_status": "CONFIRMED"
+                    },
+                    {
+                      "id": "7b752234-0a33-445c-867b-8d8ab2d7cc21",
+                      "text": "围绕门店周报与库存周转看板维护日常经营指标，面向零售业务方沟通指标口径与看板使用，支持业务团队将指标结论落地为日常运营动作",
+                      "source_kind": "target_bullet",
+                      "source_id": "6e8ed8d3-ad37-4af4-bd64-60eb276eddc8",
+                      "evidence_refs": [
+                        "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+                        "f7c11433-aee4-4eaf-a474-7ddaf77bf587",
+                        "b46916fc-6489-46e6-9709-b93c515ff4cc",
+                        "9b3cb9b5-6640-464b-b010-07d2a570a2c8",
+                        "76ae963a-6d0c-4196-9656-613891f8821b"
+                      ],
+                      "risk_level": "HIGH",
+                      "claim_status": "CONFIRMED"
+                    }
+                  ]
+                },
+                {
+                  "id": "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+                  "status": "INCLUDED",
+                  "title": {
+                    "id": "6ae82324-4a12-4b68-bee3-e2e540555d16",
+                    "text": "用户流失预警模型",
+                    "source_kind": "experience",
+                    "source_id": "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+                    "evidence_refs": [
+                      "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44"
+                    ],
+                    "risk_level": "HIGH",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "subtitle": {
+                    "id": "5ef8749b-8328-4d5a-bcf6-2c053679df6d",
+                    "text": "",
+                    "source_kind": "experience",
+                    "source_id": "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+                    "evidence_refs": [
+                      "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44"
+                    ],
+                    "risk_level": "HIGH",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "date": {
+                    "id": "2d0a66a9-7e77-46f5-b10e-65dfc42722a7",
+                    "text": "2024.03 - 2024.09",
+                    "source_kind": "experience",
+                    "source_id": "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+                    "evidence_refs": [
+                      "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44"
+                    ],
+                    "risk_level": "HIGH",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "location": {
+                    "id": "9476c9db-3640-4dc4-a5cd-a5af8508e8e0",
+                    "text": "",
+                    "source_kind": "experience",
+                    "source_id": "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "bullets": [
+                    {
+                      "id": "18594297-dd6e-4011-8604-770487d3855c",
+                      "text": "参与用户流失预警建模项目，结合 Python 与 SQL 进行数据清洗与特征处理，沉淀与流失预警相关的特征及评估方法",
+                      "source_kind": "target_bullet",
+                      "source_id": "18594297-dd6e-4011-8604-770487d3855c",
+                      "evidence_refs": [
+                        "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+                        "b46916fc-6489-46e6-9709-b93c515ff4cc",
+                        "f7c11433-aee4-4eaf-a474-7ddaf77bf587",
+                        "a48ef1cd-461d-4c79-aec2-c2661f64e6b8"
+                      ],
+                      "risk_level": "HIGH",
+                      "claim_status": "CONFIRMED"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "c92248ce-3fe4-4407-9b2b-d3c633dfedd5",
+              "kind": "skills",
+              "title": {
+                "id": "00550d26-b57c-4bad-90ab-0dbc9c6125a5",
+                "text": "技能",
+                "source_kind": "system",
+                "source_id": null,
+                "evidence_refs": [],
+                "risk_level": "LOW",
+                "claim_status": "CONFIRMED"
+              },
+              "entries": [
+                {
+                  "id": "f7c11433-aee4-4eaf-a474-7ddaf77bf587",
+                  "status": "INCLUDED",
+                  "title": {
+                    "id": "b4cd601f-40a1-4f78-82ed-4f608699b1a6",
+                    "text": "SQL",
+                    "source_kind": "profile",
+                    "source_id": "f7c11433-aee4-4eaf-a474-7ddaf77bf587",
+                    "evidence_refs": [
+                      "f7c11433-aee4-4eaf-a474-7ddaf77bf587"
+                    ],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "subtitle": {
+                    "id": "12905345-b09e-45c8-934c-cab384501587",
+                    "text": "",
+                    "source_kind": "profile",
+                    "source_id": "f7c11433-aee4-4eaf-a474-7ddaf77bf587",
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "date": {
+                    "id": "604707e9-093b-449c-b0d0-1604d03d9740",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "location": {
+                    "id": "02d10905-ada9-459c-8704-642eaab1b94d",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "bullets": []
+                },
+                {
+                  "id": "b46916fc-6489-46e6-9709-b93c515ff4cc",
+                  "status": "INCLUDED",
+                  "title": {
+                    "id": "5a971b6e-bf26-41c5-94fc-093af436c5e1",
+                    "text": "Python",
+                    "source_kind": "profile",
+                    "source_id": "b46916fc-6489-46e6-9709-b93c515ff4cc",
+                    "evidence_refs": [
+                      "b46916fc-6489-46e6-9709-b93c515ff4cc"
+                    ],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "subtitle": {
+                    "id": "356f6e54-5fd0-4825-97aa-42ed8ef51a54",
+                    "text": "",
+                    "source_kind": "profile",
+                    "source_id": "b46916fc-6489-46e6-9709-b93c515ff4cc",
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "date": {
+                    "id": "f370f11b-f944-4dd9-b591-588bc7f50aee",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "location": {
+                    "id": "9c45d00b-541e-4c02-a477-29e19fdb6c4b",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "bullets": []
+                },
+                {
+                  "id": "9b3cb9b5-6640-464b-b010-07d2a570a2c8",
+                  "status": "INCLUDED",
+                  "title": {
+                    "id": "35f5453d-bc80-4321-9c82-faff4942dfe2",
+                    "text": "Tableau",
+                    "source_kind": "profile",
+                    "source_id": "9b3cb9b5-6640-464b-b010-07d2a570a2c8",
+                    "evidence_refs": [
+                      "9b3cb9b5-6640-464b-b010-07d2a570a2c8"
+                    ],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "subtitle": {
+                    "id": "a515952f-affe-4156-abdd-c6ea4f98bf1c",
+                    "text": "",
+                    "source_kind": "profile",
+                    "source_id": "9b3cb9b5-6640-464b-b010-07d2a570a2c8",
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "date": {
+                    "id": "edd7a064-fc92-4053-b135-48ff1f5e0174",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "location": {
+                    "id": "700b9be8-d86b-4049-8adc-5a58145f4217",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "bullets": []
+                },
+                {
+                  "id": "a48ef1cd-461d-4c79-aec2-c2661f64e6b8",
+                  "status": "INCLUDED",
+                  "title": {
+                    "id": "13bc8cd2-ef18-43e4-a9e5-774a19c90f56",
+                    "text": "统计分析",
+                    "source_kind": "profile",
+                    "source_id": "a48ef1cd-461d-4c79-aec2-c2661f64e6b8",
+                    "evidence_refs": [
+                      "a48ef1cd-461d-4c79-aec2-c2661f64e6b8"
+                    ],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "subtitle": {
+                    "id": "aa7cf865-8af4-4709-8e87-c00b926c552a",
+                    "text": "",
+                    "source_kind": "profile",
+                    "source_id": "a48ef1cd-461d-4c79-aec2-c2661f64e6b8",
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "date": {
+                    "id": "e9daf0c3-5a4f-4061-8177-415b8b738b14",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "location": {
+                    "id": "40b588bf-8441-4603-85f0-32eceae82678",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "bullets": []
+                },
+                {
+                  "id": "76ae963a-6d0c-4196-9656-613891f8821b",
+                  "status": "INCLUDED",
+                  "title": {
+                    "id": "988fa2f3-1a33-45d3-a3a2-3ec4bca8fc63",
+                    "text": "Excel",
+                    "source_kind": "profile",
+                    "source_id": "76ae963a-6d0c-4196-9656-613891f8821b",
+                    "evidence_refs": [
+                      "76ae963a-6d0c-4196-9656-613891f8821b"
+                    ],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "subtitle": {
+                    "id": "6e80102c-1d42-4947-b601-ed677c3d8c1e",
+                    "text": "",
+                    "source_kind": "profile",
+                    "source_id": "76ae963a-6d0c-4196-9656-613891f8821b",
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "date": {
+                    "id": "463f81f1-a062-4606-a308-adbde76d87bd",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "location": {
+                    "id": "14a24ee2-6729-42cc-ac56-cd32f83c2d0c",
+                    "text": "",
+                    "source_kind": "system",
+                    "source_id": null,
+                    "evidence_refs": [],
+                    "risk_level": "LOW",
+                    "claim_status": "CONFIRMED"
+                  },
+                  "bullets": []
+                }
+              ]
+            },
+            {
+              "id": "072e9dec-f3c8-4a6b-91fb-ed2872270253",
+              "kind": "certifications",
+              "title": {
+                "id": "772daf7c-df53-4774-b4bc-19c0cfb6a91e",
+                "text": "证书",
+                "source_kind": "system",
+                "source_id": null,
+                "evidence_refs": [],
+                "risk_level": "LOW",
+                "claim_status": "CONFIRMED"
+              },
+              "entries": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "step": "9b-source-diff-after-v1",
+      "ok": true,
+      "result": {
+        "update_available": false,
+        "current_source_id": "5fcd1700-4616-45b1-a396-cc4caf3ca395"
+      }
+    },
+    {
+      "step": "10-manual-edit",
+      "ok": true,
+      "result": {
+        "revision": 2
+      }
+    },
+    {
+      "step": "11-generate-target-v2",
+      "ok": true,
+      "result": {
+        "id": "9fccfb80-ca3e-46c2-9303-fc8e8181ba3e",
+        "mission_id": "25b90abe-269d-4f29-ad15-27f2387683fa",
+        "version": 2,
+        "status": "DRAFT",
+        "positioning_statement": "统计学本科 + 零售数据分析师经验，聚焦 SQL/Python 数据清洗、经营指标与看板，补足 A/B 实验与用户分层的项目草案以匹配上海数据分析师岗。",
+        "recommended_experience_order": [
+          "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+          "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44"
+        ],
+        "strategy": {
+          "positioning_statement": "以统计学本科背景为基础，具备 SQL/Python/Tableau/Excel 与统计分析能力的数据分析师，在零售场景中搭建覆盖 120 家门店的门店周报与库存周转看板，并在用户流失预警项目中参与建模，能够围绕数据清洗、指标建设、看板输出、流失预警建模以及面向非技术同事的沟通表达形成岗位匹配优势。",
+          "recommended_experience_order": [
+            "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+            "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44"
+          ],
+          "experience_guidance": [
+            {
+              "experience_id": "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+              "role_in_story": "展示在零售集团担任数据分析师期间，围绕 120 家门店搭建门店周报与库存周转看板的核心工作，直接对应岗位核心的数据清洗、指标建设与看板输出能力。",
+              "what_to_highlight": [
+                "使用 SQL、Python 与 Excel 完成数据清洗与指标建设的实际工作场景",
+                "搭建覆盖 120 家门店的门店周报与库存周转看板，体现经营指标体系搭建与可复用看板输出能力",
+                "通过 Tableau 看板输出日常经营指标，面向零售业务方进行指标维护与沟通",
+                "结合统计分析能力，将门店日常经营指标转化为可被非技术同事理解的分析结论"
+              ],
+              "what_to_avoid": [
+                "不要声称主导了零售集团层面从 0 到 1 的指标体系设计，除非有额外证据支持",
+                "不要虚构门店数量之外的数量指标、GMV、销售额或转化率提升幅度",
+                "不要将团队协作产出的看板说成完全个人独立完成，需保持责任边界",
+                "不要添加简历中未出现的 A/B 实验或效果归因经历"
+              ],
+              "target_capabilities": [
+                "SQL",
+                "Python",
+                "数据清洗",
+                "指标建设",
+                "看板输出",
+                "经营指标体系搭建",
+                "统计分析",
+                "沟通表达"
+              ],
+              "evidence_refs": [
+                "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+                "f7c11433-aee4-4eaf-a474-7ddaf77bf587",
+                "b46916fc-6489-46e6-9709-b93c515ff4cc",
+                "9b3cb9b5-6640-464b-b010-07d2a570a2c8",
+                "76ae963a-6d0c-4196-9656-613891f8821b",
+                "a48ef1cd-461d-4c79-aec2-c2661f64e6b8"
+              ],
+              "interview_risk_notes": [
+                "面试官可能追问在覆盖 120 家门店的看板搭建中，你个人负责的具体模块与交付边界",
+                "可能被要求说明 SQL 与 Python 在数据清洗与指标建设中的具体使用方式，而不仅是工具名称",
+                "可能被追问看板如何被非技术同事使用，以及你如何将数据结论转化为运营动作",
+                "如果没有实际 A/B 实验经历，需坦诚说明并聚焦已有的看板与指标建设经验"
+              ]
+            },
+            {
+              "experience_id": "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+              "role_in_story": "展示在 2024.03 - 2024.09 期间参与用户流失预警模型项目，用于呼应岗位优先项中的用户分层运营与用户流失预警建模能力。",
+              "what_to_highlight": [
+                "参与用户流失预警模型项目，体现建模项目经历与岗位优先项中的用户流失预警建模方向一致",
+                "结合统计学本科背景与 SQL、Python 能力，说明在特征处理与建模流程中的参与方式",
+                "若有涉及用户分层运营的内容，可围绕流失预警与分层运营的结合进行说明",
+                "强调从数据到模型结论的完整环节中自己实际承担的部分"
+              ],
+              "what_to_avoid": [
+                "不要声称独立主导用户流失预警模型从 0 到 1 的搭建",
+                "不要虚构模型 AUC、准确率、召回率或流失率下降等具体指标",
+                "不要将项目包装为 A/B 实验或效果归因经历，简历中未体现该内容",
+                "不要夸大特征工程或评估方法沉淀的深度，避免超出实际参与范围"
+              ],
+              "target_capabilities": [
+                "用户流失预警建模",
+                "特征工程",
+                "用户分层运营",
+                "Python",
+                "SQL",
+                "统计分析"
+              ],
+              "evidence_refs": [
+                "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+                "b46916fc-6489-46e6-9709-b93c515ff4cc",
+                "f7c11433-aee4-4eaf-a474-7ddaf77bf587",
+                "a48ef1cd-461d-4c79-aec2-c2661f64e6b8"
+              ],
+              "interview_risk_notes": [
+                "面试官可能追问项目中的具体建模方法、特征选择与评估指标，需按实际参与内容如实回答",
+                "可能被问到用户流失预警模型是否上线以及业务效果，若没有可量化的业务结果，需说明项目阶段与个人贡献边界",
+                "可能被追问是否具备 A/B 实验经验，若无则需明确区分建模项目与实验设计的不同",
+                "需避免把项目描述为端到端负责，防止责任边界被质疑"
+              ]
+            }
+          ],
+          "_generation": {
+            "section_order": [
+              "education",
+              "experience",
+              "project",
+              "skills"
+            ],
+            "skills": [],
+            "excluded_suggestions": [],
+            "bullet_grounding": [
+              "NEEDS_CONFIRMATION",
+              "NEEDS_CONFIRMATION"
+            ],
+            "bullet_target_capabilities": [
+              [
+                "SQL",
+                "Python",
+                "数据清洗",
+                "指标建设",
+                "看板输出",
+                "沟通表达",
+                "运营动作推动"
+              ],
+              [
+                "用户流失预警建模",
+                "特征工程",
+                "Python",
+                "统计分析"
+              ]
+            ],
+            "bullet_project_titles": [
+              null,
+              null
+            ],
+            "provider": "llm"
+          }
+        },
+        "section_order": [
+          "education",
+          "experience",
+          "project",
+          "skills"
+        ],
+        "skills": [],
+        "excluded_suggestions": [],
+        "bullets": [
+          {
+            "id": "06c37e38-6324-4fb2-9501-8062b3caa506",
+            "source_experience_id": "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+            "original_text": "搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标",
+            "suggested_text": "使用 SQL 与 Python 对门店经营数据做清洗与口径统一后，搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标，并面向零售业务方做日常更新与维护\n基于看板中的门店经营指标，向业务团队解释指标波动的分析结论并推动门店层面的跟进动作",
+            "final_text": "使用 SQL 与 Python 对门店经营数据做清洗与口径统一后，搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标，并面向零售业务方做日常更新与维护\n基于看板中的门店经营指标，向业务团队解释指标波动的分析结论并推动门店层面的跟进动作",
+            "reason": "补上 JD 要求的 SQL/Python 数据清洗与指标建设动作，并把'搭建'扩展为'更新维护'以贴合报表维护职责，事实边界不变；呼应 JD 沟通与'转化为可执行运营动作'要求，用已有看板场景延展沟通表达，不新增量化结果",
+            "jd_refs": [
+              "REQ2",
+              "REQ3"
+            ],
+            "evidence_refs": [
+              "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+              "f7c11433-aee4-4eaf-a474-7ddaf77bf587",
+              "b46916fc-6489-46e6-9709-b93c515ff4cc"
+            ],
+            "resume_skill_refs": [
+              "EVIDENCE_GROUNDED_WRITING",
+              "JD_RELEVANCE",
+              "NO_FABRICATED_METRICS",
+              "RESPONSIBILITY_BOUNDARY"
+            ],
+            "risk_flags": [
+              "SQL_PYTHON_USAGE_UNCONFIRMED",
+              "SCOPE_UNCONFIRMED",
+              "COMMUNICATION_SCENARIO_UNCONFIRMED"
+            ],
+            "status": "SUGGESTED",
+            "sort_order": 0,
+            "grounding_status": "NEEDS_CONFIRMATION",
+            "target_capabilities": [
+              "SQL",
+              "Python",
+              "数据清洗",
+              "指标建设",
+              "看板输出",
+              "沟通表达",
+              "运营动作推动"
+            ],
+            "project_title": null
+          },
+          {
+            "id": "7bd8c6f2-4e7a-456a-b2a4-a34c3324528b",
+            "source_experience_id": "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+            "original_text": "用户流失预警模型 2024.03 - 2024.09",
+            "suggested_text": "参与用户流失预警模型项目：使用 Python 处理用户行为数据并做特征整理，结合统计分析参与模型评估环节的讨论",
+            "final_text": "参与用户流失预警模型项目：使用 Python 处理用户行为数据并做特征整理，结合统计分析参与模型评估环节的讨论",
+            "reason": "把仅有标题的项目补为'参与 + 方法'结构，对齐 JD 的建模与特征沉淀方向，并用'参与/讨论'限定责任边界",
+            "jd_refs": [
+              "PREF1"
+            ],
+            "evidence_refs": [
+              "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+              "b46916fc-6489-46e6-9709-b93c515ff4cc",
+              "a48ef1cd-461d-4c79-aec2-c2661f64e6b8"
+            ],
+            "resume_skill_refs": [
+              "RESPONSIBILITY_BOUNDARY",
+              "ACTION_METHOD_RESULT",
+              "ASK_BEFORE_INVENTING"
+            ],
+            "risk_flags": [
+              "MODELING_DETAILS_UNCONFIRMED",
+              "NO_METRIC_ALLOWED"
+            ],
+            "status": "SUGGESTED",
+            "sort_order": 1,
+            "grounding_status": "NEEDS_CONFIRMATION",
+            "target_capabilities": [
+              "用户流失预警建模",
+              "特征工程",
+              "Python",
+              "统计分析"
+            ],
+            "project_title": null
+          }
+        ],
+        "created_at": "2026-10-16T17:42:39",
+        "updated_at": "2026-10-16T17:42:39",
+        "workflow_state": "TARGET_RESUME_CONFIRMED"
+      }
+    },
+    {
+      "step": "11a-accept-bullets-v2",
+      "ok": true,
+      "result": {
+        "version": 2,
+        "accepted": 2,
+        "skipped": 0,
+        "ok": true
+      }
+    },
+    {
+      "step": "11b-confirm-target-v2",
+      "ok": true,
+      "result": {
+        "id": "25b90abe-269d-4f29-ad15-27f2387683fa",
+        "profile_id": "3128610b-55d4-40cc-9d7a-8541cf057932",
+        "target_job_id": "45a488f2-42c3-4d39-90ef-407c2ca45d9c",
+        "display_name": "数据分析师",
+        "company": "UNKNOWN",
+        "role": "数据分析师",
+        "role_family": "DATA_ANALYTICS",
+        "seniority": "UNKNOWN",
+        "location": "上海",
+        "status": "RESUME_PREP",
+        "workflow_state": "TARGET_RESUME_CONFIRMED",
+        "resume_source": {
+          "mode": "paste",
+          "bound_at": "2026-10-16T17:42:04.935435+00:00",
+          "isolation": "mission_local",
+          "bound_profile_id": "d1100661-3d23-438f-9cf3-79a00fa3edd3",
+          "master_profile_id": "3128610b-55d4-40cc-9d7a-8541cf057932",
+          "filename": null,
+          "content_hash": "9df8289a49e5062fd47dd19bbdae8e8ed2c56f3fb56a00fff7f4891d36c84c1f",
+          "section_order": [
+            "education",
+            "experience",
+            "project",
+            "skills"
+          ],
+          "optimization_reset_at": "2026-10-16T17:42:04.828918+00:00"
+        },
+        "warnings": [
+          "company_intel_unavailable"
+        ],
+        "analysis_error": null,
+        "parsed_jd": {
+          "company": "UNKNOWN",
+          "role": "数据分析师",
+          "role_family": "DATA_ANALYTICS",
+          "seniority": "UNKNOWN",
+          "location": "上海",
+          "education_requirements": [
+            "本科及以上学历"
+          ],
+          "responsibilities": [],
+          "requirements": [
+            {
+              "id": "REQ1",
+              "text": "本科及以上学历，统计、数学、计算机相关专业",
+              "category": "must_have",
+              "evidence_text": "本科及以上学历，统计、数学、计算机相关专业"
+            },
+            {
+              "id": "REQ2",
+              "text": "熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设",
+              "category": "must_have",
+              "evidence_text": "熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设"
+            },
+            {
+              "id": "REQ3",
+              "text": "沟通清晰，能把分析结论讲给非技术同事听",
+              "category": "沟通能力",
+              "evidence_text": "沟通清晰，能把分析结论讲给非技术同事听"
+            }
+          ],
+          "preferred_requirements": [
+            {
+              "id": "PREF1",
+              "text": "有 A/B 实验与用户分层运营经验者优先",
+              "category": "nice_to_have",
+              "evidence_text": "有 A/B 实验与用户分层运营经验者优先"
+            }
+          ],
+          "capabilities": [
+            "SQL",
+            "Python",
+            "数据清洗",
+            "指标建设",
+            "看板输出",
+            "A/B 实验",
+            "效果归因",
+            "用户流失预警建模",
+            "特征工程",
+            "用户分层运营",
+            "沟通表达"
+          ],
+          "keywords": [
+            "数据分析师",
+            "经营指标体系",
+            "报表维护",
+            "看板",
+            "A/B 实验",
+            "效果归因",
+            "用户流失预警",
+            "建模",
+            "特征",
+            "SQL",
+            "Python",
+            "数据清洗",
+            "指标建设",
+            "用户分层运营",
+            "上海"
+          ]
+        },
+        "what_matters": {
+          "core_capabilities": [
+            {
+              "name": "SQL 与 Python 数据清洗与指标建设",
+              "why": "岗位要求熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设，这是数据分析师完成日常数据工作的核心基础。",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "name": "经营指标体系搭建与看板输出",
+              "why": "岗位职责要求负责经营指标体系搭建与日常报表维护，输出可复用的看板，直接体现数据分析的交付能力。",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "name": "A/B 实验设计与效果归因",
+              "why": "岗位职责要求设计并执行 A/B 实验，完成效果归因与结论复盘，是评估业务动作效果的关键能力。",
+              "evidence_refs": [
+                "PREF1"
+              ]
+            },
+            {
+              "name": "用户流失预警建模与特征沉淀",
+              "why": "岗位职责要求参与用户流失预警等建模项目，沉淀特征与评估方法，体现建模与评估能力。",
+              "evidence_refs": [
+                "PREF1"
+              ]
+            },
+            {
+              "name": "面向非技术同事的沟通表达",
+              "why": "岗位要求沟通清晰，能把分析结论讲给非技术同事听，并转化为可执行的运营动作。",
+              "evidence_refs": [
+                "REQ3"
+              ]
+            }
+          ],
+          "high_importance_requirements": [
+            {
+              "text": "本科及以上学历，统计、数学、计算机相关专业",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "REQ1"
+              ]
+            },
+            {
+              "text": "熟练使用 SQL 与 Python，能独立完成数据清洗与指标建设",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "REQ2"
+              ]
+            },
+            {
+              "text": "沟通清晰，能把分析结论讲给非技术同事听",
+              "importance": "MUST_HAVE",
+              "evidence_refs": [
+                "REQ3"
+              ]
+            },
+            {
+              "text": "有 A/B 实验与用户分层运营经验者优先",
+              "importance": "NICE_TO_HAVE",
+              "evidence_refs": [
+                "PREF1"
+              ]
+            }
+          ],
+          "evidence_expected": [
+            "SQL 与 Python 进行数据清洗、指标建设的实际项目经验",
+            "经营指标体系搭建与可复用看板/报表输出案例",
+            "A/B 实验设计、效果归因与结论复盘的完整经历",
+            "用户流失预警建模、特征工程与评估方法沉淀案例",
+            "面向非技术同事进行数据结论沟通与推动运营动作的证据"
+          ],
+          "likely_success_signals": [
+            "能独立完成从数据清洗到指标建设与看板输出的全流程",
+            "具备 A/B 实验设计与效果归因经验，能形成可复用结论",
+            "有用户分层运营或流失预警建模经验，能沉淀特征与评估方法",
+            "能将分析结论清晰讲给非技术同事并转化为运营动作"
+          ],
+          "bonus_capabilities": [
+            "用户分层运营经验",
+            "用户流失预警建模经验",
+            "特征工程与评估方法沉淀经验"
+          ],
+          "potential_interview_focus": [
+            "请说明你如何用 SQL 与 Python 独立完成数据清洗与指标建设",
+            "你搭建过哪些经营指标体系与可复用看板，如何维护",
+            "请复盘一次你设计并执行的 A/B 实验，如何做效果归因",
+            "你参与过哪些用户流失预警建模项目，沉淀了哪些特征与评估方法",
+            "你如何把分析结论讲给非技术同事听并推动运营动作"
+          ],
+          "confidence": 0.55,
+          "jd_evidence_refs": [
+            "REQ1",
+            "REQ2",
+            "REQ3",
+            "PREF1"
+          ]
+        },
+        "resume_strategy": {
+          "positioning_statement": "以统计学本科背景为基础，具备 SQL/Python/Tableau/Excel 与统计分析能力的数据分析师，在零售场景中搭建覆盖 120 家门店的门店周报与库存周转看板，并在用户流失预警项目中参与建模，能够围绕数据清洗、指标建设、看板输出、流失预警建模以及面向非技术同事的沟通表达形成岗位匹配优势。",
+          "recommended_experience_order": [
+            "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+            "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44"
+          ],
+          "experience_guidance": [
+            {
+              "experience_id": "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+              "role_in_story": "展示在零售集团担任数据分析师期间，围绕 120 家门店搭建门店周报与库存周转看板的核心工作，直接对应岗位核心的数据清洗、指标建设与看板输出能力。",
+              "what_to_highlight": [
+                "使用 SQL、Python 与 Excel 完成数据清洗与指标建设的实际工作场景",
+                "搭建覆盖 120 家门店的门店周报与库存周转看板，体现经营指标体系搭建与可复用看板输出能力",
+                "通过 Tableau 看板输出日常经营指标，面向零售业务方进行指标维护与沟通",
+                "结合统计分析能力，将门店日常经营指标转化为可被非技术同事理解的分析结论"
+              ],
+              "what_to_avoid": [
+                "不要声称主导了零售集团层面从 0 到 1 的指标体系设计，除非有额外证据支持",
+                "不要虚构门店数量之外的数量指标、GMV、销售额或转化率提升幅度",
+                "不要将团队协作产出的看板说成完全个人独立完成，需保持责任边界",
+                "不要添加简历中未出现的 A/B 实验或效果归因经历"
+              ],
+              "target_capabilities": [
+                "SQL",
+                "Python",
+                "数据清洗",
+                "指标建设",
+                "看板输出",
+                "经营指标体系搭建",
+                "统计分析",
+                "沟通表达"
+              ],
+              "evidence_refs": [
+                "a003285c-fc49-47d4-8d4e-deba7ecfdfca",
+                "f7c11433-aee4-4eaf-a474-7ddaf77bf587",
+                "b46916fc-6489-46e6-9709-b93c515ff4cc",
+                "9b3cb9b5-6640-464b-b010-07d2a570a2c8",
+                "76ae963a-6d0c-4196-9656-613891f8821b",
+                "a48ef1cd-461d-4c79-aec2-c2661f64e6b8"
+              ],
+              "interview_risk_notes": [
+                "面试官可能追问在覆盖 120 家门店的看板搭建中，你个人负责的具体模块与交付边界",
+                "可能被要求说明 SQL 与 Python 在数据清洗与指标建设中的具体使用方式，而不仅是工具名称",
+                "可能被追问看板如何被非技术同事使用，以及你如何将数据结论转化为运营动作",
+                "如果没有实际 A/B 实验经历，需坦诚说明并聚焦已有的看板与指标建设经验"
+              ]
+            },
+            {
+              "experience_id": "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+              "role_in_story": "展示在 2024.03 - 2024.09 期间参与用户流失预警模型项目，用于呼应岗位优先项中的用户分层运营与用户流失预警建模能力。",
+              "what_to_highlight": [
+                "参与用户流失预警模型项目，体现建模项目经历与岗位优先项中的用户流失预警建模方向一致",
+                "结合统计学本科背景与 SQL、Python 能力，说明在特征处理与建模流程中的参与方式",
+                "若有涉及用户分层运营的内容，可围绕流失预警与分层运营的结合进行说明",
+                "强调从数据到模型结论的完整环节中自己实际承担的部分"
+              ],
+              "what_to_avoid": [
+                "不要声称独立主导用户流失预警模型从 0 到 1 的搭建",
+                "不要虚构模型 AUC、准确率、召回率或流失率下降等具体指标",
+                "不要将项目包装为 A/B 实验或效果归因经历，简历中未体现该内容",
+                "不要夸大特征工程或评估方法沉淀的深度，避免超出实际参与范围"
+              ],
+              "target_capabilities": [
+                "用户流失预警建模",
+                "特征工程",
+                "用户分层运营",
+                "Python",
+                "SQL",
+                "统计分析"
+              ],
+              "evidence_refs": [
+                "7de68f14-8e5f-4b85-a8b1-7fa11b96ba44",
+                "b46916fc-6489-46e6-9709-b93c515ff4cc",
+                "f7c11433-aee4-4eaf-a474-7ddaf77bf587",
+                "a48ef1cd-461d-4c79-aec2-c2661f64e6b8"
+              ],
+              "interview_risk_notes": [
+                "面试官可能追问项目中的具体建模方法、特征选择与评估指标，需按实际参与内容如实回答",
+                "可能被问到用户流失预警模型是否上线以及业务效果，若没有可量化的业务结果，需说明项目阶段与个人贡献边界",
+                "可能被追问是否具备 A/B 实验经验，若无则需明确区分建模项目与实验设计的不同",
+                "需避免把项目描述为端到端负责，防止责任边界被质疑"
+              ]
+            }
+          ]
+        },
+        "interview_intel": [],
+        "created_at": "2026-10-16T17:42:01",
+        "updated_at": "2026-10-16T17:42:40.081705"
+      }
+    },
+    {
+      "step": "12-source-diff-v2",
+      "ok": true,
+      "result": {
+        "update_available": true,
+        "current_source_id": "5fcd1700-4616-45b1-a396-cc4caf3ca395",
+        "new_source_id": "9fccfb80-ca3e-46c2-9303-fc8e8181ba3e",
+        "new_source_version": 2,
+        "added_bullets": [
+          "使用 SQL 与 Python 对门店经营数据做清洗与口径统一后，搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标，并面向零售业务方做日常更新与维护",
+          "基于看板中的门店经营指标，向业务团队解释指标波动的分析结论并推动门店层面的跟进动作",
+          "参与用户流失预警模型项目：使用 Python 处理用户行为数据并做特征整理，结合统计分析参与模型评估环节的讨论"
+        ],
+        "removed_bullets": [
+          "手工补充：整理过评测集用例并每周同步质量报表。",
+          "基于 SQL、Python 与 Excel 完成日常经营数据清洗与指标建设，搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标，并通过 Tableau 输出可复用看板供业务方查看",
+          "围绕门店周报与库存周转看板维护日常经营指标，面向零售业务方沟通指标口径与看板使用，支持业务团队将指标结论落地为日常运营动作",
+          "参与用户流失预警建模项目，结合 Python 与 SQL 进行数据清洗与特征处理，沉淀与流失预警相关的特征及评估方法"
+        ],
+        "sections": [
+          {
+            "section": "教育经历",
+            "status": "changed",
+            "added": [],
+            "removed": [
+              "手工补充：整理过评测集用例并每周同步质量报表。"
+            ],
+            "kept": 0
+          },
+          {
+            "section": "工作与项目经历",
+            "status": "changed",
+            "added": [
+              "使用 SQL 与 Python 对门店经营数据做清洗与口径统一后，搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标，并面向零售业务方做日常更新与维护",
+              "基于看板中的门店经营指标，向业务团队解释指标波动的分析结论并推动门店层面的跟进动作",
+              "参与用户流失预警模型项目：使用 Python 处理用户行为数据并做特征整理，结合统计分析参与模型评估环节的讨论"
+            ],
+            "removed": [
+              "基于 SQL、Python 与 Excel 完成日常经营数据清洗与指标建设，搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标，并通过 Tableau 输出可复用看板供业务方查看",
+              "围绕门店周报与库存周转看板维护日常经营指标，面向零售业务方沟通指标口径与看板使用，支持业务团队将指标结论落地为日常运营动作",
+              "参与用户流失预警建模项目，结合 Python 与 SQL 进行数据清洗与特征处理，沉淀与流失预警相关的特征及评估方法"
+            ],
+            "kept": 0
+          },
+          {
+            "section": "技能",
+            "status": "unchanged",
+            "added": [],
+            "removed": [],
+            "kept": 0
+          },
+          {
+            "section": "证书",
+            "status": "unchanged",
+            "added": [],
+            "removed": [],
+            "kept": 0
+          }
+        ],
+        "manual_edit_count": 1,
+        "manual_edit_samples": [
+          "手工补充：整理过评测集用例并每周同步质量报表。"
+        ],
+        "will_replace_studio_edits": true,
+        "will_reset_language": false
+      }
+    },
+    {
+      "step": "13a-reimport-without-if-match",
+      "ok": true,
+      "result": {
+        "expect": 428,
+        "got": 428
+      }
+    },
+    {
+      "step": "13b-stale-revision-409",
+      "ok": true,
+      "result": {
+        "expect": 409,
+        "got": 409
+      }
+    },
+    {
+      "step": "13c-reimport-ok",
+      "ok": true,
+      "result": {
+        "revision": 3,
+        "confirmed_revision": null,
+        "source": "9fccfb80-ca3e-46c2-9303-fc8e8181ba3e"
+      }
+    },
+    {
+      "step": "13d-fix-placeholder-residue",
+      "ok": true,
+      "result": {
+        "cleaned": 0,
+        "omitted": 0,
+        "failed": 0,
+        "revision": 3
+      }
+    },
+    {
+      "step": "14-confirm-delivery",
+      "ok": true,
+      "result": {
+        "confirmed_revision": 3,
+        "page_count": 1
+      }
+    },
+    {
+      "step": "16-switch-template-keeps-content",
+      "ok": true,
+      "result": {
+        "template_id": "zh-sidebar",
+        "content_identical": true,
+        "bullet_count": 3
+      }
+    },
+    {
+      "step": "17-reconfirm-after-template",
+      "ok": true,
+      "result": {
+        "confirmed_revision": 4,
+        "page_count": 1
+      }
+    },
+    {
+      "step": "18-reload-persists",
+      "ok": true,
+      "result": {
+        "revision_stable": true,
+        "template_stable": true,
+        "content_stable": true
+      }
+    }
+  ],
+  "initial_diff_update_available": false,
+  "diff_v2": {
+    "update_available": true,
+    "added": [
+      "使用 SQL 与 Python 对门店经营数据做清洗与口径统一后，搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标，并面向零售业务方做日常更新与维护",
+      "基于看板中的门店经营指标，向业务团队解释指标波动的分析结论并推动门店层面的跟进动作",
+      "参与用户流失预警模型项目：使用 Python 处理用户行为数据并做特征整理，结合统计分析参与模型评估环节的讨论"
+    ],
+    "removed": [
+      "手工补充：整理过评测集用例并每周同步质量报表。",
+      "基于 SQL、Python 与 Excel 完成日常经营数据清洗与指标建设，搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标，并通过 Tableau 输出可复用看板供业务方查看",
+      "围绕门店周报与库存周转看板维护日常经营指标，面向零售业务方沟通指标口径与看板使用，支持业务团队将指标结论落地为日常运营动作",
+      "参与用户流失预警建模项目，结合 Python 与 SQL 进行数据清洗与特征处理，沉淀与流失预警相关的特征及评估方法"
+    ],
+    "sections": [
+      {
+        "section": "教育经历",
+        "status": "changed",
+        "added": [],
+        "removed": [
+          "手工补充：整理过评测集用例并每周同步质量报表。"
+        ],
+        "kept": 0
+      },
+      {
+        "section": "工作与项目经历",
+        "status": "changed",
+        "added": [
+          "使用 SQL 与 Python 对门店经营数据做清洗与口径统一后，搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标，并面向零售业务方做日常更新与维护",
+          "基于看板中的门店经营指标，向业务团队解释指标波动的分析结论并推动门店层面的跟进动作",
+          "参与用户流失预警模型项目：使用 Python 处理用户行为数据并做特征整理，结合统计分析参与模型评估环节的讨论"
+        ],
+        "removed": [
+          "基于 SQL、Python 与 Excel 完成日常经营数据清洗与指标建设，搭建门店周报与库存周转看板，覆盖 120 家门店的日常经营指标，并通过 Tableau 输出可复用看板供业务方查看",
+          "围绕门店周报与库存周转看板维护日常经营指标，面向零售业务方沟通指标口径与看板使用，支持业务团队将指标结论落地为日常运营动作",
+          "参与用户流失预警建模项目，结合 Python 与 SQL 进行数据清洗与特征处理，沉淀与流失预警相关的特征及评估方法"
+        ],
+        "kept": 0
+      },
+      {
+        "section": "技能",
+        "status": "unchanged",
+        "added": [],
+        "removed": [],
+        "kept": 0
+      },
+      {
+        "section": "证书",
+        "status": "unchanged",
+        "added": [],
+        "removed": [],
+        "kept": 0
+      }
+    ],
+    "manual_edit_count": 1,
+    "manual_edit_samples": [
+      "手工补充：整理过评测集用例并每周同步质量报表。"
+    ]
+  },
+  "revision_before": 2,
+  "revision_after": 3,
+  "placeholder_residue": {
+    "cleaned": 0,
+    "omitted": 0,
+    "failed": 0,
+    "revision": 3
+  },
+  "pdf_bytes": 77340,
+  "diff_after_reimport_update_available": false,
+  "template_switch": {
+    "from": "zh-classic",
+    "to": "zh-sidebar",
+    "content_identical": true
+  },
+  "pdf_after_template_bytes": 77579,
+  "finished_at": "2026-10-16T17:42:46.487480+00:00",
+  "mission_id": "25b90abe-269d-4f29-ad15-27f2387683fa"
+}

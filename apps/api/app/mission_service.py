@@ -2603,6 +2603,16 @@ def confirm_target_resume(db: Session, mission_id: UUID) -> dict[str, object]:
             unresolved.append(bullet)
     if unresolved:
         raise _http(409, "还有内容需要确认事实后才能生成最终简历。")
+    # 防呆：如果这版改写一条被接受的要点都没有，确认会生成一份「空白经历」的投递简历，
+    # Studio 里只剩教育/技能，用户只会在导出时看到一句含糊的 empty_resume。
+    # 必须在这里拦下，把真正的下一步（去岗位简历页逐条接受/编辑要点）告诉用户。
+    accepted_count = sum(1 for bullet in resume.bullets if bullet.status in {"ACCEPTED", "EDITED"})
+    if accepted_count == 0:
+        raise _http(
+            409,
+            "这版改写还没有任何被接受的要点（其余要点或因事实待确认被暂缓，或为合成项目草案）。"
+            "请回到「岗位简历」页逐条接受或编辑要点，再确认投递版。",
+        )
     resume.status = "CONFIRMED"
     advance_workflow(mission, "confirm_target", user_confirmed=True)
     mission.updated_at = datetime.now(timezone.utc)

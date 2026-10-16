@@ -339,7 +339,7 @@ def _load_duplicate_row(db: Session, kind: str, raw_id: str | None):
 
 
 def _same_hash(db: Session, duplicate: dict, incoming_hash: str) -> bool:
-    """已有记录与本次采集的正文指纹是否一致（旧记录没有指纹时视为已变化）。"""
+    """已有记录与本次采集的正文指纹是否一致（旧记录没有指纹时用同一口径现算）。"""
     if not incoming_hash:
         return True
     row = _load_duplicate_row(db, duplicate.get("kind"), duplicate.get("id"))
@@ -347,7 +347,11 @@ def _same_hash(db: Session, duplicate: dict, incoming_hash: str) -> bool:
         return False
     if duplicate.get("kind") == "CANDIDATE":
         payload = row.raw_payload if isinstance(row.raw_payload, dict) else {}
-        return payload.get("content_hash") == incoming_hash
+        stored_hash = payload.get("content_hash")
+        if not stored_hash:
+            # 存量记录（指纹回填之前入库）没有 content_hash：按同一口径现算正文指纹再比。
+            stored_hash = ingest.content_hash(row.role, row.location, row.source_text)
+        return stored_hash == incoming_hash
     payload = row.resume_source if isinstance(row.resume_source, dict) else {}
     return payload.get("content_hash") == incoming_hash
 

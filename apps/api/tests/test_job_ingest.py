@@ -60,7 +60,8 @@ def test_fetch_url_rejects_non_http():
 def test_sources_endpoint_lists_real_adapters(client):
     body = client.get("/api/v1/job-ingest/sources").json()
     ids = {item["id"] for item in body["sources"]}
-    assert {"paste", "generic_url", "file", "remoteok"} <= ids
+    # generic_url 已升级为浏览器桥采集来源 browser（见 M1 适配器契约）
+    assert {"paste", "browser", "file", "remoteok", "remotive"} <= ids
     remoteok = next(item for item in body["sources"] if item["id"] == "remoteok")
     assert remoteok["auto_collect"] is True
 
@@ -153,7 +154,20 @@ def test_save_collected_skips_duplicates(client, persisted_profile, db_session):
     body = client.post(f"/api/v1/profiles/{persisted_profile.id}/job-ingest/save-collected", json=payload).json()
     assert body["saved_count"] == 0
     assert body["skipped_count"] == 1
-    assert body["skipped"][0]["reason"] == "DUPLICATE"
+    # 库里已有记录的正文更短，本次带来了新内容 → 语义是 UPDATED（有更新），不是 DUPLICATE
+    assert body["skipped"][0]["reason"] == "UPDATED"
+
+    # 默认不动库里内容 → 再保存一次相同内容仍是 UPDATED；用户选择更新后 → 才变成 DUPLICATE
+    body2 = client.post(f"/api/v1/profiles/{persisted_profile.id}/job-ingest/save-collected", json=payload).json()
+    assert body2["skipped"][0]["reason"] == "UPDATED"
+    body3 = client.post(
+        f"/api/v1/profiles/{persisted_profile.id}/job-ingest/save-collected",
+        json={**payload, "update_duplicates": True},
+    ).json()
+    assert body3["updated_count"] == 1
+    body4 = client.post(f"/api/v1/profiles/{persisted_profile.id}/job-ingest/save-collected", json=payload).json()
+    assert body4["skipped_count"] == 1
+    assert body4["skipped"][0]["reason"] == "DUPLICATE"
 
 
 def test_collected_job_saves_once_and_rerun_is_deduplicated(client, persisted_profile):

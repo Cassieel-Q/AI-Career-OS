@@ -44,6 +44,7 @@ export function StudioPage({ missionId }: { missionId: string }) {
   const [samples, setSamples] = useState<Record<string, SamplePreview>>({});
   const [sampleOpen, setSampleOpen] = useState<string | null>(null);
   const [sourceOpen, setSourceOpen] = useState(false);
+  const [diffOpen, setDiffOpen] = useState(false);
   const [history, setHistory] = useState<StudioHistory>(emptyHistory);
   const [mobileTab, setMobileTab] = useState<"preview" | "edit">("preview");
   const previewSeq = useRef(0);
@@ -167,16 +168,21 @@ export function StudioPage({ missionId }: { missionId: string }) {
   };
   const reimport = async () => {
     if (!state || !sourceDiff?.update_available) return;
-    const summary = `新版已确认改写稿有 ${sourceDiff.added_bullets?.length || 0} 条新增、${sourceDiff.removed_bullets?.length || 0} 条移除要点。重新导入会替换当前工作台精修内容，并生成新修订版。`;
-    if (!window.confirm(`${summary}\n\n确定重新导入？`)) return;
     setBusy(true); setError("");
     try {
       const next = await reimportStudio(missionId, state.revision);
       setState(next); setSourceDiff({ update_available: false, current_source_id: next.source_target_resume_id });
+      setDiffOpen(false);
       setHistory(emptyHistory()); setSelectedId(null); setDraft(""); draftRef.current = "";
       setMessage("已从新版已确认改写稿重新导入。请重新核对并确认投递版。");
-    } catch (caught) { setError(describeError(caught)); }
-    finally { setBusy(false); }
+    } catch (caught) {
+      setError(describeError(caught));
+      // 409 = 修订冲突：别的窗口已经更新过简历，这里必须让用户重新读取最新差异再决定。
+      if (caught instanceof StudioApiError && caught.status === 409) {
+        setDiffOpen(false);
+        setMessage("简历在其他窗口已更新（修订冲突）。请点「重新读取」查看最新版本与差异。");
+      }
+    } finally { setBusy(false); }
   };
   const download = async () => {
     try {
@@ -239,7 +245,38 @@ export function StudioPage({ missionId }: { missionId: string }) {
       <div className="rs-toolbar-buttons"><button type="button" className="rs-secondary" onClick={() => setGallery(true)}>选择模板 <b>{activeTemplate?.name || state.template_id}</b></button><button type="button" className="rs-secondary" onClick={() => void doUndo()} disabled={!history.undo.length || busy}>撤销</button><button type="button" className="rs-secondary" onClick={() => void doRedo()} disabled={!history.redo.length || busy}>重做</button></div>
     </div>
     {(error || message) && <div className={error ? "rs-alert rs-alert-error" : "rs-alert"} role={error ? "alert" : "status"}>{error || message}{error && <button type="button" onClick={() => void load()}>重新读取</button>}</div>}
-    {sourceDiff?.update_available && <div className="rs-source-update" role="status"><div><strong>发现新版已确认改写稿</strong><p>新增 {sourceDiff.added_bullets?.length || 0} 条、移除 {sourceDiff.removed_bullets?.length || 0} 条要点。当前精修版会一直保留，直到你主动重新导入。</p><details><summary>查看差异</summary><p>新增：{sourceDiff.added_bullets?.join("；") || "无"}</p><p>移除：{sourceDiff.removed_bullets?.join("；") || "无"}</p></details></div><button type="button" disabled={busy} onClick={() => void reimport()}>重新导入新版</button></div>}
+    {sourceDiff?.update_available && <div className="rs-source-update" role="status"><div><strong>发现新版已确认改写稿（岗位定向更新）</strong><p>新增 {sourceDiff.added_bullets?.length || 0} 条、移除 {sourceDiff.removed_bullets?.length || 0} 条要点。当前精修版会一直保留，直到你主动确认更新。</p><button type="button" className="rs-secondary" onClick={() => setDiffOpen(true)}>查看差异并确认</button></div><button type="button" disabled={busy} onClick={() => setDiffOpen(true)}>更新到工作台</button></div>}
+    {diffOpen && sourceDiff?.update_available && <div className="rs-gallery-backdrop" role="dialog" aria-modal="true" aria-label="更新到工作台差异确认"><div className="rs-gallery rs-diff-modal">
+      <div className="rs-gallery-header"><div><span>UPDATE / 一键更新</span><h2>把新版岗位简历更新到工作台</h2><p>新版：来源 v{sourceDiff.new_source_version ?? "—"}。逐个板块确认会发生什么。</p></div><button type="button" onClick={() => setDiffOpen(false)} aria-label="关闭差异确认">×</button></div>
+      <table className="rs-diff-table">
+        <thead><tr><th>板块</th><th>状态</th><th>新增</th><th>移除</th><th>保留</th></tr></thead>
+        <tbody>
+          {(sourceDiff.sections ?? []).map(item => (
+            <tr key={item.section}>
+              <td>{item.section || "未命名板块"}</td>
+              <td><span className={`rs-diff-status ${item.status}`}>{item.status === "added" ? "新增板块" : item.status === "removed" ? "整块移除" : item.status === "changed" ? "有修改" : "保持不变"}</span></td>
+              <td>{item.added.length || "—"}</td>
+              <td>{item.removed.length || "—"}</td>
+              <td>{item.kept || "—"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <details className="rs-diff-detail"><summary>逐条差异</summary>
+        <p><strong>新增要点：</strong>{sourceDiff.added_bullets?.length ? <ul>{sourceDiff.added_bullets.map((text, index) => <li key={index}>{text}</li>)}</ul> : "无"}</p>
+        <p><strong>移除要点：</strong>{sourceDiff.removed_bullets?.length ? <ul>{sourceDiff.removed_bullets.map((text, index) => <li key={index}>{text}</li>)}</ul> : "无"}</p>
+      </details>
+      {Boolean(sourceDiff.manual_edit_count) && <div className="rs-diff-warning" role="alert">
+        <strong>注意：工作台里有 {sourceDiff.manual_edit_count} 处你手工新增/修改的内容，更新后会被新版内容替换：</strong>
+        <ul>{(sourceDiff.manual_edit_samples ?? []).map((text, index) => <li key={index}>{text}</li>)}</ul>
+        {Boolean(sourceDiff.manual_edit_count && (sourceDiff.manual_edit_samples ?? []).length < (sourceDiff.manual_edit_count ?? 0)) && <p>…等共 {sourceDiff.manual_edit_count} 处。</p>}
+      </div>}
+      {sourceDiff.will_reset_language && <p className="rs-diff-warning">新版为中文稿，导入后文档语言会切回中文，模板会重置为默认。</p>}
+      <div className="rs-edit-actions">
+        <button type="button" disabled={busy} onClick={() => void reimport()}>确认更新（生成新修订版）</button>
+        <button type="button" className="rs-secondary" onClick={() => setDiffOpen(false)}>先不更新</button>
+      </div>
+    </div></div>}
     <div className="rs-mobile-tabs"><button type="button" className={mobileTab === "preview" ? "active" : ""} onClick={() => setMobileTab("preview")}>页面预览</button><button type="button" className={mobileTab === "edit" ? "active" : ""} onClick={() => setMobileTab("edit")}>内容编辑</button></div>
     <div className="rs-workbench">
       <aside className={`rs-outline ${mobileTab === "preview" ? "rs-mobile-hidden" : ""}`}>

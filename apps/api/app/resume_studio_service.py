@@ -209,14 +209,87 @@ def _latest_confirmed_source(db: Session, mission_id: UUID) -> models.TargetResu
     ).order_by(models.TargetResume.version.desc()))
 
 
-def _included_bullet_texts(document: dict) -> list[str]:
+def _section_bullet_texts(section: dict) -> list[str]:
+    """单个板块里实际会渲染出来的要点文本（跳过被 OMIT 的条目与要点）。"""
     return [
         bullet["text"]
-        for section in document.get("sections") or []
-        for entry in section.get("entries") or [] if entry.get("status") != "OMITTED"
+        for entry in section.get("entries") or []
+        if entry.get("status") != "OMITTED"
         for bullet in entry.get("bullets") or []
         if bullet.get("claim_status") != "OMITTED" and bullet.get("text")
     ]
+
+
+def _included_bullet_texts(document: dict) -> list[str]:
+    return [
+        text
+        for section in document.get("sections") or []
+        for text in _section_bullet_texts(section)
+    ]
+
+
+def _manual_edit_texts(document: dict) -> list[str]:
+    """用户在 Studio 里手工新增/修改过的内容（source_kind == user_entered）。
+
+    重新导入会整体替换文档，这些内容会丢——必须在确认弹窗里如实列出来。
+    """
+    texts: list[str] = []
+    for node in (document.get("basics") or {}).values():
+        if isinstance(node, dict) and node.get("source_kind") == "user_entered" and node.get("text"):
+            texts.append(node["text"])
+    for section in document.get("sections") or []:
+        for entry in section.get("entries") or []:
+            for field in ("title", "subtitle", "date"):
+                node = entry.get(field) or {}
+                if node.get("source_kind") == "user_entered" and node.get("text"):
+                    texts.append(node["text"])
+            for bullet in entry.get("bullets") or []:
+                if bullet.get("source_kind") == "user_entered" and bullet.get("text"):
+                    texts.append(bullet["text"])
+    return texts
+
+
+def _section_breakdown(old_doc: dict, new_doc: dict) -> list[dict]:
+    """按板块对比新旧两版：新增 / 删除 / 修改 / 保持不变，让用户看清每个板块会发生什么。"""
+    # 同名板块可能出现多次，用「标题 + 出现序号」配对，避免 dict 覆盖漏掉后半部分。
+    def _index(document: dict) -> dict[tuple[str, int], dict]:
+        bucket: dict[str, int] = {}
+        indexed: dict[tuple[str, int], dict] = {}
+        for section in document.get("sections") or []:
+            title = (section.get("title") or {}).get("text", "") if isinstance(section.get("title"), dict) else str(section.get("title") or "")
+            seq = bucket.get(title, 0)
+            bucket[title] = seq + 1
+            indexed[(title, seq)] = section
+        return indexed
+
+    old_by_title = _index(old_doc)
+    new_by_title = _index(new_doc)
+    breakdown: list[dict] = []
+    for key in list(new_by_title) + [item for item in old_by_title if item not in new_by_title]:
+        title = key[0]
+        old_section = old_by_title.get(key)
+        new_section = new_by_title.get(key)
+        if old_section is None and new_section is not None:
+            breakdown.append({"section": title, "status": "added", "added": _section_bullet_texts(new_section), "removed": [], "kept": 0})
+            continue
+        if new_section is None and old_section is not None:
+            breakdown.append({"section": title, "status": "removed", "added": [], "removed": _section_bullet_texts(old_section), "kept": 0})
+            continue
+        old_texts = _section_bullet_texts(old_section or {})
+        new_texts = _section_bullet_texts(new_section or {})
+        added = [text for text in new_texts if text not in old_texts]
+        removed = [text for text in old_texts if text not in new_texts]
+        kept = len([text for text in new_texts if text in old_texts])
+        breakdown.append(
+            {
+                "section": title,
+                "status": "changed" if added or removed else "unchanged",
+                "added": added,
+                "removed": removed,
+                "kept": kept,
+            }
+        )
+    return breakdown
 
 
 def source_diff(db: Session, mission_id: UUID) -> dict:
@@ -230,6 +303,7 @@ def source_diff(db: Session, mission_id: UUID) -> dict:
     proposed = _import_document(profile, latest, mission)
     old_texts = _included_bullet_texts(row.document_json)
     new_texts = _included_bullet_texts(proposed)
+    manual_edits = _manual_edit_texts(row.document_json)
     return {
         "update_available": True,
         "current_source_id": str(row.source_target_resume_id),
@@ -237,6 +311,10 @@ def source_diff(db: Session, mission_id: UUID) -> dict:
         "new_source_version": latest.version,
         "added_bullets": [text for text in new_texts if text not in old_texts],
         "removed_bullets": [text for text in old_texts if text not in new_texts],
+        "sections": _section_breakdown(row.document_json, proposed),
+        # 人工新增/修改过的内容：重新导入会被整体替换，必须提前告知数量与内容。
+        "manual_edit_count": len(manual_edits),
+        "manual_edit_samples": manual_edits[:8],
         "will_replace_studio_edits": True,
         "will_reset_language": row.language != "zh",
     }

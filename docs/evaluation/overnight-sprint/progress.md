@@ -48,3 +48,64 @@ cd apps/api; .venv\Scripts\python -m pytest tests/test_job_collect_tasks.py test
 cd apps\api; .venv\Scripts\python scripts\collect_acceptance.py http://127.0.0.1:8100 <profile_id>
 cd apps\web; node scripts\e2e-overnight-m1.cjs
 ```
+
+## M2 · Studio 一键更新（差异确认 + 修订冲突 + PDF）
+
+状态：**DONE_VERIFIED**（两份简历 × 两个不同 JD 全链路验收脚本各 30 步 0 失败 + 浏览器 E2E 19/19）
+
+### 本轮新增/修复
+
+- `source-diff` 升级为**板块级差异**：逐板块返回 `added/removed/kept` 与状态
+  （`added/removed/changed/unchanged`），并统计**人工编辑内容**
+  （`source_kind == "user_entered"` 的文本）——重新导入会整体替换文档，
+  弹窗必须提前列出这些内容（`manual_edit_count` + 样本）。
+- 前端差异确认弹窗：板块表格（状态/新增/移除/保留）→ 逐条差异 → 人工编辑警告
+  →「确认更新（生成新修订版）」/「先不更新」。`reimport` 不再使用 `window.confirm`。
+- **换模板不改正文**：`set_template` 只改 `template_id`，正文逐条不变（验收实测 4→4 条一致）。
+- **换模板后必须重新确认才能下载正式 PDF**（修订号推进 → 旧确认失效）——防呆而非缺陷。
+- **零接受要点防呆**：`confirm_target_resume` 在 `accepted_count == 0` 时返回 409，
+  明确指引回岗位简历页逐条接受/编辑，不允许确认出一版全被拒绝的空简历。
+- 占位符防呆（`待补充/待核实/待完善/待补全`）拦截确认 → 属预期行为；验收脚本模拟用户补齐
+  （能留实质内容的改写，否则整条省略，**不凭空补量化成果**）。
+
+### 修掉的真实缺陷
+
+1. `_section_breakdown` 把 **section** 传给了期望 **document** 的
+   `_included_bullet_texts` → 板块差异恒为 `unchanged/kept=0`，与顶层 `added_bullets`
+   自相矛盾。修复：拆出 `_section_bullet_texts()`；同名板块用「标题+出现序号」配对，
+   避免重复标题被 dict 覆盖。补纯函数回归测试。
+2. `_same_hash` 对无指纹的存量记录一律判「已变化」→ 相同内容反复保存永远 UPDATED。
+   修复：按同一口径现算存量正文指纹再比。
+3. 旧测试与新契约不一致（`generic_url`→`browser`；UPDATED/DUPLICATE 语义）→
+   更新测试并补完整语义链（UPDATED → 用户选择更新 → 再保存才是 DUPLICATE）。
+4. `test_bulk_confirmation_never_auto_accepts_unsupported_point` 与零接受防呆冲突 →
+   保留原意（不自动接受不支持要点），补一条已接受要点。
+
+### 证据（两份简历 × 两个不同 JD）
+
+| 用例 | 步骤 | 失败 | 修订 | 人工编辑提示 | 板块差异 | PDF |
+|---|---|---|---|---|---|---|
+| ai-pm（张三 × AI 产品经理 JD） | 30 | 0 | 2→3，确认 rev4 | 1 条（手工补充被识别） | 工作与项目 a4/r4 | 88,841 B + 换模板后 89,102 B |
+| data-analyst（李四 × 数据分析师 JD） | 30 | 0 | 2→3，确认 rev3 | 1 条 | 工作与项目 a3/r3 | 77,340 B + 换模板后 77,579 B |
+
+每步验证：428（缺 If-Match）→ 409（过期修订）→ reimport 成功（rev+1）→ 确认投递版 →
+真实 Typst PDF → 换模板（正文逐条不变）→ 重新确认 → 二次 PDF → 刷新恢复（修订/模板/正文）。
+
+- 浏览器 E2E 19/19：`docs/screenshots/overnight-m2/01..06.png`（新版提示横幅、差异弹窗、
+  取消后保留原稿、更新后新修订版、换模板后正文不变、刷新恢复）+ `e2e-result.json`
+- 验收 JSON：`m2-studio-acceptance-{ai-pm,data-analyst}.json`
+- 测试：`tests/test_resume_studio_reimport.py`（4 项，含板块差异回归）+ grounding 全绿
+
+### 复现命令
+
+```powershell
+cd apps\api; .venv\Scripts\python scripts\studio_update_acceptance.py http://127.0.0.1:8100 ai-pm
+cd apps\api; .venv\Scripts\python scripts\studio_update_acceptance.py http://127.0.0.1:8100 data-analyst
+cd apps\web; $env:NODE_PATH="C:\Users\覆水\.workbuddy\binaries\node\workspace\node_modules"; node scripts\e2e-overnight-m2.cjs
+```
+
+### 基线失败（非本轮引入，已用 worktree 在 bb5b140 逐一验证）
+
+`test_claim_provider` / `test_gap_analysis` / `test_market_profile` / `test_priorities` /
+`test_resume_reliability` / `test_roadmap` / `test_target_jobs` 共 7 个，与 M1 基线完全一致，
+不依赖本轮改动（多为 LLM 输出不确定性相关的断言）。当前全量：**825 passed / 7 failed（基线）/ 5 skipped**。

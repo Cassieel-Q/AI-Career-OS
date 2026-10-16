@@ -1,0 +1,137 @@
+{
+  "finished_at": "2026-10-16T17:47:19.527Z",
+  "web": "http://127.0.0.1:3000",
+  "api": "http://127.0.0.1:8100",
+  "mission_id": "b59be0ad-8825-43f4-8d83-80d7fc9f42e0",
+  "profile_id": "074f9c15-158a-4024-a694-e9a8b7ba11f0",
+  "revision_before_update": 2,
+  "revision_after_update": 3,
+  "manual_edit_count": 1,
+  "sections": [
+    {
+      "section": "教育经历",
+      "status": "changed",
+      "added": 0,
+      "removed": 1,
+      "kept": 0
+    },
+    {
+      "section": "工作与项目经历",
+      "status": "changed",
+      "added": 4,
+      "removed": 2,
+      "kept": 0
+    },
+    {
+      "section": "技能",
+      "status": "unchanged",
+      "added": 0,
+      "removed": 0,
+      "kept": 0
+    },
+    {
+      "section": "证书",
+      "status": "unchanged",
+      "added": 0,
+      "removed": 0,
+      "kept": 0
+    }
+  ],
+  "results": [
+    {
+      "name": "创建本地档案",
+      "ok": true,
+      "detail": "074f9c15"
+    },
+    {
+      "name": "创建岗位 Mission",
+      "ok": true,
+      "detail": "b59be0ad"
+    },
+    {
+      "name": "v1 逐条接受要点",
+      "ok": true,
+      "detail": "accepted=1 skipped=1"
+    },
+    {
+      "name": "Studio 初始导入",
+      "ok": true,
+      "detail": "revision=1"
+    },
+    {
+      "name": "工作台手工新增内容",
+      "ok": true,
+      "detail": "revision=2"
+    },
+    {
+      "name": "v2 逐条接受要点",
+      "ok": true,
+      "detail": "accepted=2 skipped=0"
+    },
+    {
+      "name": "检测到新版改写稿",
+      "ok": true,
+      "detail": "new_source_version=2"
+    },
+    {
+      "name": "差异提示人工编辑内容",
+      "ok": true,
+      "detail": "manual_edit_count=1"
+    },
+    {
+      "name": "板块级差异有真实条数",
+      "ok": true,
+      "detail": "教育经历:changed | 工作与项目经历:changed | 技能:unchanged | 证书:unchanged"
+    },
+    {
+      "name": "页面出现新版更新提示",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "差异弹窗打开",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "弹窗列出板块差异",
+      "ok": true,
+      "detail": "UPDATE / 一键更新 把新版岗位简历更新到工作台  新版：来源 v2。逐个板块确认会发生什么。  × 板块\t状态\t新增\t移除\t保留 教育经历\t有修改\t—\t"
+    },
+    {
+      "name": "弹窗警告人工编辑会被替换",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "点「先不更新」不动正文",
+      "ok": true,
+      "detail": "2 → 2"
+    },
+    {
+      "name": "确认更新后修订号 +1",
+      "ok": true,
+      "detail": "2 → 3"
+    },
+    {
+      "name": "切换模板成功",
+      "ok": true,
+      "detail": "zh-sidebar"
+    },
+    {
+      "name": "换模板不改正文",
+      "ok": true,
+      "detail": "4 → 4 条"
+    },
+    {
+      "name": "刷新后修订号保持",
+      "ok": true,
+      "detail": "4"
+    },
+    {
+      "name": "刷新后模板保持",
+      "ok": true,
+      "detail": "zh-sidebar"
+    }
+  ]
+}
