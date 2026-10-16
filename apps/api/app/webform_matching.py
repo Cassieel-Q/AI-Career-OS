@@ -47,6 +47,23 @@ BLOCKED_TYPES = {"password", "hidden", "submit", "button", "captcha"}
 #: 登录/验证码相关的关键词：命中即视为不可自动化处理。
 _CAPTCHA_HINTS = ("验证码", "captcha", "verification code", "短信码")
 
+# --- 字段生命周期六态（M4 对齐） ---------------------------------------------
+# READ       已读取页面字段，但规则没有把握（低置信）——等用户确认或模型辅助（模型不可用也不影响其它字段）
+# MATCHED    规则匹配成功、资料里有值（高置信，可直接执行）
+# CONFIRMED  用户在预览里确认过（执行层把用户确认的 assignment 视为 CONFIRMED 再写入）
+# FILLED     已写入页面
+# SKIPPED    不填（不支持/被封锁/用户跳过/禁用控件）
+# FAILED     执行写入失败
+FIELD_STATES = ("READ", "MATCHED", "CONFIRMED", "FILLED", "SKIPPED", "FAILED")
+
+#: 规则层状态 → 六态（执行层 FILLED/FAILED 由 fill 结果决定，CONFIRMED 由用户确认决定）
+_PLAN_STATE = {
+    "READY": "MATCHED",
+    "NEEDS_CONFIRM": "READ",
+    "UNSUPPORTED": "SKIPPED",
+    "BLOCKED": "SKIPPED",
+}
+
 
 @dataclass(frozen=True)
 class FieldSpec:
@@ -145,8 +162,12 @@ def _control_type(raw: dict) -> str:
 def _is_captcha(raw: dict, haystack: str) -> bool:
     if any(hint in haystack for hint in _CAPTCHA_HINTS):
         return True
-    name = (raw.get("name") or "") + (raw.get("id") or "")
-    return any(hint in name.lower() for hint in ("captcha", "verify", "code"))
+    name = ((raw.get("name") or "") + " " + (raw.get("id") or "")).lower()
+    # 明确的验证码命名；裸「code」太宽（ref_code/promo_code 是普通业务字段），必须同时出现验证词。
+    if any(hint in name for hint in ("captcha", "verify", "vcode")):
+        return True
+    has_code_token = "code" in name.replace("_", " ").split() or name.endswith("code")
+    return has_code_token and any(hint in haystack for hint in _CAPTCHA_HINTS)
 
 
 def _value_fits_control(value: str, control: str, options: list[str] | None) -> tuple[bool, str]:
@@ -180,30 +201,53 @@ def plan_field(raw: dict, facts: dict, values: dict[str, str]) -> dict:
         "selector": raw.get("selector") or "",
     }
 
+    # 隐藏 / 禁用控件：如实标为 SKIPPED（页面上用户也看不到或改不了）。
+    if raw.get("disabled") or raw.get("readonly") is True:
+        return {**base, "match_key": None, "match_label": None, "value": "", "status": "SKIPPED", "state": "SKIPPED", "reason": "控件被禁用/只读，跳过"}
+    if raw.get("hidden"):
+        return {**base, "match_key": None, "match_label": None, "value": "", "status": "SKIPPED", "state": "SKIPPED", "reason": "隐藏控件，跳过"}
+    # 确认类勾选（隐私政策 / 同意条款）永远由人工完成：勾选即法律确认，系统不代劳。
+    # 桥的 label 启发式对 checkbox 可能取错标题（比如把页面文案当成字段名），更不能替用户勾。
+    if control == "checkbox":
+        return {**base, "match_key": None, "match_label": None, "value": "", "status": "SKIPPED", "state": "SKIPPED", "reason": "确认类勾选由人工完成，系统不代劳"}
+
     if _is_captcha(raw, haystack):
-        return {**base, "match_key": None, "match_label": None, "value": "", "status": "BLOCKED", "reason": "验证码类字段，永不自动填写"}
+        return {**base, "match_key": None, "match_label": None, "value": "", "status": "BLOCKED", "state": "SKIPPED", "reason": "验证码类字段，永不自动填写"}
     if control in BLOCKED_TYPES:
-        return {**base, "match_key": None, "match_label": None, "value": "", "status": "BLOCKED", "reason": "密码/隐藏/按钮类控件，永不自动填写"}
+        return {**base, "match_key": None, "match_label": None, "value": "", "status": "BLOCKED", "state": "SKIPPED", "reason": "密码/隐藏/按钮类控件，永不自动填写"}
     if any(hint in haystack for hint in _FORBIDDEN_LABEL_HINTS):
-        return {**base, "match_key": None, "match_label": None, "value": "", "status": "BLOCKED", "reason": "疑似密码字段，已拒绝填写"}
+        return {**base, "match_key": None, "match_label": None, "value": "", "status": "BLOCKED", "state": "SKIPPED", "reason": "疑似密码字段，已拒绝填写"}
     if control == "file":
-        return {**base, "match_key": None, "match_label": None, "value": "", "status": "UNSUPPORTED", "reason": "文件上传控件，请手动选择文件"}
+        return {**base, "match_key": None, "match_label": None, "value": "", "status": "UNSUPPORTED", "state": "SKIPPED", "reason": "文件上传控件，请手动选择文件"}
     if support == "UNSUPPORTED":
-        return {**base, "match_key": None, "match_label": None, "value": "", "status": "UNSUPPORTED", "reason": "暂不支持的控件类型"}
+        return {**base, "match_key": None, "match_label": None, "value": "", "status": "UNSUPPORTED", "state": "SKIPPED", "reason": "暂不支持的控件类型"}
 
     spec = _match_spec(haystack)
     if spec is None:
-        return {**base, "match_key": None, "match_label": None, "value": "", "status": "NEEDS_CONFIRM", "reason": "未匹配到已知字段，请人工确认是否填写"}
+        return {
+            **base,
+            "match_key": None,
+            "match_label": None,
+            "value": "",
+            "status": "NEEDS_CONFIRM",
+            "state": "READ",
+            "reason": "未匹配到已知字段（规则置信度低），请人工确认；模型不可用不影响其它字段",
+        }
 
     value = values.get(spec.key, "")
     if not value:
+        state = "READ"
+        reason = f"匹配到「{spec.label}」，但资料里没有该字段的值"
+        if base["required"]:
+            reason = f"必填字段「{spec.label}」在资料里没有值，请人工补充"
         return {
             **base,
             "match_key": spec.key,
             "match_label": spec.label,
             "value": "",
             "status": "NEEDS_CONFIRM",
-            "reason": f"匹配到「{spec.label}」，但资料里没有该字段的值",
+            "state": state,
+            "reason": reason,
         }
 
     fits, why = _value_fits_control(value, control, raw.get("options"))
@@ -214,6 +258,7 @@ def plan_field(raw: dict, facts: dict, values: dict[str, str]) -> dict:
             "match_label": spec.label,
             "value": "",
             "status": "NEEDS_CONFIRM",
+            "state": "READ",
             "reason": why,
         }
 
@@ -223,12 +268,13 @@ def plan_field(raw: dict, facts: dict, values: dict[str, str]) -> dict:
         "match_label": spec.label,
         "value": value,
         "status": "READY",
+        "state": "MATCHED",
         "reason": f"来自已保存资料「{spec.label}」",
     }
 
 
 def build_plan(fields: list[dict], facts: dict) -> dict:
-    """为整页字段生成填写计划 + 统计。"""
+    """为整页字段生成填写计划 + 统计（纯规则，不依赖任何模型服务）。"""
     values = build_fact_values(facts)
     plans = [plan_field(raw, facts, values) for raw in fields]
     summary = {
@@ -237,6 +283,11 @@ def build_plan(fields: list[dict], facts: dict) -> dict:
         "needs_confirm": sum(1 for item in plans if item["status"] == "NEEDS_CONFIRM"),
         "unsupported": sum(1 for item in plans if item["status"] == "UNSUPPORTED"),
         "blocked": sum(1 for item in plans if item["status"] == "BLOCKED"),
+        # 六态统计（M4）
+        "matched": sum(1 for item in plans if item.get("state") == "MATCHED"),
+        "read": sum(1 for item in plans if item.get("state") == "READ"),
+        "skipped": sum(1 for item in plans if item.get("state") == "SKIPPED"),
+        "required_missing": sum(1 for item in plans if item.get("required") and not item.get("value") and item.get("state") != "SKIPPED"),
     }
     by_support: dict[str, int] = {}
     for item in plans:

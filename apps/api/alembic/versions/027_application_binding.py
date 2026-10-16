@@ -47,13 +47,16 @@ def upgrade() -> None:
             ("greeting_short", sa.Column("greeting_short", sa.Text(), nullable=True)),
             ("greeting_long", sa.Column("greeting_long", sa.Text(), nullable=True)),
         ]
-        for name, column in additions:
-            if not _has_column("job_applications", name):
-                op.add_column("job_applications", column)
+        # batch 模式：SQLite 上将来 downgrade drop 带外键的列需要重建表。
+        with op.batch_alter_table("job_applications") as batch:
+            for name, column in additions:
+                if not _has_column("job_applications", name):
+                    batch.add_column(column)
 
 
 def downgrade() -> None:
     if "job_applications" in _tables():
-        for name in ("greeting_long", "greeting_short", "pdf_snapshot_path", "studio_revision", "resume_version_id", "jd_source"):
-            if _has_column("job_applications", name):
-                op.drop_column("job_applications", name)
+        with op.batch_alter_table("job_applications") as batch:
+            for name in ("greeting_long", "greeting_short", "pdf_snapshot_path", "studio_revision", "resume_version_id", "jd_source"):
+                if _has_column("job_applications", name):
+                    batch.drop_column(name)

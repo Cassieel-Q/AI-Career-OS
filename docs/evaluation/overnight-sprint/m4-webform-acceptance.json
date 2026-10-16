@@ -1,0 +1,230 @@
+{
+  "started_at": "2026-10-16T18:42:32.438391+00:00",
+  "base_url": "http://127.0.0.1:8100",
+  "form_url": "http://127.0.0.1:8123/index.html",
+  "steps": [
+    {
+      "step": "1-profile-facts-ready",
+      "ok": true,
+      "result": {
+        "full_name": "周八",
+        "phone": "13400000000",
+        "email": "zhouba@example.com",
+        "city": "成都"
+      }
+    },
+    {
+      "step": "2-session-start",
+      "ok": true,
+      "result": {
+        "ok": true,
+        "pageUrl": "http://127.0.0.1:8123/index.html"
+      }
+    },
+    {
+      "step": "2b-session-open",
+      "ok": true,
+      "result": {
+        "pageUrl": "http://127.0.0.1:8123/index.html"
+      }
+    },
+    {
+      "step": "3-read-plan",
+      "ok": true,
+      "result": {
+        "total": 16,
+        "by_support": {
+          "FULL": 11,
+          "PARTIAL": 2,
+          "BLOCKED": 1,
+          "UNSUPPORTED": 1,
+          "LIMITED": 1
+        }
+      }
+    },
+    {
+      "step": "4-plan-states",
+      "ok": true,
+      "result": {
+        "MATCHED:姓名": true,
+        "MATCHED:手机号码": true,
+        "MATCHED:电子邮箱": true,
+        "MATCHED:现居城市": true,
+        "MATCHED:最高学历(下拉)": true,
+        "MATCHED:毕业时间(month)": true,
+        "MATCHED:所学专业": true,
+        "READ:自我介绍(低置信)": true,
+        "SKIPPED:禁用控件": true,
+        "SKIPPED:密码": true,
+        "SKIPPED:验证码": true,
+        "SKIPPED:文件上传": true,
+        "SKIPPED:同意条款勾选": true,
+        "READ:内推人工号(name含code不误判)": true,
+        "隐藏字段不可见": true
+      }
+    },
+    {
+      "step": "5-fill",
+      "ok": true,
+      "result": {
+        "summary": {
+          "total": 7,
+          "filled": 7,
+          "failed": 0,
+          "skipped": 0,
+          "submitted": false
+        },
+        "note": "填写完成，**未提交**。系统不会点击提交按钮，请自行核对后手动提交。",
+        "results": [
+          {
+            "selector": "[data-aios-field=\"0\"]",
+            "label": "姓名",
+            "ok": true,
+            "reason": ""
+          },
+          {
+            "selector": "[data-aios-field=\"1\"]",
+            "label": "手机号码",
+            "ok": true,
+            "reason": ""
+          },
+          {
+            "selector": "[data-aios-field=\"2\"]",
+            "label": "电子邮箱",
+            "ok": true,
+            "reason": ""
+          },
+          {
+            "selector": "[data-aios-field=\"3\"]",
+            "label": "现居城市",
+            "ok": true,
+            "reason": ""
+          },
+          {
+            "selector": "[data-aios-field=\"4\"]",
+            "label": "最高学历",
+            "ok": true,
+            "reason": ""
+          },
+          {
+            "selector": "[data-aios-field=\"5\"]",
+            "label": "毕业时间",
+            "ok": true,
+            "reason": ""
+          },
+          {
+            "selector": "[data-aios-field=\"6\"]",
+            "label": "所学专业",
+            "ok": true,
+            "reason": ""
+          }
+        ],
+        "assignments_sent": [
+          "姓名",
+          "手机号码",
+          "电子邮箱",
+          "现居城市",
+          "最高学历",
+          "毕业时间",
+          "所学专业"
+        ]
+      }
+    },
+    {
+      "step": "6-verify-filled",
+      "ok": true,
+      "result": {
+        "姓名已填": true,
+        "同意条款未被代勾": true,
+        "手机已填": true,
+        "邮箱已填": true,
+        "城市已填": true,
+        "学历已选(本科)": true,
+        "专业已填": true,
+        "密码未填": true,
+        "验证码未填": true,
+        "附件未填": true,
+        "禁用控件未被改动": true
+      }
+    },
+    {
+      "step": "7-never-submitted",
+      "ok": true,
+      "result": {
+        "page_url": "http://127.0.0.1:8123/index.html"
+      }
+    },
+    {
+      "step": "8-ssrf-metadata-blocked",
+      "ok": true,
+      "result": {
+        "status": 422,
+        "detail": "{'__error': '{\"detail\":\"目标地址不是公网地址，已拒绝抓取。\"}'}"
+      }
+    },
+    {
+      "step": "9-ssrf-loopback-blocked",
+      "ok": true,
+      "result": {
+        "status": 422
+      }
+    }
+  ],
+  "plan_summary": {
+    "total": 16,
+    "ready": 7,
+    "needs_confirm": 4,
+    "unsupported": 1,
+    "blocked": 2,
+    "matched": 7,
+    "read": 4,
+    "skipped": 5,
+    "required_missing": 0,
+    "by_support": {
+      "FULL": 11,
+      "PARTIAL": 2,
+      "BLOCKED": 1,
+      "UNSUPPORTED": 1,
+      "LIMITED": 1
+    }
+  },
+  "plan_checks": {
+    "MATCHED:姓名": true,
+    "MATCHED:手机号码": true,
+    "MATCHED:电子邮箱": true,
+    "MATCHED:现居城市": true,
+    "MATCHED:最高学历(下拉)": true,
+    "MATCHED:毕业时间(month)": true,
+    "MATCHED:所学专业": true,
+    "READ:自我介绍(低置信)": true,
+    "SKIPPED:禁用控件": true,
+    "SKIPPED:密码": true,
+    "SKIPPED:验证码": true,
+    "SKIPPED:文件上传": true,
+    "SKIPPED:同意条款勾选": true,
+    "READ:内推人工号(name含code不误判)": true,
+    "隐藏字段不可见": true
+  },
+  "fill_summary": {
+    "total": 7,
+    "filled": 7,
+    "failed": 0,
+    "skipped": 0,
+    "submitted": false
+  },
+  "post_checks": {
+    "姓名已填": true,
+    "同意条款未被代勾": true,
+    "手机已填": true,
+    "邮箱已填": true,
+    "城市已填": true,
+    "学历已选(本科)": true,
+    "专业已填": true,
+    "密码未填": true,
+    "验证码未填": true,
+    "附件未填": true,
+    "禁用控件未被改动": true
+  },
+  "finished_at": "2026-10-16T18:42:36.547767+00:00",
+  "profile_id": "476bef41-669d-475f-a085-a27fc73846a5"
+}

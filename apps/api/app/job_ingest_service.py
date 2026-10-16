@@ -121,7 +121,13 @@ def _deem_blocked(text: str) -> bool:
 
 
 def fetch_url_text(url: str, *, timeout: float = 15.0) -> dict:
-    """抓取公开链接正文。返回结构含 status / text / title / note。"""
+    """抓取公开链接正文。返回结构含 status / text / title / note。
+
+    SSRF 防护：只允许公网 http(s)；重定向逐跳手动跟随，每一跳都重新校验，
+    防止「公网 URL 302 跳内网/云元数据」的绕过（见 url_guard）。
+    """
+    from .url_guard import MAX_REDIRECTS, UrlBlocked, assert_public_url, safe_redirect_target
+
     parsed = (url or "").strip()
     if not re.match(r"^https?://", parsed, re.IGNORECASE):
         raise HTTPException(422, "请输入以 http:// 或 https:// 开头的公开链接。")
@@ -136,12 +142,29 @@ def fetch_url_text(url: str, *, timeout: float = 15.0) -> dict:
         "fetched_at": datetime.now(timezone.utc).isoformat(),
     }
     try:
+        # 第一跳之前先校验；随后每一跳重新校验（重定向不允许交给 httpx 自动跟随）。
+        assert_public_url(parsed)
         with httpx.Client(
-            follow_redirects=True,
+            follow_redirects=False,
             timeout=timeout,
             headers={"User-Agent": USER_AGENT, "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8"},
         ) as client:
-            response = client.get(parsed)
+            response = None
+            current = parsed
+            for _ in range(MAX_REDIRECTS + 1):
+                assert_public_url(current)
+                response = client.get(current)
+                if response.is_redirect:
+                    next_url = safe_redirect_target(current, response.headers.get("location", ""))
+                    if next_url:
+                        current = next_url
+                        continue
+                break
+            else:
+                result["note"] = "重定向次数过多，已停止抓取。"
+                return result
+    except UrlBlocked as exc:
+        raise HTTPException(exc.status_code, exc.detail) from exc
     except httpx.HTTPError as exc:
         result["note"] = f"请求失败：{exc.__class__.__name__}"
         return result

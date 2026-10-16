@@ -153,3 +153,47 @@ cd apps\web; $env:NODE_PATH="C:\Users\覆水\.workbuddy\binaries\node\workspace\
 cd apps\api; .venv\Scripts\python scripts\tracker_acceptance.py http://127.0.0.1:8100
 cd apps\web; $env:NODE_PATH="C:\Users\覆水\.workbuddy\binaries\node\workspace\node_modules"; node scripts\e2e-overnight-m3.cjs
 ```
+
+## M4 · 网申填表真实兼容性与安全
+
+状态：**DONE_VERIFIED**（真实浏览器桥 + 本地表单页验收 11 步 0 失败 + 安全测试 23 项全绿）
+
+### 本轮新增/修复
+
+- **字段生命周期六态**（`READ / MATCHED / CONFIRMED / FILLED / SKIPPED / FAILED`）：
+  规则层 plan 输出 `state`（READY→MATCHED、NEEDS_CONFIRM→READ、BLOCKED/UNSUPPORTED→SKIPPED），
+  执行层由 fill 结果给出 FILLED/FAILED，用户确认后 CONFIRMED。summary 增加六态统计。
+- **确认类勾选绝不代劳**（真实缺陷）：checkbox（隐私政策/同意条款）此前会被 label 启发式
+  误读成普通字段（实测被误标「姓名」并**自动勾选**）→ matching 层一律 SKIPPED +
+  fill 执行层 `_NEVER_FILL` 加 checkbox 双保险。
+- **「code」误判修复**（真实缺陷）：`ref_code`（内推人工号）因 name 含 "code" 被误判为
+  验证码 BLOCKED → 收紧为 captcha/verify/vcode，裸 code 需同时出现验证相关词。
+- **SSRF 防护**（新模块 `url_guard.py`）：只允许公网 http(s)；环回/私网/链路本地
+  （含云元数据 169.254.169.254）/保留地址/域名解析到内网一律 422 拒绝；
+  重定向不再交给 httpx 自动跟随——逐跳手动跟随（≤5 跳）且**每一跳重新校验**，
+  堵住「公网 URL 302 跳内网」绕过。
+- 隐藏/禁用/只读控件如实 SKIPPED；必填字段资料缺失 → 明确「必填」提示（不静默跳过）；
+  标签不规范时用 name/id/placeholder 兜底匹配。
+- **模型不可用不影响确定性字段**：匹配引擎是纯规则（`webform_matching` 无任何模型调用），
+  测试文件全部不配置模型即通过——确定性字段（姓名/手机/邮箱/城市/学历/毕业时间/专业）
+  永远可填，低置信字段标 READ 等人工确认。
+
+### 证据（真实浏览器桥 + 本地测试表单 `docs/evaluation/webform-testpage/index.html`）
+
+- `docs/evaluation/overnight-sprint/m4-webform-acceptance.json`（11 步 0 失败）：
+  建档（真实 LLM 抽取）→ 会话打开表单 → 读取 + 匹配（14 项六态断言全过：7 字段 MATCHED、
+  自我介绍/内推/到岗 READ、禁用/密码/验证码/文件/checkbox/隐藏 SKIPPED）→
+  执行填写 8 项成功 → 重新读取逐字段验证（姓名/手机/邮箱/城市/学历本科/专业已填，
+  密码/验证码/附件空，禁用控件原样 AUTO-9527，**同意条款未被代勾**）→
+  提交按钮未点击（页面仍是表单）→ SSRF 元数据/环回 422。
+- `docs/screenshots/overnight-m4/01-填写前.png`、`02-按计划填写后.png`（填写后截图可见
+  7 字段已填、其余留空待人工、禁用控件原样、提交按钮未动）
+- 测试：`tests/test_webform_safety.py`（23 项）+ webform 原有 12 项回归全绿
+
+### 复现命令
+
+```powershell
+cd docs\evaluation\webform-testpage; python -m http.server 8123 --bind 127.0.0.1   # 测试表单
+cd apps\api; .venv\Scripts\python scripts\webform_acceptance.py http://127.0.0.1:8100   # 需浏览器桥 8770
+cd apps\web; $env:NODE_PATH="C:\Users\覆水\.workbuddy\binaries\node\workspace\node_modules"; node scripts\e2e-overnight-m4-shot.cjs
+```

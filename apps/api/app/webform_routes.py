@@ -23,7 +23,8 @@ from .database import get_db
 router = APIRouter(prefix="/api/v1")
 
 #: 这些控件类型在写入前被再次拦截（双保险，浏览器桥里也拦一次）。
-_NEVER_FILL = {"password", "hidden", "submit", "button", "captcha"}
+#: checkbox：确认类勾选（隐私政策/同意条款）必须由人工完成，系统不代劳。
+_NEVER_FILL = {"password", "hidden", "submit", "button", "captcha", "checkbox"}
 
 
 class SessionStartRequest(BaseModel):
