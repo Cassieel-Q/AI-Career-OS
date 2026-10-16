@@ -197,3 +197,89 @@ cd docs\evaluation\webform-testpage; python -m http.server 8123 --bind 127.0.0.1
 cd apps\api; .venv\Scripts\python scripts\webform_acceptance.py http://127.0.0.1:8100   # 需浏览器桥 8770
 cd apps\web; $env:NODE_PATH="C:\Users\覆水\.workbuddy\binaries\node\workspace\node_modules"; node scripts\e2e-overnight-m4-shot.cjs
 ```
+
+## M5 · Benchmark（evals/overnight-v1）
+
+状态：**DONE_VERIFIED**（数据集 30 JD / 10 简历 / 30 配对 / 90 改写 / 15 对抗用例，全量真实跑通）
+
+### 交付物
+
+- `evals/overnight-v1/schema/*.json`（6 个 draft-07 schema）+ `scripts/{build_dataset,validate,run,score,report}.py`
+- `evals/overnight-v1/annotations/{GUIDELINES.md,template.json}`（人工标注规范与模板）
+- 报告：`docs/evaluation/overnight-benchmark-report.md`
+
+### 真实运行结果（`run-20261016T192635Z.json` / `score-20261016T192635Z.json`）
+
+| 路径 | 结果 |
+|---|---|
+| B（AI Career OS） | **30/30 配对全部执行**，38 条要点参与机械评分 |
+| A（Direct LLM） | **30/30 NOT_RUN**（未配置 `BASELINE_DIRECT_LLM_*`，如实标注，不伪造） |
+| 对抗/安全 | **15/15 全部执行**；`bc_safe=15`、`bc_unsafe=0`，其中 `bc-09`（空 JD）按预期被系统 422 拒绝 |
+| 疑似编造数字 | **0**（白名单覆盖整份简历 + JD 后，误报归零） |
+| 空改写 | 0 |
+
+### 修掉的三个方法学缺陷（否则会得出假结论）
+
+1. `run.py` 曾强行把每条经历写成 `KEEP_AND_HIGHLIGHT` 再与 ground_truth 比对——
+   等于替被测系统作答。改为**只确认、不改写**系统自己的四分类。
+2. `score.py` 曾把 `NOT_RUN` 计入 `bc_safe`（**把没执行当成安全通过**）。
+   现单独统计 `bc_not_run`，未执行的 `safe` 为 `null`。
+3. `score.py` 曾靠 `risk_flags` 反推四分类，得出「准确率 2/5」——系统并不输出要点级四分类，
+   那个数字是假的。现如实标 `b_decision_comparable=0`，四分类交人工标注。
+4. 数字白名单原只用单条要点 → 把「跨要点合并改写」误判成编造（实测 2 例均为误报）。
+   白名单改为整份简历 + 对应 JD。
+
+### 复现命令
+
+```powershell
+cd evals\overnight-v1\scripts
+python build_dataset.py && python validate.py
+python run.py --api http://127.0.0.1:8100     # 全量 30 配对 + 15 对抗用例，约 25 分钟
+python score.py ..\results\run-<时间戳>.json
+python report.py
+```
+
+## M6 · 全链路回归与最终交付
+
+状态：**DONE_VERIFIED**（A~F 六场景 E2E **40 步 0 失败** + 安全边界测试 31 项全绿 + 隔离 production build 通过）
+
+### A~F 全链路（`m6-full-chain.json`，40/40）
+
+| 场景 | 覆盖步骤 | 结果 |
+|---|---|---|
+| A 采集 | 建档 → 采集任务终态 → **抓到 vs 保存分开统计** | 6/6 |
+| B 改写 | JD → 经历四分类 → 策略 → 定向简历 → 逐条接受 → 确认 | 10/10 |
+| C 更新 | 修订号 → 板块差异 → **428 / 409** → 换模板不改正文 → 重新确认 | 7/7 |
+| D 投递 | 绑定（版本 ID + 修订号 + 快照）→ **下载真实 PDF 快照** → 话术 → 看板 | 5/5 |
+| E 网申 | 六态读取 → 按计划填写 → **绝不自动提交** → SSRF 元数据/环回 422 | 5/5 |
+| F 备份 | 导出 → 完整性校验 → 损坏包拒绝 → **恢复为新数据集** → 原数据集仍在 → **切回原数据集** | 7/7 |
+
+### 安全测试 `tests/test_security_boundaries.py`（31 项全绿）
+
+SSRF（10 个内网/元数据/协议用例全部 422）· 桥跨站与缺令牌拒绝 · 桥不提供本地文件读写 ·
+**Zip Slip 路径穿越** · **解压炸弹** · 备份损坏/篡改拒绝 · 备份不含密钥 ·
+未确认不得绑定投递版 · 不存在自动投递接口 · 数据集切换不删除原数据集。
+
+### 修掉的真实安全缺陷
+
+1. **Zip Slip（备份恢复路径穿越）**：`restore_as_new_dataset` 直接拼接压缩包成员名，
+   `attachments/../../evil.txt` 会写到数据集目录之外。已加 `_safe_attachment_rel()`
+   （拒绝 `..`/绝对路径/反斜杠/盘符）+ `Path.is_relative_to()` 二次兜底。
+2. **解压炸弹无上限**：新增单成员 256 MiB / 整包 1 GiB 限制，`inspect_archive` 先按声明大小拦截。
+
+### 隔离 production build（G 盘 EPERM 是环境问题，非代码问题）
+
+在 `D:\temp\aicareer-webbuild`（NTFS，非 G 盘）完整复制前端源码与 node_modules 后
+`next build` **成功**（Next.js 15.5.24，编译 27.5s，`BUILD_EXIT=0`），全部路由产出。
+原工作树未被触碰（未生成 `.next`）。
+
+### 复现命令
+
+```powershell
+# 后端（必须带 AI_CAREER_DATA_DIR，否则回退 DATABASE_URL 会 500）
+cd apps\api; $env:AI_CAREER_DATA_DIR="$env:LOCALAPPDATA\AICareerOS"
+.venv\Scripts\python -m uvicorn app.main:app --host 127.0.0.1 --port 8100
+
+cd apps\api; .venv\Scripts\python scripts\e2e_full_chain.py http://127.0.0.1:8100
+cd apps\api; .venv\Scripts\python -m pytest tests\test_security_boundaries.py -q
+```

@@ -23,3 +23,34 @@
    偶尔生成含「待补充」占位标记的要点 → 确认投递版会被 placeholder 防呆拦截（预期行为），
    用户需补齐或省略该条。验收脚本已内置模拟用户补齐的步骤。
 9. 换模板会推进修订号并使旧确认失效（需重新确认才能下载正式 PDF）——设计如此，防止悄悄替换已确认的投递版。
+
+## M5 / M6 新发现并已修复
+
+10. **备份恢复存在 Zip Slip 路径穿越**（真实安全缺陷，已修）：`restore_as_new_dataset`
+    直接把压缩包成员名拼进输出路径，`attachments/../../evil.txt` 会写到数据集目录之外。
+    修复：`_safe_attachment_rel()` 拒绝 `..` / 绝对路径 / 反斜杠 / 盘符，并用
+    `Path.is_relative_to()` 二次兜底；不安全成员跳过并记录到 `skipped_unsafe_members`。
+11. **备份恢复无解压体积上限**（真实安全缺陷，已修）：单成员 >256 MiB 或整包解压
+    >1 GiB 直接拒绝（防解压炸弹）。
+12. **评测脚本的方法学缺陷**（已修，避免得出假结论）：
+    - `run.py` 曾强行把每条经历写成 `KEEP_AND_HIGHLIGHT` 再与 ground_truth 比对——
+      等于替被测系统作答。现改为**只确认、不改写**系统自己的四分类；
+    - `score.py` 曾把 `NOT_RUN` 计入 `bc_safe`（把没执行当成安全），现单独统计
+      `bc_not_run`，且 `safe` 对未执行为 `null`；
+    - `score.py` 曾靠 `risk_flags` 反推四分类得出「准确率 2/5」——系统并不输出要点级
+      四分类，该数字是假的。现如实标 `b_decision_comparable=0`，交人工标注；
+    - 数字白名单原只用单条要点，把「跨要点合并改写」误判为编造。现白名单覆盖
+      整份简历 + 对应 JD，误报归零。
+13. **测试污染了真实本地数据集**（事故，已修复并加固）：安全测试调用
+    `restore_as_new_dataset` 时未隔离，导致 active_dataset 指针被切到一个 17 字节的假库，
+    服务全部 503。已把指针恢复为 `ds2610162021590a18`（原 5.9 MB 真实数据集完好），
+    污染文件移入 `quarantine/`，并为测试加 autouse 隔离 fixture。
+    **教训：任何触碰数据集的测试必须隔离 `AI_CAREER_DATA_DIR`。**
+14. 后端必须以 `AI_CAREER_DATA_DIR=%LOCALAPPDATA%\AICareerOS` 启动才走本地数据集模式；
+    否则回退 `DATABASE_URL`（本项目未装 psycopg2）→ 500。
+
+## 基线既有失败（与本轮改动无关，已用 worktree 在 bb5b140 验证）
+
+后端 7 项：`test_claim_provider` / `test_gap_analysis` / `test_market_profile` /
+`test_priorities` / `test_resume_reliability` / `test_roadmap` / `test_target_jobs`。
+M6 全量实测 **856 passed / 7 failed / 5 skipped**，失败项与基线完全一致 → 本轮新增 0 失败。

@@ -32,6 +32,30 @@ MANIFEST_NAME = "manifest.json"
 DATABASE_NAME = "data/career.db"
 ATTACHMENTS_DIR = "attachments"
 
+#: 解压上限（防「解压炸弹」）：单文件 256 MiB，整包解压总计 1 GiB。
+MAX_MEMBER_BYTES = 256 * 1024 * 1024
+MAX_TOTAL_BYTES = 1024 * 1024 * 1024
+
+
+def _safe_attachment_rel(name: str) -> str | None:
+    """把压缩包内的附件名转成安全的相对路径；不安全则返回 None。
+
+    防 Zip Slip：`attachments/../../evil.txt` 这类成员名会把文件写到数据集目录之外。
+    这里同时拒绝绝对路径、盘符、反斜杠与任何 `..` 段。
+    """
+    if not name.startswith(f"{ATTACHMENTS_DIR}/"):
+        return None
+    rel = name[len(ATTACHMENTS_DIR) + 1 :]
+    if not rel or rel.endswith("/"):
+        return None
+    if "\\" in rel or ":" in rel:
+        return None
+    parts = [part for part in rel.split("/") if part not in {"", "."}]
+    if not parts or any(part == ".." for part in parts):
+        return None
+    return "/".join(parts)
+
+
 #: 备份中显式排除的内容（写进清单，供用户核对）。
 EXCLUDED_ITEMS = (
     "根目录 .env（模型 API Key 等本机密钥）",
@@ -178,6 +202,18 @@ def inspect_archive(blob: bytes) -> dict:
             ok = False
             actual_size = 0
             if path in names:
+                # 先用成员声明大小挡一道「解压炸弹」，避免无上限地把内容读进内存
+                if zf.getinfo(path).file_size > MAX_MEMBER_BYTES:
+                    verified.append(
+                        {
+                            "path": path,
+                            "declared_size": item.get("size"),
+                            "actual_size": zf.getinfo(path).file_size,
+                            "sha256_ok": False,
+                            "too_large": True,
+                        }
+                    )
+                    continue
                 data = zf.read(path)
                 actual_size = len(data)
                 ok = _sha256(data) == item.get("sha256")
@@ -218,15 +254,36 @@ def restore_as_new_dataset(blob: bytes, *, label: str | None = None) -> dict:
     dataset_id = local_mode.new_dataset_id()
     target = local_mode.dataset_db_path(dataset_id, root)
 
+    total_bytes = 0
+    skipped_members: list[str] = []
     with zipfile.ZipFile(io.BytesIO(blob)) as zf:
         db_bytes = zf.read(DATABASE_NAME)
+        if len(db_bytes) > MAX_MEMBER_BYTES:
+            raise local_mode.DatasetError(f"备份中的数据库过大（>{MAX_MEMBER_BYTES} 字节），已拒绝恢复。")
+        total_bytes += len(db_bytes)
         target.write_bytes(db_bytes)
+
+        attachments_root = (root / "attachments" / dataset_id).resolve()
         for name in zf.namelist():
-            if name.startswith(f"{ATTACHMENTS_DIR}/") and not name.endswith("/"):
-                rel = name[len(ATTACHMENTS_DIR) + 1 :]
-                out = root / "attachments" / dataset_id / rel
-                out.parent.mkdir(parents=True, exist_ok=True)
-                out.write_bytes(zf.read(name))
+            rel = _safe_attachment_rel(name)
+            if rel is None:
+                # 路径穿越 / 非法成员名：跳过而不是写出数据集目录之外
+                if name.startswith(f"{ATTACHMENTS_DIR}/") and not name.endswith("/"):
+                    skipped_members.append(name)
+                continue
+            member_size = zf.getinfo(name).file_size
+            if member_size > MAX_MEMBER_BYTES:
+                raise local_mode.DatasetError(f"备份中 {name} 过大（>{MAX_MEMBER_BYTES} 字节），已拒绝恢复。")
+            total_bytes += member_size
+            if total_bytes > MAX_TOTAL_BYTES:
+                raise local_mode.DatasetError("备份解压后体积超限（疑似解压炸弹），已拒绝恢复。")
+            out = (attachments_root / rel).resolve()
+            # 二次兜底：解析后的真实路径必须仍在附件目录内
+            if not out.is_relative_to(attachments_root):
+                skipped_members.append(name)
+                continue
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_bytes(zf.read(name))
 
     previous = local_mode.active_dataset_id(root)
     local_mode.write_metadata(
@@ -251,6 +308,7 @@ def restore_as_new_dataset(blob: bytes, *, label: str | None = None) -> dict:
         "previous_dataset_id": previous,
         "counts": inspection.get("counts", {}),
         "restored_files": len(inspection["files"]),
+        "skipped_unsafe_members": skipped_members,
         "note": "已切换为恢复后的数据集；原数据集文件仍保留在本地，可随时切回。",
     }
 

@@ -1,0 +1,353 @@
+{
+  "run_at": "2026-10-16T20:03:45.829156+00:00",
+  "finished_at": "2026-10-16T20:04:30.365659+00:00",
+  "api": "http://127.0.0.1:8100",
+  "summary": {
+    "total": 40,
+    "passed": 40,
+    "failed": 0,
+    "skipped_external": 0
+  },
+  "abort_reason": null,
+  "steps": [
+    {
+      "step": "A1 建档",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/profiles/draft",
+      "status": 201
+    },
+    {
+      "step": "A2 上传原始简历",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/profiles/10f6b794-846f-49e3-9cd1-63747c407633/resumes/text",
+      "status": 200
+    },
+    {
+      "step": "A3 确认档案",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/profiles/10f6b794-846f-49e3-9cd1-63747c407633/confirm",
+      "status": 200
+    },
+    {
+      "step": "A4 发起采集任务",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/profiles/{id}/job-ingest/collect-runs",
+      "status": 200,
+      "note": "外部来源不可用时记录真实状态，不伪造"
+    },
+    {
+      "step": "A5 采集任务终态",
+      "ok": true,
+      "method": "GET",
+      "path": "/api/v1/job-ingest/collect-runs/task-91895d1cf763",
+      "status": 200,
+      "task_status": "COMPLETED",
+      "fetched": 5,
+      "filter_modes": [
+        "local"
+      ]
+    },
+    {
+      "step": "A6 「抓到」与「保存」分开统计",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/profiles/10f6b794-846f-49e3-9cd1-63747c407633/job-ingest/save-collected",
+      "status": 200,
+      "fetched": 5,
+      "saved_count": 0,
+      "skipped_count": 0,
+      "note": "fetched=抓到条数；saved_count=成功保存条数；两者分开呈现，不混为一谈"
+    },
+    {
+      "step": "B1 建 Mission（JD 解析）",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/profiles/10f6b794-846f-49e3-9cd1-63747c407633/job-missions",
+      "status": 201
+    },
+    {
+      "step": "B2 进入岗位简历",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/job-missions/962a85f2-fb14-4f6b-a2ce-b72b13a5144b/continue-to-resume",
+      "status": 200
+    },
+    {
+      "step": "B3 上传岗位简历",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/job-missions/962a85f2-fb14-4f6b-a2ce-b72b13a5144b/resumes/text",
+      "status": 200
+    },
+    {
+      "step": "B4 确认简历来源（不覆盖母版）",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/job-missions/962a85f2-fb14-4f6b-a2ce-b72b13a5144b/confirm-resume-source",
+      "status": 200
+    },
+    {
+      "step": "B5 生成经历四分类",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/job-missions/962a85f2-fb14-4f6b-a2ce-b72b13a5144b/experience-selection/generate",
+      "status": 200,
+      "count": 2,
+      "decisions": [
+        "KEEP",
+        "KEEP_AND_HIGHLIGHT"
+      ]
+    },
+    {
+      "step": "B6 确认四分类",
+      "ok": true,
+      "method": "PUT",
+      "path": "/api/v1/job-missions/962a85f2-fb14-4f6b-a2ce-b72b13a5144b/experience-selection",
+      "status": 200
+    },
+    {
+      "step": "B7 确认改写策略",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/job-missions/962a85f2-fb14-4f6b-a2ce-b72b13a5144b/confirm-strategy",
+      "status": 200
+    },
+    {
+      "step": "B8 生成定向简历",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/job-missions/962a85f2-fb14-4f6b-a2ce-b72b13a5144b/target-resumes",
+      "status": 201,
+      "retries": 0,
+      "note": "上游模型偶发 502，重试 2 次；失败如实记录"
+    },
+    {
+      "step": "B9 逐条接受要点（合成项目不代劳）",
+      "ok": true,
+      "method": "PATCH",
+      "path": "/api/v1/target-resume-bullets/{id}",
+      "status": 200,
+      "accepted": 2,
+      "total": 2
+    },
+    {
+      "step": "B10 确认投递版",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/job-missions/962a85f2-fb14-4f6b-a2ce-b72b13a5144b/confirm-target-resume",
+      "status": 200
+    },
+    {
+      "step": "C1 读取 Studio 文档（含修订号）",
+      "ok": true,
+      "method": "GET",
+      "path": "/api/v1/job-missions/962a85f2-fb14-4f6b-a2ce-b72b13a5144b/resume-studio",
+      "status": 200,
+      "revision": 1,
+      "confirmed_revision": null
+    },
+    {
+      "step": "C2 板块级差异（新增/删除/修改/不变）",
+      "ok": true,
+      "method": "GET",
+      "path": "/api/v1/job-missions/962a85f2-fb14-4f6b-a2ce-b72b13a5144b/resume-studio/source-diff",
+      "status": 200,
+      "update_available": false,
+      "section_count": 0,
+      "manual_edit_count": null,
+      "note": "当前 Studio 来源已是最新确认稿，因此无待更新差异（接口如实返回 update_available=false，不是缺陷）"
+    },
+    {
+      "step": "C3 不带 If-Match 的更新必须 428",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/job-missions/962a85f2-fb14-4f6b-a2ce-b72b13a5144b/resume-studio/reimport",
+      "status": 428
+    },
+    {
+      "step": "C4 过期修订号必须 409",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/job-missions/962a85f2-fb14-4f6b-a2ce-b72b13a5144b/resume-studio/reimport",
+      "status": 409
+    },
+    {
+      "step": "C5 重新导入 / 无更新稿时拒绝",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/job-missions/962a85f2-fb14-4f6b-a2ce-b72b13a5144b/resume-studio/reimport",
+      "status": 409,
+      "revision_before": 1,
+      "revision_after": null,
+      "note": "无更新稿，服务以 409 拒绝重新导入（防呆：不允许凭空覆盖用户已编辑的 Studio 文档）"
+    },
+    {
+      "step": "C6 换模板不改正文",
+      "ok": true,
+      "method": "PATCH",
+      "path": "/api/v1/job-missions/962a85f2-fb14-4f6b-a2ce-b72b13a5144b/resume-studio",
+      "status": 200,
+      "template": "zh-modern",
+      "bullets": 5
+    },
+    {
+      "step": "C7 换模板后重新确认（防呆：旧确认失效）",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/job-missions/962a85f2-fb14-4f6b-a2ce-b72b13a5144b/resume-studio/confirm",
+      "status": 200,
+      "note": "未重新确认时绑定投递版会被 409 拒绝——防止悄悄替换用户已确认的内容"
+    },
+    {
+      "step": "D1 新建投递记录",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/profiles/10f6b794-846f-49e3-9cd1-63747c407633/applications",
+      "status": 201
+    },
+    {
+      "step": "D2 绑定投递版本（版本 ID + 修订号 + 快照）",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/applications/00d2db9d-5bf4-4350-8893-05958b2916c8/bind-resume",
+      "status": 200,
+      "resume_version_id": "de816767-c922-4fc3-829f-6517f5110985",
+      "studio_revision": 2,
+      "snapshot": "C:\\Users\\覆水\\AppData\\Local\\AICareerOS\\pdf_snapshots\\00d2db9d-5bf4-4350-8893-05958b2916c8.pdf"
+    },
+    {
+      "step": "D3 下载投递快照（回答「当初投的是哪份」）",
+      "ok": true,
+      "method": "GET",
+      "path": "/api/v1/applications/00d2db9d-5bf4-4350-8893-05958b2916c8/resume-snapshot",
+      "status": 200,
+      "bytes": 81987,
+      "is_pdf": true
+    },
+    {
+      "step": "D4 生成打招呼话术（不编造、不自动发送）",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/applications/00d2db9d-5bf4-4350-8893-05958b2916c8/greeting",
+      "status": 200,
+      "length": 154
+    },
+    {
+      "step": "D5 求职看板聚合（阶段分列 + 版本使用记录）",
+      "ok": true,
+      "method": "GET",
+      "path": "/api/v1/profiles/10f6b794-846f-49e3-9cd1-63747c407633/applications/board",
+      "status": 200,
+      "columns": 7,
+      "version_usage": 1
+    },
+    {
+      "step": "E1 读取字段六态",
+      "ok": true,
+      "method": "GET",
+      "path": "/api/v1/profiles/10f6b794-846f-49e3-9cd1-63747c407633/webform/read",
+      "status": 200,
+      "total": 16,
+      "state_counts": {
+        "MATCHED": 7,
+        "READ": 4,
+        "SKIPPED": 5
+      }
+    },
+    {
+      "step": "E2 按计划填写（不自动提交）",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/profiles/10f6b794-846f-49e3-9cd1-63747c407633/webform/fill",
+      "status": 200,
+      "accepted": 0,
+      "rejected": 0,
+      "detail": ""
+    },
+    {
+      "step": "E3 绝不自动提交",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/profiles/10f6b794-846f-49e3-9cd1-63747c407633/webform/fill",
+      "status": 200
+    },
+    {
+      "step": "E4 SSRF 元数据地址必须被拒",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/job-ingest/fetch-url",
+      "status": 422
+    },
+    {
+      "step": "E5 SSRF 环回地址必须被拒",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/job-ingest/fetch-url",
+      "status": 422
+    },
+    {
+      "step": "F1 导出备份（返回 zip 二进制）",
+      "ok": true,
+      "method": "GET",
+      "path": "/api/v1/backup/export",
+      "status": 200,
+      "bytes": 1521452
+    },
+    {
+      "step": "F2 读取数据集列表（恢复前）",
+      "ok": true,
+      "method": "GET",
+      "path": "/api/v1/local/datasets",
+      "status": 200,
+      "count": 3,
+      "active": "ds2610162021590a18"
+    },
+    {
+      "step": "F3 备份完整性校验通过（manifest + SHA-256）",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/backup/inspect",
+      "status": 200,
+      "integrity_ok": true,
+      "excluded_count": 4
+    },
+    {
+      "step": "F4 损坏备份必须被拒绝",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/backup/inspect",
+      "status": 422
+    },
+    {
+      "step": "F5 恢复为新数据集（不覆盖现有数据集）",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/backup/restore",
+      "status": 200,
+      "new_dataset_id": "ds261017040430e2b6",
+      "previous_dataset_id": "ds2610162021590a18"
+    },
+    {
+      "step": "F6 恢复后原数据集仍在",
+      "ok": true,
+      "method": "GET",
+      "path": "/api/v1/local/datasets",
+      "status": 200,
+      "before": 3,
+      "after": 4
+    },
+    {
+      "step": "F7 验收结束切回原数据集（不改变用户环境）",
+      "ok": true,
+      "method": "POST",
+      "path": "/api/v1/local/datasets/ds2610162021590a18/activate",
+      "status": 200,
+      "active_before": "ds2610162021590a18",
+      "active_now": "ds2610162021590a18"
+    }
+  ]
+}

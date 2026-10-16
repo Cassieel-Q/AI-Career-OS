@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>示例公司校招网申表单（本地测试页）</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 640px; margin: 40px auto; }
+  .row { margin-bottom: 14px; display: flex; flex-direction: column; gap: 4px; }
+  .inline { flex-direction: row; gap: 12px; align-items: center; }
+  label.t { font-weight: 600; }
+</style>
+</head>
+<body>
+<h1>示例公司 2026 校园招聘申请</h1>
+<p>本页面仅用于网申填表功能的本地验收（公开表单，无需登录）。</p>
+<form id="apply-form" method="post" action="/submit">
+  <div class="row">
+    <label class="t" for="f-name">姓名</label>
+    <input id="f-name" name="fullname" type="text" required placeholder="请输入姓名" />
+  </div>
+  <div class="row">
+    <label class="t" for="f-phone">手机号码</label>
+    <input id="f-phone" name="mobile" type="tel" required />
+  </div>
+  <div class="row">
+    <label class="t" for="f-email">电子邮箱</label>
+    <input id="f-email" name="mail" type="email" required />
+  </div>
+  <div class="row">
+    <label class="t" for="f-city">现居城市</label>
+    <input id="f-city" name="city" type="text" />
+  </div>
+  <div class="row">
+    <label class="t" for="f-degree">最高学历</label>
+    <select id="f-degree" name="degree" required>
+      <option value="">请选择</option>
+      <option>高中</option>
+      <option>大专</option>
+      <option>本科</option>
+      <option>硕士</option>
+      <option>博士</option>
+    </select>
+  </div>
+  <div class="row">
+    <label class="t" for="f-grad">毕业时间</label>
+    <input id="f-grad" name="graduation" type="month" />
+  </div>
+  <div class="row">
+    <label class="t" for="f-major">所学专业</label>
+    <input id="f-major" name="major" type="text" />
+  </div>
+  <div class="row">
+    <label class="t">性别</label>
+    <fieldset style="border:none; display:flex; gap:16px; margin:0; padding:0;">
+      <label class="inline"><input type="radio" name="gender" value="男" /> 男</label>
+      <label class="inline"><input type="radio" name="gender" value="女" /> 女</label>
+    </fieldset>
+  </div>
+  <div class="row">
+    <label class="t" for="f-intro">请用一段话介绍你自己（低置信度示例：规则不匹配，交由人工确认）</label>
+    <textarea id="f-intro" name="selfintro" rows="4"></textarea>
+  </div>
+  <div class="row">
+    <label class="t" for="f-referral">内推人工号（标签不规范示例）</label>
+    <input id="f-referral" name="ref_code" type="text" placeholder="没有可留空" />
+  </div>
+  <div class="row">
+    <label class="t" for="f-availability">到岗时间</label>
+    <input id="f-availability" name="available_from" type="text" />
+  </div>
+  <div class="row">
+    <label class="t" for="f-track">内部跟踪号（隐藏字段，不应出现在可填列表）</label>
+    <input id="f-track" name="tracking" type="hidden" value="TRK-INTERNAL" />
+  </div>
+  <div class="row">
+    <label class="t" for="f-frozen">系统编号（禁用控件示例）</label>
+    <input id="f-frozen" name="sysno" type="text" value="AUTO-9527" disabled />
+  </div>
+  <div class="row">
+    <label class="t" for="f-pass">设置查询密码（永不自动填写）</label>
+    <input id="f-pass" name="loginpass" type="password" />
+  </div>
+  <div class="row">
+    <label class="t" for="f-captcha">短信验证码（永不自动填写）</label>
+    <input id="f-captcha" name="smscode" type="text" />
+  </div>
+  <div class="row">
+    <label class="t" for="f-resume">上传简历附件（不支持自动上传）</label>
+    <input id="f-resume" name="attach" type="file" />
+  </div>
+  <div class="row inline">
+    <input id="f-agree" name="agree" type="checkbox" />
+    <label for="f-agree">我已阅读并同意《应聘者隐私政策》（确认类勾选由人工完成）</label>
+  </div>
+  <div class="row">
+    <button type="submit" id="btn-submit">提交申请（系统永不自动点击）</button>
+  </div>
+</form>
+</body>
+</html>
