@@ -55,6 +55,7 @@ from app.overview_routes import router as overview_router
 from app.job_insight_routes import router as job_insight_router
 from app.backup_routes import router as backup_router
 from app.job_ingest_routes import router as job_ingest_router
+from app.manual_import_routes import router as manual_import_router
 from app.webform_routes import router as webform_router
 from app.profile_schemas import CareerPreferencesInput, CareerPreferencesRead, ProfileRead, ProfileUpdate
 from app.profile_service import (
@@ -2746,6 +2747,7 @@ app.include_router(overview_router)
 app.include_router(job_insight_router)
 app.include_router(backup_router)
 app.include_router(job_ingest_router)
+app.include_router(manual_import_router)
 app.include_router(webform_router)
 app.add_middleware(
     CORSMiddleware,

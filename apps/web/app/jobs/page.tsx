@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -575,6 +576,9 @@ export default function JobsPage() {
             一键采集真实在招岗位、采集当前招聘网页，或手动导入。保存进岗位库后可直接：JD 分析 → 经历四分类 → 定向简历 → Resume Studio → PDF。
           </p>
         </div>
+        <Link className="app-btn primary" href={"/jobs/import" as Route}>
+          导入 BOSS 直聘岗位 →
+        </Link>
       </header>
 
       {error && (

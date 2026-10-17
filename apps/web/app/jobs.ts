@@ -316,3 +316,84 @@ export function parseCandidateJobs(profileId: string, sourceText: string, source
 export function importCandidateJob(candidateId: string): Promise<{ candidate_id: string; mission_id: string; company: string; role: string; reused: boolean }> {
   return json(`/api/v1/candidate-jobs/${encodeURIComponent(candidateId)}/import`, { method: "POST" });
 }
+
+// ---------------------------------------------------------------------------
+// 手动导入（BOSS 直聘等需要登录的中文平台）：粘贴 → 解析 → 确认 → 保存 → 进入匹配
+// ---------------------------------------------------------------------------
+
+export type JobDraft = {
+  schema?: string;
+  source?: string;
+  source_site?: string;
+  recognition?: string;
+  source_url?: string;
+  company?: string;
+  role?: string;
+  location?: string;
+  salary_text?: string;
+  education?: string;
+  experience?: string;
+  employment_type?: "INTERN" | "FULLTIME" | "PARTTIME" | "UNKNOWN";
+  jd?: string;
+  jd_excerpt?: string;
+  collected_at?: string;
+  dedupe_key?: string;
+  content_hash?: string;
+  needs_confirm?: string[];
+  confidence?: Record<string, string>;
+  warnings?: string[];
+  text?: string;
+  original_length?: number;
+};
+
+export function parseManualJob(input: {
+  source_text: string;
+  source_url?: string;
+  source_site?: string;
+  provided?: Record<string, string>;
+}): Promise<{ status: string; draft: JobDraft }> {
+  return json("/api/v1/job-import/parse", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ recognition: "MANUAL_PASTE", ...input }),
+  });
+}
+
+export type ManualSaveResult = {
+  status: "NEW" | "DUPLICATE" | "UPDATED";
+  candidate_id: string;
+  company?: string | null;
+  role?: string | null;
+  changed_fields?: string[];
+  message?: string;
+  mission_id?: string;
+  mission_reused?: boolean;
+  mission_error?: string;
+  user_edited_preserved?: boolean;
+};
+
+export function saveManualJob(
+  profileId: string,
+  draft: JobDraft,
+  options: { update_duplicates?: boolean; import_to_mission?: boolean } = {},
+): Promise<ManualSaveResult> {
+  return json(`/api/v1/profiles/${encodeURIComponent(profileId)}/job-import/save`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ draft, ...options }),
+  });
+}
+
+export type ExtensionStatus = {
+  paired: boolean;
+  token_fingerprint: string | null;
+  pending_codes: number;
+};
+
+export function readExtensionStatus(): Promise<ExtensionStatus> {
+  return json("/api/v1/extension/status");
+}
+
+export function createExtensionPairCode(): Promise<{ code: string; expires_in: number }> {
+  return json("/api/v1/extension/pair/code", { method: "POST" });
+}
