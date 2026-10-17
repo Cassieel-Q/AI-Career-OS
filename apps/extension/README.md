@@ -46,6 +46,8 @@
 ## 文件
 
 - `manifest.json` — MV3 清单
-- `extract.js` — 页面可见文本抽取（选择器优先，失败降级整页文本）
-- `background.js` — 注入 + 本地 API 通信（写请求带配对令牌）
+- `extract.js` — 页面可见文本抽取（选择器优先，失败降级整页文本）。
+  注意：MV3 的 `executeScript({ files })` **不返回**脚本结果，因此抽取结果写在
+  `document.documentElement[data-ai-career-capture]` / `chrome.storage.local` 上，由后台回读
+- `background.js` — 注入 + 回读 + 本地 API 通信（写请求带配对令牌）
 - `popup.html` / `popup.js` / `popup.css` — 弹窗界面

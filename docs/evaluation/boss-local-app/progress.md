@@ -206,3 +206,27 @@
      result 为空时把原始注入结果 JSON 带出并提示「先 F5 刷新页面再试」。
 - 回归：扩展专项 E2E 10/10。
 - 下一步：用户刷新 BOSS 页后重试；若仍失败，弹窗会给出可定位的真实错误文本。
+
+### 扩展 v1.3.0：根因定位——MV3 `files` 注入不返回值（不是 BOSS 页面的问题）
+
+- 用户 v1.2.3 弹窗报错原文：
+  `页面没有返回可读内容（注入结果：[{"documentId":"E84E...","frameId":0,"result":null}]）`。
+- **真正根因（我方代码缺陷，非站点结构差异）**：
+  `background.js` 用的是 `chrome.scripting.executeScript({ target, files: ["extract.js"] })`。
+  MV3 规范下 **`files` 注入不会把脚本的最后一个表达式作为返回值**，`results[0].result` 恒为 `null`。
+  也就是说 extract.js 一直都执行成功、也抽到了内容，只是结果从来没传回后台。
+  → 这也是为什么「F5 刷新」永远无效：刷新改变不了注入方式。
+  v1.2.1/1.2.2/1.2.3 加的 probe / 透明化只是把症状显示出来，没有碰到病根。
+- 修复（改成「注入 → 回读」两段式，三条互不依赖的通道）：
+  1. `extract.js`：不再依赖返回值，把结果 JSON 写到
+     `document.documentElement[data-ai-career-capture]`（DOM 属性，最可靠）、
+     `window.__AI_CAREER_CAPTURE__`（隔离世界全局变量）、
+     `chrome.storage.local.aiCareerCapture`（兜底）；
+  2. `background.js`：新增 `clearCapture`（先清残留，避免读到旧结果）→ 注入 →
+     `readCapture`（先用 `func` 读 DOM 属性，失败退回 `chrome.storage.local`）→ `JSON.parse`；
+  3. 错误文案不再误导用户去刷新，改为「注入成功但页面没写回结果」并带上原始帧信息。
+- 可观测性：弹窗顶部显示 `扩展版本：vX.Y.Z`，用户可确认是否真的重载到最新版。
+- 回归：扩展专项 E2E **11/11**（新增 4c：守住「MV3 回读通道」这条回归用例，
+  直接断言 `data-ai-career-capture` 里能解析出与 4b 一致的岗位结果）。
+- 下一步：用户重载扩展到 v1.3.0 后点「读取当前岗位」；若仍失败，说明抽取逻辑与真实
+  BOSS DOM 不匹配（此时弹窗会给出 status=NOT_A_JOB_PAGE + probe 自诊），按 probe 数值调选择器。

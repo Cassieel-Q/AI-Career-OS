@@ -1,9 +1,9 @@
 {
   "web": "http://127.0.0.1:3000",
   "api": "http://127.0.0.1:8100",
-  "finished_at": "2026-10-17T07:16:50.475Z",
-  "total": 9,
-  "passed": 9,
+  "finished_at": "2026-10-17T08:59:44.903Z",
+  "total": 11,
+  "passed": 11,
   "failed": 0,
   "steps": [
     {
@@ -31,6 +31,18 @@
       "detail": "confidence={\"role\":\"MISSING\",\"salary\":\"MISSING\",\"company\":\"MISSING\",\"location\":\"MISSING\",\"jd\":\"MISSING\"} source_len=51"
     },
     {
+      "step": "4b",
+      "name": "BOSS 推荐流双栏布局（网址不变）从右侧详情面板抽取",
+      "ok": true,
+      "detail": "status=OK provided={\"company\":\"示例科技有限公司\",\"role\":\"供应链产品经理（采购寻源与智能订货）\",\"location\":\"北京\",\"salary_text\":\"30-50K\",\"education\":\"本科\",\"experience\":\"经验不限\"} job_url=http://127.0.0.1:3000/job_detail/card-b.html"
+    },
+    {
+      "step": "4c",
+      "name": "MV3 注入回读通道可用（files 注入不返回值）",
+      "ok": true,
+      "detail": "回读属性前 40 字={\"status\":\"OK\",\"page_url\":\"http://127.0."
+    },
+    {
       "step": 5,
       "name": "已配对状态下仍拒绝无效令牌",
       "ok": true,
@@ -46,7 +58,7 @@
       "step": 7,
       "name": "扩展重复导入不产生第二条记录",
       "ok": true,
-      "detail": "first=NEW second=DUPLICATE same_id=true"
+      "detail": "first=DUPLICATE second=DUPLICATE same_id=true"
     },
     {
       "step": 8,

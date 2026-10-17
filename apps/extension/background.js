@@ -29,26 +29,99 @@ async function activeTabId() {
   return tab.id;
 }
 
+/**
+ * 回读通道常量，必须与 extract.js 里的一致。
+ * 注意：MV3 的 executeScript({ files }) 不返回脚本结果（result 恒为 null），
+ * 所以 v1.3.0 起改成「注入 → 回读」两段式。
+ */
+const CAPTURE_ATTR = "data-ai-career-capture";
+const CAPTURE_KEY = "aiCareerCapture";
+
+/** 清掉上一次的残留，避免读到旧结果。 */
+async function clearCapture(tabId) {
+  await chrome.storage.local.remove(CAPTURE_KEY);
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      func: () => {
+        try {
+          document.documentElement.removeAttribute("data-ai-career-capture");
+        } catch (_) {
+          /* ignore */
+        }
+        try {
+          delete window.__AI_CAREER_CAPTURE__;
+        } catch (_) {
+          /* ignore */
+        }
+      },
+    });
+  } catch (_) {
+    /* 清不干净不影响下一步 */
+  }
+}
+
+/** 回读：先读 DOM 属性，再退回 chrome.storage.local。 */
+async function readCapture(tabId) {
+  try {
+    const results = await chrome.scripting.executeScript({
+      target: { tabId },
+      func: () => {
+        try {
+          const attr = document.documentElement.getAttribute("data-ai-career-capture");
+          if (attr) return attr;
+        } catch (_) {
+          /* ignore */
+        }
+        return window.__AI_CAREER_CAPTURE__ || null;
+      },
+    });
+    const first = results && results[0];
+    if (first && first.result) return first.result;
+  } catch (_) {
+    /* 落到 storage 兜底 */
+  }
+  const stored = await chrome.storage.local.get(CAPTURE_KEY);
+  return stored && stored[CAPTURE_KEY] ? stored[CAPTURE_KEY] : null;
+}
+
 /** 用户点击后才注入：activeTab 权限会在点击扩展图标时临时授予。 */
 async function extractFromActiveTab() {
   const tabId = await activeTabId();
-  const results = await chrome.scripting.executeScript({
-    target: { tabId },
-    files: ["extract.js"],
-  });
-  const first = results && results[0];
+  await clearCapture(tabId);
+
+  let injected = [];
+  try {
+    injected = await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ["extract.js"],
+    });
+  } catch (error) {
+    throw new Error(`注入页面脚本失败：${error instanceof Error ? error.message : String(error)}`);
+  }
+
   // 页面内脚本报错：把真实错误带出来，不让它变成「没有返回内容」
+  const first = injected && injected[0];
   if (first && first.error) {
     const detail = first.error && first.error.message ? first.error.message : String(first.error);
     throw new Error(`页面脚本执行出错：${String(detail).slice(0, 200)}`);
   }
-  const value = first && first.result;
-  if (!value) {
-    const raw = JSON.stringify(results || []).slice(0, 200);
+
+  const raw = await readCapture(tabId);
+  if (!raw) {
+    const frameInfo = String(JSON.stringify(injected || [])).slice(0, 160);
     throw new Error(
-      `页面没有返回可读内容（注入结果：${raw}）。请先刷新页面（F5）再点一次；还是失败就把这条发出来。`,
+      `注入成功但页面没写回结果（${frameInfo}）。请在 BOSS 页面按 F5 刷新、点开一个职位卡片后再读一次；仍失败请把这条发出来。`,
     );
   }
+
+  let value = null;
+  try {
+    value = JSON.parse(raw);
+  } catch (_) {
+    throw new Error(`读取结果不是合法 JSON（前 120 字：${String(raw).slice(0, 120)}）。`);
+  }
+  if (!value) throw new Error("读取结果为空。");
   return value;
 }
 

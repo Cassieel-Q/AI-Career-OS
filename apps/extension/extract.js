@@ -13,6 +13,9 @@
  * 此时直接从右侧详情面板抽取，不再要求网址跳到 /job_detail/。
  */
 
+/** 与 background.js 约定：抽取结果写在这个 DOM 属性上，供回读。 */
+const CAPTURE_ATTR = "data-ai-career-capture";
+
 /** 只取可见文本：跳过 script/style/隐藏节点与表单控件。 */
 function visibleText(el) {
   if (!el) return "";
@@ -432,5 +435,37 @@ function extractJob() {
   }
 }
 
-// executeScript 的返回值就是最后一个表达式的值
-extractJob();
+/**
+ * MV3 的 executeScript({ files }) **不会把脚本的最后一个表达式作为返回值**
+ * （results[0].result 恒为 null）。所以这里不靠返回值，而是把结果写到三个
+ * 通道里，由 background.js 主动回读：
+ *   1. document.documentElement 上的 data 属性（同一 DOM，最可靠）
+ *   2. 隔离世界的全局变量（同一次页面会话内有效）
+ *   3. chrome.storage.local（连第 1、2 条都拿不到时的兜底）
+ */
+(function () {
+  const payload = extractJob();
+  let raw = "";
+  try {
+    raw = JSON.stringify(payload);
+  } catch (_) {
+    raw = JSON.stringify({ status: "ERROR", note: "抽取结果无法序列化。" });
+  }
+  try {
+    document.documentElement.setAttribute(CAPTURE_ATTR, raw);
+  } catch (_) {
+    /* ignore */
+  }
+  try {
+    window.__AI_CAREER_CAPTURE__ = raw;
+  } catch (_) {
+    /* ignore */
+  }
+  try {
+    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.set({ aiCareerCapture: raw, aiCareerCaptureAt: Date.now() });
+    }
+  } catch (_) {
+    /* ignore */
+  }
+})();

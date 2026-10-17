@@ -234,6 +234,11 @@ async function pair() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  try {
+    $("ext-version").textContent = `扩展版本：v${chrome.runtime.getManifest().version}`;
+  } catch (_) {
+    /* ignore */
+  }
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     const tab = tabs && tabs[0];
     $("page-host").textContent = tab && tab.url ? `当前页面：${tab.url}` : "当前页面：—";

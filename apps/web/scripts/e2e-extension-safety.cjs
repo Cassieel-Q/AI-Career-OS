@@ -164,6 +164,32 @@ function startEvilServer() {
       `status=${stream.status} provided=${JSON.stringify(stream.provided)} job_url=${stream.job_url}`,
     );
 
+    // ---------------------------------------------------------------- 4c 回读通道回归
+    // MV3 的 executeScript({ files: [...] }) **不返回**脚本结果（results[0].result 恒为 null），
+    // 历史上正是因为依赖返回值，导致扩展一直报「页面没有返回可读内容」。
+    // v1.3.0 起结果写在 documentElement 的 data 属性上，由 background.js 主动回读。
+    await page.goto(`${WEB}/boss-stream-test.html`, { waitUntil: "domcontentloaded" });
+    await page.addScriptTag({ content: EXTRACT_SRC });
+    const readback = await page.evaluate(() => {
+      const raw = document.documentElement.getAttribute("data-ai-career-capture");
+      if (!raw) return { raw: null, parsed: null };
+      try {
+        return { raw: raw.slice(0, 40), parsed: JSON.parse(raw) };
+      } catch (_) {
+        return { raw: "INVALID_JSON", parsed: null };
+      }
+    });
+    const okReadback =
+      readback.parsed &&
+      readback.parsed.status === "OK" &&
+      readback.parsed.provided.role === "供应链产品经理（采购寻源与智能订货）";
+    check(
+      "4c",
+      "MV3 注入回读通道可用（files 注入不返回值）",
+      okReadback,
+      readback.raw ? `回读属性前 40 字=${readback.raw}` : "页面没有写入回读属性",
+    );
+
     // ---------------------------------------------------------------- 5
     const notPaired = await fetch(`${API}/api/v1/extension/status`);
     const statusBody = await notPaired.json();
