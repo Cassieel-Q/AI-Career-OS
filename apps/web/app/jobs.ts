@@ -189,6 +189,13 @@ export function readJobSources(): Promise<{ sources: JobSource[] }> {
   return json("/api/v1/job-ingest/sources");
 }
 
+export type ProfileSummary = { id: string; full_name: string; status: string };
+
+/** 本机档案列表：页面在 localStorage 没有档案 ID 时用它挑第一个兜底。 */
+export function readProfiles(): Promise<{ profiles: ProfileSummary[] }> {
+  return json("/api/v1/profiles");
+}
+
 export function fetchJobUrl(url: string): Promise<FetchedJob> {
   return json("/api/v1/job-ingest/fetch-url", {
     method: "POST",

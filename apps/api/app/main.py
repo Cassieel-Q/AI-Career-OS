@@ -28,10 +28,12 @@ import httpx
 from fastapi import Depends, FastAPI, File, HTTPException, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app import models
 from app.job_description_routes import router as job_description_router
 from app.market_profile_routes import router as market_profile_router
 from app.gap_routes import router as gap_router
@@ -2836,6 +2838,25 @@ async def upload_resume(
         timing_ms["total_llm_calls"] = total_llm_calls
         timing_ms["total_resume_ms"] = (time.perf_counter() - resume_started) * 1000
         _log_resume_timing(timing_ms, total_llm_calls)
+
+
+@app.get("/api/v1/profiles")
+def list_profiles(db: Session = Depends(get_db)) -> dict:
+    """本机档案列表（轻量字段）：岗位库/工作台等页面在本地没有档案 ID 时用它兜底。"""
+    rows = db.scalars(
+        select(models.UserProfile).order_by(models.UserProfile.created_at.asc())
+    ).all()
+    return {
+        "profiles": [
+            {
+                "id": str(row.id),
+                "full_name": row.full_name or "",
+                "status": row.status,
+                "created_at": row.created_at.isoformat() if row.created_at else None,
+            }
+            for row in rows
+        ]
+    }
 
 
 @app.get("/api/v1/profiles/{profile_id}", response_model=ProfileRead)

@@ -192,3 +192,46 @@ def test_question_bank_routes_roundtrip(client, persisted_profile) -> None:
     listed = client.get(f"/api/v1/profiles/{pid}/question-banks").json()
     assert len(listed) == 1
     assert listed[0]["item_count"] == 2
+
+
+# ---------------------------------------------------------------------------
+# 相关性：门槛条件不出题 + REJECTED 要点不算已验证事实
+# ---------------------------------------------------------------------------
+
+
+def test_threshold_requirements_never_become_questions(db_session, persisted_profile) -> None:
+    """学历/年限这类门槛条件是筛选标准，不展开成「你如何满足本科及以上学历」。"""
+    from types import SimpleNamespace
+
+    from app.question_bank_service import _is_threshold_requirement, generate_bank_from_context
+
+    assert _is_threshold_requirement("本科及以上学历，计算机相关专业优先")
+    assert _is_threshold_requirement("8年以上互联网产品经验")
+    assert not _is_threshold_requirement("熟悉主流AIGC技术栈，理解Diffusion Transformer")
+
+    mission = _make_mission(db_session, persisted_profile.id)
+    mission.parsed_jd = {
+        "requirements": [
+            "本科及以上学历，计算机相关专业优先",
+            "8年以上互联网产品经验",
+            "熟悉主流AIGC技术栈，能独立完成prompt设计与评测",
+        ]
+    }
+    db_session.commit()
+
+    bank = generate_bank_from_context(db_session, persisted_profile.id, mission_id=mission.id)
+    questions = [item.question_text for item in bank.items]
+    assert all("本科及以上学历" not in q for q in questions), questions
+    assert any("AIGC" in q for q in questions), questions
+
+
+def test_rejected_bullet_is_never_verified_evidence() -> None:
+    """用户明确拒绝（REJECTED）的要点，即使带证据也不能进「已验证」通道。"""
+    from types import SimpleNamespace
+
+    from app.mission_interview_context import _bullet_claim_status
+
+    assert _bullet_claim_status(SimpleNamespace(status="REJECTED", evidence_refs=["e1"])) == "REJECTED"
+    assert _bullet_claim_status(SimpleNamespace(status="ACCEPTED", evidence_refs=["e1"])) == "CONFIRMED"
+    assert _bullet_claim_status(SimpleNamespace(status="PENDING", evidence_refs=["e1"])) == "SUPPORTED"
+    assert _bullet_claim_status(SimpleNamespace(status="ACCEPTED", evidence_refs=[])) == "NEEDS_CONFIRMATION"

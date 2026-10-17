@@ -423,8 +423,11 @@ def generate_bank_from_context(
 
     # ---- JD 要求 → PROJECT_DEEP_DIVE ----
     requirements = _requirement_texts(ctx)
+    # 学历 / 工作年限这类门槛条件是筛选标准，不是可以展开聊的经历话题；
+    # 拿它们出「你如何满足本科及以上学历」是无效题。过滤后若一条不剩，退回第一条兜底。
+    discussable = [r for r in requirements if not _is_threshold_requirement(r)] or requirements[:1]
     existing_texts = {item.question_text for item in bank.items}
-    for index, requirement in enumerate(requirements[:6]):
+    for index, requirement in enumerate(discussable[:6]):
         question = f"请结合你的经历说明：你如何满足「{requirement}」？"
         if question in existing_texts:
             continue
@@ -448,15 +451,15 @@ def generate_bank_from_context(
 
     # ---- 技能型 JD 要求 / 技能 → BASIC ----
     basic_sources: list[str] = [
-        requirement for requirement in requirements if _looks_like_skill(requirement)
+        requirement for requirement in discussable if _looks_like_skill(requirement)
     ]
     for skill in (target.get("skills") or []):
         text = str(skill).strip()
         if text:
             basic_sources.append(text)
     if not basic_sources:
-        # 保证三分类齐全：用第一条要求派生一道基础理解题。
-        basic_sources = requirements[:1]
+        # 保证三分类齐全：用第一条可讨论要求派生一道基础理解题。
+        basic_sources = discussable[:1]
     for index, text in enumerate(list(dict.fromkeys(basic_sources))[:4]):
         question = f"请解释你在实际工作中如何运用「{text}」？"
         if question in existing_texts:
@@ -500,6 +503,16 @@ def generate_bank_from_context(
 
 
 _SKILL_KEYWORDS = ("熟悉", "掌握", "了解", "熟练", "具备", "会用", "使用", "使用过", "经验")
+
+# 门槛条件关键词：这些是筛选标准（学历/年限/语言等），展开成面试题没有意义。
+_THRESHOLD_KEYWORDS = (
+    "学历", "本科", "硕士", "研究生", "博士", "大专", "专科",
+    "年以上", "年及以上", "年以上经验", "相关专业", "应届", "统招",
+)
+
+
+def _is_threshold_requirement(text: str) -> bool:
+    return any(keyword in (text or "") for keyword in _THRESHOLD_KEYWORDS)
 
 
 def _looks_like_skill(text: str) -> bool:

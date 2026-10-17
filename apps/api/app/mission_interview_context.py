@@ -87,6 +87,9 @@ def get_confirmed_claims_context(db: Session, profile_id: UUID) -> dict:
 def _bullet_claim_status(bullet: models.TargetResumeBullet) -> str:
     status = (bullet.status or "").upper()
     has_evidence = bool(bullet.evidence_refs)
+    # 用户明确拒绝的要点不是事实，绝不能因为有证据就被当成「已验证」。
+    if status == "REJECTED":
+        return "REJECTED"
     if status in {"ACCEPTED", "EDITED"} and has_evidence:
         return "CONFIRMED"
     if has_evidence:

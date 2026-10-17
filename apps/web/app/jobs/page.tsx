@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { readCurrentProfileId } from "../career-hub.ts";
-import { missionHref } from "../missions.ts";
+import { missionHref, PROFILE_STORAGE_KEY } from "../missions.ts";
 import {
   cancelCollectRun,
   collectJobs,
@@ -18,6 +18,7 @@ import {
   readCollectRun,
   readJobLibrary,
   readJobSources,
+  readProfiles,
   saveCollectedJobs,
   startCollectRun,
   type CollectedJob,
@@ -162,7 +163,29 @@ export default function JobsPage() {
     void readJobSources()
       .then((result) => setSources(result.sources))
       .catch(() => setSources([]));
-    void refreshLibrary(pid, {});
+    if (pid) {
+      void refreshLibrary(pid, {});
+      return;
+    }
+    // 本地没有档案 ID（例如首次打开/清了浏览器数据）：自动取第一个档案并记住，
+    // 否则岗位库会永远显示为空。
+    void (async () => {
+      try {
+        const response = await readProfiles();
+        const profiles = Array.isArray(response?.profiles) ? response.profiles : [];
+        if (!profiles.length) {
+          setError("还没有简历档案，请先到「简历」上传简历。");
+          return;
+        }
+        const first = String(profiles[0].id || "");
+        window.localStorage.setItem(PROFILE_STORAGE_KEY, first);
+        setProfileId(first);
+        setInfo(`已自动选择档案${profiles[0].full_name ? `：${profiles[0].full_name}` : ""}。`);
+        void refreshLibrary(first, {});
+      } catch {
+        setError("读取档案列表失败，请确认本机服务已启动。");
+      }
+    })();
   }, [refreshLibrary]);
 
   const applyFilters = useCallback(
