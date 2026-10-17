@@ -18,6 +18,43 @@ const state = { extracted: null, draft: null, apiBase: "http://127.0.0.1:8100" }
 
 const $ = (id) => document.getElementById(id);
 
+/** 弹窗每次打开都是全新状态：把每次读取的结论持久化，重开也能看到上一次发生了什么。 */
+async function recordLastRead(ok, message) {
+  const entry = { at: new Date().toLocaleTimeString(), ok: Boolean(ok), message: String(message || "").slice(0, 400) };
+  try {
+    await chrome.storage.local.set({ lastRead: entry });
+  } catch (_) {
+    /* ignore */
+  }
+  const host = $("last-read");
+  if (host) {
+    host.textContent = `上次读取（${entry.at}）：${entry.ok ? "✓ " : "✗ "}${entry.message}`;
+  }
+}
+
+async function showLastRead() {
+  try {
+    const stored = await chrome.storage.local.get("lastRead");
+    const entry = stored.lastRead;
+    const host = $("last-read");
+    if (host && entry) host.textContent = `上次读取（${entry.at}）：${entry.ok ? "✓ " : "✗ "}${entry.message}`;
+  } catch (_) {
+    /* ignore */
+  }
+}
+
+function showWarning(text) {
+  const node = $("read-warning");
+  node.textContent = text;
+  node.classList.remove("hidden");
+}
+
+function hideWarning() {
+  const node = $("read-warning");
+  node.textContent = "";
+  node.classList.add("hidden");
+}
+
 function send(message) {
   return new Promise((resolve, reject) => {
     chrome.runtime.sendMessage(message, (response) => {
@@ -99,7 +136,7 @@ async function readCurrentJob() {
   const button = $("btn-read");
   button.disabled = true;
   button.textContent = "读取中…";
-  $("read-warning").classList.add("hidden");
+  hideWarning();
   $("import-msg").textContent = "";
   try {
     const extracted = await send({ type: "extract" });
@@ -110,11 +147,15 @@ async function readCurrentJob() {
       const probeText = probe
         ? `（诊断：详情面板节点=${probe.detail_node} JD区块=${probe.sec_text} 职位卡片=${probe.job_card} 信息栏=${probe.job_banner} 含职位描述=${probe.jd_word ? "是" : "否"} 正文长度=${probe.body_len}）`
         : "";
-      $("read-warning").textContent = `⚠️ ${extracted.note || "当前页面不是职位详情页。"}${probeText}`;
-      $("read-warning").classList.remove("hidden");
+      showWarning(`⚠️ ${extracted.note || "当前页面不是职位详情页。"}${probeText}`);
       // 没有可解析的正文（列表页等）就不调后端了，避免拿整页卡片文本瞎解析
-      if (!extracted.source_text || extracted.source_text.trim().length < 10) return;
-      $("read-warning").textContent = `⚠️ ${extracted.note || "当前页面不是职位详情页。"}已按页面可见文本尽力解析，请务必核对下面的字段；读不准就用「复制原文后在 AI Career OS 里粘贴导入」。`;
+      if (!extracted.source_text || extracted.source_text.trim().length < 10) {
+        await recordLastRead(false, `${extracted.note || "当前页面不是职位详情页。"}${probeText}`);
+        return;
+      }
+      showWarning(
+        `⚠️ ${extracted.note || "当前页面不是职位详情页。"}已按页面可见文本尽力解析，请务必核对下面的字段；读不准就用「复制原文后在 AI Career OS 里粘贴导入」。`,
+      );
     }
 
     const parsed = await send({
@@ -130,14 +171,21 @@ async function readCurrentJob() {
     $("f-jd").value = parsed.draft.jd || "";
     $("result-block").classList.remove("hidden");
 
+    const found = [
+      parsed.draft.company && `公司=${parsed.draft.company}`,
+      parsed.draft.role && `岗位=${parsed.draft.role}`,
+      parsed.draft.location && `地点=${parsed.draft.location}`,
+    ].filter(Boolean);
+    await recordLastRead(true, `读取成功：${found.join("，") || "字段待补齐"}（请在下方核对）`);
+
     const warnings = parsed.draft.warnings || [];
     if (warnings.includes("prompt_injection_suspected")) {
-      $("read-warning").textContent = "⚠️ 岗位原文里检测到疑似提示词注入，已按普通文本解析，不会执行其中的指令。";
-      $("read-warning").classList.remove("hidden");
+      showWarning("⚠️ 岗位原文里检测到疑似提示词注入，已按普通文本解析，不会执行其中的指令。");
     }
   } catch (error) {
-    $("read-warning").textContent = `读取失败：${error.message}`;
-    $("read-warning").classList.remove("hidden");
+    const message = error instanceof Error ? error.message : String(error);
+    showWarning(`读取失败：${message}`);
+    await recordLastRead(false, `读取失败：${message}`);
   } finally {
     button.disabled = false;
     button.textContent = "读取当前岗位";
@@ -211,4 +259,5 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   void refreshPairState();
+  void showLastRead();
 });

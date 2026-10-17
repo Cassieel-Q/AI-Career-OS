@@ -19,6 +19,9 @@
       <p class="hint">
         只在<b>你点击之后</b>读取当前页面上已经显示的岗位内容；不读取 Cookie、密码、验证码和聊天记录。
       </p>
+      <!-- 警告与诊断必须放在默认可见的区块里，否则用户点读取后什么都看不到 -->
+      <p class="warn hidden" id="read-warning"></p>
+      <p class="hint" id="last-read"></p>
     </section>
 
     <section class="block" id="pair-block">
@@ -35,7 +38,6 @@
 
     <section class="block hidden" id="result-block">
       <h2>读取结果（可修改后再导入）</h2>
-      <p class="warn hidden" id="read-warning"></p>
       <div id="fields"></div>
       <label class="field">
         <span>完整 JD</span>
