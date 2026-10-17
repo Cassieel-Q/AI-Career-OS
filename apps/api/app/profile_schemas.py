@@ -78,6 +78,17 @@ class ProfileItemInput(BaseModel):
     evidence_text: str | None = None
     source_type: SourceType = SourceType.USER_ENTERED
 
+    @field_validator("source_type", mode="before")
+    @classmethod
+    def tolerate_unknown_source_type(cls, value: object) -> object:
+        # 历史数据/一次性迁移可能写入过不在枚举里的值；读取时兜底归为 USER_ENTERED，
+        # 避免整个档案详情接口因单条脏数据 500。
+        try:
+            SourceType(value)
+        except ValueError:
+            return SourceType.USER_ENTERED
+        return value
+
     @field_validator("evidence_text", mode="before")
     @classmethod
     def normalize_evidence(cls, value: str | None) -> str | None:
