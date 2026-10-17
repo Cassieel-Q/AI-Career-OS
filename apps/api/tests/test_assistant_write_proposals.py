@@ -103,3 +103,27 @@ def test_proposal_routes_roundtrip(client, persisted_profile, db_session):
     assert {c["name"] for c in caps.json()} == {
         "create_interview_experience", "create_referral", "create_reminder",
     }
+
+
+def test_read_tools_work_without_profile_id(db_session, persisted_profile):
+    """回归：不传 profile_id 时 _profile_ids 走全量查询，曾因 scalars 返回 UUID 仍取 .id 而崩溃。"""
+    job = models.TargetJob(profile_id=persisted_profile.id, raw_text="jd", content_hash="meicai" + "0" * 58)
+    db_session.add(job)
+    db_session.flush()
+    mission = models.JobMission(
+        profile_id=persisted_profile.id,
+        target_job_id=job.id,
+        display_name="美菜 商品运营",
+        company="美菜",
+        role="商品运营",
+        status="ACTIVE",
+    )
+    db_session.add(mission)
+    db_session.commit()
+
+    for name in ("list_jobs", "list_applications", "list_resumes"):
+        text, changed, _ = execute_tool(name, {}, db_session, None)
+        assert changed is False
+        assert "UUID" not in text
+    jobs_text = execute_tool("list_jobs", {}, db_session, None).summary
+    assert "美菜" in jobs_text

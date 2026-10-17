@@ -210,7 +210,8 @@ def _profile_ids(db: Session, profile_id: str | None) -> list:
     """确定工具查询范围：指定 profile 就只查它，否则查全部（单用户本地场景通常只有一个）。"""
     if profile_id:
         return [profile_id]
-    return [str(row.id) for row in db.scalars(select(models.UserProfile.id)).all()]
+    # select(Model.id) + scalars 返回的是 UUID 本身，不能再取 .id
+    return [str(row) for row in db.scalars(select(models.UserProfile.id)).all()]
 
 
 def _jobs(db: Session, profile_id: str | None) -> list[dict[str, Any]]:
@@ -240,7 +241,7 @@ def _to_uuid(value: str) -> Any:
 def _resumes(db: Session, profile_id: str | None) -> list[dict[str, Any]]:
     ids = _profile_ids(db, profile_id)
     uuids = [_to_uuid(i) for i in ids]
-    mission_ids = [r.id for r in db.scalars(select(models.JobMission.id).where(models.JobMission.profile_id.in_(uuids))).all()]
+    mission_ids = list(db.scalars(select(models.JobMission.id).where(models.JobMission.profile_id.in_(uuids))).all())
     if not mission_ids:
         return []
     rows = db.scalars(
