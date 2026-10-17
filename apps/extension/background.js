@@ -185,6 +185,19 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       return { apiBase, ...(await callApi("/api/v1/extension/status", { anonymous: true })) };
     },
     extract: extractFromActiveTab,
+    /** 用扩展本地存的令牌真实校验一次（status 接口只反映服务端有没有令牌，不校验我们这份）。 */
+    async verifyPair() {
+      const { apiBase, token } = await readSettings();
+      if (!token) return { ok: false, hasToken: false };
+      try {
+        const response = await fetch(`${apiBase}/api/v1/extension/ping`, {
+          headers: { "X-AI-Career-Token": token },
+        });
+        return { ok: response.status === 200, hasToken: true, status: response.status };
+      } catch (_) {
+        return { ok: false, hasToken: true, unreachable: true };
+      }
+    },
     async pair() {
       const payload = await callApi("/api/v1/extension/pair/exchange", {
         method: "POST",

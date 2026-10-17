@@ -118,12 +118,24 @@ async function refreshPairState() {
     const data = await send({ type: "status" });
     state.apiBase = data.apiBase;
     $("f-apibase").value = data.apiBase;
-    if (data.paired) {
+    if (!data.paired) {
+      node.textContent = "未配对。请在 AI Career OS 生成配对码后填入下面。";
+      $("pair-input-row").classList.remove("hidden");
+      return;
+    }
+    // 服务端有令牌 ≠ 我们这份还有效：用本地令牌真实 ping 一次，
+    // 避免出现「显示已配对但一读就 401、且配对码输入框被藏住」的死锁。
+    const check = await send({ type: "verifyPair" });
+    if (check.ok) {
       node.textContent = `已配对（令牌 ${data.token_fingerprint}）`;
       node.classList.remove("err");
       $("pair-input-row").classList.add("hidden");
+    } else if (check.unreachable) {
+      node.textContent = "暂时连不上本机服务，读取功能暂不可用。";
+      node.classList.add("err");
     } else {
-      node.textContent = "未配对。请在 AI Career OS 生成配对码后填入下面。";
+      node.textContent = "本机令牌已更换，原配对失效：请在 AI Career OS 生成新配对码，在下面重新配对。";
+      node.classList.remove("err");
       $("pair-input-row").classList.remove("hidden");
     }
   } catch (error) {
