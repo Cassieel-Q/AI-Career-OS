@@ -57,6 +57,7 @@ from app.mock_interview_routes import router as mock_interview_router
 from app.overview_routes import router as overview_router
 from app.job_insight_routes import router as job_insight_router
 from app.backup_routes import router as backup_router
+from app.local_access import LOOPBACK_ORIGIN_REGEX
 from app.job_ingest_routes import router as job_ingest_router
 from app.manual_import_routes import router as manual_import_router
 from app.webform_routes import router as webform_router
@@ -2824,6 +2825,8 @@ app.include_router(webform_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_allowed_frontend_origins(),
+    # 本地前端端口会被其它项目挤占而漂移（3000/3001/3002…），回环地址不再逐端口列举
+    allow_origin_regex=LOOPBACK_ORIGIN_REGEX,
     allow_methods=["POST", "GET", "PUT", "PATCH", "DELETE"],
     allow_headers=["*"],
 )

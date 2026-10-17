@@ -15,6 +15,7 @@ import pytest
 
 from app import model_config_service as service
 from app import secret_store
+from app import local_access
 from app.local_access import CLIENT_HEADER, CLIENT_HEADER_VALUE
 from app.model_config_service import ModelConfigError, ModelNotConfiguredError, ModelUnusableError
 
@@ -599,3 +600,31 @@ def test_broken_user_config_without_env_raises():
     service.update_config(service.list_configs()[0]["id"], {"clear_key": True})
     with pytest.raises(ModelUnusableError):
         service.llm_settings("assistant")
+
+
+@pytest.mark.parametrize(
+    "origin,expected",
+    [
+        ("http://127.0.0.1:3002", True),
+        ("http://localhost:47821", True),
+        ("http://[::1]:3100", True),
+        ("https://evil.example.com", False),
+        ("http://192.168.1.9:3000", False),
+        ("http://127.0.0.1.evil.com:3000", False),
+    ],
+)
+def test_loopback_ports_are_trusted_but_lan_and_hostnames_are_not(origin, expected):
+    """端口漂移（3001/3002…）不影响本机使用，但局域网和伪装主机名必须拒绝。"""
+    assert local_access.is_trusted_origin(origin) is expected
+
+
+def test_frontend_cors_allows_drifted_loopback_port(client):
+    """前端被挤到任意端口后预检仍要通过，否则整页 Failed to fetch。"""
+    response = client.options(
+        "/api/v1/model-configs/status",
+        headers={
+            "Origin": "http://127.0.0.1:47821",
+            "Access-Control-Request-Method": "GET",
+        },
+    )
+    assert response.headers.get("access-control-allow-origin") == "http://127.0.0.1:47821"
