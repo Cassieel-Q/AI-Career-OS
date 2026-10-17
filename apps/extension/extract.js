@@ -277,7 +277,7 @@ function pageProbe() {
   };
 }
 
-function extractJob() {
+function extractJobCore() {
   const site = detectSite();
   const isJobPage = looksLikeJobPage();
   // 双栏推荐流：右侧详情面板（存在时优先作为抽取根节点，避免命中左侧卡片）
@@ -408,6 +408,28 @@ function looksLikeBossListPage() {
   const path = location.pathname || "";
   if (/job_detail|wejob|position\//.test(path)) return false;
   return Boolean(document.querySelector("[class*='job-card'], [class*='job-list-box'], .job-list, [class*='search-job-result']"));
+}
+
+function extractJob() {
+  try {
+    return extractJobCore();
+  } catch (error) {
+    // 绝不让异常静默：页面内脚本报错时也返回可序列化的诊断结果
+    return {
+      status: "ERROR",
+      page_url: location.href,
+      page_title: document.title || "",
+      site: "UNKNOWN",
+      used_selectors: {},
+      provided: { company: "", role: "", location: "", salary_text: "", education: "", experience: "" },
+      confidence: {},
+      source_text: "",
+      has_jd_block: false,
+      job_url: "",
+      probe: pageProbe(),
+      note: "页面读取异常：" + (error && error.message ? error.message : String(error)),
+    };
+  }
 }
 
 // executeScript 的返回值就是最后一个表达式的值

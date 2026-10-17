@@ -36,8 +36,19 @@ async function extractFromActiveTab() {
     target: { tabId },
     files: ["extract.js"],
   });
-  const value = results && results[0] && results[0].result;
-  if (!value) throw new Error("页面没有返回可读内容。");
+  const first = results && results[0];
+  // 页面内脚本报错：把真实错误带出来，不让它变成「没有返回内容」
+  if (first && first.error) {
+    const detail = first.error && first.error.message ? first.error.message : String(first.error);
+    throw new Error(`页面脚本执行出错：${String(detail).slice(0, 200)}`);
+  }
+  const value = first && first.result;
+  if (!value) {
+    const raw = JSON.stringify(results || []).slice(0, 200);
+    throw new Error(
+      `页面没有返回可读内容（注入结果：${raw}）。请先刷新页面（F5）再点一次；还是失败就把这条发出来。`,
+    );
+  }
   return value;
 }
 
