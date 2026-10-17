@@ -219,15 +219,31 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       });
     },
     async save() {
-      return callApi("/api/v1/extension/job-import/save", {
+      // 默认 true：读一个岗位就导入一个，直接落到工作台，不用再去岗位库点「导入」
+      const wantMission = message.import_to_mission === undefined ? true : Boolean(message.import_to_mission);
+      const result = await callApi("/api/v1/extension/job-import/save", {
         method: "POST",
         body: JSON.stringify({
           draft: message.draft,
           update_duplicates: Boolean(message.update_duplicates),
-          // 默认 true：读一个岗位就导入一个，直接落到工作台，不用再去岗位库点「导入」
-          import_to_mission: message.import_to_mission === undefined ? true : Boolean(message.import_to_mission),
+          import_to_mission: wantMission,
         }),
       });
+      // 自愈：旧版后端会忽略 import_to_mission，只把岗位留在候选草稿里
+      // （表现就是「导入成功但工作台看不到」）。这时扩展自己再走一步候选导入，
+      // 这样即使本机服务还没重启到新版后端，也能直接进工作台。
+      const candidateId = result && result.candidate_id;
+      if (wantMission && candidateId && !result.mission_id && !result.mission_error) {
+        try {
+          const imported = await callApi(`/api/v1/candidate-jobs/${candidateId}/import`, { method: "POST" });
+          result.mission_id = imported && imported.mission_id;
+          result.mission_reused = imported && imported.reused;
+          result.imported_by_extension = true;
+        } catch (error) {
+          result.mission_error = error instanceof Error ? error.message : String(error);
+        }
+      }
+      return result;
     },
     async settings() {
       return readSettings();

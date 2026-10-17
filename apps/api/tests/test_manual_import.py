@@ -366,6 +366,55 @@ def test_extension_save_uses_existing_profile(client: TestClient, isolated_exten
     assert saved.json()["status"] == "NEW"
 
 
+def test_extension_save_import_to_mission_lands_in_workbench(
+    client: TestClient, isolated_extension_dir, db_session
+):
+    """扩展保存带 import_to_mission 时，岗位必须直接成为工作台的正式岗位。
+
+    回归背景：后端 extension_save 曾漏掉该字段，浏览器里读到的岗位只停在
+    候选草稿，用户「导入成功但工作台看不到」。
+    """
+    profile_id = _profile_id(db_session)
+    code = client.post("/api/v1/extension/pair/code").json()["code"]
+    token = client.post("/api/v1/extension/pair/exchange", json={"code": code}).json()["token"]
+
+    saved = client.post(
+        "/api/v1/extension/job-import/save",
+        json={
+            "profile_id": profile_id,
+            "company": "工作台可见性公司",
+            "role": "AI产品实习生",
+            "location": "杭州",
+            "jd": BOSS_SAMPLE,
+            "source_site": "BOSS_ZHIPIN",
+            "import_to_mission": True,
+        },
+        headers={"X-AI-Career-Token": token},
+    )
+    assert saved.status_code == 200, saved.text
+    body = saved.json()
+    assert body["status"] == "NEW"
+    assert body.get("mission_id"), "import_to_mission=True 却没有生成正式岗位"
+
+    missions = client.get(f"/api/v1/profiles/{profile_id}/job-missions").json()
+    assert any(item["id"] == body["mission_id"] for item in missions)
+    assert any(item["role"] == "AI产品实习生" for item in missions)
+
+    # 反向：不带该字段时仍是候选草稿，不污染工作台
+    plain = client.post(
+        "/api/v1/extension/job-import/save",
+        json={
+            "profile_id": profile_id,
+            "company": "草稿公司",
+            "role": "草稿岗位",
+            "jd": BOSS_SAMPLE + "（草稿）",
+        },
+        headers={"X-AI-Career-Token": token},
+    )
+    assert plain.status_code == 200, plain.text
+    assert "mission_id" not in plain.json()
+
+
 def test_extension_rejects_oversized_body(client: TestClient, isolated_extension_dir):
     code = client.post("/api/v1/extension/pair/code").json()["code"]
     token = client.post("/api/v1/extension/pair/exchange", json={"code": code}).json()["token"]

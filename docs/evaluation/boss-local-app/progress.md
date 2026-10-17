@@ -314,3 +314,24 @@
   （美菜·供应链产品经理、焱法科技·产品实习生、焱法科技·AI研发实习生；
   job_missions 由 121 → 124）。
 - 回归：扩展 E2E 11/11。
+
+### v1.3.4 补全：后端 extension_save 漏掉 import_to_mission（半截修复）
+
+- 用户第二次反馈：「又读了新的岗位，工作台还是不更新」。核查：新导入的
+  明树数据·AI实习生（09:43）、GatherOne·产品一号位（09:42）仍是候选草稿
+  （imported_mission_id 为 NULL）。
+- 根因：上一轮只改了扩展侧（save 带 import_to_mission=true），但**后端
+  `/extension/job-import/save` 完全没处理该字段**（只有 `save_manual` 处理了），
+  所以不管扩展怎么传，都被丢掉 → 仍然停在候选草稿。
+- 修复（两侧都补齐）：
+  1. 后端 `extension_save` 补上与 `save_manual` 一致的 import_to_mission 处理，
+     返回 mission_id / mission_reused / mission_error；
+  2. 新增后端回归测试 `test_extension_save_import_to_mission_lands_in_workbench`
+     （断言进工作台 + 不带字段时仍是草稿），manual_import 测试 **24/24 通过**；
+  3. 扩展自愈：save 返回没有 mission_id 时，扩展自己再调一次
+     `/candidate-jobs/{id}/import`——这样在本机服务还没重启到新版后端时也能直接进工作台；
+  4. 弹窗以返回结果为准说明落点（进工作台 / 失败原因 / 仍是草稿），不再靠前端猜。
+- 同时用 API 把用户卡在草稿的两条推进工作台（job_missions 124 → 126，
+  五条 BOSS 岗位全部可见）。
+- 教训：跨端字段（客户端新增参数 → 服务端必须接住）要**同时**加端到端断言，
+  只改一侧会变成假修复；本次是后端测试才暴露的。

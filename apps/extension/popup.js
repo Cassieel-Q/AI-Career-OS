@@ -219,8 +219,11 @@ async function importJob() {
       update_duplicates: $("f-update").checked,
       import_to_mission: toWorkbench,
     });
-    // 落点要说清楚：默认进工作台，未勾选时只是岗位库里的候选草稿（不会出现在工作台）
-    const where = toWorkbench ? "已进入工作台（正式岗位）。" : "已存为岗位库的候选草稿，需到岗位库点「导入」才会进工作台。";
+    // 落点要说清楚：进没进工作台以返回结果为准，失败时把原因讲出来
+    let where;
+    if (result.mission_id) where = "已进入工作台（正式岗位）。";
+    else if (result.mission_error) where = `没能进入工作台：${result.mission_error}（岗位已存为候选草稿，可到岗位库手动导入）`;
+    else where = "已存为岗位库的候选草稿，需到岗位库点「导入」才会进工作台。";
     if (result.status === "NEW") msg.textContent = `已导入 AI Career OS，${where}`;
     else if (result.status === "UPDATED") msg.textContent = `岗位已存在，已按要求更新内容（保留了你的备注与投递状态），${where}`;
     else msg.textContent = `${result.message || "岗位库里已有同一条，未重复新增。"}${toWorkbench ? "（已在工作台中）" : "（在岗位库候选草稿里）"}`;

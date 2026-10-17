@@ -457,7 +457,21 @@ def extension_save(payload: ExtensionSaveRequest, request: Request, db: Session 
     draft = _apply_user_edits(draft, payload)
     if not (draft.get("jd") or "").strip():
         raise HTTPException(422, "岗位描述为空，未保存。")
-    return _save_draft(db, profile_id, draft, payload.update_duplicates)
+
+    result = _save_draft(db, profile_id, draft, payload.update_duplicates)
+
+    # 与手动导入保持一致：扩展保存也支持「直接进工作台」（import_to_mission）。
+    # 少这一段的话，浏览器里读到的岗位只会停在候选草稿，工作台永远不显示。
+    if payload.import_to_mission and result.get("candidate_id"):
+        from . import candidate_job_service as candidate_svc
+
+        try:
+            imported = candidate_svc.import_candidate(db, UUID(result["candidate_id"]), profile_id)
+            result["mission_id"] = imported.get("mission_id")
+            result["mission_reused"] = imported.get("reused", False)
+        except HTTPException as exc:
+            result["mission_error"] = exc.detail
+    return result
 
 
 __all__ = ["router"]
