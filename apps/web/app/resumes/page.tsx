@@ -118,7 +118,7 @@ export default function ResumesPage() {
     void loadResumeText(profileId);
   }, [profileId, loadResumeText]);
 
-  /** 拖拽 / 点选上传：直接建档案，并记住本机档案 ID。 */
+  /** 拖拽 / 点选上传：已有档案时替换该档案的简历（不新建），否则建档案，并记住本机档案 ID。 */
   async function uploadFiles(items: AcceptedImport[]) {
     const first = items[0];
     if (!first || uploading) return;
@@ -127,14 +127,22 @@ export default function ResumesPage() {
     setNotice("");
     const body = new FormData();
     body.append("file", first.file);
+    // 已有档案 → 换文件（原档案 ID 不变，岗位/投递记录全部保留）；没有 → 新建档案。
+    const url = profileId
+      ? `${API_BASE_URL}/api/v1/profiles/${profileId}/resumes`
+      : `${API_BASE_URL}/api/v1/resumes`;
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/resumes`, { method: "POST", body });
+      const response = await fetch(url, { method: "POST", body });
       const profile = await readApiPayload<Profile>(response);
       window.localStorage.setItem(PROFILE_STORAGE_KEY, profile.profile_id);
       upsertProfileLabelFromFilename(profile.profile_id, first.file.name);
       refreshLabel(profile.profile_id);
       setProfileId(profile.profile_id);
-      setNotice("简历已上传并完成解析，可以直接在下面的简历工作台里修改原始文字。");
+      setNotice(
+        profileId
+          ? "已用新文件替换当前档案的简历，事实已重新提取；岗位与投递记录不受影响。"
+          : "简历已上传并完成解析，可以直接在下面的简历工作台里修改原始文字。",
+      );
       await loadOverview();
       // 上传后自动滚到工作台，避免用户以为「上传了却没有简历」。
       window.setTimeout(() => studioRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);

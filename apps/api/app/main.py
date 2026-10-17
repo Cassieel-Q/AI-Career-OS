@@ -2842,9 +2842,18 @@ async def upload_resume(
 
 @app.get("/api/v1/profiles")
 def list_profiles(db: Session = Depends(get_db)) -> dict:
-    """本机档案列表（轻量字段）：岗位库/工作台等页面在本地没有档案 ID 时用它兜底。"""
+    """本机档案列表（轻量字段）：岗位库/工作台等页面在本地没有档案 ID 时用它兜底。
+
+    排序规则：有简历的档案排最前（最新优先）——「取第一个」的兜底逻辑因此
+    总是落在用户上传过简历的档案上，避免岗位与简历分裂到两个档案。
+    """
     rows = db.scalars(
-        select(models.UserProfile).order_by(models.UserProfile.created_at.asc())
+        select(models.UserProfile)
+        .order_by(
+            models.UserProfile.resume_text.is_(None),
+            models.UserProfile.resume_text == "",
+            models.UserProfile.created_at.desc(),
+        )
     ).all()
     return {
         "profiles": [
@@ -2852,6 +2861,7 @@ def list_profiles(db: Session = Depends(get_db)) -> dict:
                 "id": str(row.id),
                 "full_name": row.full_name or "",
                 "status": row.status,
+                "has_resume": bool((row.resume_text or "").strip()),
                 "created_at": row.created_at.isoformat() if row.created_at else None,
             }
             for row in rows

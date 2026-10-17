@@ -307,6 +307,8 @@ export function MissionPage({ missionId, currentTab }: MissionPageProps) {
   const [pasteText, setPasteText] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [forceResumeSource, setForceResumeSource] = useState(false);
+  const [autoBindState, setAutoBindState] = useState<"idle" | "running" | "failed">("idle");
+  const autoBindMissionRef = useRef<string | null>(null);
   const [forceResumeStep, setForceResumeStep] = useState<null | "selection" | "strategy" | "target">(null);
   const [updateMasterResume, setUpdateMasterResume] = useState(false);
   const [masterImpactLabel, setMasterImpactLabel] = useState("");
@@ -594,6 +596,31 @@ useEffect(() => {
     (latestResume?.status === "CONFIRMED");
   const hasStrategy = Boolean(currentMission.resume_strategy && Object.keys(currentMission.resume_strategy).length > 0);
   const resumeStep = forceResumeSource ? "source" : (forceResumeStep ?? deriveResumeSubstep(workflowState));
+
+  // 用户诉求：简历中心上传过一次简历后，进入岗位直接用这份简历开始优化，
+  // 不再每次都弹「选择简历来源」。仅在无可用简历或自动绑定失败时回退到手动选择。
+  useEffect(() => {
+    if (currentTab !== "resume" || loading || busy || !mission) return;
+    if (forceResumeSource || boundNeedsConfirm) return;
+    if (resumeStep !== "source" || currentMission.resume_source?.mode) return;
+    if (autoBindMissionRef.current === mission.id) return;
+    autoBindMissionRef.current = mission.id;
+    setAutoBindState("running");
+    void bindResume("master");
+    // bindResume 内部自带错误处理；结束后由下面的对账 effect 决定回退到手动选择还是继续。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTab, loading, busy, mission?.id, resumeStep, forceResumeSource, boundNeedsConfirm, currentMission.resume_source?.mode]);
+
+  // 自动绑定对账：busy 结束后若来源仍未绑定 → 标记失败，回退到手动选择界面。
+  useEffect(() => {
+    if (autoBindState !== "running" || busy || loading) return;
+    if (currentMission.resume_source?.mode) {
+      setAutoBindState("idle");
+    } else {
+      setAutoBindState("failed");
+    }
+  }, [autoBindState, busy, loading, currentMission.resume_source?.mode]);
+
   const intel = summarizeIntelCoverage(currentMission.interview_intel ?? []);
   const intelLayers = partitionIntelBySource(currentMission.interview_intel ?? []);
   const companyPending = isUnknownIdentity(currentMission.company);
@@ -682,14 +709,15 @@ useEffect(() => {
     };
   }
 
-  async function bindResume() {
-    if (!resumeMode) throw new Error("请先选择简历来源。");
+  async function bindResume(forcedMode?: "master" | "upload" | "paste") {
+    const mode = forcedMode ?? resumeMode;
+    if (!mode) throw new Error("请先选择简历来源。");
     let errorKind: "resume_ingest" | "resume_bind" | "experience_selection" = "resume_ingest";
     setBusy(true);
     setError("");
     setResumeParseStage(0);
     try {
-      if (resumeMode === "master") {
+      if (mode === "master") {
         const profile = await readProfile(currentMission.profile_id);
         if (!profile.experiences.length) {
           throw new Error("当前档案还没有经历，请上传或粘贴简历。");
@@ -1022,8 +1050,8 @@ useEffect(() => {
 
         <section className="mission-card">
           <p className="section-kicker">下一步</p>
-          <h3>简历来源</h3>
-          <p className="summary">选择已有简历，或为当前岗位上传新版本。</p>
+          <h3>简历准备</h3>
+          <p className="summary">自动使用你在简历中心上传的简历，进入优化流程——无需重复上传。</p>
           <PrimaryButton
             disabled={busy}
             onClick={() => {
@@ -1038,7 +1066,7 @@ useEffect(() => {
               router.push(nextRoute(workflowState, missionId));
             }}
           >
-            选择简历来源
+            开始简历优化
           </PrimaryButton>
         </section>
       </>
@@ -1046,12 +1074,24 @@ useEffect(() => {
   }
 
   function renderResumeSource() {
+    // 正常流程：简历中心上传过简历 → 自动绑定，不再让用户每次三选一。
+    // 只有自动绑定失败（无简历/解析失败）或用户主动「更换简历来源」才显示完整选择器。
+    const showChooser = forceResumeSource || autoBindState === "failed";
     return (
       <section className="mission-card">
         <p className="section-kicker">简历来源</p>
-        <h3>选择简历来源</h3>
-        <p className="summary">选择已有简历，或为当前岗位上传新版本。</p>
-        {(forceResumeSource || Boolean(currentMission.resume_source)) && (
+        <h3>{showChooser ? "选择简历来源" : "使用简历中心的简历"}</h3>
+        <p className="summary">
+          {showChooser
+            ? "选择已有简历，或为当前岗位上传新版本。"
+            : "将自动使用你在简历中心上传的简历，直接进入优化流程；想换简历可到「简历中心」更新，或在下面点「更换简历来源」。"}
+        </p>
+        {showChooser ? null : autoBindState === "running" ? (
+          <p className="mission-pipeline-note" role="status">正在读取简历中心的简历并整理经历…</p>
+        ) : (
+          <p className="mission-pipeline-note">正在准备使用已有简历…</p>
+        )}
+        {showChooser && (
           <p className="mission-pipeline-note">
             当前已绑定：{resumeSourceLine(currentMission, experiences)}。
             重新选择后会回到经历筛选，可再走后续步骤。
@@ -1065,6 +1105,8 @@ useEffect(() => {
             ) : null}
           </p>
         )}
+        {showChooser && (
+        <>
         <div className="mission-resume-choices">
           <label className={resumeMode === "master" ? "proof-select-card selected" : "proof-select-card"}>
             <input type="radio" name="resume-mode" checked={resumeMode === "master"} onChange={() => { setResumeMode("master"); setModeTouched(true); }} />
@@ -1130,7 +1172,16 @@ useEffect(() => {
         <PrimaryButton disabled={busy || !modeTouched || !resumeMode || (resumeMode === "upload" && !uploadFile) || (resumeMode === "paste" && pasteText.trim().length < 40)} onClick={() => void advanceResume()}>
           {busy ? "正在读取简历…" : "使用这份简历"}
         </PrimaryButton>
-        {resumeParseStage !== null && <TaskProgress kind="resume-parse" activeIndex={resumeParseStage} error={!busy ? error : ""} onRetry={() => void bindResume()} />}
+        {!forceResumeSource ? (
+          <p className="mission-pipeline-note">
+            自动使用简历失败时，也可以先到
+            <Link href="/resumes" className="app-link">简历中心</Link>
+            确认简历已上传，再回来重试。
+          </p>
+        ) : null}
+        </>
+        )}
+        {resumeParseStage !== null && <TaskProgress kind="resume-parse" activeIndex={resumeParseStage} error={!busy ? error : ""} onRetry={() => void bindResume(resumeMode ?? "master")} />}
         {confirmableProfileIdOf(currentMission) ? (
           <div style={{ marginTop: "1rem" }}>
             <MissionProfileConfirmCard

@@ -425,8 +425,15 @@ def extension_save(payload: ExtensionSaveRequest, request: Request, db: Session 
     _guard_body_size(request)
     raw_profile = (payload.profile_id or "").strip()
     if not raw_profile:
-        # 本地单用户：没有显式档案时取第一个
-        first = db.scalars(select(models.UserProfile).order_by(models.UserProfile.created_at)).first()
+        # 本地单用户：没有显式档案时优先取「有简历的最新档案」，
+        # 保证浏览器扩展导入的岗位与用户上传的简历落在同一个档案上。
+        first = db.scalars(
+            select(models.UserProfile).order_by(
+                models.UserProfile.resume_text.is_(None),
+                models.UserProfile.resume_text == "",
+                models.UserProfile.created_at.desc(),
+            )
+        ).first()
         if first is None:
             raise HTTPException(404, "本机还没有任何档案，请先打开 AI Career OS 创建。")
         profile_id = first.id
