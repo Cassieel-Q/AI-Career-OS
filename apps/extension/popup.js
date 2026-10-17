@@ -106,8 +106,11 @@ async function readCurrentJob() {
     state.extracted = extracted;
 
     if (extracted.status !== "OK") {
-      $("read-warning").textContent = `⚠️ ${extracted.note || "当前页面不是职位详情页。"}读取结果可能不完整，请核对下面的字段；读不到就用「复制原文后在 AI Career OS 里粘贴导入」。`;
+      $("read-warning").textContent = `⚠️ ${extracted.note || "当前页面不是职位详情页。"}`;
       $("read-warning").classList.remove("hidden");
+      // 没有可解析的正文（列表页等）就不调后端了，避免拿整页卡片文本瞎解析
+      if (!extracted.source_text || extracted.source_text.trim().length < 10) return;
+      $("read-warning").textContent = `⚠️ ${extracted.note || "当前页面不是职位详情页。"}已按页面可见文本尽力解析，请务必核对下面的字段；读不准就用「复制原文后在 AI Career OS 里粘贴导入」。`;
     }
 
     const parsed = await send({

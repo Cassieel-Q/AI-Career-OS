@@ -32,17 +32,56 @@ function firstText(selectors) {
 
 /** BOSS 直聘职位详情页：岗位名 / 薪资 / 城市 / 经验 / 学历 常在同一条信息栏里。 */
 const FIELD_SELECTORS = {
-  role: [".job-title", ".position-name", "h1.job-title", "[class*='job-title']", ".job-name", "h1"],
-  salary: [".salary", ".job-salary", "[class*='salary']", "[class*='Salary']"],
+  role: [
+    ".job-banner .name h1",
+    ".job-banner .name",
+    ".job-primary .name h1",
+    ".info-primary .name h1",
+    ".job-title",
+    ".position-name",
+    "h1.job-title",
+    "[class*='job-title']",
+    ".job-name",
+    "h1",
+  ],
+  salary: [
+    ".job-banner .salary",
+    ".job-primary .salary",
+    ".info-primary .salary",
+    ".name .salary",
+    ".salary",
+    ".job-salary",
+    "[class*='salary']",
+    "[class*='Salary']",
+  ],
   company: [
+    ".job-sider .company",
+    ".job-sider .company a",
+    ".company-info .name",
+    ".sider-company .name",
+    ".job-company .name",
     ".company-name",
     "[class*='company-name']",
     ".boss-name",
     "[class*='companyName']",
-    ".job-company .name",
   ],
-  location: [".job-location", "[class*='job-location']", ".location-address", "[class*='city']"],
-  jd: [".job-sec-text", ".job-detail-section", "[class*='job-detail']", ".detail-content", "[class*='jobDetail']"],
+  location: [
+    ".job-banner .location-address",
+    ".job-primary .location-address",
+    ".job-location",
+    "[class*='job-location']",
+    ".location-address",
+    "[class*='city']",
+  ],
+  jd: [
+    ".job-sec .job-sec-text",
+    ".job-sec-text",
+    ".job-detail-section",
+    ".detail-content",
+    "[class*='job-detail']",
+    "[class*='jobDetail']",
+    "[class*='job-desc']",
+  ],
 };
 
 function detectSite(hostname) {
@@ -63,9 +102,35 @@ function looksLikeJobPage() {
   return Boolean(firstText(FIELD_SELECTORS.role) && firstText(FIELD_SELECTORS.jd));
 }
 
+/** BOSS 的推荐流 / 搜索结果等「列表页」：一页里有很多职位，没法替用户挑。 */
+function looksLikeBossListPage() {
+  const host = (location.hostname || "").toLowerCase();
+  if (!host.includes("zhipin.com")) return false;
+  const path = location.pathname || "";
+  if (/^\/web\/(geek|student)\/(jobs|recommend|position)/.test(path)) return true;
+  if (/job_detail|wejob|position\//.test(path)) return false;
+  return Boolean(document.querySelector("[class*='job-card'], [class*='job-list-box'], .job-list, [class*='search-job-result']"));
+}
+
 function extractJob() {
   const site = detectSite();
   const isJobPage = looksLikeJobPage();
+
+  // 列表页直接如实告知怎么走，不去猜用户要点哪个职位（猜了就会导入错岗位）
+  if (!isJobPage && looksLikeBossListPage()) {
+    return {
+      status: "NOT_A_JOB_PAGE",
+      page_url: location.href,
+      page_title: document.title || "",
+      site,
+      used_selectors: {},
+      provided: { company: "", role: "", location: "", salary_text: "", education: "", experience: "" },
+      confidence: {},
+      source_text: "",
+      has_jd_block: false,
+      note: "这是 BOSS 的职位「列表页」（推荐/搜索结果）。请点进一个具体职位，等网址变成包含 /job_detail/ 的详情页，再点「读取当前岗位」。",
+    };
+  }
 
   const picked = {};
   const confidence = {};
@@ -86,7 +151,10 @@ function extractJob() {
   let locationText = picked.location;
   let experienceText = "";
   let educationText = "";
-  const banner = document.querySelector(".job-banner .info-primary, [class*='job-banner'] [class*='info'], .job-primary .info-primary");
+  const banner = document.querySelector(
+    ".job-banner .info-primary p, .job-primary .info-primary p, .job-banner .job-tags, " +
+      ".job-banner .info-primary, [class*='job-banner'] [class*='info'], .job-primary .info-primary, .job-tags"
+  );
   if (banner) {
     const raw = visibleText(banner);
     if (raw) {

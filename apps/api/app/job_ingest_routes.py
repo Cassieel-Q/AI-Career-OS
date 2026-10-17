@@ -211,12 +211,22 @@ def collect_browser() -> dict:
         raise HTTPException(503, str(exc)) from exc
 
     status = captured.get("status") or "EMPTY"
+    page_url = captured.get("page_url") or ""
     if status in {"BLOCKED", "LISTING_UNSUPPORTED", "EMPTY", "ERROR"}:
+        note = captured.get("note", "")
+        if status == "EMPTY" and (not page_url or page_url.startswith("about:")):
+            # 受控浏览器里根本没开页面：说清楚下一步，而不是让用户对着 about:blank 猜
+            note = (
+                "受控浏览器里还没有打开网页（当前是空白页）。"
+                "请先在受控浏览器窗口里打开要采集的招聘网页（公开可访问、无需登录的页面），"
+                "点进单个职位详情页后再点「采集当前网页」。"
+                "BOSS 直聘等需要登录的站点请改用浏览器扩展：BOSS 职位页 → 点扩展图标 → 读取当前岗位。"
+            )
         return {
             "status": status,
-            "page_url": captured.get("page_url"),
+            "page_url": page_url or None,
             "page_title": captured.get("page_title"),
-            "note": captured.get("note", ""),
+            "note": note,
             "job": None,
         }
 
