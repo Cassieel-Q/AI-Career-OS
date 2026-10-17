@@ -1,0 +1,103 @@
+﻿{
+    "finished_at":  "2026-10-17T13:53:04",
+    "foreign_port":  {
+                         "port":  8000,
+                         "label":  "CityQuest（其他项目，绝不能被碰）",
+                         "pid_after":  14904,
+                         "pid_before":  14904
+                     },
+    "active_dataset":  {
+                           "before":  "ds2610162021590a18",
+                           "after":  "ds2610162021590a18"
+                       },
+    "total":  17,
+    "passed":  17,
+    "failed":  0,
+    "results":  [
+                    {
+                        "name":  "基线：CityQuest（其他项目，绝不能被碰） 在跑",
+                        "ok":  true,
+                        "detail":  "pid=14904"
+                    },
+                    {
+                        "name":  "stop 后本项目后端端口空闲（或仅剩他人进程）",
+                        "ok":  true,
+                        "detail":  "8100 pid="
+                    },
+                    {
+                        "name":  "stop 后本项目前端端口空闲（或仅剩他人进程）",
+                        "ok":  true,
+                        "detail":  "3000 pid="
+                    },
+                    {
+                        "name":  "stop 不影响 CityQuest（其他项目，绝不能被碰）",
+                        "ok":  true,
+                        "detail":  "pid=14904"
+                    },
+                    {
+                        "name":  "start 后后端监听 8100",
+                        "ok":  true,
+                        "detail":  "pid=38064"
+                    },
+                    {
+                        "name":  "start 后前端监听 3000",
+                        "ok":  true,
+                        "detail":  "pid=42268"
+                    },
+                    {
+                        "name":  "后端健康检查通过",
+                        "ok":  true,
+                        "detail":  "http://127.0.0.1:8100/health"
+                    },
+                    {
+                        "name":  "前端首页可访问",
+                        "ok":  true,
+                        "detail":  "http://127.0.0.1:3000/"
+                    },
+                    {
+                        "name":  "第二次 start 不重复启动后端",
+                        "ok":  true,
+                        "detail":  "38064 → 38064"
+                    },
+                    {
+                        "name":  "第二次 start 不重复启动前端",
+                        "ok":  true,
+                        "detail":  "42268 → 42268"
+                    },
+                    {
+                        "name":  "启动过程不影响 CityQuest（其他项目，绝不能被碰）",
+                        "ok":  true,
+                        "detail":  "pid=14904"
+                    },
+                    {
+                        "name":  "stop 确实停掉了本项目后端",
+                        "ok":  true,
+                        "detail":  "8100 pid="
+                    },
+                    {
+                        "name":  "stop 后 CityQuest（其他项目，绝不能被碰） 仍在跑",
+                        "ok":  true,
+                        "detail":  "pid=14904"
+                    },
+                    {
+                        "name":  "可再次启动",
+                        "ok":  true,
+                        "detail":  "pid=39212"
+                    },
+                    {
+                        "name":  "重启后当前数据集未变",
+                        "ok":  true,
+                        "detail":  "ds2610162021590a18 → ds2610162021590a18"
+                    },
+                    {
+                        "name":  "当前数据集文件仍存在",
+                        "ok":  true,
+                        "detail":  "C:\\Users\\覆水\\AppData\\Local\\AICareerOS\\datasets\\ds2610162021590a18.db"
+                    },
+                    {
+                        "name":  "双击场景会调用 Edge --app 独立应用窗口",
+                        "ok":  true,
+                        "detail":  "url=http://127.0.0.1:3000 exe=C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"
+                    }
+                ]
+}

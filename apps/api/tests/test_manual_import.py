@@ -110,6 +110,28 @@ def test_strip_html_removes_markup():
     assert "A公司" in cleaned
 
 
+def test_role_strips_recruit_prefix():
+    """BOSS 页面首行常是「招聘 XXX/诚聘 XXX」，岗位名里不能留这些前缀。"""
+    for text in (
+        "招聘 产品经理（AI方向）\n杭州某某科技\n岗位职责：负责 AI 产品规划",
+        "诚聘数据分析师\n北京某某科技\n岗位职责：数据看板",
+    ):
+        draft = manual.parse_job_text(source_text=text, source_site="BOSS_ZHIPIN")
+        assert not draft["role"].startswith(("招聘", "诚聘", "急招", "急聘")), draft["role"]
+
+    draft = manual.parse_job_text(source_text="招聘 产品经理（AI方向）\n杭州某某科技", source_site="BOSS_ZHIPIN")
+    assert draft["role"] == "产品经理（AI方向）"
+
+    # 扩展直接给出的字段同样要剥离前缀
+    draft = manual.parse_job_text(
+        source_text="BOSS 页面正文",
+        source_site="BOSS_ZHIPIN",
+        recognition="BROWSER_EXTENSION",
+        provided={"role": "招聘 AI 产品经理", "company": "某某科技"},
+    )
+    assert draft["role"] == "AI 产品经理"
+
+
 def test_provided_fields_win_over_heuristics():
     """浏览器扩展明确读到的字段，不能被 JD 启发式覆盖。"""
     draft = manual.parse_job_text(
@@ -268,6 +290,34 @@ def test_extension_pair_flow_and_write(client: TestClient, isolated_extension_di
     )
     assert parsed.status_code == 200
     assert parsed.json()["draft"]["company"] == "杭州示例科技有限公司"
+
+
+def test_extension_source_site_is_recorded_truthfully(client: TestClient, isolated_extension_dir):
+    """来源必须如实：没说是 BOSS 就不能标成 BOSS（否则等于伪造采集来源）。"""
+    code = client.post("/api/v1/extension/pair/code").json()["code"]
+    token = client.post("/api/v1/extension/pair/exchange", json={"code": code}).json()["token"]
+    headers = {"X-AI-Career-Token": token, "Origin": "chrome-extension://abcdefg"}
+
+    unknown = client.post(
+        "/api/v1/extension/job-import/parse",
+        json={"source_text": BOSS_SAMPLE},
+        headers=headers,
+    )
+    assert unknown.json()["draft"]["source_site"] == "UNKNOWN"
+
+    other = client.post(
+        "/api/v1/extension/job-import/parse",
+        json={"source_text": BOSS_SAMPLE, "source_site": "OTHER"},
+        headers=headers,
+    )
+    assert other.json()["draft"]["source_site"] == "OTHER"
+
+    boss = client.post(
+        "/api/v1/extension/job-import/parse",
+        json={"source_text": BOSS_SAMPLE, "source_site": "BOSS_ZHIPIN"},
+        headers=headers,
+    )
+    assert boss.json()["draft"]["source_site"] == "BOSS_ZHIPIN"
 
 
 def test_extension_rejects_wrong_token_and_foreign_origin(client: TestClient, isolated_extension_dir):

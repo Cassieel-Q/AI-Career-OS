@@ -215,31 +215,33 @@ export default function JobImportPage() {
             <div className="field-grid">
               <label className="field-label">
                 <span>公司 {draft.confidence?.company ? `（${CONFIDENCE_LABEL[draft.confidence.company] ?? draft.confidence.company}）` : ""}</span>
-                <input value={form.company} onChange={(event) => setForm({ ...form, company: event.target.value })} placeholder="识别不到就手动填" />
+                <input id="f-company" name="company" value={form.company} onChange={(event) => setForm({ ...form, company: event.target.value })} placeholder="识别不到就手动填" />
               </label>
               <label className="field-label">
                 <span>岗位 {draft.confidence?.role ? `（${CONFIDENCE_LABEL[draft.confidence.role] ?? draft.confidence.role}）` : ""}</span>
-                <input value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value })} placeholder="识别不到就手动填" />
+                <input id="f-role" name="role" value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value })} placeholder="识别不到就手动填" />
               </label>
               <label className="field-label">
                 <span>工作地点</span>
-                <input value={form.location} onChange={(event) => setForm({ ...form, location: event.target.value })} />
+                <input id="f-location" name="location" value={form.location} onChange={(event) => setForm({ ...form, location: event.target.value })} />
               </label>
               <label className="field-label">
                 <span>薪资</span>
-                <input value={form.salary_text} onChange={(event) => setForm({ ...form, salary_text: event.target.value })} placeholder="8-13K / 面议" />
+                <input id="f-salary_text" name="salary_text" value={form.salary_text} onChange={(event) => setForm({ ...form, salary_text: event.target.value })} placeholder="8-13K / 面议" />
               </label>
               <label className="field-label">
                 <span>学历要求</span>
-                <input value={form.education} onChange={(event) => setForm({ ...form, education: event.target.value })} placeholder="本科 / 硕士 / 学历不限" />
+                <input id="f-education" name="education" value={form.education} onChange={(event) => setForm({ ...form, education: event.target.value })} placeholder="本科 / 硕士 / 学历不限" />
               </label>
               <label className="field-label">
                 <span>经验要求</span>
-                <input value={form.experience} onChange={(event) => setForm({ ...form, experience: event.target.value })} placeholder="经验不限 / 3-5年" />
+                <input id="f-experience" name="experience" value={form.experience} onChange={(event) => setForm({ ...form, experience: event.target.value })} placeholder="经验不限 / 3-5年" />
               </label>
               <label className="field-label">
                 <span>工作类型</span>
                 <select
+                  id="f-employment_type"
+                  name="employment_type"
                   value={form.employment_type}
                   onChange={(event) => setForm({ ...form, employment_type: event.target.value as EmploymentType })}
                 >
@@ -252,13 +254,13 @@ export default function JobImportPage() {
               </label>
               <label className="field-label">
                 <span>原始链接</span>
-                <input value={form.source_url} onChange={(event) => setForm({ ...form, source_url: event.target.value })} placeholder="https://www.zhipin.com/..." />
+                <input id="f-source_url" name="source_url" value={form.source_url} onChange={(event) => setForm({ ...form, source_url: event.target.value })} placeholder="https://www.zhipin.com/..." />
               </label>
             </div>
 
             <label className="field-label">
               <span>完整 JD（保存的正文，可编辑）</span>
-              <textarea rows={12} value={form.jd} onChange={(event) => setForm({ ...form, jd: event.target.value })} />
+              <textarea id="f-jd" name="jd" rows={12} value={form.jd} onChange={(event) => setForm({ ...form, jd: event.target.value })} />
             </label>
 
             {warnings.length ? (

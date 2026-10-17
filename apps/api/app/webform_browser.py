@@ -26,7 +26,31 @@ class BrowserBridgeError(RuntimeError):
 
 
 def bridge_url() -> str:
-    return os.getenv("BROWSER_BRIDGE_URL", DEFAULT_BRIDGE_URL).rstrip("/")
+    """浏览器桥地址。
+
+    优先用显式 ``BROWSER_BRIDGE_URL``（启动器会把实际端口注入后端进程）。
+    未配置时按端口段探测真正在运行的桥：
+    本机可能同时存在多个由不同入口启动的桥（例如手动 start-browser-bridge.cmd 与
+    桌面启动器各起一个），令牌文件只反映最后一个，写死 8770 会导致 401 令牌不匹配。
+    """
+    explicit = os.getenv("BROWSER_BRIDGE_URL", "").strip()
+    if explicit:
+        return explicit.rstrip("/")
+    for port in (8770, 8771, 8772, 8773):
+        candidate = f"http://127.0.0.1:{port}"
+        try:
+            with httpx.Client(timeout=0.6) as probe:
+                response = probe.get(f"{candidate}/health")
+        except httpx.HTTPError:
+            continue
+        if response.status_code >= 500:
+            continue
+        try:
+            if response.json().get("service") == "ai-career-os-browser-bridge":
+                return candidate
+        except ValueError:
+            continue
+    return DEFAULT_BRIDGE_URL
 
 
 def _token_file() -> Path | None:

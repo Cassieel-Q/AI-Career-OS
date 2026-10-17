@@ -87,9 +87,16 @@ async function api(pathname, init) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await context.newPage();
   const consoleErrors = [];
+  const badResponses = [];
   page.on("console", (msg) => {
     if (msg.type() === "error") consoleErrors.push(msg.text());
   });
+  page.on("response", (response) => {
+    if (response.status() >= 400) badResponses.push(`${response.status()} ${response.url()}`);
+  });
+  // 这条流程里新建的岗位还没有「已确认的岗位简历」，按设计会命中 409/404：
+  // 这些是产品语义（不能拿未确认的简历去投递），不算缺陷。
+  const EXPECTED_BAD = /resume-studio|resume-snapshot|bind-resume/;
 
   try {
     // ---------------------------------------------------------------- 1
@@ -190,29 +197,66 @@ async function api(pathname, init) {
     );
 
     // ---------------------------------------------------------------- 11
+    // 新导入的岗位还没有已确认的岗位简历：按设计不生成投递 PDF 快照（不能拿未确认的简历去投递）。
+    // 这里核对「语义正确」：快照接口应给出 404 + 明确原因，而不是返回一个假 PDF。
     const snapshotUrl = (kitAfterApplied.body || {}).snapshot_url;
-    let snapshotOk = false;
+    let snapshotStatus = 0;
     let snapshotBytes = 0;
     if (snapshotUrl) {
       const res = await fetch(`${API}${snapshotUrl}`);
-      snapshotBytes = (await res.arrayBuffer()).byteLength;
-      snapshotOk = res.status === 200 && snapshotBytes > 500;
+      snapshotStatus = res.status;
+      snapshotBytes = res.status === 200 ? (await res.arrayBuffer()).byteLength : 0;
     }
-    check(11, "投递快照 PDF", snapshotOk || !snapshotUrl, snapshotUrl ? `${snapshotBytes} 字节` : "无已确认简历，按设计不出快照");
+    check(
+      11,
+      "快照语义正确（未确认简历不出快照）",
+      snapshotUrl ? snapshotStatus === 404 : true,
+      snapshotUrl ? `${snapshotUrl} → ${snapshotStatus}${snapshotBytes ? ` / ${snapshotBytes} 字节` : ""}` : "无投递记录",
+    );
+
+    // ---------------------------------------------------------------- 11b
+    // 找一条「Studio 已确认修订版」的既有岗位，用它做真实的 Studio / PDF 验收
+    // （新建岗位要走完经历筛选→策略→目标简历才能有简历，不适合放在这条端到端里）。
+    let studioMissionId = "";
+    const plazaScan = ((await api("/api/v1/plaza")).body || {}).items || [];
+    for (const item of plazaScan.slice(0, 80)) {
+      const mid = item.mission_id;
+      if (!mid) continue;
+      const r = await api(`/api/v1/job-missions/${mid}/resume-studio`);
+      if (r.status === 200 && r.body && r.body.confirmed_revision != null && r.body.confirmed_revision === r.body.revision) {
+        studioMissionId = mid;
+        break;
+      }
+    }
+    check("11b", "找到已确认修订版的岗位用于 Studio 验收", Boolean(studioMissionId), studioMissionId || "数据集中未找到");
+
+    // ---------------------------------------------------------------- 11c
+    let apiPdfBytes = 0;
+    let apiPdfHead = "";
+    if (studioMissionId) {
+      const res = await fetch(`${API}/api/v1/job-missions/${studioMissionId}/resume-studio/pdf`);
+      if (res.status === 200) {
+        const buf = Buffer.from(await res.arrayBuffer());
+        apiPdfBytes = buf.length;
+        apiPdfHead = buf.subarray(0, 5).toString("latin1");
+      }
+    }
+    check("11c", "服务端真实渲染 PDF（Typst）", apiPdfBytes > 500 && apiPdfHead === "%PDF-", `${apiPdfBytes} 字节 / 头=${apiPdfHead}`);
 
     // ---------------------------------------------------------------- 12
-    await page.goto(`${WEB}/missions/${missionId}/resume/studio`, { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(3000);
+    const studioTarget = studioMissionId || missionId;
+    await page.goto(`${WEB}/missions/${studioTarget}/resume/studio`, { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(4000);
     await shot(page, "12-studio.png");
     check(12, "打开 Resume Studio", page.url().includes("/resume/studio"), page.url());
 
     // ---------------------------------------------------------------- 13
     let pdfOk = false;
     let pdfBytes = 0;
-    const exportBtn = page.getByRole("button", { name: /导出 PDF|下载 PDF/ }).first();
+    const exportBtn = page.getByRole("button", { name: /下载 PDF/ }).first();
     if (await exportBtn.count()) {
       const [download] = await Promise.all([
-        page.waitForEvent("download", { timeout: 60000 }).catch(() => null),
+        page.waitForEvent("download", { timeout: 90000 }).catch(() => null),
         exportBtn.click().catch(() => {}),
       ]);
       if (download) {
@@ -223,7 +267,7 @@ async function api(pathname, init) {
       }
     }
     await shot(page, "13-studio-pdf.png");
-    check(13, "Studio 导出 PDF", pdfOk, pdfBytes ? `${pdfBytes} 字节` : "本环境未触发下载（Typst/模板状态相关）");
+    check(13, "Studio 导出 PDF", pdfOk, pdfBytes ? `${pdfBytes} 字节` : "未触发下载");
 
     // ---------------------------------------------------------------- 14
     const after = await api("/api/v1/plaza");

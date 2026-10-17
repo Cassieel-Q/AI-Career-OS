@@ -5,6 +5,10 @@ node_modules/
 
 # Next.js
 .next/
+.next-dev/
+.next-prod/
+.next-old-*/
+.next.*/
 out/
 
 # Python

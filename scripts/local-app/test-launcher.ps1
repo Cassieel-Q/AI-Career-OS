@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     一键启动验收（M5.4）：单实例、不误杀其他项目、可停止、重启后数据还在。
@@ -40,8 +40,17 @@ function Get-OwnerPid([int]$Port) {
     return @($found | Sort-Object -Unique)
 }
 
-function Invoke-Launcher([string]$Action) {
-    & powershell -NoProfile -ExecutionPolicy Bypass -File $Launcher -Action $Action -Quiet 2>&1 | Out-Null
+function Invoke-Launcher([string]$Action, [switch]$WithBrowser) {
+    <#
+    注意：这里刻意【不做管道重定向】。
+    启停器会以分离进程拉起 uvicorn / next，管道写端会被这些长驻子进程继承，
+    一旦用 `| Out-Null` / `| Out-String` 接收，宿主会一直等管道关闭而卡死或异常退出。
+    #>
+    if ($WithBrowser) {
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $Launcher -Action $Action -Quiet
+    } else {
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $Launcher -Action $Action -Quiet -NoBrowser
+    }
 }
 
 Write-Host ''
@@ -124,6 +133,24 @@ Add-Result '重启后当前数据集未变' ($activeBefore -eq $activeAfter) ("$
 # ---------------------------------------------------------------- 6. 数据目录核对
 $datasetFile = Join-Path $dataDir "datasets\$activeAfter.db"
 Add-Result '当前数据集文件仍存在' (Test-Path -LiteralPath $datasetFile) $datasetFile
+
+# ---------------------------------------------------------------- 7. 双击场景：真的会打开 Edge 独立应用窗口
+Invoke-Launcher 'start' -WithBrowser
+Start-Sleep -Seconds 3
+$st = $null
+$statePath = Join-Path (Join-Path $dataDir 'runtime') 'local-app-state.json'
+if (Test-Path -LiteralPath $statePath) {
+    try { $st = Get-Content -LiteralPath $statePath -Raw -Encoding UTF8 | ConvertFrom-Json } catch { }
+}
+$browserOpened = ($null -ne $st) -and ($st.browser) -and ($st.browser.opened -eq $true) -and ($st.browser.app_window -eq $true)
+$browserDetail = '状态文件未记录浏览器调用'
+if ($st -and $st.browser) { $browserDetail = "url=$($st.browser.url) exe=$($st.browser.exe)" }
+Add-Result '双击场景会调用 Edge --app 独立应用窗口' $browserOpened $browserDetail
+# 补充说明：Edge 已在本机运行时会把窗口委托给既有进程，新进程随即退出，
+# 因此这里不把「进程列表里能查到 --app」当作判据，只作为附加证据记录。
+$edge = @(Get-CimInstance Win32_Process -Filter "Name='msedge.exe'" -ErrorAction SilentlyContinue |
+    Where-Object { $_.CommandLine -and $_.CommandLine -match '--app=http://127\.0\.0\.1:\d+' })
+Write-Host ("      （附加证据）当前仍带 --app 参数的 msedge 进程数={0}，Edge 复用既有实例时会为 0" -f $edge.Count) -ForegroundColor Gray
 
 $summary = [pscustomobject]@{
     finished_at  = (Get-Date).ToString('s')

@@ -82,6 +82,49 @@ function Show-Fatal([string]$Message) {
     } catch { }
 }
 
+function Clear-File([string]$Path) {
+    <#
+    清空（而不是删除）运行时日志 / 状态文件。
+    宿主环境的删除保护会在回收站不可用时把 Remove-Item 直接抛成终止错误，
+    一键启动不能被这种策略问题打断；运行时文件只需要置空即可。
+    #>
+    try {
+        [System.IO.File]::WriteAllText($Path, '')
+    } catch { }
+}
+
+function Repair-DuplicateEnvironmentVars {
+    <#
+    Windows 进程环境块允许存在「仅大小写不同」的重复键（本机实测 HTTP_PROXY/http_proxy、
+    HTTPS_PROXY/https_proxy 各两份）。PowerShell 在带输出重定向调用 Start-Process 时会用
+    大小写不敏感的字典装载环境变量，遇到重复键直接抛 "已添加项" 异常，一键启动随即失败。
+    这里把每个重复组收敛成唯一的大写拼写，取值保持不变；只影响当前启停器进程及其子进程。
+    #>
+    $names = @()
+    try {
+        foreach ($k in [System.Environment]::GetEnvironmentVariables().Keys) { $names += [string]$k }
+    } catch { return 0 }
+    $groups = @($names | Group-Object { $_.ToUpperInvariant() } | Where-Object { $_.Count -gt 1 })
+    if ($groups.Count -eq 0) { return 0 }
+
+    $fixed = 0
+    foreach ($g in $groups) {
+        $canonical = @($g.Group | Where-Object { $_ -ceq $_.ToUpperInvariant() } | Select-Object -First 1)
+        if ($canonical.Count -eq 0) { $canonical = @((([string]$g.Group[0]).ToUpperInvariant())) }
+        $canonical = [string]$canonical[0]
+        $val = [System.Environment]::GetEnvironmentVariable($canonical)
+        # 删除大小写不敏感，重复两条要清两遍才能真正摘干净
+        for ($round = 0; $round -lt 2; $round++) {
+            foreach ($n in $g.Group) {
+                try { [System.Environment]::SetEnvironmentVariable([string]$n, $null) | Out-Null } catch { }
+            }
+        }
+        if ($null -ne $val) { [System.Environment]::SetEnvironmentVariable($canonical, $val) | Out-Null }
+        $fixed++
+    }
+    return $fixed
+}
+
 function Get-ListeningPids([int]$Port) {
     $found = @()
     try {
@@ -107,7 +150,11 @@ function Test-OwnedByApp([string]$CommandLine) {
     $cl = $CommandLine.ToLowerInvariant()
     $root = $ProjectRoot.ToLowerInvariant()
     if ($cl.Contains($root)) { return $true }
-    return $cl.Contains('ai-career')
+    if ($cl.Contains('ai-career')) { return $true }
+    # 在项目目录里用相对路径启动的桥（node scripts/browser-bridge.cjs）命令行不含项目路径，
+    # 之前因此既不能被复用也不能被清理，会和桌面启动器起的桥并存导致令牌不一致。
+    if ($cl -match 'scripts[\\/]browser-bridge\.cjs') { return $true }
+    return $false
 }
 
 function Get-ServiceRole([string]$CommandLine) {
@@ -174,20 +221,22 @@ function Select-FreePort([int[]]$Ports) {
 }
 
 # ---------------------------------------------------------------- 启动实现
-function Start-ApiService([int]$Port, [int]$WebPort) {
+function Start-ApiService([int]$Port, [int]$WebPort, [string]$BridgeUrl) {
     $out = Join-Path $LogDir 'api.out.log'
     $err = Join-Path $LogDir 'api.err.log'
-    foreach ($f in @($out, $err)) { if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force } }
+    foreach ($f in @($out, $err)) { Clear-File -Path $f }
 
-    $prevDataDir = $env:AI_CAREER_DATA_DIR
-    $prevDbUrl   = $env:DATABASE_URL
-    $prevPyPath  = $env:PYTHONPATH
-    $prevOrigins = $env:FRONTEND_ORIGINS
+    $prevDataDir  = $env:AI_CAREER_DATA_DIR
+    $prevDbUrl    = $env:DATABASE_URL
+    $prevPyPath   = $env:PYTHONPATH
+    $prevOrigins  = $env:FRONTEND_ORIGINS
+    $prevBridgeUrl = $env:BROWSER_BRIDGE_URL
     try {
         $env:AI_CAREER_DATA_DIR = $DataDir
         $env:DATABASE_URL       = ''      # 留空 -> 由 active_dataset 指针决定，避免误连旧主库
         $env:PYTHONPATH         = '.'
         $env:FRONTEND_ORIGINS   = "http://127.0.0.1:$WebPort,http://localhost:$WebPort"
+        if ($BridgeUrl) { $env:BROWSER_BRIDGE_URL = $BridgeUrl }   # 让后端连到本次实际的桥（否则多桥时令牌对不上）
         $argList = @('-m', 'uvicorn', 'app.main:app', '--host', '127.0.0.1', '--port', "$Port")
         $proc = Start-Process -FilePath $PythonExe -ArgumentList $argList `
                     -WorkingDirectory $ApiDir -WindowStyle Hidden `
@@ -198,20 +247,26 @@ function Start-ApiService([int]$Port, [int]$WebPort) {
         $env:DATABASE_URL       = $prevDbUrl
         $env:PYTHONPATH         = $prevPyPath
         $env:FRONTEND_ORIGINS   = $prevOrigins
+        $env:BROWSER_BRIDGE_URL = $prevBridgeUrl
     }
 }
 
 function Start-WebService([int]$Port, [int]$ApiPort, [bool]$UseDev) {
     $out = Join-Path $LogDir 'web.out.log'
     $err = Join-Path $LogDir 'web.err.log'
-    foreach ($f in @($out, $err)) { if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force } }
+    foreach ($f in @($out, $err)) { Clear-File -Path $f }
 
     $prevApiBase = $env:NEXT_PUBLIC_API_BASE_URL
+    $prevDistDir = $env:NEXT_DIST_DIR
     try {
         $env:NEXT_PUBLIC_API_BASE_URL = "http://127.0.0.1:$ApiPort"
         if ($UseDev) {
+            # 关键：dev 产物必须和 production 隔离，否则 next dev 会清空 .next，
+            # 把已经构建好的 production 产物删掉
+            $env:NEXT_DIST_DIR = '.next-dev'
             $argList = @('--require', $CompatShim, $NextBin, 'dev', '-H', '127.0.0.1', '-p', "$Port")
         } else {
+            $env:NEXT_DIST_DIR = ''
             $argList = @('--require', $CompatShim, $NextBin, 'start', '-H', '127.0.0.1', '-p', "$Port")
         }
         $proc = Start-Process -FilePath 'node.exe' -ArgumentList $argList `
@@ -220,13 +275,14 @@ function Start-WebService([int]$Port, [int]$ApiPort, [bool]$UseDev) {
         return $proc
     } finally {
         $env:NEXT_PUBLIC_API_BASE_URL = $prevApiBase
+        $env:NEXT_DIST_DIR = $prevDistDir
     }
 }
 
 function Start-BridgeService([int]$Port) {
     $out = Join-Path $LogDir 'bridge.out.log'
     $err = Join-Path $LogDir 'bridge.err.log'
-    foreach ($f in @($out, $err)) { if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force } }
+    foreach ($f in @($out, $err)) { Clear-File -Path $f }
 
     $prevPort = $env:BROWSER_BRIDGE_PORT
     try {
@@ -282,8 +338,33 @@ function Stop-AppServices {
         Stop-ProcessTree -ProcessId ([int]$p.ProcessId)
     }
 
-    if (Test-Path -LiteralPath $StateFile) { Remove-Item -LiteralPath $StateFile -Force }
+    Clear-File -Path $StateFile   # 置空即代表“没有在运行的实例”
     Write-Ok '已停止（其他项目的服务未受影响）'
+}
+
+# ---------------------------------------------------------------- 受控浏览器桥去重
+# 真实踩过：桌面启动器起一个桥、手动 start-browser-bridge.cmd 又起一个，
+# 两个桥各自持有不同令牌，而令牌文件只保留最后一个 → 后端按固定端口连到另一个桥，报“令牌不匹配”。
+function Get-AllOwnedBridges {
+    $found = @()
+    foreach ($port in $BridgePorts) {
+        foreach ($listenerPid in (Get-ListeningPids -Port $port)) {
+            $cl = Get-ProcCmdLine -ProcessId $listenerPid
+            if ((Test-OwnedByApp -CommandLine $cl) -and ((Get-ServiceRole -CommandLine $cl) -eq 'bridge')) {
+                $found += @{ Port = $port; Pid = $listenerPid }
+            }
+        }
+    }
+    return $found
+}
+
+function Stop-StrayBridges([int]$KeepPort) {
+    foreach ($b in (Get-AllOwnedBridges)) {
+        if ([int]$b.Port -ne $KeepPort) {
+            Write-Info "清理多余的受控浏览器桥 (127.0.0.1:$($b.Port), pid=$($b.Pid))"
+            Stop-ProcessTree -ProcessId ([int]$b.Pid)
+        }
+    }
 }
 
 # ---------------------------------------------------------------- 状态实现
@@ -324,6 +405,10 @@ function Start-App {
     Write-Info "数据目录: $DataDir"
 
     # --- 环境自检 ---
+    $repaired = Repair-DuplicateEnvironmentVars
+    if ($repaired -gt 0) {
+        Write-Info "已收敛 $repaired 组重复环境变量（仅大小写不同），避免子进程启动失败"
+    }
     if (-not (Test-Path -LiteralPath $PythonExe)) { Show-Fatal "找不到 Python 解释器：$PythonExe"; return 1 }
     if (-not (Test-Path -LiteralPath $NextBin))   { Show-Fatal "找不到 Next.js 入口：$NextBin`n请先在 apps/web 执行 npm install。"; return 1 }
     $nodeCmd = Get-Command 'node.exe' -ErrorAction SilentlyContinue
@@ -363,6 +448,7 @@ function Start-App {
         }
     }
 
+    # --- 先起受控浏览器桥：后端要连到它，端口必须早于后端确定 ---
     $bridgePort = $null
     $bridgeProc = $null
     if (-not $SkipBridge) {
@@ -373,6 +459,18 @@ function Start-App {
         } else {
             $bridgePort = Select-FreePort -Ports $BridgePorts
         }
+        if ($bridgePort) {
+            Stop-StrayBridges -KeepPort $bridgePort
+            if ($null -eq $existingBridge -or -not (Test-UrlOk -Url "http://127.0.0.1:$bridgePort/health")) {
+                Write-Info "启动受控浏览器桥 (127.0.0.1:$bridgePort)..."
+                $bridgeProc = Start-BridgeService -Port $bridgePort
+                if (Wait-ForUrl -Url "http://127.0.0.1:$bridgePort/health" -TimeoutSec 30 -Label 'Bridge') {
+                    Write-Ok "浏览器桥就绪 http://127.0.0.1:$bridgePort (pid=$($bridgeProc.Id))"
+                } else {
+                    Write-Warn "浏览器桥未就绪（网申填表暂不可用），日志: $(Join-Path $LogDir 'bridge.err.log')"
+                }
+            }
+        }
     }
 
     # --- 决定前端模式：有 production build 就用 next start ---
@@ -382,10 +480,11 @@ function Start-App {
         Write-Warn '未检测到 production build（.next/BUILD_ID），本次以【开发模式】启动（不是正式构建）。'
     }
 
-    # --- 启动后端 ---
+    # --- 启动后端（带上本次实际的桥地址，避免多桥时令牌对不上）---
     if ($null -eq $existingApi -or -not (Test-UrlOk -Url "http://127.0.0.1:$ApiPort/health")) {
         Write-Info "启动后端 API (127.0.0.1:$ApiPort)..."
-        $apiProc = Start-ApiService -Port $ApiPort -WebPort $WebPort
+        $bridgeUrl = if ($bridgePort) { "http://127.0.0.1:$bridgePort" } else { '' }
+        $apiProc = Start-ApiService -Port $ApiPort -WebPort $WebPort -BridgeUrl $bridgeUrl
         if (-not (Wait-ForUrl -Url "http://127.0.0.1:$ApiPort/health" -TimeoutSec 60 -Label 'API')) {
             Write-Err "后端启动超时，请查看日志: $(Join-Path $LogDir 'api.err.log')"
             return 1
@@ -416,16 +515,9 @@ function Start-App {
         }
     }
 
-    # --- 启动浏览器桥 ---
-    if ($bridgePort -and ($null -eq $existingBridge -or -not (Test-UrlOk -Url "http://127.0.0.1:$bridgePort/health"))) {
-        Write-Info "启动受控浏览器桥 (127.0.0.1:$bridgePort)..."
-        $bridgeProc = Start-BridgeService -Port $bridgePort
-        if (Wait-ForUrl -Url "http://127.0.0.1:$bridgePort/health" -TimeoutSec 30 -Label 'Bridge') {
-            Write-Ok "浏览器桥就绪 http://127.0.0.1:$bridgePort (pid=$($bridgeProc.Id))"
-        } else {
-            Write-Warn "浏览器桥未就绪（网申填表暂不可用），日志: $(Join-Path $LogDir 'bridge.err.log')"
-        }
-    }
+    # --- 打开 Edge 独立应用窗口（结果写入状态文件，便于事后核对）---
+    $browserInfo = [pscustomobject]@{ opened = $false; app_window = $false; url = "http://127.0.0.1:$WebPort" }
+    if (-not $NoBrowser) { $browserInfo = Open-AppWindow -Url "http://127.0.0.1:$WebPort" }
 
     # --- 写状态文件 ---
     $state = [ordered]@{
@@ -436,11 +528,9 @@ function Start-App {
         web        = @{ port = $WebPort; pid = if ($webProc) { $webProc.Id } else { $existingWeb.Pid }; url = "http://127.0.0.1:$WebPort" }
         bridge     = @{ port = $bridgePort; pid = if ($bridgeProc) { $bridgeProc.Id } elseif ($existingBridge) { $existingBridge.Pid } else { $null } }
         reused     = @{ api = [bool]$existingApi; web = $reusedWeb }
+        browser    = $browserInfo
     }
     ($state | ConvertTo-Json -Depth 5) | Set-Content -LiteralPath $StateFile -Encoding UTF8
-
-    # --- 打开 Edge 独立应用窗口 ---
-    if (-not $NoBrowser) { Open-AppWindow -Url "http://127.0.0.1:$WebPort" }
 
     Write-Host ''
     Write-Host '  AI Career OS 已就绪' -ForegroundColor Green
@@ -455,6 +545,13 @@ function Start-App {
 }
 
 function Open-AppWindow([string]$Url) {
+    <#
+    用 Edge --app 打开独立应用窗口（没有地址栏/标签页，外观等同桌面软件）。
+    不指定 --user-data-dir：复用你日常登录的 Edge 配置，BOSS 直聘登录态可继续使用。
+    返回值写入状态文件，作为「本次启动确实调用过独立窗口」的可核对证据 ——
+    因为 Edge 在本机已有实例时会把窗口委托给既有进程，新进程随即退出，
+    事后在进程列表里查不到 --app 参数，不能以此判定失败。
+    #>
     $edgeCandidates = @(
         (Join-Path ${env:ProgramFiles(x86)} 'Microsoft\Edge\Application\msedge.exe'),
         (Join-Path $env:ProgramFiles 'Microsoft\Edge\Application\msedge.exe')
@@ -464,15 +561,23 @@ function Open-AppWindow([string]$Url) {
         $chrome = Join-Path $env:ProgramFiles 'Google\Chrome\Application\chrome.exe'
         if (Test-Path -LiteralPath $chrome) { $edge = $chrome }
     }
+    $appUrl = '--app=' + $Url
     if (-not $edge) {
         Write-Warn "未找到 Microsoft Edge，改用默认浏览器打开 $Url"
         Start-Process $Url
-        return
+        return [pscustomobject]@{ opened = $true; app_window = $false; exe = $null; url = $Url; at = (Get-Date).ToString('s') }
     }
-    # 不指定 --user-data-dir：复用你日常登录的 Edge 配置（BOSS 直聘登录态可继续使用）
-    $args = @('--app=' + $Url, '--window-size=1440,900', '--no-first-run', '--no-default-browser-check')
-    Start-Process -FilePath $edge -ArgumentList $args | Out-Null
+    $proc = Start-Process -FilePath $edge -ArgumentList @($appUrl, '--window-size=1440,900', '--no-first-run', '--no-default-browser-check') -PassThru
     Write-Ok "已用 Edge 独立窗口打开 $Url"
+    return [pscustomobject]@{
+        opened     = $true
+        app_window = $true
+        exe        = $edge
+        url        = $Url
+        args       = @($appUrl, '--window-size=1440,900')
+        pid        = if ($proc) { $proc.Id } else { $null }
+        at         = (Get-Date).ToString('s')
+    }
 }
 
 # ---------------------------------------------------------------- 入口

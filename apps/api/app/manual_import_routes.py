@@ -402,10 +402,13 @@ def extension_parse(payload: ParseRequest, request: Request) -> dict:
     if len(text.strip()) < 10:
         raise HTTPException(422, "页面内容太短，无法识别岗位。")
     _reject_credentials(text)
+    # 来源如实记录：扩展会按页面域名给出 BOSS_ZHIPIN / OTHER / UNKNOWN。
+    # 这里绝不把缺省值补成 BOSS_ZHIPIN——那会让非 BOSS 页面被标成 BOSS 采集（伪造来源）。
+    raw_site = (payload.source_site or "").strip()
     draft = manual.parse_job_text(
         source_text=text,
         source_url=payload.source_url or "",
-        source_site=payload.source_site or "BOSS_ZHIPIN",
+        source_site=raw_site or "UNKNOWN",
         recognition="BROWSER_EXTENSION",
         provided=payload.provided,
     )
@@ -447,7 +450,8 @@ def extension_save(payload: ExtensionSaveRequest, request: Request, db: Session 
             "employment_type": payload.employment_type or "UNKNOWN",
             "jd": payload.jd or "",
             "source_url": payload.source_url or "",
-            "source_site": payload.source_site or "BOSS_ZHIPIN",
+            # 同上：来源如实记录，缺省记为 UNKNOWN，不冒充 BOSS 采集
+            "source_site": (payload.source_site or "").strip() or "UNKNOWN",
             "recognition": "BROWSER_EXTENSION",
         }
     draft = _apply_user_edits(draft, payload)

@@ -152,6 +152,8 @@ _COMPANY_SUFFIX_RE = re.compile(
     r"Inc\.|Inc|Ltd\.?|LLC|GmbH|Corp\.?|Limited))"
 )
 _URL_RE = re.compile(r"https?://[^\s，,；;）)】\]]+")
+#: BOSS 等站点首行常见「招聘产品经理/诚聘 XX」，岗位名里不应保留这些前缀
+_ROLE_PREFIX_RE = re.compile(r"^\s*(?:诚聘|急招|急聘|热招|长期招聘|招聘|诚招|招)\s*")
 
 
 def _first_match(pattern: re.Pattern[str], text: str) -> str:
@@ -218,7 +220,7 @@ def _guess_company(lines: list[str], text: str) -> str:
 def _guess_role(lines: list[str]) -> str:
     """BOSS 详情页首行通常是岗位名；只有看起来像岗位名才采用。"""
     for line in lines[:3]:
-        candidate = line.strip().lstrip("【[").rstrip("】]")
+        candidate = _ROLE_PREFIX_RE.sub("", line.strip()).strip().lstrip("【[").rstrip("】]")
         if not candidate or len(candidate) > 40:
             continue
         if _SALARY_RE.fullmatch(candidate) or _SALARY_RE.search(candidate):
@@ -278,7 +280,8 @@ def parse_job_text(
     injection = detect_prompt_injection(cleaned)
 
     company = provided.get("company") or _labeled_value("company", lines) or _guess_company(lines, cleaned)
-    role = provided.get("role") or _labeled_value("role", lines) or _guess_role(lines)
+    # provided / 标签 / 启发式三个来源都可能带「招聘」「诚聘」等前缀，统一在最后剥离
+    role = _ROLE_PREFIX_RE.sub("", (provided.get("role") or _labeled_value("role", lines) or _guess_role(lines))).strip()
     location = provided.get("location") or _labeled_value("location", lines) or _guess_location(cleaned)
     salary = provided.get("salary_text") or _labeled_value("salary", lines) or _first_match(_SALARY_RE, cleaned)
     if not salary:

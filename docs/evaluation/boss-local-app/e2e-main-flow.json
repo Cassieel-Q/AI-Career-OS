@@ -1,0 +1,118 @@
+{
+  "web": "http://127.0.0.1:3000",
+  "api": "http://127.0.0.1:8100",
+  "finished_at": "2026-10-17T07:18:06.781Z",
+  "total": 18,
+  "passed": 18,
+  "failed": 0,
+  "steps": [
+    {
+      "step": 1,
+      "name": "打开导入页",
+      "ok": true,
+      "detail": "http://127.0.0.1:3000/jobs/import"
+    },
+    {
+      "step": 2,
+      "name": "粘贴岗位原文",
+      "ok": true,
+      "detail": "290 字符"
+    },
+    {
+      "step": 3,
+      "name": "解析完成",
+      "ok": true,
+      "detail": "出现字段确认区"
+    },
+    {
+      "step": 4,
+      "name": "字段抽取正确",
+      "ok": true,
+      "detail": "{\"company\":\"杭州示例科技有限公司\",\"role\":\"AI产品经理实习\",\"salary_text\":\"8-13K·13薪\",\"location\":\"杭州 滨江区\",\"education\":\"本科\",\"employment_type\":\"INTERN\",\"source_url\":\"https://www.zhipin.com/job_detail/synthetic-fixture.html\"}"
+    },
+    {
+      "step": 5,
+      "name": "保存并进入匹配",
+      "ok": true,
+      "detail": "mission=8ba195f3-cb24-45ae-900f-36ccc0409027"
+    },
+    {
+      "step": 6,
+      "name": "岗位详情页可读到原岗位链接",
+      "ok": true,
+      "detail": "https://www.zhipin.com/job_detail/synthetic-fixture.html"
+    },
+    {
+      "step": 7,
+      "name": "生成话术",
+      "ok": true,
+      "detail": "您好，我是我，正在应聘AI产品经理实习岗位。我的简历已附上，期待有机会进一步沟通。"
+    },
+    {
+      "step": 8,
+      "name": "话术可编辑",
+      "ok": true,
+      "detail": "，期待有机会进一步沟通。（我已手动编辑）"
+    },
+    {
+      "step": 9,
+      "name": "话术已保存",
+      "ok": true,
+      "detail": "，期待有机会进一步沟通。（我已手动编辑）"
+    },
+    {
+      "step": 10,
+      "name": "标记已投递",
+      "ok": true,
+      "detail": "status=APPLIED applied_at=2026-10-17"
+    },
+    {
+      "step": 11,
+      "name": "快照语义正确（未确认简历不出快照）",
+      "ok": true,
+      "detail": "/api/v1/applications/e2040abe-4bef-44c5-b35c-1f4177a049ec/resume-snapshot → 404"
+    },
+    {
+      "step": "11b",
+      "name": "找到已确认修订版的岗位用于 Studio 验收",
+      "ok": true,
+      "detail": "962a85f2-fb14-4f6b-a2ce-b72b13a5144b"
+    },
+    {
+      "step": "11c",
+      "name": "服务端真实渲染 PDF（Typst）",
+      "ok": true,
+      "detail": "81987 字节 / 头=%PDF-"
+    },
+    {
+      "step": 12,
+      "name": "打开 Resume Studio",
+      "ok": true,
+      "detail": "http://127.0.0.1:3000/missions/962a85f2-fb14-4f6b-a2ce-b72b13a5144b/resume/studio"
+    },
+    {
+      "step": 13,
+      "name": "Studio 导出 PDF",
+      "ok": true,
+      "detail": "81987 字节"
+    },
+    {
+      "step": 14,
+      "name": "岗位已进入岗位库",
+      "ok": true,
+      "detail": "total 120 → 121"
+    },
+    {
+      "step": 15,
+      "name": "重复导入不新增",
+      "ok": true,
+      "detail": "total 121 → 121；提示：岗位库里已有同一条，未重复新增。"
+    },
+    {
+      "step": 16,
+      "name": "页面无 JS 报错",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}

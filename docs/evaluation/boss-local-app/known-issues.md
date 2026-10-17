@@ -18,7 +18,17 @@
 | 5 | 真实 BOSS 直聘页面读取 | `BOSS_REAL_SITE_PENDING_USER` | 需要你本人登录。扩展与复制粘贴两条路都已就绪，你回来后只需：登录 BOSS → 打开一个职位页 → 点扩展图标「读取当前岗位」→ 核对字段 → 导入。若平台不允许自动读取，就退回复制粘贴（这条已完全可用） |
 | 6 | 浏览器扩展在 Edge 的实机加载 | `DONE_UNVERIFIED` | 代码、权限、鉴权、安全测试都已完成，但**没有真人在 Edge 里加载并点过**。需要你执行一次：`edge://extensions` → 开发人员模式 → 加载解压缩的扩展 → 选 `apps/extension` |
 | 7 | 桌面快捷方式的双击验收 | `PARTIAL` | 脚本已写好并可执行，实机验收要等 production 构建完成后统一跑 |
-| 8 | 后端全量测试有 1 项受环境影响的失败 | 观察中 | `test_bind_resume_records_version_revision_and_pdf_snapshot` 报「Typst 排版超时」，与构建抢占 CPU 有关；将在 CPU 空闲时复跑确认 |
+| 8 | 后端全量测试有 1 项受环境影响的失败 | 已确认与本次改动无关 | `test_bind_resume_records_version_revision_and_pdf_snapshot` 曾报「Typst 排版超时」；CPU 空闲后复跑通过。全量 916 passed / 7 failed，这 7 项在基线提交 `c3268ac` 上单独复跑**同样失败**，属既有问题 |
+
+## 二·补、本轮修掉的真实缺陷（都是实机踩出来的）
+
+| # | 现象 | 根因 | 修法 |
+| --- | --- | --- | --- |
+| 9 | 「采集当前网页」报 `浏览器桥拒绝了本次调用（令牌不匹配）` | 本机同时存在**两个桥**（手动 `start-browser-bridge.cmd` 起 8770、桌面启动器起 8771），令牌文件 `<数据目录>/browser-bridge.token` 只反映最后启动的那个；后端写死连 8770，于是永远对不上 | ① 启停器**先起桥再起后端**，并把实际端口以 `BROWSER_BRIDGE_URL` 注入后端进程；② 启动时清理多余的本桥（`Stop-StrayBridges`）；③ 后端 `webform_browser.bridge_url()` 在未显式配置时按 8770–8773 探测真实在跑的桥（`service == ai-career-os-browser-bridge`） |
+| 10 | 用相对路径启动的桥（`node scripts/browser-bridge.cjs`）不被识别成本项目进程 | 归属判定只看命令行里有没有项目路径 / `ai-career`，相对路径命令行两者都没有 → 既不能复用也不能清理，长期占着 8770 | `Test-OwnedByApp` 增加规则：命令行匹配 `scripts[\\/]browser-bridge\.cjs` 视为本项目 |
+| 11 | 岗位名被解析成「招聘 产品经理（AI方向）」 | BOSS 首行常带「招聘/诚聘/急招」等前缀，解析器原样保留 | 新增 `_ROLE_PREFIX_RE`，对 `provided` / 标签行 / 启发式三条来源都在最后统一剥离 |
+| 12 | 来源被虚标：扩展解析时缺省 `source_site` 会被补成 `BOSS_ZHIPIN` | `payload.source_site or "BOSS_ZHIPIN"` 永远不会命中——模型默认值 `"UNKNOWN"` 是真值；反过来若真有空值则把任意网页标成 BOSS 采集 | 改为 `(payload.source_site or "").strip() or "UNKNOWN"`，扩展按页面域名如实上报 `BOSS_ZHIPIN / OTHER / UNKNOWN` |
+| 13 | 开发模式 `next dev` 清空 `.next`，把 production 构建删掉（用户因此打不开工作台） | dev 与 prod 共用 distDir | `next.config.mjs` 支持 `NEXT_DIST_DIR`，dev 走 `.next-dev` |
 
 ## 三、明确不做（按你的要求 & 平台规则）
 

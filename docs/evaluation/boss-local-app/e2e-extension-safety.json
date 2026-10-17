@@ -1,0 +1,64 @@
+{
+  "web": "http://127.0.0.1:3000",
+  "api": "http://127.0.0.1:8100",
+  "finished_at": "2026-10-17T07:16:50.475Z",
+  "total": 9,
+  "passed": 9,
+  "failed": 0,
+  "steps": [
+    {
+      "step": 1,
+      "name": "BOSS 测试页抽取字段正确",
+      "ok": true,
+      "detail": "{\"company\":\"杭州示例科技有限公司\",\"role\":\"AI产品经理实习\",\"location\":\"杭州\",\"salary_text\":\"8-13K·13薪\",\"education\":\"本科\",\"experience\":\"经验不限\"}"
+    },
+    {
+      "step": 2,
+      "name": "不读取密码框 / Cookie / 隐藏注入文本",
+      "ok": true,
+      "detail": "抽取结果里没有任何敏感内容"
+    },
+    {
+      "step": 3,
+      "name": "非岗位页面明确标记（不伪装成功）",
+      "ok": true,
+      "detail": "status=NOT_A_JOB_PAGE note=当前页面看起来不是职位详情页，读取结果可能不完整。"
+    },
+    {
+      "step": 4,
+      "name": "页面结构变化时降级为整页文本且不谎报高置信",
+      "ok": true,
+      "detail": "confidence={\"role\":\"MISSING\",\"salary\":\"MISSING\",\"company\":\"MISSING\",\"location\":\"MISSING\",\"jd\":\"MISSING\"} source_len=51"
+    },
+    {
+      "step": 5,
+      "name": "已配对状态下仍拒绝无效令牌",
+      "ok": true,
+      "detail": "paired=true status=401"
+    },
+    {
+      "step": 6,
+      "name": "配对后可用 / 错令牌 401 / 外来 Origin 403",
+      "ok": true,
+      "detail": "ping=200 wrong=401 foreign=403"
+    },
+    {
+      "step": 7,
+      "name": "扩展重复导入不产生第二条记录",
+      "ok": true,
+      "detail": "first=NEW second=DUPLICATE same_id=true"
+    },
+    {
+      "step": 8,
+      "name": "外来网页无法调用本地写接口",
+      "ok": true,
+      "detail": "TypeError: Failed to fetch"
+    },
+    {
+      "step": 9,
+      "name": "本地服务不可用时报错清晰（不静默）",
+      "ok": true,
+      "detail": "fetch failed"
+    }
+  ]
+}
