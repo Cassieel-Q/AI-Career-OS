@@ -13,7 +13,11 @@
 [CmdletBinding()]
 param(
     [int]$ApiPort = 8100,
-    [string]$IsolatedRoot = 'D:\ai-career-web-build'
+    [string]$IsolatedRoot = 'D:\ai-career-web-build',
+    #: 直接走 NTFS 隔离目录构建，跳过 G 盘原地尝试。
+    #: G 盘是 exFAT 移动盘，某些宿主环境会在 next 清理 .next 时拦截 unlink 而失败，
+    #: 这时用本开关可以省掉一轮无谓的失败等待。
+    [switch]$PreferIsolated
 )
 
 $ErrorActionPreference = 'Stop'
@@ -51,12 +55,22 @@ Write-Host ''
 Write-Host '构建前端 production 产物...' -ForegroundColor Cyan
 Write-Host "  后端地址: http://127.0.0.1:$ApiPort" -ForegroundColor Gray
 
-$code = Invoke-Build -WorkDir $WebDir
-$builtIn = $WebDir
+$iso = Join-Path $IsolatedRoot 'web'
+
+if ($PreferIsolated) {
+    Write-Host '  按 -PreferIsolated 直接走 NTFS 隔离目录（跳过 G 盘原地尝试）。' -ForegroundColor Gray
+    $code = 1
+} else {
+    $code = Invoke-Build -WorkDir $WebDir
+    $builtIn = $WebDir
+}
 
 if ($code -ne 0) {
-    Write-Host '  [!] G 盘原地构建失败，切换到 NTFS 隔离目录重试...' -ForegroundColor Yellow
-    $iso = Join-Path $IsolatedRoot 'web'
+    if ($PreferIsolated) {
+        Write-Host '  使用 NTFS 隔离目录构建（G 盘 exFAT 在 unlink / readlink 上不可靠）。' -ForegroundColor Gray
+    } else {
+        Write-Host '  [!] G 盘原地构建失败，切换到 NTFS 隔离目录重试...' -ForegroundColor Yellow
+    }
     if (-not (Test-Path -LiteralPath $iso)) { New-Item -ItemType Directory -Path $iso -Force | Out-Null }
     # 排除 .next / 运行期缓存；其余真实复制
     $robocopyArgs = @(

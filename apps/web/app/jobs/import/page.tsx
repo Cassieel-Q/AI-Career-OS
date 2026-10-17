@@ -46,6 +46,8 @@ const CONFIDENCE_LABEL: Record<string, string> = {
   MISSING: "缺失",
 };
 
+type EmploymentType = NonNullable<JobDraft["employment_type"]>;
+
 type Editable = {
   company: string;
   role: string;
@@ -53,7 +55,7 @@ type Editable = {
   salary_text: string;
   education: string;
   experience: string;
-  employment_type: string;
+  employment_type: EmploymentType;
   source_url: string;
   jd: string;
 };
@@ -84,7 +86,7 @@ export default function JobImportPage() {
   const [result, setResult] = useState<ManualSaveResult | null>(null);
 
   const warnings = useMemo(() => draft?.warnings ?? [], [draft]);
-  const hardWarnings = useMemo(
+  const hardWarnings: string[] = useMemo(
     () => warnings.filter((code) => code === "prompt_injection_suspected" || code === "hidden_characters"),
     [warnings],
   );
@@ -237,7 +239,10 @@ export default function JobImportPage() {
               </label>
               <label className="field-label">
                 <span>工作类型</span>
-                <select value={form.employment_type} onChange={(event) => setForm({ ...form, employment_type: event.target.value })}>
+                <select
+                  value={form.employment_type}
+                  onChange={(event) => setForm({ ...form, employment_type: event.target.value as EmploymentType })}
+                >
                   {EMPLOYMENT_OPTIONS.map((option) => (
                     <option key={option.id} value={option.id}>
                       {option.label}
