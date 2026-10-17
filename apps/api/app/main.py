@@ -89,7 +89,13 @@ from app.resume_schemas import (
 from app.resume_sections import ResumeSection, completeness_warnings, detect_sections, section_for_warning
 
 MAX_RESUME_BYTES = 10 * 1024 * 1024
-LOCAL_FRONTEND_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
+LOCAL_FRONTEND_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    # 3000 被其他项目占用时，本地启动器会把前端挪到 3001
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+]
 DEFAULT_OPENAI_TIMEOUT_SECONDS = 30.0
 MAX_OPENAI_TIMEOUT_SECONDS = 120.0
 DEFAULT_OPENAI_MAX_RETRIES = 0
