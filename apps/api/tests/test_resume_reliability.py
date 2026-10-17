@@ -216,7 +216,9 @@ def test_structurally_different_resume_layouts_keep_routing_and_deterministic_re
     assert any(item.title == "运营助理" for item in processed.result.experiences)
     assert any(item.title == "班级干事" and item.experience_type == ExperienceType.CAMPUS for item in processed.result.experiences)
     assert {"Word", "Excel", "PowerPoint"} <= skills
-    assert "CET-6" in certifications
+    # 四六级按用户要求归入技能（语言能力），不再单独成证书。
+    assert "CET-6" in skills
+    assert "CET-6" not in certifications
     assert "普通话二级甲等" not in certifications
     assert "计算机二级" not in certifications
 
@@ -872,8 +874,11 @@ def test_section_first_preserves_deterministic_hard_fact_recovery() -> None:
     processed = main.extract_section_first_resume(Provider(), source)
 
     assert [item.institution for item in processed.result.education] == ["Example University"]
-    assert [skill.name for skill in processed.result.skills] == ["Word", "Excel", "PowerPoint"]
-    assert [(item.name, item.score) for item in processed.result.certifications] == [("CET-6", "300")]
+    # 四六级按用户要求归入技能（语言能力），分数保留在原文证据里。
+    assert [skill.name for skill in processed.result.skills] == ["Word", "Excel", "PowerPoint", "CET-6"]
+    assert processed.result.certifications == []
+    cet = processed.result.skills[-1]
+    assert cet.raw_value == "CET-6 300"
     education = processed.result.education[0]
     assert source[education.evidence_start:education.evidence_end] == education.evidence_text
     assert processed.total_llm_calls == 1
@@ -1041,7 +1046,8 @@ def test_unsupported_certification_and_experience_are_quarantined_individually()
     result = ResumeExtractionResult(
         skills=[{"name": "Python", "evidence_text": "Python"}],
         experiences=[{"title": "Fabricated role", "evidence_text": "Fabricated role"}],
-        certifications=[{"name": "CET-6", "evidence_text": "CET-6"}],
+        # CET 归技能后，证书隔离用例改用非语言类证书。
+        certifications=[{"name": "普通话二级甲等", "evidence_text": "普通话二级甲等"}],
     )
 
     processed = process_resume_extraction(result, "Python")
@@ -1933,15 +1939,18 @@ def test_resume_timing_diagnostics_are_redacted(caplog) -> None:
 
 
 def test_credential_score_is_preserved_without_inferred_pass_fail_status() -> None:
+    # 四六级按用户要求归入技能：分数原文保留在技能 raw_value/evidence_text 里，不推断通过状态。
     result = ResumeExtractionResult(
         certifications=[{"name": "CET-6 300", "evidence_text": "CET-6 300"}]
     )
 
     normalized = normalize_resume_extraction(result)
 
-    assert normalized.certifications[0].name == "CET-6"
-    assert normalized.certifications[0].score == "300"
-    assert normalized.certifications[0].status is None
+    assert normalized.certifications == []
+    cet = normalized.skills[0]
+    assert cet.name == "CET-6"
+    assert cet.raw_value == "CET-6 300"
+    assert cet.evidence_text == "CET-6 300"
 
 
 def test_office_tools_are_atomic_and_generic_office_software_is_not_invented() -> None:
@@ -1962,13 +1971,16 @@ def test_explicit_office_tools_and_credentials_are_recovered_when_llm_is_incompl
 
     processed = process_resume_extraction(result, source, allow_repair=False)
 
-    assert [skill.name for skill in processed.result.skills] == ["Word", "Excel", "PowerPoint"]
-    assert [certification.name for certification in processed.result.certifications] == [
+    # 四六级按用户要求恢复成技能（分数保留在原文里），证书只留普通话二级甲等。
+    assert [skill.name for skill in processed.result.skills] == [
+        "Word",
+        "Excel",
+        "PowerPoint",
         "CET-4",
         "CET-6",
-        "普通话二级甲等",
     ]
-    assert [certification.score for certification in processed.result.certifications] == ["500", "300", None]
+    assert [skill.raw_value for skill in processed.result.skills[-2:]] == ["CET-4 500", "CET-6 300"]
+    assert [certification.name for certification in processed.result.certifications] == ["普通话二级甲等"]
     assert all(certification.status is None for certification in processed.result.certifications)
 
 
@@ -1980,9 +1992,9 @@ def test_explicit_recovery_uses_real_source_spans() -> None:
     office = {skill.name: skill for skill in processed.result.skills}
     assert office["PowerPoint"].evidence_text == "PPT"
     assert source[office["PowerPoint"].evidence_start : office["PowerPoint"].evidence_end] == "PPT"
-    credential = processed.result.certifications[0]
-    assert credential.evidence_text == "CET-4 500"
-    assert source[credential.evidence_start : credential.evidence_end] == "CET-4 500"
+    cet = office["CET-4"]
+    assert cet.evidence_text == "CET-4 500"
+    assert source[cet.evidence_start : cet.evidence_end] == "CET-4 500"
 
 
 def test_office_aliases_are_recovered_from_the_skills_section() -> None:
@@ -2003,9 +2015,9 @@ def test_supported_credential_aliases_are_recovered_from_explicit_sections() -> 
 
     processed = process_resume_extraction(ResumeExtractionResult(), source, allow_repair=False)
 
+    # 四六级归入技能；其余显式证书仍恢复为证书。
+    assert {skill.name for skill in processed.result.skills} >= {"CET-4", "CET-6"}
     assert [certification.name for certification in processed.result.certifications] == [
-        "CET-4",
-        "CET-6",
         "IELTS",
         "TOEFL",
         "JLPT",

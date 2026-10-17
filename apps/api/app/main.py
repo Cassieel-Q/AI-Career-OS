@@ -543,11 +543,11 @@ class OpenAIResumeProvider:
                 "Extract explicit resume facts only. Use section headings as structural evidence and map "
                 "教育背景 to education, 主修课程 to education.relevant_courses, 实习经历 to "
                 "INTERNSHIP, 工作经历 to WORK, 校园经历 to CAMPUS, 项目经历 to PROJECT, 专业技能 "
-                "to skills, and explicit 证书/资格证书/language credentials to certifications. "
+                "to skills, and explicit 证书/资格证书 credentials to certifications. "
                 "For each experience, return source_section as the exact heading when present and "
                 "experience_type as WORK, INTERNSHIP, CAMPUS, PROJECT, or OTHER. Keep generic language "
-                "ability in skills, and keep explicit credentials such as CET-4/CET-6, IELTS, TOEFL, "
-                "JLPT, or 普通话二级甲等 in certifications. Never invent a credential. "
+                "ability and CET-4/CET-6 (大学英语四级/六级) in skills; keep other explicit credentials "
+                "such as IELTS, TOEFL, JLPT, or 普通话二级甲等 in certifications. Never invent a credential. "
                 "For every evidence_text, copy a VERBATIM contiguous excerpt from the resume. Do not "
                 "paraphrase, summarize, translate, or rewrite evidence_text. Preserve evidence_text "
                 "exactly as shown. Keep evidence excerpts concise but include the relevant course text "
@@ -894,16 +894,19 @@ _EXPLICIT_OFFICE_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"(?<![A-Za-z0-9_])PPT(?![A-Za-z0-9_])", re.IGNORECASE), "PowerPoint"),
 )
 _EXPLICIT_CREDENTIAL_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
-    (re.compile(r"(?<![A-Za-z0-9_])CET[- ]?4(?![A-Za-z0-9_])", re.IGNORECASE), "CET-4"),
-    (re.compile(r"(?<![A-Za-z0-9_])CET[- ]?6(?![A-Za-z0-9_])", re.IGNORECASE), "CET-6"),
-    (re.compile(r"大学英语四级"), "CET-4"),
-    (re.compile(r"大学英语六级"), "CET-6"),
+    # CET-4/CET-6 按用户要求归入技能（语言能力），不再作为证书恢复；见 _EXPLICIT_CET_PATTERNS。
     (re.compile(r"普通话二级甲等"), "普通话二级甲等"),
     (re.compile(r"(?<![A-Za-z0-9_])IELTS(?![A-Za-z0-9_])", re.IGNORECASE), "IELTS"),
     (re.compile(r"雅思"), "IELTS"),
     (re.compile(r"(?<![A-Za-z0-9_])TOEFL(?![A-Za-z0-9_])", re.IGNORECASE), "TOEFL"),
     (re.compile(r"托福"), "TOEFL"),
     (re.compile(r"(?<![A-Za-z0-9_])JLPT(?![A-Za-z0-9_])", re.IGNORECASE), "JLPT"),
+)
+_EXPLICIT_CET_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"(?<![A-Za-z0-9_])CET[- ]?4(?![A-Za-z0-9_])", re.IGNORECASE), "CET-4"),
+    (re.compile(r"(?<![A-Za-z0-9_])CET[- ]?6(?![A-Za-z0-9_])", re.IGNORECASE), "CET-6"),
+    (re.compile(r"大学英语四级"), "CET-4"),
+    (re.compile(r"大学英语六级"), "CET-6"),
 )
 _EXPLICIT_LANGUAGE_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"(?<![A-Za-z0-9_])English(?![A-Za-z0-9_])", re.IGNORECASE), "English"),
@@ -977,6 +980,9 @@ def _section_has_semantic_content(section: ResumeSection, *, content: str | None
     elif section.key in {"CREDENTIALS", "LANGUAGE"}:
         for pattern, _ in _EXPLICIT_CREDENTIAL_PATTERNS:
             content = pattern.sub(" ", content)
+        # 四六级现在算技能事实，也要从「剩余内容」里扣除，避免纯四六级的证书栏被判为需要再抽取。
+        for pattern, _ in _EXPLICIT_CET_PATTERNS:
+            content = pattern.sub(" ", content)
         if section.key == "LANGUAGE":
             for pattern, _ in _EXPLICIT_LANGUAGE_PATTERNS:
                 content = pattern.sub(" ", content)
@@ -992,7 +998,8 @@ def _deterministic_section_facts(
     if section.key == "SKILLS":
         return tuple(deterministic.skills)
     if section.key == "CREDENTIALS":
-        return tuple(deterministic.certifications)
+        # 四六级恢复为技能，证据覆盖也要把它们算进去（否则纯四六级证书栏会触发重复抽取）。
+        return (*deterministic.certifications, *deterministic.skills)
     if section.key == "LANGUAGE":
         return (*deterministic.skills, *deterministic.certifications)
     return ()
@@ -1266,6 +1273,30 @@ def _recover_explicit_credentials(source_text: str) -> list[Certification]:
     return recovered
 
 
+def _recover_explicit_cet_skills(source_text: str) -> list[Skill]:
+    """四六级按用户要求恢复成技能（语言能力），带分数时分数保留在原文里。"""
+    candidates = _select_non_overlapping_candidates(
+        _section_match_candidates(source_text, ("CREDENTIALS", "LANGUAGE", "SKILLS"), _EXPLICIT_CET_PATTERNS)
+    )
+    recovered: list[Skill] = []
+    for start, end, canonical, raw_value in candidates:
+        score_suffix = _EXPLICIT_SCORE_SUFFIX.match(source_text, end)
+        if score_suffix is not None:
+            end = score_suffix.end()
+            raw_value = source_text[start:end]
+        recovered.append(
+            Skill(
+                name=canonical,
+                raw_value=raw_value,
+                canonical_value=canonical,
+                evidence_text=raw_value,
+                evidence_start=start,
+                evidence_end=end,
+            )
+        )
+    return recovered
+
+
 def _recover_explicit_language_skills(source_text: str) -> list[Skill]:
     candidates = _select_non_overlapping_candidates(
         _section_match_candidates(source_text, ("LANGUAGE",), _EXPLICIT_LANGUAGE_PATTERNS)
@@ -1399,6 +1430,7 @@ def recover_explicit_facts(result: ResumeExtractionResult, source_text: str) -> 
     recovered_office = _recover_explicit_office_skills(source_text)
     recovered_credentials = _recover_explicit_credentials(source_text)
     recovered_language = _recover_explicit_language_skills(source_text)
+    recovered_cet = _recover_explicit_cet_skills(source_text)
 
     skills = list(result.skills)
     if recovered_office:
@@ -1414,6 +1446,18 @@ def recover_explicit_facts(result: ResumeExtractionResult, source_text: str) -> 
         recovered_by_name = {skill.name.casefold(): skill for skill in recovered_language}
         skills = [skill for skill in skills if skill.name.casefold() not in recovered_by_name]
         skills.extend(recovered_language)
+    if recovered_cet:
+        # 四六级统一落技能：去掉同名/重复的旧条目再追加。
+        recovered_by_name = {skill.name.casefold(): skill for skill in recovered_cet}
+        seen: set[str] = set()
+        deduped: list[Skill] = []
+        for skill in skills:
+            key = skill.name.casefold()
+            if key in recovered_by_name or key in seen:
+                continue
+            seen.add(key)
+            deduped.append(skill)
+        skills = deduped + recovered_cet
 
     certifications = list(result.certifications)
     for recovered in recovered_credentials:

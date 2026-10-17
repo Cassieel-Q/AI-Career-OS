@@ -106,11 +106,13 @@
         (key: "other", label: "其他技能"),
       )
       [#section-heading(sec)
+        // 每个分类独占一行，比挤成一段更整齐（用户要求）。
         #block(above: 2pt, below: gap)[
           #for group in groups {
             let members = entries.filter(e => e.skill_category == group.key)
             if members.len() > 0 {
-              [#text(weight: "bold")[#group.label：]
+              block(above: 0pt, below: 4pt)[
+                #text(weight: "bold")[#group.label：]
                 #for (i, member) in members.enumerate() {
                   field(member.title)
                   if visible(member.subtitle) { [（#field(member.subtitle)）] }
@@ -119,7 +121,6 @@
                   }
                   if i < members.len() - 1 { [、] }
                 }
-                #if group.key != "other" { [；] }
               ]
             }
           }

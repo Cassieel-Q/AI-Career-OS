@@ -382,3 +382,35 @@
      「采集结果」两个区块及全部相关状态/回调，保留「1 · 手动导入」+
      「2 · 已保存岗位」，标题改为「岗位导入与岗位库」。
 - 验证：tsc 通过；manual_import+question_bank 35/35。
+
+## 2026-10-17 晚：第七轮反馈（排版/题库/顺顺）
+
+用户反馈（含 3 张截图）：①经历卡「产品负责人」与「AI Career OS…·时间」上下位置要互换；
+②简历改写要支持 STAR / STAR-C / 能力证据链三框架并由 AI 判断套用；③证书别硬性识别，
+四六级并入技能；④技能分类后每类独占一行；⑤面试题库按宝洁八大问组织；⑥顺顺发送报
+network error；⑦题库要随反复面试积累、支持定向回答与模拟面试闭环。
+
+- 修复：
+  1. 顺顺 network error 根因：assistant_routes.get_db_gen 直接读 DATABASE_URL 环境变量，
+     本地模式（数据集指针）下为空 → SSE 流中途 RuntimeError。改用
+     local_mode.resolve_database_url()，与 get_db 同源；岗位上下文读取挪进 try；
+     前端把裸 network error 换成中文可操作提示，createConversation 挪进 try。
+  2. 证书→技能：resume_normalization（CET 不再提升为证书、显式 CET 证书降级为技能）+
+     main.py 确定性恢复（_recover_explicit_cet_skills，CET 移出 _EXPLICIT_CREDENTIAL_PATTERNS，
+     LLM 提示词同步）+ 存量数据迁移（cf5c774b 的「六级（504）」→ 技能 CET-6）。
+  3. 技能分类每类一行：resume_studio_typst/base.typ（每组一个 block，去掉组间「；」）；
+     投递版导出 export-target-resume.ts 用 groupSkillNames 每类一行。
+  4. 经历卡标题互换：mission-page.tsx 新增 experienceHeading（项目名+时间在上、角色在下），
+     原始简历列/经历筛选/暂不放入/待改写卡全部同步；export experienceHeading 改 org 在前。
+  5. STAR 框架：mission_provider build_target_resume 提示词要求每段经历选
+     STAR / STAR-C / 能力证据链并写入 reason 开头「改写框架：X（理由）」；
+     前端 RewriteReason 解析成徽章展示。
+  6. 宝洁八大问：question_bank_service 新增 BEHAVIORAL_8 分类与 8 道能力题（目的性/领导力/
+     计划性/说服力/协作力/创新性/前瞻性/学习力，要求按 STAR 作答）；classify_question 支持
+     行为面归类；模拟面试 BEHAVIORAL/MIXED/HR 类型优先出八大问；前端分类标签同步。
+  7. 面试积累闭环：generate_bank_from_context 自动回流 interview_records（REAL_INTERVIEW
+     真题，带「你当时的回答已存档」）与已完成的 mock_interview_sessions（练习题，带改进建议），
+     按题面去重、幂等，岗位相关记录优先。
+- 验证：后端全量 922 passed（7 失败均为基线既有：claim_provider/gap_analysis/market_profile/
+  priorities/repeated_education_merge/roadmap/target_jobs，stash 基线复核确认）；tsc 通过；
+  export-target-resume 测试通过。

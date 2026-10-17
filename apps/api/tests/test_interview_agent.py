@@ -552,12 +552,17 @@ def test_generated_questions_have_jd_and_experience_refs(db_session):
 
     bank = generate_bank_from_context(db_session, profile.id, mission_id=mission.id)
     categories = {item.category for item in bank.items}
-    assert {"BASIC", "PROJECT_DEEP_DIVE", "HR_QUESTIONS"}.issubset(categories)
+    assert {"BASIC", "PROJECT_DEEP_DIVE", "HR_QUESTIONS", "BEHAVIORAL_8"}.issubset(categories)
+    # 宝洁八大问是通用能力题，不挂 JD 要求；其余分类仍必须带 JD 关联。
     for item in bank.items:
-        assert item.jd_requirement_refs, item.question_text
-        assert item.experience_refs, item.question_text
-        assert item.why_asked
-        assert item.followup_paths
+        if item.category == "BEHAVIORAL_8":
+            assert item.experience_refs, item.question_text
+            assert "宝洁八大问" in (item.why_asked or "")
+        else:
+            assert item.jd_requirement_refs, item.question_text
+            assert item.experience_refs, item.question_text
+            assert item.why_asked
+            assert item.followup_paths
     assert all(item.expected_evidence for item in bank.items)
 
 
@@ -810,3 +815,68 @@ def test_fixed_case_five_required_checks(db_session):
     claims = execute_tool("get_confirmed_claims_context", {}, db_session, str(profile.id))
     assert claims.ok is True
     assert "主导过一次需求评审" in claims.summary
+
+
+# ---------------------------------------------------------------------------
+# 13. 面试历史积累：真实面试记录 + 已完成的模拟面试自动回流进题库
+# ---------------------------------------------------------------------------
+
+
+def test_interview_history_flows_into_question_bank(db_session):
+    from datetime import date
+
+    profile = _make_profile(db_session)
+    mission, _experience = _make_mission(db_session, profile)
+    db_session.flush()
+
+    record = models.InterviewRecord(
+        profile_id=profile.id,
+        mission_id=mission.id,
+        company="Acme",
+        role="产品经理",
+        interview_round="一面",
+        interviewed_on=date(2026, 10, 10),
+    )
+    db_session.add(record)
+    db_session.flush()
+    db_session.add_all(
+        [
+            models.InterviewRecordItem(
+                record_id=record.id, sort_order=0, question="介绍一个你主导过的项目", my_answer="我主导了 XX 活动"
+            ),
+            models.InterviewRecordItem(
+                record_id=record.id, sort_order=1, question="描述你如何解决团队冲突并推动合作", my_answer=""
+            ),
+        ]
+    )
+    mock = models.MockInterviewSession(
+        profile_id=profile.id, mission_id=mission.id, status="COMPLETED", rounds=1, current_round=1, config={}, report={}
+    )
+    db_session.add(mock)
+    db_session.flush()
+    db_session.add(
+        models.MockInterviewTurn(
+            session_id=mock.id,
+            round_number=1,
+            question="模拟面试里的旧问题",
+            question_source="JD_DERIVED",
+            answer="上次答过了",
+            evaluation={"improvement_tip": "把结果提前说"},
+        )
+    )
+    db_session.commit()
+
+    bank = generate_bank_from_context(db_session, profile.id, mission_id=mission.id)
+    by_text = {item.question_text: item for item in bank.items}
+
+    real = by_text["介绍一个你主导过的项目"]
+    assert real.source == "REAL_INTERVIEW"
+    assert "真实面试" in (real.why_asked or "")
+    assert by_text["描述你如何解决团队冲突并推动合作"].category == "BEHAVIORAL_8"
+    mock_item = by_text["模拟面试里的旧问题"]
+    assert mock_item.source == "MODEL"
+    assert "模拟面试" in (mock_item.why_asked or "")
+
+    # 幂等：重复生成不产生重复题目。
+    again = generate_bank_from_context(db_session, profile.id, mission_id=mission.id)
+    assert len(again.items) == len(bank.items)

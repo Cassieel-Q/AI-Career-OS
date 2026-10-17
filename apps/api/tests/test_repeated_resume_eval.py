@@ -60,4 +60,5 @@ def test_five_equivalent_raw_outputs_have_one_normalized_semantic_signature() ->
     signatures = [_signature(process_resume_extraction(variant, source).result) for variant in variants]
 
     assert len(set(signatures)) == 1
-    assert signatures[0] == (("English", "Excel", "PowerPoint", "Python", "Word"), ("CET-6",), ())
+    # 四六级不再单独成证书，统一归入技能（语言能力）。
+    assert signatures[0] == (("CET-6", "English", "Excel", "PowerPoint", "Python", "Word"), (), ())

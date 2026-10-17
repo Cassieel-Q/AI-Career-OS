@@ -53,8 +53,9 @@ def test_section_aware_fields_and_language_classification_are_normalized() -> No
 
     assert normalized.education[0].relevant_courses == ["Machine Learning", "Database Systems"]
     assert normalized.experiences[0].experience_type == "CAMPUS"
-    assert [skill.name for skill in normalized.skills] == ["English"]
-    assert [certification.name for certification in normalized.certifications] == ["CET-6"]
+    # 四六级按用户要求归入技能（语言能力），不再单独成证书。
+    assert [skill.name for skill in normalized.skills] == ["English", "CET-6"]
+    assert normalized.certifications == []
     validate_evidence_trace(
         normalized,
         (

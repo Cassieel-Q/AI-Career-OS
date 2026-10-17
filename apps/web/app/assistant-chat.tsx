@@ -150,12 +150,18 @@ export function AssistantChat({
     const content = input.trim();
     if (!content || busy) return;
     let cid = conversationId;
-    if (!cid) {
-      const conv = await createConversation(surface);
-      cid = conv.id;
-      // 新会话刚创建，标记为已加载，避免下面的回填 effect 把刚发出的消息清空。
-      loadedConvRef.current = conv.id;
-      onConversationChange?.(conv.id);
+    try {
+      if (!cid) {
+        const conv = await createConversation(surface);
+        cid = conv.id;
+        // 新会话刚创建，标记为已加载，避免下面的回填 effect 把刚发出的消息清空。
+        loadedConvRef.current = conv.id;
+        onConversationChange?.(conv.id);
+      }
+    } catch {
+      // 之前这步在 try 之外，创建会话失败会变成裸 "network error"。
+      setError("连接本地服务失败。请确认 AI Career OS 后端已启动，然后重试。");
+      return;
     }
     const userMessage: AssistantMessage = { id: `local-${Date.now()}`, role: "user", content };
     setMessages((prev) => [...prev, userMessage]);
@@ -200,7 +206,11 @@ export function AssistantChat({
       setStreamingText("");
       setActiveTools([]);
     } catch (caught) {
-      const message = caught instanceof Error ? caught.message : "发送失败。";
+      const raw = caught instanceof Error ? caught.message : "";
+      // fetch 层失败（连接中断/后端未启动）浏览器只给英文 "network error"，换成可操作的中文。
+      const message = /network|failed to fetch|load failed/i.test(raw)
+        ? "与本地服务的连接中断了。请确认后端已启动后重试；如果反复出现，重启 AI Career OS 再试。"
+        : caught instanceof Error ? caught.message : "发送失败。";
       // 保留已经流出的部分内容，避免"答到一半"的成果被清空。
       if (fullText.trim()) {
         setMessages((prev) => [...prev, { id: `local-${Date.now()}-partial`, role: "assistant", content: fullText.trim() }]);

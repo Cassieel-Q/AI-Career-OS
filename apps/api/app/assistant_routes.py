@@ -206,14 +206,14 @@ async def _stream_chat(payload: ChatRequest, conversation_id: UUID, surface: str
     user_text = payload.content
     context_lines: list[str] = []
     if payload.mission_id:
-        # 可选：把当前岗位上下文带进去
+        # 可选：把当前岗位上下文带进去（任何失败都不能让流中断）。
         from .mission_service import get_mission
-        with next(get_db_gen()) as db2:
-            try:
+        try:
+            with next(get_db_gen()) as db2:
                 mission = get_mission(db2, UUID(payload.mission_id))
                 context_lines.append(f"用户当前正在查看的岗位：{mission.company} · {mission.role}")
-            except Exception:  # noqa: BLE001
-                pass
+        except Exception:  # noqa: BLE001
+            logger.warning("读取岗位上下文失败，跳过", exc_info=True)
 
     # 第一阶段：解析面试上下文（intent / 岗位 / 目标简历 / 置信度 / 缺失项）。
     resolved: dict[str, Any] | None = None
@@ -460,15 +460,19 @@ def _humanize_stream_error(exc: Exception) -> str:
 
 
 def get_db_gen():
-    """流式期间请求会话已关闭，这里按需建独立会话（复用 database 的引擎缓存逻辑）。"""
-    import os
+    """流式期间请求会话已关闭，这里按需建独立会话（与 get_db 同一套「本地优先」解析）。
+
+    之前直接读 DATABASE_URL，本地模式（AI_CAREER_DATA_DIR + 数据集指针）下没有
+    这个环境变量，导致 SSE 流中途抛 RuntimeError，前端表现为 network error。
+    """
+    from app.local_mode import resolve_database_url
+
+    from .database import _engines
 
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
 
-    from .database import _engines
-
-    database_url = os.getenv("DATABASE_URL", "").strip()
+    database_url = resolve_database_url()
     if not database_url:
         raise RuntimeError("Profile persistence is not configured")
     engine = _engines.get(database_url)

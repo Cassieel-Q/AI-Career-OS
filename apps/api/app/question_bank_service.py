@@ -1,10 +1,12 @@
 """独立题库与参考答案（目标三）。
 
 保留现有 mission 模拟面试流程不动，新增可复用题库：
-- 三分类：BASIC / PROJECT_DEEP_DIVE / HR_QUESTIONS；
+- 四分类：BASIC / PROJECT_DEEP_DIVE / HR_QUESTIONS / BEHAVIORAL_8（宝洁八大问）；
 - 支持岗位（mission）、难度、面试官风格；
 - 每题可生成参考答案；真实面试题可录入（source=REAL_INTERVIEW）；
-- 可根据真实问题生成简历优化建议。
+- 可根据真实问题生成简历优化建议；
+- 面试历史积累：真实面试记录与已完成的模拟面试会自动回流进题库，
+  面得越多题库越大，用于定向复盘与参考回答。
 
 **事实门控（硬约束）**：参考答案只能使用
 1) 状态为已确认的 ResumeClaim；
@@ -28,7 +30,7 @@ from .question_provider import generate_answer
 
 logger = logging.getLogger("career_os.question_bank")
 
-CATEGORIES = {"BASIC", "PROJECT_DEEP_DIVE", "HR_QUESTIONS"}
+CATEGORIES = {"BASIC", "PROJECT_DEEP_DIVE", "HR_QUESTIONS", "BEHAVIORAL_8"}
 DIFFICULTIES = {"EASY", "MEDIUM", "HARD"}
 CONFIRMED_CLAIM_STATUSES = {"READY", "CONFIRMED", "SUPPORTED"}
 UNKNOWN = "UNKNOWN"
@@ -36,6 +38,12 @@ NEEDS_CONFIRMATION = "NEEDS_CONFIRMATION"
 
 _HR_PATTERNS = ("自我介绍", "为什么", "缺点", "优点", "职业规划", "离职", "期望薪资", "加班", "为什么选择", "职业目标", "抗压")
 _BASIC_PATTERNS = ("什么是", "概念", "区别", "原理", "流程", "如何理解", "介绍一下")
+# 行为面试（宝洁八大问 / 能力八问）的典型问法：先于 HR 分类判断。
+_BEHAVIORAL_PATTERNS = (
+    "宝洁八大问", "能力八问", "带领团队", "主动承担责任", "说服", "与他人合作", "团队合作",
+    "团队冲突", "一个创意", "快速学习", "高压", "影响他人", "多项任务", "优先级",
+    "很高的目标", "挑战性目标", "评估情况", "聚焦关键问题",
+)
 
 
 def _profile(db: Session, profile_id: UUID) -> models.UserProfile:
@@ -46,8 +54,10 @@ def _profile(db: Session, profile_id: UUID) -> models.UserProfile:
 
 
 def classify_question(text: str) -> str:
-    """按题面把题目归到三分类（用于真实面试题录入的默认分类）。"""
+    """按题面把题目归类（用于真实面试题录入的默认分类）。"""
     folded = (text or "").casefold()
+    if any(pattern in folded for pattern in _BEHAVIORAL_PATTERNS):
+        return "BEHAVIORAL_8"
     if any(pattern in folded for pattern in _HR_PATTERNS):
         return "HR_QUESTIONS"
     if any(pattern in folded for pattern in _BASIC_PATTERNS):
@@ -360,6 +370,18 @@ _HR_BANK_QUESTIONS = (
     ("你的职业规划是什么？", "考察稳定性与成长路径是否与团队匹配。"),
 )
 
+# 宝洁八大问：八个能力维度，每题都要求用真实经历按 STAR 法则作答。
+_PG8_BANK_QUESTIONS = (
+    ("目的性", "举例说明你如何设定了一个「很高的目标」，并最终实现它。", "考察目标设定与达成能力（High Goal）。"),
+    ("领导力", "举例说明你在团队活动中如何主动承担责任、发挥领导作用并达成结果。", "考察领导力（Leadership）。"),
+    ("计划性", "描述一个你需要搜集信息、划定关键点并决定行动步骤以达成目标的情境。", "考察计划性与问题拆解（Planning）。"),
+    ("说服力", "举例说明你如何用事实说服他人与你达成一致。", "考察说服力（Influencing）。"),
+    ("协作力", "举例说明你如何与他人合作，共同实现一个重要目标。", "考察协作力（Teamwork）。"),
+    ("创新性", "举例说明你的一个创意如何对项目成功起到关键作用。", "考察创新性（Innovation）。"),
+    ("前瞻性", "举例说明你如何评估情况、聚焦关键问题并做出判断。", "考察前瞻性与优先级判断（Strategic Thinking）。"),
+    ("学习力", "举例说明你如何获得一项技能并成功应用于实践。", "考察学习力（Learning Agility）。"),
+)
+
 
 def generate_bank_from_context(
     db: Session,
@@ -370,7 +392,7 @@ def generate_bank_from_context(
     raw_jd: str | None = None,
     name: str | None = None,
 ) -> models.QuestionBank:
-    """基于 MissionInterviewContext 生成题库：三分类齐全，且每题可回答六个必答问题。
+    """基于 MissionInterviewContext 生成题库：四分类齐全（含宝洁八大问），且每题可回答六个必答问题。
 
     只使用真实的 JD 要点、已确认（带证据）的岗位简历要点与技能；没有证据的方向
     会带上 ``NO_VERIFIED_EXPERIENCE`` 风险标记，而不是编造经历。
@@ -498,8 +520,131 @@ def generate_bank_from_context(
             followup_paths=["能再具体一点吗？", "这和你的长期规划是怎么衔接的？"],
         )
 
+    # ---- 宝洁八大问（行为面试）----
+    # 每题对应一个能力维度，回答必须落在真实经历上并按 STAR 展开。
+    for index, (capability, question, why) in enumerate(_PG8_BANK_QUESTIONS):
+        if question in existing_texts:
+            continue
+        add_item(
+            db,
+            bank.id,
+            question_text=question,
+            category="BEHAVIORAL_8",
+            difficulty="MEDIUM",
+            source="MODEL",
+            experience_refs=_rotate_pick(all_experience_labels, index, 2),
+            why_asked=(
+                f"宝洁八大问之一，考察{capability}。{why}"
+                "请用真实经历按 STAR（情境-任务-行动-结果）作答。"
+            ),
+            expected_evidence=_pick_evidence(verified, question, offset=index),
+            followup_paths=[
+                "这件事的背景和你的任务分别是什么？",
+                "你个人的动作是什么，结果用什么衡量？",
+            ],
+            risk_flags=list(unverified_note),
+        )
+
+    # ---- 面试历史积累：真实面试记录 / 已完成的模拟面试回流进题库 ----
+    _ingest_interview_history(db, bank, profile_id, mission_id, all_experience_labels)
+
     db.refresh(bank)
     return bank
+
+
+def _ingest_interview_history(
+    db: Session,
+    bank: models.QuestionBank,
+    profile_id: UUID,
+    mission_id: UUID | None,
+    experience_labels: list[str],
+) -> int:
+    """把「反复面试」沉淀进题库：每多面一次，题库就自动长大一点。
+
+    - 真实面试记录（interview_records + items）→ source=REAL_INTERVIEW 真题；
+    - 已完成的模拟面试会话 → source=MODEL 练习题（已问过的问题，便于定向复盘）。
+    全部按题面去重，不覆盖用户已有题目。
+    """
+    added = 0
+    existing_texts = {item.question_text for item in bank.items}
+
+    records = list(
+        db.scalars(
+            select(models.InterviewRecord).where(models.InterviewRecord.profile_id == profile_id)
+        ).all()
+    )
+    mission = db.get(models.JobMission, mission_id) if mission_id else None
+    # 优先当前岗位相关的记录，其余公司按时间倒序排在其后。
+    records.sort(key=lambda row: row.interviewed_on, reverse=True)
+    records.sort(
+        key=lambda row: (
+            not (mission_id and row.mission_id == mission_id),
+            not (mission is not None and bool(row.company) and row.company == mission.company),
+        )
+    )
+    for record in records[:10]:
+        origin = " · ".join(part for part in [record.company, record.role, record.interview_round] if part)
+        for item in sorted(record.items or [], key=lambda row: row.sort_order or 0):
+            question = (item.question or "").strip()
+            if not question or question in existing_texts:
+                continue
+            my_answer = (item.my_answer or "").strip()
+            why = f"来自真实面试（{origin}）。" if origin else "来自真实面试记录。"
+            if my_answer:
+                why += "你当时的回答已存档，可对照参考答案定向补强。"
+            add_item(
+                db,
+                bank.id,
+                question_text=question,
+                category=classify_question(question),
+                difficulty="MEDIUM",
+                source="REAL_INTERVIEW",
+                experience_refs=_rotate_pick(experience_labels, added, 2),
+                why_asked=why,
+                expected_evidence=[my_answer[:200]] if my_answer else [],
+                followup_paths=["这场面试之后你有补齐这个短板吗？", "再来一次，你会怎么改结构？"],
+            )
+            existing_texts.add(question)
+            added += 1
+
+    completed = list(
+        db.scalars(
+            select(models.MockInterviewSession).where(
+                models.MockInterviewSession.profile_id == profile_id,
+                models.MockInterviewSession.status == "COMPLETED",
+            )
+        ).all()
+    )
+    completed.sort(key=lambda row: row.created_at or 0, reverse=True)
+    completed.sort(
+        key=lambda row: not (mission_id and row.mission_id == mission_id),
+    )
+    for session in completed[:5]:
+        for turn in sorted(session.turns or [], key=lambda t: t.round_number):
+            question = (turn.question or "").strip()
+            if not question or question in existing_texts:
+                continue
+            evaluation = turn.evaluation or {}
+            tips = [str(tip) for tip in [evaluation.get("improvement_tip")] if tip]
+            add_item(
+                db,
+                bank.id,
+                question_text=question,
+                category=classify_question(question),
+                difficulty="MEDIUM",
+                source="MODEL",
+                experience_refs=_rotate_pick(experience_labels, added, 2),
+                why_asked=(
+                    "来自一次已完成的模拟面试，之前答过；对照评估与参考答案做定向复盘。"
+                    + (f" 改进建议：{tips[0]}" if tips else "")
+                ),
+                expected_evidence=[(turn.answer or "").strip()[:200]] if turn.answer else [],
+                followup_paths=["上一次回答缺了哪段证据？", "把结论提前，再练一遍。"],
+            )
+            existing_texts.add(question)
+            added += 1
+
+    return added
 
 
 _SKILL_KEYWORDS = ("熟悉", "掌握", "了解", "熟练", "具备", "会用", "使用", "使用过", "经验")

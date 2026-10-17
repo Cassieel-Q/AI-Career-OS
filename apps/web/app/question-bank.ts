@@ -7,13 +7,14 @@
  */
 import { MISSION_API_BASE_URL } from "./missions.ts";
 
-export const QUESTION_CATEGORIES = ["BASIC", "PROJECT_DEEP_DIVE", "HR_QUESTIONS"] as const;
+export const QUESTION_CATEGORIES = ["BASIC", "PROJECT_DEEP_DIVE", "HR_QUESTIONS", "BEHAVIORAL_8"] as const;
 export type QuestionCategory = (typeof QUESTION_CATEGORIES)[number];
 
 export const QUESTION_CATEGORY_LABEL: Record<QuestionCategory, string> = {
   BASIC: "基础题",
   PROJECT_DEEP_DIVE: "项目深挖",
   HR_QUESTIONS: "HR 面",
+  BEHAVIORAL_8: "宝洁八大问",
 };
 
 export const QUESTION_DIFFICULTIES = ["EASY", "MEDIUM", "HARD"] as const;

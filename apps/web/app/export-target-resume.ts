@@ -3,6 +3,8 @@
  * 缺失节跳过，不造假数据。不改简历生成算法。
  */
 
+import { groupSkillNames } from "./skill-groups.ts";
+
 export type ExportBullet = {
   id?: string;
   source_experience_id?: string | null;
@@ -214,10 +216,11 @@ function educationLine(row: ExportEducation): string {
 
 function experienceHeading(exp: ExportExperience | undefined, fallbackId?: string): string {
   if (!exp) return "经历";
+  // 与简历排版一致：项目/组织名在前，角色在后（用户要求项目名在上、角色放下）。
   const title = cleanLabel(exp.title);
   const org = cleanLabel(exp.organization);
   const dates = cleanLabel(exp.dates);
-  const main = [title, org].filter(Boolean).join(" · ") || "经历";
+  const main = [org, title].filter(Boolean).join(" · ") || "经历";
   return dates ? `${main}（${dates}）` : main;
 }
 
@@ -434,7 +437,9 @@ export function buildTargetResumeExportHtml(input: BuildExportHtmlInput): string
     if (label && !skillLines.some((item) => item.toLowerCase() === label.toLowerCase())) skillLines.push(label);
   }
   const skillsBody = skillLines.length
-    ? `<p class="skills">${skillLines.map((line) => escapeHtml(line)).join(" · ")}</p>`
+    ? groupSkillNames(skillLines)
+        .map((group) => `<p class="skills"><strong>${escapeHtml(group.label)}：</strong>${escapeHtml(group.items.join("、"))}</p>`)
+        .join("")
     : "";
 
   const certLines = (profile?.certifications ?? [])

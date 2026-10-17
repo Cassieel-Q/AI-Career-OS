@@ -263,6 +263,31 @@ function WhyPoints({ text }: { text: string }) {
   return <ul className="resume-structured-points">{parts.map((part, index) => <li key={`${index}-${part.slice(0, 12)}`}>{part}</li>)}</ul>;
 }
 
+// 改写框架徽章：后端会在第一条改写说明前标注「改写框架：STAR/STAR-C/能力证据链（理由）」。
+const FRAMEWORK_LABELS: Record<string, string> = {
+  "STAR": "STAR · 情境-任务-行动-结果",
+  "STAR-C": "STAR-C · 补充商业影响",
+  "能力证据链": "能力证据链 · 多段经历证明同一能力",
+};
+
+function splitRewriteFramework(reason: string | null | undefined): { framework: string; rest: string } {
+  const text = (reason || "").trim();
+  const matched = text.match(/^改写框架：\s*(STAR-C|STAR|能力证据链)\s*([\s\S]*)$/);
+  if (!matched) return { framework: "", rest: text };
+  return { framework: matched[1], rest: matched[2].trim() };
+}
+
+function RewriteReason({ reason, fallback }: { reason: string | null | undefined; fallback: string }) {
+  const { framework, rest } = splitRewriteFramework(reason);
+  const label = framework ? FRAMEWORK_LABELS[framework] : "";
+  return (
+    <div className="resume-ai-reason">
+      {label ? <span className="mission-framework-badge">{label}</span> : null}
+      {rest || fallback}
+    </div>
+  );
+}
+
 function confirmedProjectTitle(title?: string | null) {
   return (title || "").replace(/^项目草案\s*[:：—-]?\s*/, "").trim() || "作品集项目";
 }
@@ -494,6 +519,31 @@ useEffect(() => {
     // CTA handlers still call nextRoute(...) after mutations.
   }, [mission, currentTab, missionId, router]);
 
+  // 用户诉求：简历中心上传过一次简历后，进入岗位直接用这份简历开始优化，
+  // 不再每次都弹「选择简历来源」。仅在无可用简历或自动绑定失败时回退到手动选择。
+  useEffect(() => {
+    if (currentTab !== "resume" || loading || busy || !mission) return;
+    if (forceResumeSource || boundNeedsConfirm) return;
+    const step = deriveResumeSubstep(normalizeWorkflowState(mission.workflow_state));
+    if (step !== "source" || mission.resume_source?.mode) return;
+    if (autoBindMissionRef.current === mission.id) return;
+    autoBindMissionRef.current = mission.id;
+    setAutoBindState("running");
+    void bindResume("master");
+    // bindResume 内部自带错误处理；结束后由下面的对账 effect 决定回退到手动选择还是继续。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTab, loading, busy, mission?.id, mission?.workflow_state, mission?.resume_source?.mode, forceResumeSource, boundNeedsConfirm]);
+
+  // 自动绑定对账：busy 结束后若来源仍未绑定 → 标记失败，回退到手动选择界面。
+  useEffect(() => {
+    if (autoBindState !== "running" || busy || loading) return;
+    if (mission?.resume_source?.mode) {
+      setAutoBindState("idle");
+    } else {
+      setAutoBindState("failed");
+    }
+  }, [autoBindState, busy, loading, mission?.resume_source?.mode]);
+
   async function run(
     action: () => Promise<unknown>,
     kind: "generic" | "jd_analysis" | "company_intel" | "resume_parse" | "resume_ingest" | "resume_bind" | "experience_selection" = "generic",
@@ -597,30 +647,6 @@ useEffect(() => {
   const hasStrategy = Boolean(currentMission.resume_strategy && Object.keys(currentMission.resume_strategy).length > 0);
   const resumeStep = forceResumeSource ? "source" : (forceResumeStep ?? deriveResumeSubstep(workflowState));
 
-  // 用户诉求：简历中心上传过一次简历后，进入岗位直接用这份简历开始优化，
-  // 不再每次都弹「选择简历来源」。仅在无可用简历或自动绑定失败时回退到手动选择。
-  useEffect(() => {
-    if (currentTab !== "resume" || loading || busy || !mission) return;
-    if (forceResumeSource || boundNeedsConfirm) return;
-    if (resumeStep !== "source" || currentMission.resume_source?.mode) return;
-    if (autoBindMissionRef.current === mission.id) return;
-    autoBindMissionRef.current = mission.id;
-    setAutoBindState("running");
-    void bindResume("master");
-    // bindResume 内部自带错误处理；结束后由下面的对账 effect 决定回退到手动选择还是继续。
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentTab, loading, busy, mission?.id, resumeStep, forceResumeSource, boundNeedsConfirm, currentMission.resume_source?.mode]);
-
-  // 自动绑定对账：busy 结束后若来源仍未绑定 → 标记失败，回退到手动选择界面。
-  useEffect(() => {
-    if (autoBindState !== "running" || busy || loading) return;
-    if (currentMission.resume_source?.mode) {
-      setAutoBindState("idle");
-    } else {
-      setAutoBindState("failed");
-    }
-  }, [autoBindState, busy, loading, currentMission.resume_source?.mode]);
-
   const intel = summarizeIntelCoverage(currentMission.interview_intel ?? []);
   const intelLayers = partitionIntelBySource(currentMission.interview_intel ?? []);
   const companyPending = isUnknownIdentity(currentMission.company);
@@ -706,6 +732,15 @@ useEffect(() => {
     return {
       title: item.title?.trim() || "未命名经历",
       meta: [item.organization, item.dates].filter(Boolean).join(" · "),
+    };
+  }
+
+  // 用户习惯（与简历排版一致）：项目名+时间在上作为主标题，角色（title）放在下面一行小字。
+  function experienceHeading(experienceId: string) {
+    const label = experienceLabel(experienceId);
+    return {
+      primary: label.meta || label.title,
+      secondary: label.meta && label.title ? label.title : "",
     };
   }
 
@@ -1225,8 +1260,8 @@ useEffect(() => {
       const heading = kind === "project" ? "主要科研及竞赛经历" : kind === "campus" ? "校园经历" : "实习与工作经历";
       return <div className="resume-source-section" key={kind}><strong>{heading}</strong>{rows.map((item) => (
         <div className={`resume-source-item ${highlightedExperienceId === item.id ? "is-linked" : ""}`} key={item.id} id={`resume-source-${item.id}`}>
-          <strong>{item.title || "未命名经历"}</strong>
-          <small>{[item.organization, item.dates].filter(Boolean).join(" · ")}</small>
+          <strong>{[item.organization, item.dates].filter(Boolean).join(" · ") || item.title || "未命名经历"}</strong>
+          {item.organization || item.dates ? <small>{item.title}</small> : null}
           <p>{item.description || "原简历未填写具体描述。"}</p>
           <button type="button" className="mission-text-btn" onClick={() => {
             setHighlightedExperienceId(item.id);
@@ -1306,8 +1341,7 @@ useEffect(() => {
             <h3>保留原文与原有结构</h3>
             {renderSourceResumeColumn()}
             {experienceSelection.length ? <div className="resume-source-section"><strong>经历筛选</strong>{dedupeExperienceSelections(experienceSelection, experienceMap).map((selection) => {
-              const label = experienceLabel(selection.experience_id);
-              return <div className="resume-source-item" key={selection.id}><strong>{label.title}</strong><span className="resume-decision-note">AI 建议：{selection.decision === "KEEP_AND_HIGHLIGHT" ? "重点优化" : selection.decision === "KEEP" ? "保留" : selection.decision === "DEEMPHASIZE" ? "弱化" : "暂不放入"}</span><WhyPoints text={stripEvidenceDump(selection.why)} /><div className="decision-chip-row">{EXPERIENCE_DECISION_OPTIONS.map((option) => <button key={option.value} type="button" className={selection.decision === option.value ? "decision-chip active" : "decision-chip"} disabled={savingDecision || busy} onClick={() => void updateDecision(selection.id, option.value)}>{option.label}</button>)}</div></div>;
+              return <div className="resume-source-item" key={selection.id}><strong>{experienceHeading(selection.experience_id).primary}</strong>{experienceHeading(selection.experience_id).secondary ? <small>{experienceHeading(selection.experience_id).secondary}</small> : null}<span className="resume-decision-note">AI 建议：{selection.decision === "KEEP_AND_HIGHLIGHT" ? "重点优化" : selection.decision === "KEEP" ? "保留" : selection.decision === "DEEMPHASIZE" ? "弱化" : "暂不放入"}</span><WhyPoints text={stripEvidenceDump(selection.why)} /><div className="decision-chip-row">{EXPERIENCE_DECISION_OPTIONS.map((option) => <button key={option.value} type="button" className={selection.decision === option.value ? "decision-chip active" : "decision-chip"} disabled={savingDecision || busy} onClick={() => void updateDecision(selection.id, option.value)}>{option.label}</button>)}</div></div>;
             })}</div> : null}
           </div>
           <div className="resume-optimization-column">
@@ -1326,12 +1360,12 @@ useEffect(() => {
               const highlightText = listOf(guidanceItem?.what_to_highlight).map((value) => textOf(value)).filter(Boolean).join("、") || listOf(bullet.target_capabilities).map((value) => textOf(value)).filter(Boolean).join("、") || "项目中的个人动作、方案取舍和测试结果";
               const avoidText = listOf(guidanceItem?.what_to_avoid).map((value) => textOf(value)).filter(Boolean).join("、") || "无关的专业细节和未经验证的数字";
               const statusLabel = targetResumeBulletStatusLabel(bullet.status);
-              return <article id={!sameExperienceBefore && bullet.source_experience_id ? `resume-rewrite-${bullet.source_experience_id}` : undefined} className={`resume-ai-item ${statusLabel === "已接受" ? "resume-ai-item-accepted" : statusLabel === "未采用" ? "resume-ai-item-rejected" : ""}`} key={bullet.id} onMouseEnter={() => setHighlightedExperienceId(bullet.source_experience_id)} onMouseLeave={() => setHighlightedExperienceId(null)} onFocus={() => setHighlightedExperienceId(bullet.source_experience_id)}>{!sameExperienceBefore ? <div><h4>{isSyntheticProject ? (bullet.project_title || "项目草案") : experienceLabel(bullet.source_experience_id || "").title}</h4>{!isSyntheticProject && experienceLabel(bullet.source_experience_id || "").meta ? <p className="resume-project-meta">{experienceLabel(bullet.source_experience_id || "").meta}</p> : null}</div> : <p className="resume-bullet-group-label">同一经历的下一条改写（只能选择一条）</p>}<div className="resume-original">原文：{bullet.original_text || "—"}</div>{isEditing ? <textarea className="textarea mission-bullet-edit-textarea" rows={5} value={editingDraft} disabled={busy} onChange={(event) => setEditingDraft(event.target.value)} /> : <div className="resume-rewrite">建议改写：<StructuredRewrite text={targetResumeBulletDisplayText(bullet)} /></div>}<div className="resume-ai-reason">改写说明：{bullet.reason || "把原始事实改写成更容易被招聘方理解的岗位语言。"}</div><div className="resume-ai-reason">调整重点：强化 {highlightText}；弱化 {avoidText}。</div>{siblingAlreadyChosen && statusLabel !== "已接受" && statusLabel !== "已编辑" ? <div className="resume-fact-warning">同一经历已有选定改写。采用此版本时将自动替换。</div> : null}{isSyntheticProject ? <div className="resume-fact-warning">建议完成的作品集项目 · 尚未写入正式简历。完成并确认事实后才能采用。</div> : null}{needsTruthCheck ? <div className="resume-fact-warning">此处含原始简历未明确提供的信息，请先确认事实。</div> : null}{statusLabel ? <span className={`mission-bullet-badge mission-bullet-badge-${statusLabel === "已接受" ? "accepted" : statusLabel === "未采用" ? "rejected" : "edited"}`}>{statusLabel}</span> : null}<div className="mission-bullet-actions">{(needsTruthCheck || isSyntheticProject) && !factConfirmed ? <TextButton disabled={busy || isEditing} onClick={() => void run(async () => { await updateResumeBullet(bullet.id, { ...factConfirmationPatch() }); setResumes(await readTargetResumes(missionId)); })}>确认事实</TextButton> : null}<TextButton disabled={busy || isEditing || ((needsTruthCheck || isSyntheticProject) && !factConfirmed)} onClick={() => void run(async () => { await updateResumeBullet(bullet.id, { status: "ACCEPTED" }); setResumes(await readTargetResumes(missionId)); })}>{statusLabel === "已接受" ? "已接受" : "接受"}</TextButton>{isEditing ? <><TextButton disabled={busy} onClick={() => { const built = buildTargetResumeInlineEditPatch(editingDraft); if (!built.ok) { setError(built.error); return; } void run(async () => { await updateResumeBullet(bullet.id, built.payload); setEditingBulletId(null); setEditingDraft(""); setResumes(await readTargetResumes(missionId)); }); }}>保存</TextButton><TextButton disabled={busy} onClick={() => { setEditingBulletId(null); setEditingDraft(""); }}>取消</TextButton></> : <TextButton disabled={busy} onClick={() => { setEditingBulletId(bullet.id); setEditingDraft(targetResumeBulletDisplayText(bullet)); }}>编辑</TextButton>}<TextButton disabled={busy || isEditing} onClick={() => void run(async () => { await updateResumeBullet(bullet.id, { status: "REJECTED" }); setResumes(await readTargetResumes(missionId)); })}>{statusLabel === "未采用" ? "未采用" : "不采用"}</TextButton></div></article>;
+              return <article id={!sameExperienceBefore && bullet.source_experience_id ? `resume-rewrite-${bullet.source_experience_id}` : undefined} className={`resume-ai-item ${statusLabel === "已接受" ? "resume-ai-item-accepted" : statusLabel === "未采用" ? "resume-ai-item-rejected" : ""}`} key={bullet.id} onMouseEnter={() => setHighlightedExperienceId(bullet.source_experience_id)} onMouseLeave={() => setHighlightedExperienceId(null)} onFocus={() => setHighlightedExperienceId(bullet.source_experience_id)}>{!sameExperienceBefore ? <div><h4>{isSyntheticProject ? (bullet.project_title || "项目草案") : experienceHeading(bullet.source_experience_id || "").primary}</h4>{!isSyntheticProject && experienceHeading(bullet.source_experience_id || "").secondary ? <p className="resume-project-meta">{experienceHeading(bullet.source_experience_id || "").secondary}</p> : null}</div> : <p className="resume-bullet-group-label">同一经历的下一条改写（只能选择一条）</p>}<div className="resume-original">原文：{bullet.original_text || "—"}</div>{isEditing ? <textarea className="textarea mission-bullet-edit-textarea" rows={5} value={editingDraft} disabled={busy} onChange={(event) => setEditingDraft(event.target.value)} /> : <div className="resume-rewrite">建议改写：<StructuredRewrite text={targetResumeBulletDisplayText(bullet)} /></div>}<RewriteReason reason={bullet.reason} fallback="把原始事实改写成更容易被招聘方理解的岗位语言。" /><div className="resume-ai-reason">调整重点：强化 {highlightText}；弱化 {avoidText}。</div>{siblingAlreadyChosen && statusLabel !== "已接受" && statusLabel !== "已编辑" ? <div className="resume-fact-warning">同一经历已有选定改写。采用此版本时将自动替换。</div> : null}{isSyntheticProject ? <div className="resume-fact-warning">建议完成的作品集项目 · 尚未写入正式简历。完成并确认事实后才能采用。</div> : null}{needsTruthCheck ? <div className="resume-fact-warning">此处含原始简历未明确提供的信息，请先确认事实。</div> : null}{statusLabel ? <span className={`mission-bullet-badge mission-bullet-badge-${statusLabel === "已接受" ? "accepted" : statusLabel === "未采用" ? "rejected" : "edited"}`}>{statusLabel}</span> : null}<div className="mission-bullet-actions">{(needsTruthCheck || isSyntheticProject) && !factConfirmed ? <TextButton disabled={busy || isEditing} onClick={() => void run(async () => { await updateResumeBullet(bullet.id, { ...factConfirmationPatch() }); setResumes(await readTargetResumes(missionId)); })}>确认事实</TextButton> : null}<TextButton disabled={busy || isEditing || ((needsTruthCheck || isSyntheticProject) && !factConfirmed)} onClick={() => void run(async () => { await updateResumeBullet(bullet.id, { status: "ACCEPTED" }); setResumes(await readTargetResumes(missionId)); })}>{statusLabel === "已接受" ? "已接受" : "接受"}</TextButton>{isEditing ? <><TextButton disabled={busy} onClick={() => { const built = buildTargetResumeInlineEditPatch(editingDraft); if (!built.ok) { setError(built.error); return; } void run(async () => { await updateResumeBullet(bullet.id, built.payload); setEditingBulletId(null); setEditingDraft(""); setResumes(await readTargetResumes(missionId)); }); }}>保存</TextButton><TextButton disabled={busy} onClick={() => { setEditingBulletId(null); setEditingDraft(""); }}>取消</TextButton></> : <TextButton disabled={busy} onClick={() => { setEditingBulletId(bullet.id); setEditingDraft(targetResumeBulletDisplayText(bullet)); }}>编辑</TextButton>}<TextButton disabled={busy || isEditing} onClick={() => void run(async () => { await updateResumeBullet(bullet.id, { status: "REJECTED" }); setResumes(await readTargetResumes(missionId)); })}>{statusLabel === "未采用" ? "未采用" : "不采用"}</TextButton></div></article>;
             })}
-            {experienceSelection.filter((selection) => selection.decision === "OMIT" && !rewriteIds.has(selection.experience_id)).map((selection) => <article className="resume-ai-item" key={`omit-${selection.id}`}><h4>{experienceLabel(selection.experience_id).title}</h4><div className="resume-rewrite">AI 建议：暂不放入</div><div className="resume-ai-reason">{stripEvidenceDump(selection.why) || "与当前岗位核心要求关联较弱，建议把篇幅留给更强的科研、项目和竞赛经历。"}</div><div className="mission-bullet-actions"><TextButton disabled={busy} onClick={() => void updateDecision(selection.id, "KEEP")}>改为保留</TextButton></div></article>)}
+            {experienceSelection.filter((selection) => selection.decision === "OMIT" && !rewriteIds.has(selection.experience_id)).map((selection) => <article className="resume-ai-item" key={`omit-${selection.id}`}><h4>{experienceHeading(selection.experience_id).primary}</h4>{experienceHeading(selection.experience_id).secondary ? <p className="resume-project-meta">{experienceHeading(selection.experience_id).secondary}</p> : null}<div className="resume-rewrite">AI 建议：暂不放入</div><div className="resume-ai-reason">{stripEvidenceDump(selection.why) || "与当前岗位核心要求关联较弱，建议把篇幅留给更强的科研、项目和竞赛经历。"}</div><div className="mission-bullet-actions"><TextButton disabled={busy} onClick={() => void updateDecision(selection.id, "KEEP")}>改为保留</TextButton></div></article>)}
             {experienceSelection.filter((selection) => (selection.decision === "KEEP_AND_HIGHLIGHT" || selection.decision === "KEEP" || selection.decision === "DEEMPHASIZE") && !rewriteIds.has(selection.experience_id)).map((selection) => {
               const decisionLabel = selection.decision === "KEEP_AND_HIGHLIGHT" ? "重点展示" : selection.decision === "KEEP" ? "保留" : "弱化";
-              return <article className="resume-ai-item" key={`pending-rewrite-${selection.id}`}><h4>{experienceLabel(selection.experience_id).title}</h4><div className="resume-rewrite">已标记「{decisionLabel}」，正在等待改写要点。</div><div className="resume-ai-reason">这条经历已决定写入岗位版本，但改写要点尚未生成。点击下方按钮为当前决策重新生成改写。</div><div className="mission-bullet-actions"><TextButton disabled={busy} onClick={() => void run(async () => { await withTaskTimeout(generateMissionStep(missionId, "target-resumes"), 180_000, "岗位版本生成"); await refresh(); })}>生成这条的改写要点</TextButton></div></article>;
+              return <article className="resume-ai-item" key={`pending-rewrite-${selection.id}`}><h4>{experienceHeading(selection.experience_id).primary}</h4>{experienceHeading(selection.experience_id).secondary ? <p className="resume-project-meta">{experienceHeading(selection.experience_id).secondary}</p> : null}<div className="resume-rewrite">已标记「{decisionLabel}」，正在等待改写要点。</div><div className="resume-ai-reason">这条经历已决定写入岗位版本，但改写要点尚未生成。点击下方按钮为当前决策重新生成改写。</div><div className="mission-bullet-actions"><TextButton disabled={busy} onClick={() => void run(async () => { await withTaskTimeout(generateMissionStep(missionId, "target-resumes"), 180_000, "岗位版本生成"); await refresh(); })}>生成这条的改写要点</TextButton></div></article>;
             })}
           </div>
         </div>

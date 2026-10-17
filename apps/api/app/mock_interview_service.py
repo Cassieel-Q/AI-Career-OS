@@ -185,6 +185,12 @@ def _next_question(
             question = (q.get("question") or "").strip()
             if question:
                 candidates.append({"question": question, "source": "REAL_INTERVIEW"})
+    # 行为面 / 混合面：优先宝洁八大问（每题考察一个能力维度，要求按 STAR 作答）。
+    if interview_type in {"BEHAVIORAL", "MIXED", "HR"}:
+        from .question_bank_service import _PG8_BANK_QUESTIONS
+
+        for _capability, question, _why in _PG8_BANK_QUESTIONS:
+            candidates.append({"question": question, "source": "BEHAVIORAL_8"})
     for req in _requirement_texts(ctx):
         candidates.append({"question": f"请结合你的经历说明：你如何满足「{req}」？", "source": "JD_DERIVED"})
     verified, _ = _evidence_pool(ctx)

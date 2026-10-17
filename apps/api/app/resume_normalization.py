@@ -23,6 +23,8 @@ _CREDENTIAL_PATTERNS = (
     (re.compile(r"\b(?:toefl|托福)\b", re.IGNORECASE), "TOEFL"),
     (re.compile(r"\bjlpt\b", re.IGNORECASE), "JLPT"),
 )
+# 用户要求：四六级不算「证书」，一律归入技能（语言能力），避免没有证书栏时硬造一栏。
+_LANGUAGE_CREDENTIALS = {"CET-4", "CET-6"}
 _CREDENTIAL_SCORE = re.compile(
     r"(?:cet[- ]?[46]|大学英语四级|大学英语六级)\s*(?:score|成绩|分数)?\s*[:：-]?\s*(\d{2,4})",
     re.IGNORECASE,
@@ -128,17 +130,25 @@ def normalize_resume_extraction(result: ResumeExtractionResult) -> ResumeExtract
         credential_details = _credential_details(raw_value)
         if credential_details:
             credential, score = credential_details
-            certifications.append(
-                Certification(
-                    name=credential,
-                    score=score,
-                    evidence_text=skill.evidence_text,
-                    raw_value=raw_value,
-                    canonical_value=credential,
-                    evidence_start=skill.evidence_start,
-                    evidence_end=skill.evidence_end,
+            if credential in _LANGUAGE_CREDENTIALS:
+                # 四六级保留在技能里（语言能力），不提升为证书。
+                skills.append(
+                    skill.model_copy(
+                        update={"name": credential, "raw_value": raw_value, "canonical_value": credential}
+                    )
                 )
-            )
+            else:
+                certifications.append(
+                    Certification(
+                        name=credential,
+                        score=score,
+                        evidence_text=skill.evidence_text,
+                        raw_value=raw_value,
+                        canonical_value=credential,
+                        evidence_start=skill.evidence_start,
+                        evidence_end=skill.evidence_end,
+                    )
+                )
             continue
         language = _language_name(raw_value)
         names = [(language, raw_value)] if language else _canonical_office_items(raw_value)
@@ -155,6 +165,19 @@ def normalize_resume_extraction(result: ResumeExtractionResult) -> ResumeExtract
         credential_details = _credential_details(certification.raw_value or certification.name)
         if credential_details:
             credential, detected_score = credential_details
+            if credential in _LANGUAGE_CREDENTIALS:
+                # 明确写在证书栏里的四六级也归入技能，不单独成证书。
+                skills.append(
+                    Skill(
+                        name=credential,
+                        evidence_text=certification.evidence_text,
+                        raw_value=certification.raw_value or certification.name,
+                        canonical_value=credential,
+                        evidence_start=certification.evidence_start,
+                        evidence_end=certification.evidence_end,
+                    )
+                )
+                continue
             normalized_certification = certification.model_copy(
                 update={
                     "name": credential,
