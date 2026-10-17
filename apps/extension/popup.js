@@ -106,7 +106,11 @@ async function readCurrentJob() {
     state.extracted = extracted;
 
     if (extracted.status !== "OK") {
-      $("read-warning").textContent = `⚠️ ${extracted.note || "当前页面不是职位详情页。"}`;
+      const probe = extracted.probe;
+      const probeText = probe
+        ? `（诊断：详情面板节点=${probe.detail_node} JD区块=${probe.sec_text} 职位卡片=${probe.job_card} 信息栏=${probe.job_banner} 含职位描述=${probe.jd_word ? "是" : "否"} 正文长度=${probe.body_len}）`
+        : "";
+      $("read-warning").textContent = `⚠️ ${extracted.note || "当前页面不是职位详情页。"}${probeText}`;
       $("read-warning").classList.remove("hidden");
       // 没有可解析的正文（列表页等）就不调后端了，避免拿整页卡片文本瞎解析
       if (!extracted.source_text || extracted.source_text.trim().length < 10) return;

@@ -257,6 +257,26 @@ function findJobUrl(scope, roleText) {
   return "";
 }
 
+/** 读取失败时的页面自诊信息：帮助远程定位真实站点的 DOM 结构差异。 */
+function pageProbe() {
+  const count = (selector) => {
+    try {
+      return document.querySelectorAll(selector).length;
+    } catch (_) {
+      return -1;
+    }
+  };
+  const bodyText = visibleText(document);
+  return {
+    detail_node: count("[class*='job-detail']"),
+    sec_text: count(".job-sec-text, [class*='sec-text']"),
+    job_card: count("[class*='job-card']"),
+    job_banner: count("[class*='job-banner']"),
+    jd_word: JD_KEYWORDS.some((keyword) => bodyText.includes(keyword)),
+    body_len: bodyText.length,
+  };
+}
+
 function extractJob() {
   const site = detectSite();
   const isJobPage = looksLikeJobPage();
@@ -277,6 +297,7 @@ function extractJob() {
       source_text: "",
       has_jd_block: false,
       job_url: "",
+      probe: pageProbe(),
       note: "还没有打开具体职位：请在左侧职位列表里点一个职位卡片，右侧会展开职位详情，然后再点「读取当前岗位」。",
     };
   }
@@ -376,6 +397,7 @@ function extractJob() {
     // 交给后端兜底解析的原文：优先 JD 区块，其次详情面板可见文本
     source_text: jdText || bodyText,
     has_jd_block: Boolean(jdText),
+    probe: statusOk ? null : pageProbe(),
     note,
   };
 }

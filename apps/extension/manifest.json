@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AI Career OS · 岗位导入助手",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "把 BOSS 直聘等职位详情页（含推荐流双栏布局）上已经展示的岗位内容，一键导入本机运行的 AI Career OS（不读取 Cookie / 密码 / 聊天数据）。",
   "permissions": ["activeTab", "scripting", "storage"],
   "host_permissions": ["http://127.0.0.1:*/", "http://localhost:*/"],

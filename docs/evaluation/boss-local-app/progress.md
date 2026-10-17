@@ -170,3 +170,15 @@
   `visibleText(document)` 对 Document 节点返回 null（落到 document.body）。
 - 回归结果：扩展专项 E2E **10/10**（含 4b 双栏流用例）。
 - 环境备忘：`next start` 只在启动时扫描 public/，新增静态文件后需重启 Web 才可访问。
+
+### 用户实机使用反馈（第四轮，扩展 v1.2.1 + 删除「采集当前网页」）
+
+- 用户确认已重载到 v1.2.0，但在 BOSS 推荐流（详情已展开）点「读取当前岗位」仍未成功。
+  真实 BOSS DOM 的类名无法远程确认 → v1.2.1 在抽取失败时把页面自诊信息
+  （详情面板节点数 / JD 区块数 / 职位卡片数 / 信息栏数 / 是否含「职位描述」/ 正文长度）
+  直接显示在扩展弹窗里，用户截图即可定位真实结构差异。
+- 按用户要求删除工作台「采集当前网页」整个区块（受控浏览器无登录态，对 BOSS 无用）：
+  - jobs/page.tsx：删除 section、handleCapture/handleSaveCapture、bridge/capture 状态与
+    readBridgeStatus 加载、CONFIRM_LABEL；区块编号重排（4→3、5→4）。
+  - 后端 /job-ingest/collect-browser 接口与 jobs.ts 相关导出保留（网申填表桥不受影响）。
+- tsc --noEmit 0 错误；扩展语法/清单校验通过。

@@ -9,21 +9,17 @@ import { readCurrentProfileId } from "../career-hub.ts";
 import { missionHref } from "../missions.ts";
 import {
   cancelCollectRun,
-  collectBrowserPage,
   collectJobs,
   extractJobFile,
   fetchJobUrl,
   healthCheckSource,
   importCandidateJob,
   parseCandidateJobs,
-  readBridgeStatus,
   readCollectRun,
   readJobLibrary,
   readJobSources,
   saveCollectedJobs,
   startCollectRun,
-  type BridgeStatus,
-  type BrowserCapture,
   type CollectedJob,
   type CollectFilter,
   type CollectResult,
@@ -58,13 +54,6 @@ const EMPLOYMENT_LABEL: Record<string, string> = {
   INTERN: "实习",
   FULLTIME: "全职",
   UNKNOWN: "未标注",
-};
-
-const CONFIRM_LABEL: Record<string, string> = {
-  company: "企业",
-  role: "岗位",
-  location: "地点",
-  jd: "JD",
 };
 
 const POSTED_OPTIONS: Array<{ value: number; label: string }> = [
@@ -137,12 +126,6 @@ export default function JobsPage() {
   const [health, setHealth] = useState<Record<string, { status: string; note: string; latency_ms?: number }>>({});
   const [healthBusy, setHealthBusy] = useState("");
 
-  // ---- 浏览器采集
-  const [bridge, setBridge] = useState<BridgeStatus | null>(null);
-  const [capture, setCapture] = useState<BrowserCapture | null>(null);
-  const [captureBusy, setCaptureBusy] = useState(false);
-  const [captureDraft, setCaptureDraft] = useState<{ company: string; role: string; location: string; jd: string } | null>(null);
-
   // ---- 手动导入
   const [mode, setMode] = useState<IntakeMode>("paste");
   const [pasteText, setPasteText] = useState("");
@@ -179,9 +162,6 @@ export default function JobsPage() {
     void readJobSources()
       .then((result) => setSources(result.sources))
       .catch(() => setSources([]));
-    void readBridgeStatus()
-      .then(setBridge)
-      .catch(() => setBridge({ available: false, bridge_url: "", error: "无法读取浏览器桥状态" }));
     void refreshLibrary(pid, {});
   }, [refreshLibrary]);
 
@@ -413,70 +393,6 @@ export default function JobsPage() {
     },
     [applyFilters, profileId, router],
   );
-
-  // ---------------------------------------------------------------- 采集当前网页
-
-  const handleCapture = useCallback(async () => {
-    setCaptureBusy(true);
-    setError("");
-    setCapture(null);
-    setCaptureDraft(null);
-    try {
-      const result = await collectBrowserPage();
-      setCapture(result);
-      if (result.job) {
-        setCaptureDraft({
-          company: result.job.company || "",
-          role: result.job.role || "",
-          location: result.job.location || "",
-          jd: result.job.jd || "",
-        });
-      }
-      if (result.status !== "OK") {
-        setInfo("");
-        setError(result.note || `无法读取当前页面（状态：${result.status}）`);
-      }
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "采集当前网页失败。");
-    } finally {
-      setCaptureBusy(false);
-    }
-  }, []);
-
-  const handleSaveCapture = useCallback(async () => {
-    if (!requireProfile() || !capture?.job || !captureDraft) return;
-    if (!captureDraft.role.trim() || !captureDraft.jd.trim()) {
-      setError("岗位名称和 JD 不能为空，请先补齐再保存。");
-      return;
-    }
-    setSaving(true);
-    setError("");
-    try {
-      const job: CollectedJob = {
-        ...capture.job,
-        company: captureDraft.company.trim(),
-        role: captureDraft.role.trim(),
-        location: captureDraft.location.trim(),
-        jd: captureDraft.jd.trim(),
-        needs_confirm: [],
-        text: `公司：${captureDraft.company}\n职位：${captureDraft.role}\n地点：${captureDraft.location}\n\n${captureDraft.jd}`,
-      };
-      const result = await saveCollectedJobs(profileId, [job]);
-      if (!result.saved_count) {
-        const reason = (result.skipped[0] as { reason?: string } | undefined)?.reason;
-        setError(reason === "DUPLICATE" ? "这个岗位已经在岗位库里了。" : "保存失败。");
-        return;
-      }
-      setInfo("已保存到岗位库，可在下方岗位库继续操作。");
-      setCapture(null);
-      setCaptureDraft(null);
-      applyFilters();
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "保存失败。");
-    } finally {
-      setSaving(false);
-    }
-  }, [applyFilters, capture, captureDraft, profileId]);
 
   // ---------------------------------------------------------------- 手动导入
 
@@ -948,81 +864,9 @@ export default function JobsPage() {
         </section>
       ) : null}
 
-      {/* ---------------------------------------------------------------- 采集当前网页 */}
-      <section className="app-card" aria-label="采集当前招聘网页">
-        <h2 className="app-card-title">3 · 采集当前招聘网页</h2>
-        <p className="app-card-meta">
-          复用网申填表那套本地受控浏览器桥：你在浏览器里打开招聘网站、点进单个职位详情页，再回到这里点击采集。
-          只读取页面已可见内容，不绕过登录、验证码或任何访问限制；桥只监听 127.0.0.1 并校验令牌与调用来源。
-        </p>
-        <div className="app-row">
-          <span className={`app-badge ${bridge?.available ? "filled" : "warn"}`}>
-            {bridge?.available ? `浏览器桥已连接（${bridge.bridge_url}）` : "浏览器桥未启动"}
-          </span>
-          {bridge?.currentUrl ? <span className="app-muted">当前页：{bridge.currentUrl}</span> : null}
-          <button type="button" className="app-btn primary" disabled={captureBusy} onClick={() => void handleCapture()}>
-            {captureBusy ? "读取中…" : "采集当前网页"}
-          </button>
-        </div>
-        {!bridge?.available ? (
-          <p className="app-card-meta">
-            请先运行 <code>start-browser-bridge.cmd</code> 启动受控浏览器桥，再点采集。{bridge?.error ? `（${bridge.error}）` : ""}
-          </p>
-        ) : null}
-
-        {capture && capture.status !== "OK" ? (
-          <p className="app-inline-error" role="alert">
-            {capture.note || `无法读取（${capture.status}）`}
-            {capture.status === "LISTING_UNSUPPORTED" ? " 也可以复制岗位正文粘贴导入。" : ""}
-          </p>
-        ) : null}
-
-        {capture?.job && captureDraft ? (
-          <div className="app-card nested">
-            <h3 className="app-card-title">预览（确认后再入库）</h3>
-            <p className="app-card-meta">
-              来源：{capture.page_url} · 读取方式：{capture.job.raw?.extraction === "jsonld" ? "页面结构化数据 JobPosting" : "页面可见文本推断"}
-            </p>
-            <div className="app-filter-row">
-              <input value={captureDraft.company} onChange={(event) => setCaptureDraft({ ...captureDraft, company: event.target.value })} placeholder="企业" />
-              <input value={captureDraft.role} onChange={(event) => setCaptureDraft({ ...captureDraft, role: event.target.value })} placeholder="岗位" />
-              <input value={captureDraft.location} onChange={(event) => setCaptureDraft({ ...captureDraft, location: event.target.value })} placeholder="工作地点" />
-            </div>
-            <div className="app-chip-row">
-              {Object.entries(capture.confidence ?? {}).map(([field, level]) => (
-                <span className={`app-chip${level === "MISSING" || level === "LOW" ? " warn" : ""}`} key={field}>
-                  {CONFIRM_LABEL[field] ?? field}：{level === "MISSING" ? "待确认" : level === "LOW" ? "低置信" : level === "MEDIUM" ? "中等" : "高"}
-                </span>
-              ))}
-            </div>
-            <textarea
-              className="app-textarea"
-              rows={8}
-              value={captureDraft.jd}
-              onChange={(event) => setCaptureDraft({ ...captureDraft, jd: event.target.value })}
-            />
-            <div className="app-row">
-              <button type="button" className="app-btn primary" disabled={saving} onClick={() => void handleSaveCapture()}>
-                {saving ? "保存中…" : "确认并保存到岗位库"}
-              </button>
-              <button
-                type="button"
-                className="app-btn subtle"
-                onClick={() => {
-                  setCapture(null);
-                  setCaptureDraft(null);
-                }}
-              >
-                放弃
-              </button>
-            </div>
-          </div>
-        ) : null}
-      </section>
-
       {/* ---------------------------------------------------------------- 手动导入 */}
       <section className="app-card" aria-label="手动导入">
-        <h2 className="app-card-title">4 · 手动导入（粘贴 / 链接 / 文件）</h2>
+        <h2 className="app-card-title">3 · 手动导入（粘贴 / 链接 / 文件）</h2>
         <div className="app-filter-row">
           {(Object.keys(MODE_LABEL) as IntakeMode[]).map((item) => (
             <button
@@ -1087,7 +931,7 @@ export default function JobsPage() {
 
       {/* ---------------------------------------------------------------- 岗位库 */}
       <section className="app-card" aria-label="岗位库">
-        <h2 className="app-card-title">5 · 已保存岗位（{library.length}）</h2>
+        <h2 className="app-card-title">4 · 已保存岗位（{library.length}）</h2>
         <div className="app-filter-row">
           <input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="关键词：公司 / 岗位 / 原文" />
           <select
