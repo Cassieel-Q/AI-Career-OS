@@ -1,7 +1,7 @@
 {
   "web": "http://127.0.0.1:3000",
   "api": "http://127.0.0.1:8100",
-  "finished_at": "2026-10-17T09:08:14.879Z",
+  "finished_at": "2026-10-17T09:27:47.502Z",
   "total": 11,
   "passed": 11,
   "failed": 0,
@@ -32,7 +32,7 @@
     },
     {
       "step": "4b",
-      "name": "BOSS 推荐流双栏布局（网址不变）从右侧详情面板抽取",
+      "name": "BOSS 推荐流双栏布局（网址不变）从右侧详情面板抽取，且清理反爬水印/动作条噪声",
       "ok": true,
       "detail": "status=OK provided={\"company\":\"示例科技有限公司\",\"role\":\"供应链产品经理（采购寻源与智能订货）\",\"location\":\"北京\",\"salary_text\":\"30-50K\",\"education\":\"本科\",\"experience\":\"经验不限\"} job_url=http://127.0.0.1:3000/job_detail/card-b.html"
     },

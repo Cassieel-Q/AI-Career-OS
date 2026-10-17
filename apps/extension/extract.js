@@ -213,6 +213,38 @@
     return { role, company };
   }
 
+  /**
+   * BOSS 页面噪声清理（v1.3.3，真实页面实测发现的两类污染）：
+   * 1. 反爬零宽字符（肉眼不可见，会污染后续 AI 解析与去重哈希）；
+   * 2. 正文里被随机插入的站点水印「BOSS直聘」——真实页面出现
+   *    「紧BOSS直聘追全球AI模型」这类句子，删掉水印后才是「紧跟全球AI模型」；
+   * 3. 详情面板动作条带出来的噪声词（收藏 / 立即沟通 / 举报 / 微信扫码分享 /
+   *    不适合职位描述）——「立即沟通」等词在任何位置都移除（正常 JD 几乎不会
+   *   出现），「收藏 / 举报 / 分享」只作为独立顿号/逗号分隔的词移除，避免误伤
+   *    正文（例如「收藏品」「举报机制」）。
+   * 只删已知噪声，不做任何“聪明”改写；站点名可能被 JD 正常提及，
+   * 因此仅当 site === BOSS_ZHIPIN 时调用。
+   */
+  const INVISIBLE_RE = /[\u200b-\u200f\u202a-\u202e\u2060\ufeff]/g;
+  const WATERMARK_RE = /BOSS\s*直聘/g;
+  const ANYWHERE_NOISE_RE = /立即沟通|继续沟通|微信扫码分享|扫码分享|不适合职位描述/g;
+  const TOKEN_NOISE_RE = /(^|[,，、;；])\s*(?:收藏|举报|分享)\s*(?=[,，、;；]|$)/g;
+
+  function cleanBossNoise(text) {
+    let value = String(text || "")
+      .replace(INVISIBLE_RE, "")
+      .replace(WATERMARK_RE, "")
+      .replace(ANYWHERE_NOISE_RE, "");
+    // 独立噪声词可能连续出现（如「…,收藏,举报,分享,」），循环剥到不再变化
+    for (let i = 0; i < 5; i++) {
+      const next = value.replace(TOKEN_NOISE_RE, "$1");
+      if (next === value) break;
+      value = next;
+    }
+    // 删词后残留的连续逗号折叠成一个
+    return value.replace(/([,，、;；])[\s,，、;；]+/g, "$1").trim();
+  }
+
   /** 从一段可见文本里切出 城市 / 经验 / 学历。 */
   function parseInfoLine(raw) {
     let locationText = "";
@@ -376,8 +408,16 @@
       }
     }
 
-    const bodyText = visibleText(scope).slice(0, 20000);
-    const jdText = picked.jd || "";
+  // BOSS 真实页面带反爬水印与动作条噪声，交给后端/AI 前先清掉。
+  // 触发条件：站点识别为 BOSS，**或**正文里出现了水印本身（测试页 / 任何携带
+  // BOSS 水印的页面都能被清理；其他站点原文不动）。
+  const rawScopeText = visibleText(scope).slice(0, 20000);
+  const cleanText =
+    site === "BOSS_ZHIPIN" || rawScopeText.includes("BOSS直聘")
+      ? cleanBossNoise
+      : (text) => String(text || "");
+  const bodyText = cleanText(rawScopeText);
+  const jdText = cleanText(picked.jd);
 
     // 真实职位链接
     const jobUrl = findJobUrl(scope, picked.role);

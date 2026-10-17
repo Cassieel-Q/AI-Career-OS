@@ -156,10 +156,16 @@ function startEvilServer() {
       String(stream.provided.education || "") === "本科" &&
       stream.provided.company === "示例科技有限公司" &&
       stream.job_url.endsWith("/job_detail/card-b.html") &&
-      (stream.source_text || "").includes("采购寻源");
+      (stream.source_text || "").includes("采购寻源") &&
+      // v1.3.3 噪声清理：水印、零宽字符、动作条噪声词不得进入正文
+      !(stream.source_text || "").includes("BOSS直聘") &&
+      !(stream.source_text || "").includes("微信扫码分享") &&
+      !(stream.source_text || "").includes("立即沟通") &&
+      !(stream.source_text || "").includes("\u200b") &&
+      (stream.source_text || "").includes("负责食材供应链产品的规划");
     check(
       "4b",
-      "BOSS 推荐流双栏布局（网址不变）从右侧详情面板抽取",
+      "BOSS 推荐流双栏布局（网址不变）从右侧详情面板抽取，且清理反爬水印/动作条噪声",
       okStream,
       `status=${stream.status} provided=${JSON.stringify(stream.provided)} job_url=${stream.job_url}`,
     );
