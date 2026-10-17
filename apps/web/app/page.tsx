@@ -5,6 +5,7 @@ import type { Route } from "next";
 import { useCallback, useEffect, useState } from "react";
 
 import { fetchOverview, readCurrentProfileId, STAGE_LABEL, stageBadgeClass, type OverviewRead } from "./career-hub.ts";
+import ModelOnboarding from "./model-onboarding.tsx";
 import { isUnknownIdentity } from "./mission-state.ts";
 
 /** 求职路径四步：一条横向前进的流程，而非功能入口堆叠。 */
@@ -56,6 +57,12 @@ export default function HomePage() {
       </header>
 
       {error ? <p className="message error" role="alert">{error}</p> : null}
+
+      <ModelOnboarding
+        hasProfile={Boolean(profileId)}
+        missionCount={overview?.totals?.missions ?? 0}
+        resumeCount={overview?.totals?.resumes ?? 0}
+      />
 
       <section aria-label="求职路径" style={{ marginBottom: "1.75rem" }}>
         <div className="app-flow">

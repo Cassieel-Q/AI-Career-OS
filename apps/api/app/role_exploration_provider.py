@@ -16,6 +16,7 @@ from pydantic import ValidationError
 from .profile_schemas import CareerPreferencePriority
 from .role_exploration_schemas import RoleExplorationProviderPayload
 from .role_profiles import ROLE_PROFILES, RoleProfile
+from .model_config_service import ModelNotConfiguredError, ModelUnusableError, llm_settings, try_llm_settings
 
 logger = logging.getLogger(__name__)
 
@@ -220,11 +221,15 @@ class OpenAIRoleExplorationProvider:
     """Provider using the OpenAI chat-completions JSON-object interface."""
 
     def __init__(self, *, client: Any | None = None) -> None:
-        api_key = os.getenv("OPENAI_API_KEY", "").strip()
-        if not api_key and client is None:
-            raise RoleExplorationProviderNotConfiguredError("OPENAI_API_KEY is not configured")
-        base_url = os.getenv("OPENAI_BASE_URL")
-        self.model = os.getenv("OPENAI_ROLE_EXPLORATION_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-4o-mini"
+        try:
+            _settings = llm_settings("role_exploration")
+        except (ModelNotConfiguredError, ModelUnusableError) as _model_exc:
+            if client is None:
+                raise RoleExplorationProviderNotConfiguredError(str(_model_exc)) from _model_exc
+            _settings = None
+        api_key = _settings.api_key if _settings else ""
+        base_url = _settings.base_url if _settings else None
+        self.model = _settings.model if _settings else "gpt-4o-mini"
         self._is_deepseek = _is_deepseek_endpoint(base_url)
         if client is not None:
             self.client = client
@@ -234,7 +239,7 @@ class OpenAIRoleExplorationProvider:
 
             options: dict[str, object] = {
                 "api_key": api_key,
-                "timeout": _timeout_seconds(),
+                "timeout": (_settings.timeout if _settings and _settings.source == "user" else _timeout_seconds()),
                 "max_retries": _max_retries(),
             }
             if base_url:

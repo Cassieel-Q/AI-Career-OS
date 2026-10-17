@@ -13,6 +13,7 @@ import httpx
 from pydantic import ValidationError
 
 from .proof_schemas import ClaimProposalPayload
+from .model_config_service import ModelNotConfiguredError, ModelUnusableError, llm_settings, try_llm_settings
 
 
 _NIL_UUID = "00000000-0000-0000-0000-000000000000"
@@ -120,11 +121,15 @@ def _max_retries() -> int:
 
 class OpenAIClaimAnalysisProvider:
     def __init__(self, *, client: Any | None = None) -> None:
-        api_key = os.getenv("OPENAI_API_KEY", "").strip()
-        if not api_key and client is None:
-            raise ClaimProviderNotConfiguredError("OPENAI_API_KEY is not configured")
-        base_url = os.getenv("OPENAI_BASE_URL")
-        self.model = os.getenv("OPENAI_CLAIM_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-4o-mini"
+        try:
+            _settings = llm_settings("claim")
+        except (ModelNotConfiguredError, ModelUnusableError) as _model_exc:
+            if client is None:
+                raise ClaimProviderNotConfiguredError(str(_model_exc)) from _model_exc
+            _settings = None
+        api_key = _settings.api_key if _settings else ""
+        base_url = _settings.base_url if _settings else None
+        self.model = _settings.model if _settings else "gpt-4o-mini"
         self.is_deepseek = _is_deepseek(base_url)
         if client is not None:
             self.client = client
@@ -134,7 +139,7 @@ class OpenAIClaimAnalysisProvider:
 
             options: dict[str, object] = {
                 "api_key": api_key,
-                "timeout": _timeout_seconds(),
+                "timeout": (_settings.timeout if _settings and _settings.source == "user" else _timeout_seconds()),
                 "max_retries": _max_retries(),
             }
             if base_url:

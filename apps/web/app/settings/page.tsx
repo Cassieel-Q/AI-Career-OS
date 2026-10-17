@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import ModelCenter from "../model-center.tsx";
+
 import {
   activateDataset,
   backupExportUrl,
@@ -42,6 +44,7 @@ export default function SettingsPage() {
   const [info, setInfo] = useState("");
   const [extensionStatus, setExtensionStatus] = useState<ExtensionStatus | null>(null);
   const [pairCode, setPairCode] = useState("");
+  const [tab, setTab] = useState<"model" | "local">("model");
   const fileInput = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -144,6 +147,19 @@ export default function SettingsPage() {
         </div>
       </header>
 
+      <div className="model-tabs" role="tablist" aria-label="设置分类">
+        <button type="button" role="tab" aria-selected={tab === "model"} className={`model-tab ${tab === "model" ? "active" : ""}`} onClick={() => setTab("model")}>
+          AI 模型
+        </button>
+        <button type="button" role="tab" aria-selected={tab === "local"} className={`model-tab ${tab === "local" ? "active" : ""}`} onClick={() => setTab("local")}>
+          本地数据与备份
+        </button>
+      </div>
+
+      {tab === "model" ? (
+        <ModelCenter />
+      ) : (
+        <>
       {error && (
         <p className="app-inline-error" role="alert">
           {error}
@@ -360,6 +376,8 @@ export default function SettingsPage() {
           </div>
         )}
       </section>
+        </>
+      )}
     </main>
   );
 }

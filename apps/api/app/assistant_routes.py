@@ -17,7 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from . import models
-from .assistant_service import build_client, build_system_prompt, execute_tool, tool_specs
+from .assistant_service import assistant_settings, build_client, build_system_prompt, execute_tool, supports_tools, tool_specs
 from .database import get_db
 
 logger = logging.getLogger("career_os.assistant_routes")
@@ -194,7 +194,16 @@ async def send_message(conversation_id: UUID, payload: ChatRequest, db: Session 
 
 
 async def _stream_chat(payload: ChatRequest, conversation_id: UUID, surface: str, history: list[MessageRead]) -> AsyncIterator[str]:
-    client, model = build_client()
+    from .model_config_service import ModelConfigError, ModelNotConfiguredError, ModelUnusableError
+    from .secret_store import SecretStoreError
+
+    try:
+        client, model = build_client()
+        settings = assistant_settings()
+    except (ModelNotConfiguredError, ModelUnusableError, ModelConfigError, SecretStoreError) as exc:
+        yield _sse({"type": "error", "message": str(exc)})
+        return
+
     system_prompt = build_system_prompt(web_search=payload.web_search)
     note = _REASONING_NOTE.get(payload.reasoning_effort, _REASONING_NOTE["medium"])
     system_prompt += f"\n\n【思考强度】{note}"
@@ -240,13 +249,20 @@ async def _stream_chat(payload: ChatRequest, conversation_id: UUID, surface: str
 
     messages.append({"role": "user", "content": user_text})
 
-    specs = tool_specs(allow_write=payload.allow_write, web_search=payload.web_search)
+    # 模型明确不支持工具调用时，不传 tools（绝不能假装工具调用成功）
+    if supports_tools(settings):
+        specs = tool_specs(allow_write=payload.allow_write, web_search=payload.web_search)
+    else:
+        specs = []
+        system_prompt += (
+            "\n\n【重要】当前模型不支持工具调用（function calling），因此本轮**没有读取任何系统数据**。"
+            "你必须如实说明：无法查询岗位/简历/面经等数据，只能基于用户本轮提供的信息回答，不要编造数据。"
+        )
+        yield _sse({"type": "degraded", "reasons": ["当前模型不支持工具调用，本轮未读取系统数据"]})
 
     # DeepSeek 思考模型会先输出一段不展示的推理内容，导致「首字」要等十几秒，
     # 表现为「不是流式、生成完才一次性出来」。对话助手这里关闭思考以换取即时流式。
-    import os
-    _is_deepseek = "deepseek" in (os.getenv("OPENAI_BASE_URL") or "").casefold()
-    _extra_body = {"thinking": {"type": "disabled"}} if _is_deepseek else None
+    _extra_body = {"thinking": {"type": "disabled"}} if settings.is_deepseek else None
 
     full_text = ""
     tool_log: list[dict[str, Any]] = []
@@ -453,7 +469,7 @@ def _humanize_stream_error(exc: Exception) -> str:
     if "connection" in name or "connect" in text.casefold() or "proxy" in text.casefold():
         return "连接模型服务失败。请检查 API 地址 / 网络 / 代理配置后重试。"
     if "authentication" in name or "401" in text or "api key" in text.casefold():
-        return "模型 API 鉴权失败，请在 .env 检查 OPENAI_API_KEY。"
+        return "模型 API 鉴权失败（401）。请到「设置 → AI 模型」测试连接，确认 API Key 仍然有效。"
     if "rate" in name or "429" in text:
         return "请求过于频繁（限速），请稍后再试。"
     return f"回复中断：{text}"[:300]

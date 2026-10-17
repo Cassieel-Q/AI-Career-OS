@@ -11,6 +11,7 @@ import httpx
 from pydantic import ValidationError
 
 from .jd_analysis_schemas import JdExtractionPayload
+from .model_config_service import ModelNotConfiguredError, ModelUnusableError, llm_settings, try_llm_settings
 
 logger = logging.getLogger(__name__)
 
@@ -68,11 +69,15 @@ def _deepseek(base_url: str | None) -> bool:
 
 class OpenAIJDAnalysisProvider:
     def __init__(self, *, client: Any | None = None) -> None:
-        api_key = os.getenv("OPENAI_API_KEY", "").strip()
-        if not api_key and client is None:
-            raise JDAnalysisProviderNotConfiguredError("OPENAI_API_KEY is not configured")
-        base_url = os.getenv("OPENAI_BASE_URL")
-        self.model = os.getenv("OPENAI_MODEL") or "gpt-4o-mini"
+        try:
+            _settings = llm_settings("mission")
+        except (ModelNotConfiguredError, ModelUnusableError) as _model_exc:
+            if client is None:
+                raise JDAnalysisProviderNotConfiguredError(str(_model_exc)) from _model_exc
+            _settings = None
+        api_key = _settings.api_key if _settings else ""
+        base_url = _settings.base_url if _settings else None
+        self.model = _settings.model if _settings else "gpt-4o-mini"
         self.is_deepseek = _deepseek(base_url)
         if client is not None:
             self.client = client
@@ -82,7 +87,7 @@ class OpenAIJDAnalysisProvider:
 
             options: dict[str, object] = {
                 "api_key": api_key,
-                "timeout": _timeout_seconds(),
+                "timeout": (_settings.timeout if _settings and _settings.source == "user" else _timeout_seconds()),
                 "max_retries": _max_retries(),
             }
             if base_url:

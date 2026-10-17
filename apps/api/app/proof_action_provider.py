@@ -9,6 +9,7 @@ import httpx
 from pydantic import ValidationError
 
 from .proof_schemas import ProofActionCreate, ProofGuidanceRead
+from .model_config_service import ModelNotConfiguredError, ModelUnusableError, llm_settings, try_llm_settings
 
 
 class ProofActionProviderError(RuntimeError):
@@ -46,11 +47,15 @@ def _is_deepseek(base_url: str | None) -> bool:
 
 class OpenAIProofActionProvider:
     def __init__(self, *, client: Any | None = None) -> None:
-        api_key = os.getenv("OPENAI_API_KEY", "").strip()
-        if not api_key and client is None:
-            raise ProofActionProviderNotConfiguredError("OPENAI_API_KEY is not configured")
-        base_url = os.getenv("OPENAI_BASE_URL")
-        self.model = os.getenv("OPENAI_PROOF_ACTION_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-4o-mini"
+        try:
+            _settings = llm_settings("proof_action")
+        except (ModelNotConfiguredError, ModelUnusableError) as _model_exc:
+            if client is None:
+                raise ProofActionProviderNotConfiguredError(str(_model_exc)) from _model_exc
+            _settings = None
+        api_key = _settings.api_key if _settings else ""
+        base_url = _settings.base_url if _settings else None
+        self.model = _settings.model if _settings else "gpt-4o-mini"
         self.is_deepseek = _is_deepseek(base_url)
         if client is not None:
             self.client = client

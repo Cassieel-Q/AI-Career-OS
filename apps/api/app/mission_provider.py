@@ -24,6 +24,7 @@ from .mission_schemas import (
     TargetResumePayload,
     WhatMattersPayload,
 )
+from .model_config_service import ModelNotConfiguredError, ModelUnusableError, llm_settings, try_llm_settings
 
 logger = logging.getLogger("career_os.target_resume")
 # Ensure visible under uvicorn default config (root often WARNING).
@@ -121,11 +122,15 @@ def _max_retries() -> int:
 
 class OpenAIMissionProvider:
     def __init__(self, *, client: Any | None = None):
-        api_key = os.getenv("OPENAI_API_KEY", "").strip()
-        if not api_key and client is None:
-            raise MissionProviderNotConfiguredError("OPENAI_API_KEY is not configured")
-        base_url = os.getenv("OPENAI_BASE_URL")
-        self.model = os.getenv("OPENAI_MISSION_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-4o-mini"
+        try:
+            _settings = llm_settings("mission")
+        except (ModelNotConfiguredError, ModelUnusableError) as _model_exc:
+            if client is None:
+                raise MissionProviderNotConfiguredError(str(_model_exc)) from _model_exc
+            _settings = None
+        api_key = _settings.api_key if _settings else ""
+        base_url = _settings.base_url if _settings else None
+        self.model = _settings.model if _settings else "gpt-4o-mini"
         self.is_deepseek = _is_deepseek(base_url)
         if client is not None:
             self.client = client
@@ -133,12 +138,12 @@ class OpenAIMissionProvider:
             try:
                 from openai import OpenAI
 
-                options: dict[str, object] = {"api_key": api_key, "timeout": _timeout_seconds(), "max_retries": _max_retries()}
+                options: dict[str, object] = {"api_key": api_key, "timeout": (_settings.timeout if _settings and _settings.source == "user" else _timeout_seconds()), "max_retries": _max_retries()}
                 if base_url:
                     options["base_url"] = base_url
                 # trust_env=False：忽略 HTTP_PROXY/HTTPS_PROXY，避免本地代理
                 # 拦截 → 连接超时 / 流式被缓冲，导致 AI 生成时好时坏。
-                options["http_client"] = httpx.Client(trust_env=False, timeout=_timeout_seconds())
+                options["http_client"] = httpx.Client(trust_env=False, timeout=(_settings.timeout if _settings and _settings.source == "user" else _timeout_seconds()))
                 self.client = OpenAI(**options)
             except MissionProviderError:
                 raise

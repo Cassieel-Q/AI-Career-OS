@@ -15,6 +15,13 @@ from .database import get_db
 router = APIRouter(prefix="/api/v1")
 
 
+def _model_configured() -> bool:
+    """模型是否已可用：页面保存的配置，或旧版 .env 环境变量。"""
+    from .model_config_service import try_llm_settings
+
+    return try_llm_settings("resume") is not None
+
+
 def _local_status() -> dict:
     resolved = local_mode.resolve_database_url()
     root = local_mode.data_root()
@@ -26,7 +33,7 @@ def _local_status() -> dict:
         "database_url_scheme": resolved.split("://", 1)[0] if resolved else None,
         "using_dataset": bool(root) and resolved != explicit,
         "active_dataset_id": local_mode.active_dataset_id(root) if root else None,
-        "model_configured": bool(os.getenv("OPENAI_API_KEY", "").strip()),
+        "model_configured": _model_configured(),
         "backup_supported": resolved.startswith("sqlite"),
     }
 

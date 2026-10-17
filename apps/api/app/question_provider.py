@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import os
 from typing import Any
+from .model_config_service import ModelNotConfiguredError, ModelUnusableError, llm_settings, try_llm_settings
 
 _SYSTEM_PROMPT = (
     "你是资深面试教练，负责根据「候选人已确认的事实」与「岗位要求」写出一段可以直接开口说的面试回答。\n"
@@ -21,6 +22,12 @@ _SYSTEM_PROMPT = (
     "4. 不要复述整段题面，不要输出 markdown、标题或项目符号前的星号。\n"
     "5. 只输出 JSON：{\"answer\": \"...\"}，不要附加任何其它字段或解释。"
 )
+
+
+def _deepseek_enabled(module: str = "question") -> bool:
+    """当前生效配置是否是 DeepSeek（用户配置或旧环境变量）。"""
+    settings = try_llm_settings(module)
+    return bool(settings and settings.is_deepseek)
 
 
 class QuestionProviderError(RuntimeError):
@@ -36,11 +43,13 @@ def _is_deepseek(base_url: str | None) -> bool:
 
 
 def build_question_client() -> tuple[Any, str]:
-    api_key = os.getenv("OPENAI_API_KEY", "").strip()
-    if not api_key:
-        raise QuestionProviderNotConfiguredError("OPENAI_API_KEY is not configured")
-    base_url = os.getenv("OPENAI_BASE_URL")
-    model = os.getenv("OPENAI_QUESTION_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-4o-mini"
+    try:
+        _settings = llm_settings("question")
+    except (ModelNotConfiguredError, ModelUnusableError) as _model_exc:
+        raise QuestionProviderNotConfiguredError(str(_model_exc)) from _model_exc
+    api_key = _settings.api_key if _settings else ""
+    base_url = _settings.base_url if _settings else None
+    model = _settings.model if _settings else "gpt-4o-mini"
     try:
         from openai import OpenAI
     except Exception as exc:  # noqa: BLE001
@@ -86,7 +95,7 @@ def generate_answer(
         ],
         "response_format": {"type": "json_object"},
     }
-    if _is_deepseek(os.getenv("OPENAI_BASE_URL")):
+    if _deepseek_enabled():
         request["extra_body"] = {"thinking": {"type": "disabled"}}
 
     response = client.chat.completions.create(**request)

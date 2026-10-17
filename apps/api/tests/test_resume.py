@@ -447,6 +447,8 @@ def test_configured_frontend_origins_are_allowed(monkeypatch) -> None:
     assert main.get_allowed_frontend_origins() == [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
         "https://app.example.com",
         "https://preview.example.com",
     ]

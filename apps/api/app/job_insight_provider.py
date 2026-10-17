@@ -18,10 +18,17 @@ import json
 import os
 import re
 from typing import Any, Iterable
+from .model_config_service import ModelNotConfiguredError, ModelUnusableError, llm_settings, try_llm_settings
 
 # ---------------------------------------------------------------------------
 # 异常
 # ---------------------------------------------------------------------------
+
+
+def _deepseek_enabled(module: str = "insight") -> bool:
+    """当前生效配置是否是 DeepSeek（用户配置或旧环境变量）。"""
+    settings = try_llm_settings(module)
+    return bool(settings and settings.is_deepseek)
 
 
 class JobInsightError(RuntimeError):
@@ -42,11 +49,13 @@ def _is_deepseek(base_url: str | None) -> bool:
 
 
 def build_insight_client() -> tuple[Any, str]:
-    api_key = os.getenv("OPENAI_API_KEY", "").strip()
-    if not api_key:
-        raise JobInsightNotConfiguredError("OPENAI_API_KEY is not configured")
-    base_url = os.getenv("OPENAI_BASE_URL")
-    model = os.getenv("OPENAI_INSIGHT_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-4o-mini"
+    try:
+        _settings = llm_settings("insight")
+    except (ModelNotConfiguredError, ModelUnusableError) as _model_exc:
+        raise JobInsightNotConfiguredError(str(_model_exc)) from _model_exc
+    api_key = _settings.api_key if _settings else ""
+    base_url = _settings.base_url if _settings else None
+    model = _settings.model if _settings else "gpt-4o-mini"
     try:
         from openai import OpenAI
     except Exception as exc:  # noqa: BLE001
@@ -74,7 +83,7 @@ def _call_json(system_prompt: str, payload: dict[str, Any]) -> dict[str, Any]:
         ],
         "response_format": {"type": "json_object"},
     }
-    if _is_deepseek(os.getenv("OPENAI_BASE_URL")):
+    if _deepseek_enabled():
         request["extra_body"] = {"thinking": {"type": "disabled"}}
     response = client.chat.completions.create(**request)
     try:

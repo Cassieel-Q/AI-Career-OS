@@ -34,6 +34,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app import models
+from app.model_config_routes import router as model_config_router
 from app.job_description_routes import router as job_description_router
 from app.market_profile_routes import router as market_profile_router
 from app.gap_routes import router as gap_router
@@ -494,17 +495,23 @@ class OpenAIResumeProvider:
     def __init__(self) -> None:
         from openai import OpenAI
 
+        # 统一走模型中心：用户配置 → 旧环境变量 → 未配置
+        from app.model_config_service import llm_settings
+
+        settings = llm_settings("resume")
+        # 用户配置优先；走环境变量回退时沿用原来的校验逻辑（非法值仍然报错）
+        timeout = settings.timeout if settings.source == "user" else get_openai_timeout_seconds()
         client_options: dict[str, object] = {
-            "api_key": os.environ["OPENAI_API_KEY"],
-            "timeout": get_openai_timeout_seconds(),
+            "api_key": settings.api_key,
+            "timeout": timeout,
             "max_retries": get_openai_max_retries(),
         }
-        base_url = os.getenv("OPENAI_BASE_URL")
+        base_url = settings.base_url
         if base_url:
             client_options["base_url"] = base_url
         self.client = OpenAI(**client_options)
-        self.model = os.getenv("OPENAI_MODEL") or os.getenv("OPENAI_RESUME_MODEL") or "gpt-4o-mini"
-        self._is_deepseek = _is_deepseek_endpoint(base_url)
+        self.model = settings.model
+        self._is_deepseek = settings.is_deepseek
 
     def _create_json_completion(
         self,
@@ -674,8 +681,20 @@ def extract_pdf_text(data: bytes) -> str:
 def get_resume_provider() -> ResumeProvider:
     if _resume_provider is not None:
         return _resume_provider
-    if not os.getenv("OPENAI_API_KEY"):
-        raise HTTPException(status_code=503, detail="Resume extraction service is not configured")
+    from app.model_config_service import ModelNotConfiguredError, ModelUnusableError, llm_settings
+
+    try:
+        llm_settings("resume")
+    except ModelUnusableError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except (ModelNotConfiguredError, KeyError) as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "未配置 AI 模型，简历解析暂时不可用。"
+                "请在「设置 → AI 模型」里配置并启用模型；未配置时仍可管理岗位、编辑简历与导出 PDF。"
+            ),
+        ) from exc
     return OpenAIResumeProvider()
 
 
@@ -2798,6 +2817,7 @@ app.include_router(mock_interview_router)
 app.include_router(overview_router)
 app.include_router(job_insight_router)
 app.include_router(backup_router)
+app.include_router(model_config_router)
 app.include_router(job_ingest_router)
 app.include_router(manual_import_router)
 app.include_router(webform_router)

@@ -10,6 +10,7 @@ import httpx
 from pydantic import ValidationError
 
 from .roadmap_schemas import RoadmapProposal
+from .model_config_service import ModelNotConfiguredError, ModelUnusableError, llm_settings, try_llm_settings
 
 
 ROADMAP_DEFAULT_TIMEOUT_SECONDS = 45.0
@@ -71,11 +72,15 @@ class RoadmapProvider(Protocol):
 
 class OpenAIRoadmapProvider:
     def __init__(self, *, client: Any | None = None) -> None:
-        api_key = os.getenv("OPENAI_API_KEY", "").strip()
-        if not api_key and client is None:
-            raise RoadmapProviderNotConfiguredError("OPENAI_API_KEY is not configured")
-        base_url = os.getenv("OPENAI_BASE_URL")
-        self.model = os.getenv("OPENAI_MODEL") or "gpt-4o-mini"
+        try:
+            _settings = llm_settings("other")
+        except (ModelNotConfiguredError, ModelUnusableError) as _model_exc:
+            if client is None:
+                raise RoadmapProviderNotConfiguredError(str(_model_exc)) from _model_exc
+            _settings = None
+        api_key = _settings.api_key if _settings else ""
+        base_url = _settings.base_url if _settings else None
+        self.model = _settings.model if _settings else "gpt-4o-mini"
         self.is_deepseek = (urlparse(base_url or "").hostname or "").casefold().endswith("deepseek.com")
         try:
             self.timeout_seconds = roadmap_timeout_seconds()

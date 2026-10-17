@@ -590,19 +590,36 @@ def build_client() -> Any:
     import httpx
     from openai import AsyncOpenAI
 
-    api_key = os.getenv("OPENAI_API_KEY", "").strip()
-    base_url = os.getenv("OPENAI_BASE_URL") or None
-    model = os.getenv("OPENAI_MISSION_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-4o-mini"
-    timeout = float(os.getenv("OPENAI_ASSISTANT_TIMEOUT_SECONDS") or os.getenv("OPENAI_TIMEOUT_SECONDS") or "180")
+    from .model_config_service import llm_settings
+
+    settings = llm_settings("assistant")
+    timeout = settings.timeout
     options: dict[str, Any] = {
-        "api_key": api_key,
+        "api_key": settings.api_key,
         "timeout": timeout,
         "max_retries": 0,
         "http_client": httpx.AsyncClient(trust_env=False, timeout=timeout),
     }
-    if base_url:
-        options["base_url"] = base_url
-    return AsyncOpenAI(**options), model
+    if settings.base_url:
+        options["base_url"] = settings.base_url
+    return AsyncOpenAI(**options), settings.model
+
+
+def assistant_settings() -> Any:
+    """顺顺当前生效的模型设置（供路由判断能力降级）。"""
+    from .model_config_service import llm_settings
+
+    return llm_settings("assistant")
+
+
+def supports_tools(settings: Any) -> bool:
+    """该模型是否**已知**支持工具调用。
+
+    ``capabilities.tools`` 只有在用户点过「测试连接」后才有值；未知时按「支持」处理，
+    真实不支持会在请求报错时被路由捕获并降级（不会伪装成工具调用成功）。
+    """
+    value = (getattr(settings, "capabilities", None) or {}).get("tools")
+    return True if value is None else bool(value)
 
 
 __all__ = [

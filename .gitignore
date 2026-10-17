@@ -58,3 +58,4 @@ evals/benchmark/runs/**
 
 # 本地反馈截图，勿提交
 image/
+.playwright-cli/
