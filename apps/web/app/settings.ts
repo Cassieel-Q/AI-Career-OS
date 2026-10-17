@@ -92,3 +92,23 @@ async function readError(response: Response): Promise<string> {
     return `请求失败（${response.status}）`;
   }
 }
+
+// ---------------------------------------------------------------------------
+// 浏览器扩展配对：配对码只在本地生成、5 分钟有效；令牌本身不在页面上展示
+// ---------------------------------------------------------------------------
+
+export type ExtensionStatus = {
+  paired: boolean;
+  token_fingerprint: string | null;
+  pending_codes: number;
+};
+
+export function readExtensionStatus(): Promise<ExtensionStatus> {
+  return fetch(`${api}/api/v1/extension/status`).then((r) => r.json());
+}
+
+export async function createExtensionPairCode(): Promise<{ code: string; expires_in: number }> {
+  const response = await fetch(`${api}/api/v1/extension/pair/code`, { method: "POST" });
+  if (!response.ok) throw new Error(await readError(response));
+  return response.json();
+}

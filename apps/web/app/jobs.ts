@@ -384,16 +384,4 @@ export function saveManualJob(
   });
 }
 
-export type ExtensionStatus = {
-  paired: boolean;
-  token_fingerprint: string | null;
-  pending_codes: number;
-};
-
-export function readExtensionStatus(): Promise<ExtensionStatus> {
-  return json("/api/v1/extension/status");
-}
-
-export function createExtensionPairCode(): Promise<{ code: string; expires_in: number }> {
-  return json("/api/v1/extension/pair/code", { method: "POST" });
-}
+// 扩展配对相关接口统一放在 ../settings.ts（页面「设置 → 浏览器扩展」里生成配对码）。

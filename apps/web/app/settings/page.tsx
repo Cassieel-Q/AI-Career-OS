@@ -5,13 +5,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   activateDataset,
   backupExportUrl,
+  createExtensionPairCode,
   inspectBackup,
   readBackupSummary,
   readDatasets,
+  readExtensionStatus,
   readLocalStatus,
   restoreBackup,
   type BackupInspection,
   type DatasetItem,
+  type ExtensionStatus,
   type LocalStatus,
   type RestoreResult,
 } from "../settings.ts";
@@ -37,6 +40,8 @@ export default function SettingsPage() {
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
+  const [extensionStatus, setExtensionStatus] = useState<ExtensionStatus | null>(null);
+  const [pairCode, setPairCode] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -47,6 +52,11 @@ export default function SettingsPage() {
       setCounts(summary.counts);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "读取设置失败。");
+    }
+    try {
+      setExtensionStatus(await readExtensionStatus());
+    } catch {
+      setExtensionStatus(null);
     }
   }, []);
 
@@ -106,6 +116,22 @@ export default function SettingsPage() {
     [load],
   );
 
+  const handlePairCode = useCallback(async () => {
+    setBusy("pair");
+    setError("");
+    setPairCode("");
+    try {
+      const created = await createExtensionPairCode();
+      setPairCode(created.code);
+      setInfo(`配对码 ${created.code} 已生成，${Math.round(created.expires_in / 60)} 分钟内有效。`);
+      setExtensionStatus(await readExtensionStatus());
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "生成配对码失败。");
+    } finally {
+      setBusy("");
+    }
+  }, []);
+
   return (
     <main className="app-page">
       <header className="app-page-header">
@@ -164,6 +190,36 @@ export default function SettingsPage() {
         <p className="app-card-meta">
           使用 <code>start-local.cmd</code> 启动即可启用本地优先模式；配置模型后，岗位关键词、匹配分析、简历改写等会调用云端模型，
           对应的简历事实与岗位原文会发送给模型服务商。<strong>网申敏感资料（身份证、家庭情况等）默认不发送</strong>。
+        </p>
+      </section>
+
+      <section className="app-card" aria-label="浏览器扩展">
+        <h2 className="app-card-title">浏览器扩展配对（BOSS 岗位导入）</h2>
+        <p className="app-card-meta">
+          Edge / Chrome 扩展必须配对后才能写入本机 AI Career OS。配对码 5 分钟内有效；
+          <strong>令牌本身不会显示在页面上</strong>，也不会放进网页 DOM 或静态资源，任意网页都无法调用本地写接口。
+        </p>
+        <div className="app-row">
+          <button type="button" className="app-btn primary" disabled={busy === "pair"} onClick={() => void handlePairCode()}>
+            {busy === "pair" ? "生成中…" : "生成配对码"}
+          </button>
+          {pairCode ? (
+            <span style={{ fontSize: "1.6rem", fontWeight: 700, letterSpacing: "0.3rem" }}>{pairCode}</span>
+          ) : null}
+        </div>
+        <p className="app-card-meta">
+          状态：
+          {extensionStatus === null ? (
+            <span className="app-badge muted">未读取到（本地服务可能未启动）</span>
+          ) : extensionStatus.paired ? (
+            <span className="app-badge filled">已配对（令牌 {extensionStatus.token_fingerprint}）</span>
+          ) : (
+            <span className="app-badge muted">未配对</span>
+          )}
+        </p>
+        <p className="app-card-meta">
+          扩展只读取你已经打开的职位页面上<strong>可见</strong>的内容，不读取 Cookie、密码、验证码与聊天记录。
+          平台不允许自动读取时，请改用「岗位广场 → 导入 BOSS 直聘岗位」复制粘贴导入。
         </p>
       </section>
 

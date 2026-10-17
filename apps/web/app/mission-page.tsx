@@ -57,6 +57,7 @@ import type {
 } from "./missions.ts";
 import { readTargetJob, type TargetJob } from "./proof-flow.ts";
 import { MissionShell } from "./mission-shell.tsx";
+import { BossKitPanel } from "./boss-kit.tsx";
 import { MissionMatchCard } from "./mission-match-card.tsx";
 import { deriveMissionProgress } from "./mission-progress.ts";
 import { TaskProgress } from "./task-progress.tsx";
@@ -972,6 +973,8 @@ useEffect(() => {
         </section>
 
         <MissionMatchCard missionId={missionId} />
+
+        <BossKitPanel missionId={missionId} />
 
         <form
           key="mission-identity"

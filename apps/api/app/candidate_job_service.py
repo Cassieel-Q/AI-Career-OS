@@ -376,8 +376,12 @@ def import_candidate(db: Session, candidate_id: UUID, profile_id: UUID | None = 
             }
 
     payload_out: dict | None = None
+    # 原始链接要一路带进正式岗位：否则导入后「打开 BOSS 岗位」没有地址可用。
+    source_url = (row.source_url or "").strip() or None
     try:
-        payload_out = create_mission(db, target_profile_id, MissionCreate(raw_text=raw_text))  # type: ignore[assignment]
+        payload_out = create_mission(  # type: ignore[assignment]
+            db, target_profile_id, MissionCreate(raw_text=raw_text, source_url=source_url)
+        )
     except HTTPException as exc:
         if exc.status_code != 409:
             raise
@@ -397,6 +401,8 @@ def import_candidate(db: Session, candidate_id: UUID, profile_id: UUID | None = 
                 models.TargetJob.content_hash == digest,
             )
         )
+        if target_job is not None and source_url and not target_job.source_url:
+            target_job.source_url = source_url
         mission_row = db.scalar(
             select(models.JobMission).where(
                 models.JobMission.profile_id == target_profile_id,

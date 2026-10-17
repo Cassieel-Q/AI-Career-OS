@@ -384,32 +384,35 @@ def _snapshot_dir() -> Path:
     return directory
 
 
-@router.post("/applications/{application_id}/bind-resume", response_model=ApplicationRead)
-def bind_resume(application_id: UUID, payload: BindResumeRequest, db: Session = Depends(get_db)):
-    """把一份岗位定向简历（含 Studio 修订号 + PDF 快照）绑定到投递记录。
+def _bind_resume_and_snapshot(
+    db: Session,
+    row: models.JobApplication,
+    *,
+    mission_id: UUID | None = None,
+    resume_version_id: UUID | None = None,
+) -> str | None:
+    """绑定已确认的简历版本并渲染 PDF 快照；返回提示信息（快照失败时给出原因）。
 
     只允许绑定 **Studio 已确认** 的版本：投出去的简历必须是用户确认过的内容。
     快照渲染后存本地文件；之后 Studio 再怎么改，都不影响这份记录指向的证据。
     """
-    row = db.get(models.JobApplication, application_id)
-    if row is None:
-        raise HTTPException(status_code=404, detail="投递记录不存在")
-
-    mission_id = payload.mission_id or row.mission_id
+    target_mission_id = mission_id or row.mission_id
     resume = None
-    if payload.resume_version_id:
-        resume = db.get(models.TargetResume, payload.resume_version_id)
+    if resume_version_id:
+        resume = db.get(models.TargetResume, resume_version_id)
         if resume is None:
             raise HTTPException(status_code=404, detail="指定的简历版本不存在")
-    elif mission_id:
+    elif target_mission_id:
         resume = db.scalar(
             select(models.TargetResume)
-            .where(models.TargetResume.mission_id == mission_id, models.TargetResume.status == "CONFIRMED")
+            .where(models.TargetResume.mission_id == target_mission_id, models.TargetResume.status == "CONFIRMED")
             .order_by(models.TargetResume.version.desc())
         )
     if resume is None:
         raise HTTPException(status_code=409, detail="还没有可绑定的已确认岗位简历。请先在「岗位简历」页生成并确认改写稿。")
 
+    note: str | None = None
+    studio = None
     # 快照：用该简历所属 mission 的 Studio 文档渲染（必须已确认当前修订版）
     from .resume_studio_render import ResumeRenderError, render_document
     from .resume_studio_service import get_or_create_document
@@ -423,17 +426,31 @@ def bind_resume(application_id: UUID, payload: BindResumeRequest, db: Session = 
             studio.template_id,
             getattr(studio, "layout_config", None),
         )
+        snapshot_path = _snapshot_dir() / f"{row.id}.pdf"
+        snapshot_path.write_bytes(rendered.pdf)
+        row.pdf_snapshot_path = str(snapshot_path)
     except ResumeRenderError as exc:
-        raise HTTPException(409, f"PDF 渲染失败：{exc}") from exc
-    snapshot_path = _snapshot_dir() / f"{row.id}.pdf"
-    snapshot_path.write_bytes(rendered.pdf)
+        # 快照失败不阻断投递：记录仍然绑定简历版本，只是没有 PDF 证据
+        note = f"PDF 快照渲染失败（{exc}），投递记录仍已绑定简历版本。"
 
     row.resume_version_id = resume.id
-    row.studio_revision = studio.revision
-    row.pdf_snapshot_path = str(snapshot_path)
-    if mission_id and not row.mission_id:
-        row.mission_id = mission_id
+    if studio is not None:
+        row.studio_revision = studio.revision
+    if target_mission_id and not row.mission_id:
+        row.mission_id = target_mission_id
     row.updated_at = datetime.now()
+    return note
+
+
+@router.post("/applications/{application_id}/bind-resume", response_model=ApplicationRead)
+def bind_resume(application_id: UUID, payload: BindResumeRequest, db: Session = Depends(get_db)):
+    """把一份岗位定向简历（含 Studio 修订号 + PDF 快照）绑定到投递记录。"""
+    row = db.get(models.JobApplication, application_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="投递记录不存在")
+    _bind_resume_and_snapshot(
+        db, row, mission_id=payload.mission_id, resume_version_id=payload.resume_version_id
+    )
     db.commit()
     db.refresh(row)
     return _application_read(row)
@@ -685,3 +702,225 @@ def read_plaza(profile_id: UUID | None = None, db: Session = Depends(get_db)):
         ready=sum(1 for i in items if i.target_resume_confirmed),
         items=items,
     )
+
+
+# ---------------------------------------------------------------------------
+# BOSS 投递准备包（M3）
+#   岗位详情 → 匹配 → 定向简历 → Studio → PDF → 打招呼话术 → 打开原岗位
+#   → 用户确认并完成沟通 → 记录投递。
+#
+# 硬边界：
+#   * 话术只引用已确认的真实事实（greeting_service 保证），不编造经历/时间/联系方式；
+#   * 系统只生成草稿，绝不自动发送；
+#   * 投递快照一旦生成就固定，之后改简历不会静默替换历史版本。
+# ---------------------------------------------------------------------------
+
+
+class GreetingSaveRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    short: str | None = None
+    long: str | None = None
+
+
+class MarkAppliedRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    channel: str = "BOSS 直聘"
+    notes: str | None = None
+    #: 是否同时绑定已确认简历并生成 PDF 快照（默认开）
+    bind_resume: bool = True
+
+
+class BossReminderRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    title: str | None = None
+    due_at: datetime | None = None
+
+
+def _mission_or_404(db: Session, mission_id: UUID) -> models.JobMission:
+    mission = db.get(models.JobMission, mission_id)
+    if mission is None:
+        raise HTTPException(status_code=404, detail="岗位不存在")
+    return mission
+
+
+def _mission_application(db: Session, mission: models.JobMission) -> models.JobApplication | None:
+    return db.scalar(
+        select(models.JobApplication)
+        .where(models.JobApplication.mission_id == mission.id)
+        .order_by(models.JobApplication.updated_at.desc())
+    )
+
+
+def _mission_source_url(mission: models.JobMission) -> str:
+    target_job = mission.target_job
+    if target_job is not None and target_job.source_url:
+        return str(target_job.source_url)
+    payload = mission.resume_source if isinstance(mission.resume_source, dict) else {}
+    return str(payload.get("source_url") or "")
+
+
+def _ensure_application(db: Session, mission: models.JobMission) -> models.JobApplication:
+    """确保这个岗位有一条投递记录；没有就按岗位信息新建（PENDING，不冒充已投递）。"""
+    row = _mission_application(db, mission)
+    if row is not None:
+        return row
+    row = models.JobApplication(
+        profile_id=mission.profile_id,
+        mission_id=mission.id,
+        company=mission.company or "UNKNOWN",
+        role=mission.role or "UNKNOWN",
+        location=mission.location,
+        channel="BOSS 直聘",
+        status="PENDING",
+        jd_source=(_mission_source_url(mission) or "")[:512] or None,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def _confirmed_resume(db: Session, mission: models.JobMission) -> models.TargetResume | None:
+    return db.scalar(
+        select(models.TargetResume)
+        .where(models.TargetResume.mission_id == mission.id, models.TargetResume.status == "CONFIRMED")
+        .order_by(models.TargetResume.version.desc())
+    )
+
+
+def _boss_kit_payload(db: Session, mission: models.JobMission) -> dict:
+    application = _mission_application(db, mission)
+    resume = _confirmed_resume(db, mission)
+    source_url = _mission_source_url(mission)
+    greeting = None
+    if application is not None and (application.greeting_short or application.greeting_long):
+        greeting = {
+            "short": application.greeting_short or "",
+            "long": application.greeting_long or "",
+            "editable": True,
+        }
+    return {
+        "mission": {
+            "id": str(mission.id),
+            "company": mission.company,
+            "role": mission.role,
+            "location": mission.location,
+            "workflow_state": mission.workflow_state,
+        },
+        "source_url": source_url or None,
+        "resume": {
+            "version_id": str(resume.id) if resume else None,
+            "version": resume.version if resume else None,
+            "confirmed": resume is not None,
+            "studio_url": f"/missions/{mission.id}/resume/studio",
+        },
+        "application": _application_read(application) if application else None,
+        "greeting": greeting,
+        "snapshot_url": f"/api/v1/applications/{application.id}/resume-snapshot" if application else None,
+        "can_open_original": bool(source_url),
+    }
+
+
+@router.get("/missions/{mission_id}/boss-kit")
+def read_boss_kit(mission_id: UUID, db: Session = Depends(get_db)) -> dict:
+    """BOSS 投递准备包：原岗位链接 / 岗位版简历 / 话术草稿 / 投递状态 / 快照。"""
+    return _boss_kit_payload(db, _mission_or_404(db, mission_id))
+
+
+@router.post("/missions/{mission_id}/boss-kit/greeting")
+def generate_boss_greeting(mission_id: UUID, db: Session = Depends(get_db)) -> dict:
+    """生成 BOSS 打招呼话术（简洁版 + 详细版），只引用真实事实，不自动发送。
+
+    没有投递记录时会先按岗位信息建一条（PENDING），话术挂在这条记录上。
+    """
+    mission = _mission_or_404(db, mission_id)
+    application = _ensure_application(db, mission)
+    greetings = build_greetings(db, application)
+    application.greeting_short = greetings["short"]
+    application.greeting_long = greetings["long"]
+    application.updated_at = datetime.now()
+    db.commit()
+    db.refresh(application)
+    return {
+        "application_id": str(application.id),
+        "short": greetings["short"],
+        "long": greetings["long"],
+        "grounded_on": greetings["grounded_on"],
+        "note": "话术只引用你已确认的真实经历，可自由编辑；系统不会自动发送。",
+    }
+
+
+@router.patch("/missions/{mission_id}/boss-kit/greeting")
+def save_boss_greeting(mission_id: UUID, payload: GreetingSaveRequest, db: Session = Depends(get_db)) -> dict:
+    """保存用户编辑后的话术（编辑过就不再被自动生成覆盖，除非再次点「重新生成」）。"""
+    mission = _mission_or_404(db, mission_id)
+    application = _ensure_application(db, mission)
+    if payload.short is not None:
+        application.greeting_short = payload.short.strip() or None
+    if payload.long is not None:
+        application.greeting_long = payload.long.strip() or None
+    application.updated_at = datetime.now()
+    db.commit()
+    db.refresh(application)
+    return {
+        "application_id": str(application.id),
+        "short": application.greeting_short or "",
+        "long": application.greeting_long or "",
+    }
+
+
+@router.post("/missions/{mission_id}/boss-kit/mark-applied")
+def mark_boss_applied(mission_id: UUID, payload: MarkAppliedRequest, db: Session = Depends(get_db)) -> dict:
+    """标记已投递：状态推进到 APPLIED + 绑定简历版本 + 生成 PDF 快照。
+
+    **不会**替用户发送消息；只是把「我已经投了」这件事和当时的证据固定下来。
+    """
+    mission = _mission_or_404(db, mission_id)
+    application = _ensure_application(db, mission)
+
+    warning: str | None = None
+    if payload.bind_resume and not application.resume_version_id:
+        try:
+            warning = _bind_resume_and_snapshot(db, application, mission_id=mission.id)
+        except HTTPException as exc:
+            # 没有已确认简历时仍然允许标记已投递（用户可能线下投的），如实提示
+            warning = str(exc.detail)
+
+    if application.status != "APPLIED":
+        if application.status in APPLICATION_FORWARD:
+            _validate_status_transition(application.status, "APPLIED")
+        application.status = "APPLIED"
+    if not application.applied_at:
+        application.applied_at = date.today()
+    if payload.channel:
+        application.channel = payload.channel.strip() or application.channel
+    if payload.notes:
+        application.notes = payload.notes
+    application.updated_at = datetime.now()
+    db.commit()
+    db.refresh(application)
+    return {
+        "application": _application_read(application),
+        "warning": warning,
+        "note": "已标记为已投递。系统不会替你发送消息——请自行在 BOSS 上完成沟通。",
+    }
+
+
+@router.post("/missions/{mission_id}/boss-kit/reminder")
+def create_boss_reminder(mission_id: UUID, payload: BossReminderRequest, db: Session = Depends(get_db)) -> dict:
+    """为这个岗位创建跟进提醒（默认「3 天后跟进」）。"""
+    mission = _mission_or_404(db, mission_id)
+    title = (payload.title or "").strip() or f"跟进 {mission.company} · {mission.role}"
+    due_at = payload.due_at
+    if due_at is None:
+        from datetime import timedelta
+
+        due_at = datetime.now() + timedelta(days=3)
+    row = models.Reminder(profile_id=mission.profile_id, title=title[:255], due_at=due_at)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return {"id": str(row.id), "title": row.title, "due_at": row.due_at, "status": row.status}

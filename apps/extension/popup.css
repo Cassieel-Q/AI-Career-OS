@@ -1,0 +1,86 @@
+:root {
+  --bg: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --line: #e2e8f0;
+  --accent: #2563eb;
+  --warn-bg: #fff7ed;
+  --warn-line: #fdba74;
+  --err: #b91c1c;
+  --ok: #15803d;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  width: 380px;
+  padding: 12px;
+  font: 13px/1.5 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+.head { margin-bottom: 10px; }
+.brand { font-weight: 700; font-size: 14px; color: var(--accent); }
+.sub { color: var(--muted); font-size: 12px; word-break: break-all; }
+
+.block {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+.block h2 { font-size: 13px; margin: 0 0 8px; }
+
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+.row button { flex: 1 1 auto; }
+
+button {
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #f8fafc;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+}
+button:hover { background: #eef2f7; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.primary:hover { background: #1d4ed8; }
+button.danger { color: var(--err); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+input, textarea, select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: inherit;
+  color: inherit;
+  background: #fff;
+}
+textarea { resize: vertical; }
+
+.field { display: block; margin-bottom: 8px; }
+.field > span { display: block; font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+
+.checkbox { display: flex; gap: 8px; align-items: flex-start; margin: 8px 0; font-size: 12px; }
+.checkbox input { width: 16px; height: 16px; margin-top: 2px; flex: 0 0 auto; }
+
+.hint { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+.msg { font-size: 12px; margin: 8px 0 0; white-space: pre-wrap; }
+.msg.ok { color: var(--ok); }
+.msg.err { color: var(--err); }
+.warn {
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-line);
+  border-radius: 6px;
+  padding: 8px;
+  font-size: 12px;
+  color: #9a3412;
+  white-space: pre-wrap;
+}
+.hidden { display: none !important; }
+
+details summary { cursor: pointer; font-size: 12px; color: var(--muted); }
