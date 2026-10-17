@@ -61,8 +61,37 @@ async function clearCapture(tabId) {
   }
 }
 
-/** 回读：先读 DOM 属性，再退回 chrome.storage.local。 */
+/**
+ * 回读，三条通道依次降级：
+ *   通道 1（主）：func 注入调用页面里的 window.__aiCareerExtract —— MV3 只有 func 注入
+ *                才有返回值；files 注入的 result 恒为 null。
+ *   通道 2：读 documentElement 上的 data 属性 / 隔离世界全局变量。
+ *   通道 3：读 chrome.storage.local（extract.js 写入的兜底）。
+ */
 async function readCapture(tabId) {
+  try {
+    const results = await chrome.scripting.executeScript({
+      target: { tabId },
+      func: () => {
+        const fn = window.__aiCareerExtract;
+        if (typeof fn !== "function") return "__NO_EXTRACT_FN__";
+        try {
+          return JSON.stringify(fn());
+        } catch (error) {
+          return "__EXTRACT_ERROR__" + (error && error.message ? error.message : String(error));
+        }
+      },
+    });
+    const raw = results && results[0] && results[0].result;
+    if (typeof raw === "string" && raw.startsWith("__EXTRACT_ERROR__")) {
+      throw new Error(`页面内抽取函数报错：${raw.slice("__EXTRACT_ERROR__".length).slice(0, 200)}`);
+    }
+    if (typeof raw === "string" && raw.length && raw !== "__NO_EXTRACT_FN__") return raw;
+  } catch (error) {
+    // 只有「页面内函数报错」才直接抛；其它情况继续走降级通道
+    if (error instanceof Error && String(error.message).startsWith("页面内抽取函数报错")) throw error;
+  }
+
   try {
     const results = await chrome.scripting.executeScript({
       target: { tabId },
@@ -81,6 +110,7 @@ async function readCapture(tabId) {
   } catch (_) {
     /* 落到 storage 兜底 */
   }
+
   const stored = await chrome.storage.local.get(CAPTURE_KEY);
   return stored && stored[CAPTURE_KEY] ? stored[CAPTURE_KEY] : null;
 }
@@ -111,7 +141,7 @@ async function extractFromActiveTab() {
   if (!raw) {
     const frameInfo = String(JSON.stringify(injected || [])).slice(0, 160);
     throw new Error(
-      `注入成功但页面没写回结果（${frameInfo}）。请在 BOSS 页面按 F5 刷新、点开一个职位卡片后再读一次；仍失败请把这条发出来。`,
+      `注入成功但页面没写回结果（${frameInfo}）。请确认扩展版本是 v1.3.1；然后按 F5 刷新 BOSS 页面、点开一个职位卡片再读一次。仍失败请把这条发出来。`,
     );
   }
 

@@ -93,7 +93,7 @@ function startEvilServer() {
       document.cookie = "session=secret-session-token; path=/";
     });
     await page.addScriptTag({ content: EXTRACT_SRC });
-    const extracted = await page.evaluate(() => window.extractJob());
+    const extracted = await page.evaluate(() => window.__aiCareerExtract());
     await page.screenshot({ path: path.join(OUT, "ext-01-boss-page.png") });
 
     const ok1 =
@@ -117,7 +117,7 @@ function startEvilServer() {
       await page.setContent("<html><body><h1>职位列表</h1><ul><li>岗位A</li><li>岗位B</li></ul></body></html>");
     });
     await page.addScriptTag({ content: EXTRACT_SRC });
-    const listing = await page.evaluate(() => window.extractJob());
+    const listing = await page.evaluate(() => window.__aiCareerExtract());
     await page.screenshot({ path: path.join(OUT, "ext-02-listing-page.png") });
     check(
       3,
@@ -132,7 +132,7 @@ function startEvilServer() {
         "<p>杭州示例科技有限公司 招聘 AI 产品实习生，本科，杭州滨江，负责需求调研。</p></div></body></html>",
     );
     await page.addScriptTag({ content: EXTRACT_SRC });
-    const fallback = await page.evaluate(() => window.extractJob());
+    const fallback = await page.evaluate(() => window.__aiCareerExtract());
     await page.screenshot({ path: path.join(OUT, "ext-03-layout-changed.png") });
     const confidences = Object.values(fallback.confidence || {});
     check(
@@ -146,7 +146,7 @@ function startEvilServer() {
     // BOSS 推荐流：左列表 + 右详情面板，网址不含 /job_detail/（点卡片网址不变）
     await page.goto(`${WEB}/boss-stream-test.html`, { waitUntil: "domcontentloaded" });
     await page.addScriptTag({ content: EXTRACT_SRC });
-    const stream = await page.evaluate(() => window.extractJob());
+    const stream = await page.evaluate(() => window.__aiCareerExtract());
     await page.screenshot({ path: path.join(OUT, "ext-05-stream-detail.png") });
     const okStream =
       stream.status === "OK" &&
@@ -164,30 +164,43 @@ function startEvilServer() {
       `status=${stream.status} provided=${JSON.stringify(stream.provided)} job_url=${stream.job_url}`,
     );
 
-    // ---------------------------------------------------------------- 4c 回读通道回归
-    // MV3 的 executeScript({ files: [...] }) **不返回**脚本结果（results[0].result 恒为 null），
-    // 历史上正是因为依赖返回值，导致扩展一直报「页面没有返回可读内容」。
-    // v1.3.0 起结果写在 documentElement 的 data 属性上，由 background.js 主动回读。
+    // ---------------------------------------------------------------- 4c 重复注入 + 回读通道
+    // 两个历史 bug，一次守住：
+    //   (a) MV3 executeScript({ files }) **不返回**脚本结果（result 恒为 null），
+    //       曾导致扩展一直报「页面没有返回可读内容」；
+    //   (b) 同一文档内第二次注入含**顶层 const** 的脚本 → SyntaxError
+    //       「Identifier has already been declared」，注入 API 仍报成功，但脚本一行都不执行。
+    //       这正是 v1.3.0 在真实 BOSS 页上「注入成功但没写回结果」的原因。
     await page.goto(`${WEB}/boss-stream-test.html`, { waitUntil: "domcontentloaded" });
+    const pageErrors = [];
+    const onPageError = (err) => pageErrors.push(String((err && err.message) || err).slice(0, 160));
+    page.on("pageerror", onPageError);
     await page.addScriptTag({ content: EXTRACT_SRC });
+    await page.addScriptTag({ content: EXTRACT_SRC }); // 故意注入第二次
     const readback = await page.evaluate(() => {
-      const raw = document.documentElement.getAttribute("data-ai-career-capture");
-      if (!raw) return { raw: null, parsed: null };
+      const fn = window.__aiCareerExtract;
+      if (typeof fn !== "function") return { fn: false, attr: null, parsed: null };
+      const attr = document.documentElement.getAttribute("data-ai-career-capture");
+      let parsed = null;
       try {
-        return { raw: raw.slice(0, 40), parsed: JSON.parse(raw) };
+        parsed = attr ? JSON.parse(attr) : fn();
       } catch (_) {
-        return { raw: "INVALID_JSON", parsed: null };
+        /* ignore */
       }
+      return { fn: true, attr: attr ? attr.slice(0, 40) : null, parsed };
     });
+    page.off("pageerror", onPageError);
     const okReadback =
+      readback.fn &&
+      pageErrors.length === 0 &&
       readback.parsed &&
       readback.parsed.status === "OK" &&
       readback.parsed.provided.role === "供应链产品经理（采购寻源与智能订货）";
     check(
       "4c",
-      "MV3 注入回读通道可用（files 注入不返回值）",
+      "重复注入不报 SyntaxError + 回读通道可用",
       okReadback,
-      readback.raw ? `回读属性前 40 字=${readback.raw}` : "页面没有写入回读属性",
+      `pageErrors=${JSON.stringify(pageErrors)} fn=${readback.fn} attr=${readback.attr || "无"}`,
     );
 
     // ---------------------------------------------------------------- 5

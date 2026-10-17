@@ -230,3 +230,30 @@
   直接断言 `data-ai-career-capture` 里能解析出与 4b 一致的岗位结果）。
 - 下一步：用户重载扩展到 v1.3.0 后点「读取当前岗位」；若仍失败，说明抽取逻辑与真实
   BOSS DOM 不匹配（此时弹窗会给出 status=NOT_A_JOB_PAGE + probe 自诊），按 probe 数值调选择器。
+
+### 扩展 v1.3.1：第二个根因——重复注入触发顶层 const 重复声明的 SyntaxError
+
+- 用户重载到 v1.3.0 后（弹窗已确认版本），报错变成：
+  `注入成功但页面没写回结果（[{"documentId":"F28F...","frameId":0,"result":null}]）`。
+  三条回读通道（DOM 属性 / 全局变量 / storage）**全空** → 脚本在求值阶段就炸了，一行都没执行。
+- 复现实验（Playwright，同一文档连续 addScriptTag 两次）：
+  ```
+  1st-inject: OK
+  SyntaxError: Identifier 'CAPTURE_ATTR' has already been declared   ← 第二次
+  2nd-inject: OK          ← 注入 API 仍"成功"，但脚本未执行
+  ```
+  原因：同一个隔离世界里的**顶层 `const`/`let`** 会进入共享的全局词法环境，
+  重复注入含顶层 const 的脚本 → SyntaxError。
+  而 `executeScript` 对这种**求值期 SyntaxError 既不上报 error，也不填 result**
+  （result 恒为 null），所以表现为「注入成功但什么都没发生」。
+  用户的 BOSS 页此前被 v1.2.x / v1.3.0 注入过，词法绑定残留，v1.3.0 一注入就炸。
+- 修复：
+  1. `extract.js` 整体包进 IIFE，顶层不再有任何 `const`/`let` 声明 → 重复注入永不报
+     SyntaxError（顺带也让已被旧版污染、未刷新的页面直接可用）；
+  2. 抽取函数挂到 `window.__aiCareerExtract`，`background.js` 改用 **func 注入调用它**
+     来拿结果（MV3 只有 func 注入有返回值），DOM 属性 / storage 降级为通道 2、3；
+  3. 页面内函数抛错时以 `__EXTRACT_ERROR__` 前缀带回真实错误信息，不再静默。
+- 回归：E2E 4c 改为「连续注入两次 + 断言 pageerror 为空 + 回读通道可用」，**11/11 通过**。
+- 通用教训（写 MV3 内容脚本必记）：
+  被 `executeScript({ files })` 注入的脚本**一律用 IIFE 包裹**，禁止顶层 `const`/`let`；
+  并且不要依赖 `files` 注入的返回值，要结果就用 `func` 注入。

@@ -1,7 +1,7 @@
 {
   "web": "http://127.0.0.1:3000",
   "api": "http://127.0.0.1:8100",
-  "finished_at": "2026-10-17T08:59:44.903Z",
+  "finished_at": "2026-10-17T09:08:14.879Z",
   "total": 11,
   "passed": 11,
   "failed": 0,
@@ -38,9 +38,9 @@
     },
     {
       "step": "4c",
-      "name": "MV3 注入回读通道可用（files 注入不返回值）",
+      "name": "重复注入不报 SyntaxError + 回读通道可用",
       "ok": true,
-      "detail": "回读属性前 40 字={\"status\":\"OK\",\"page_url\":\"http://127.0."
+      "detail": "pageErrors=[] fn=true attr={\"status\":\"OK\",\"page_url\":\"http://127.0."
     },
     {
       "step": 5,
