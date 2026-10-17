@@ -142,6 +142,28 @@ function startEvilServer() {
       `confidence=${JSON.stringify(fallback.confidence)} source_len=${(fallback.source_text || "").length}`,
     );
 
+    // ---------------------------------------------------------------- 4b 双栏推荐流
+    // BOSS 推荐流：左列表 + 右详情面板，网址不含 /job_detail/（点卡片网址不变）
+    await page.goto(`${WEB}/boss-stream-test.html`, { waitUntil: "domcontentloaded" });
+    await page.addScriptTag({ content: EXTRACT_SRC });
+    const stream = await page.evaluate(() => window.extractJob());
+    await page.screenshot({ path: path.join(OUT, "ext-05-stream-detail.png") });
+    const okStream =
+      stream.status === "OK" &&
+      stream.provided.role === "供应链产品经理（采购寻源与智能订货）" &&
+      stream.provided.salary_text === "30-50K" &&
+      String(stream.provided.location || "") === "北京" &&
+      String(stream.provided.education || "") === "本科" &&
+      stream.provided.company === "示例科技有限公司" &&
+      stream.job_url.endsWith("/job_detail/card-b.html") &&
+      (stream.source_text || "").includes("采购寻源");
+    check(
+      "4b",
+      "BOSS 推荐流双栏布局（网址不变）从右侧详情面板抽取",
+      okStream,
+      `status=${stream.status} provided=${JSON.stringify(stream.provided)} job_url=${stream.job_url}`,
+    );
+
     // ---------------------------------------------------------------- 5
     const notPaired = await fetch(`${API}/api/v1/extension/status`);
     const statusBody = await notPaired.json();

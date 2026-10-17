@@ -116,7 +116,8 @@ async function readCurrentJob() {
     const parsed = await send({
       type: "parse",
       source_text: extracted.source_text,
-      source_url: extracted.page_url,
+      // 双栏流页面网址不随职位变化，优先用扩展找到的真实职位链接
+      source_url: extracted.job_url || extracted.page_url,
       source_site: extracted.site,
       provided: extracted.provided,
     });
