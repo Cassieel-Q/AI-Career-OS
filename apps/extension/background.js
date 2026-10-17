@@ -224,6 +224,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         body: JSON.stringify({
           draft: message.draft,
           update_duplicates: Boolean(message.update_duplicates),
+          // 默认 true：读一个岗位就导入一个，直接落到工作台，不用再去岗位库点「导入」
+          import_to_mission: message.import_to_mission === undefined ? true : Boolean(message.import_to_mission),
         }),
       });
     },
