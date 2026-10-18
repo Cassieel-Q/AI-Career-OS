@@ -11,6 +11,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { attestFact, FACT_STATUS_LABEL, readFacts, type FactItem, type FactList } from "./fact-trust.ts";
+import {
+  IMPACT_LABEL,
+  impactSummary,
+  readFactImpactByKey,
+  syncFactToMission,
+  type FactImpact,
+} from "./fact-impact.ts";
 
 const RISK_LABEL: Record<string, string> = {
   HIGH: "高风险：几乎没有可核对信息",
@@ -28,6 +35,20 @@ export function FactCheckPanel({ profileId }: { profileId: string }) {
   const [note, setNote] = useState("");
   const [syncSource, setSyncSource] = useState(false);
   const [busyKey, setBusyKey] = useState("");
+  /** 这项事实被哪些岗位简历引用（只读影响面；更新必须由用户逐岗位点选）。 */
+  const [impact, setImpact] = useState<FactImpact | null>(null);
+  const [impactKey, setImpactKey] = useState("");
+  const [syncingMission, setSyncingMission] = useState("");
+
+  const loadImpact = useCallback(async (fact: FactItem) => {
+    setImpact(null);
+    setImpactKey(fact.fact_key);
+    try {
+      setImpact(await readFactImpactByKey(profileId, fact.fact_key));
+    } catch {
+      setImpact(null);
+    }
+  }, [profileId]);
 
   const load = useCallback(async () => {
     if (!profileId) {
@@ -90,6 +111,22 @@ export function FactCheckPanel({ profileId }: { profileId: string }) {
     setNote(fact.note ?? "");
     setSyncSource(false);
     setNotice("");
+    void loadImpact(fact);
+  }
+
+  async function syncMission(missionId: string) {
+    if (!impact) return;
+    setSyncingMission(missionId);
+    setError("");
+    try {
+      const result = await syncFactToMission(profileId, impact.source_kind, impact.source_id, missionId);
+      setNotice(result.message ?? "已同步到这一个岗位，其它岗位保持原版本。");
+      await Promise.all([load(), loadImpact({ fact_key: impactKey } as FactItem)]);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "同步到岗位简历失败。");
+    } finally {
+      setSyncingMission("");
+    }
   }
 
   if (!profileId) return null;
@@ -187,6 +224,36 @@ export function FactCheckPanel({ profileId }: { profileId: string }) {
                     onChange={(event) => setNote(event.target.value)}
                     placeholder="例如：时间是 2024 年 3 月，不是 6 月"
                   />
+
+                  {open && impact && impactKey === fact.fact_key && impact.total_missions > 0 ? (
+                    <div className="fact-check-block fact-impact">
+                      <span className="reference-label">这项事实还用在哪些岗位简历</span>
+                      <p className="fact-impact-summary">{impactSummary(impact)}</p>
+                      <p className="fact-impact-note">系统不会自动改动任何一份；你可以只更新需要的岗位。</p>
+                      <ul className="fact-impact-list">
+                        {impact.missions.map((mission) => (
+                          <li key={mission.mission_id}>
+                            <div>
+                              <strong>{mission.display_name}</strong>
+                              <span className={`app-badge ${mission.impact === "NONE" ? "muted" : "filled"}`}>
+                                {IMPACT_LABEL[mission.impact]}
+                              </span>
+                              {mission.already_delivered ? <span className="app-badge danger">已投递</span> : null}
+                              <small>修订版 v{mission.studio_revision}</small>
+                            </div>
+                            <button
+                              type="button"
+                              className="app-btn"
+                              disabled={syncingMission === mission.mission_id || mission.impact === "NONE"}
+                              onClick={() => void syncMission(mission.mission_id)}
+                            >
+                              {syncingMission === mission.mission_id ? "更新中…" : "只更新这一份"}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
 
                   <div className="start-row fact-check-actions">
                     <button

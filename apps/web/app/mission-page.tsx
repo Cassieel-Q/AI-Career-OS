@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
 import { alignedExperienceWhy, missingExperienceLabel } from "./experience-utils.ts";
+import { interviewVersionBanner, readInterviewResume, type InterviewResume } from "./interview-version.ts";
 import {
   EXPERIENCE_DECISION_OPTIONS,
   advanceMission,
@@ -308,6 +309,8 @@ export function MissionPage({ missionId, currentTab }: MissionPageProps) {
   const [interviewPack, setInterviewPack] = useState<{ topics: Array<Record<string, unknown>> }>({ topics: [] });
   const [lastMockDebrief, setLastMockDebrief] = useState<LastMockDebrief | null>(null);
   const [interviewSessionStatus, setInterviewSessionStatus] = useState<string | null>(null);
+  /** 面试准备实际使用的简历版本（默认读取真正投递出去的那一版）。 */
+  const [interviewResume, setInterviewResume] = useState<InterviewResume | null>(null);
   const [optimizationStage, setOptimizationStage] = useState<number | null>(null);
   const [optimizationError, setOptimizationError] = useState("");
   const [regenerationFailed, setRegenerationFailed] = useState(false);
@@ -379,7 +382,9 @@ export function MissionPage({ missionId, currentTab }: MissionPageProps) {
         readInterviewPack(missionId).catch(() => ({ topics: [] })),
         readMissionProofSnapshot(missionId).catch(() => null),
         readProofState(missionId).catch(() => null),
-      ]).then(([nextReadiness, nextRedTeam, nextPack, nextProofSnap, nextProof]) => {
+        readInterviewResume(missionId).catch(() => null),
+      ]).then(([nextReadiness, nextRedTeam, nextPack, nextProofSnap, nextProof, nextResume]) => {
+        setInterviewResume(nextResume);
         setReadiness(nextReadiness);
         setRedTeam((prev) => (nextRedTeam ? nextRedTeam : isRedTeamExecuted(prev) ? prev : { findings: [] }));
         setRedTeamSettled(true);
@@ -2213,6 +2218,7 @@ useEffect(() => {
     const hasPack = interviewPack.topics.length > 0;
     const copy = coreInterviewCopy({ hasFinalResume: targetConfirmed, hasQuestions: hasPack });
     const mockHref = mockInterviewHref(currentMission, { fresh: true });
+    const versionBanner = interviewVersionBanner(interviewResume);
     return (
       <>
         <div className="mission-heading mission-heading-compact">
@@ -2222,6 +2228,30 @@ useEffect(() => {
             <p className="summary">{copy.description}</p>
           </div>
         </div>
+        <section className={`mission-card interview-version-banner interview-version-${versionBanner.tone}`} role="status">
+          <p className="section-kicker">本轮面试使用的简历版本</p>
+          <h3>{versionBanner.title}</h3>
+          <p className="summary">{versionBanner.detail}</p>
+          {(interviewResume?.versions?.length ?? 0) > 1 ? (
+            <div className="mission-action-row mission-action-wrap">
+              <label className="interview-version-picker">
+                选择投递版本
+                <select
+                  value={interviewResume?.application_id ?? ""}
+                  onChange={(event) =>
+                    void readInterviewResume(missionId, event.target.value || null)
+                      .then((next) => setInterviewResume(next))
+                      .catch(() => setError("没能切换投递版本，请稍后重试。"))
+                  }
+                >
+                  {interviewResume?.versions.map((version) => (
+                    <option key={version.application_id} value={version.application_id}>{version.label}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          ) : null}
+        </section>
         {lastMockDebrief ? (
           <section className="mission-card" style={{ marginBottom: "1rem" }}>
             <p className="section-kicker">最近一次练习</p>

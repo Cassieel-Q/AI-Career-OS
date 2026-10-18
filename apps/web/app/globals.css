@@ -1790,6 +1790,14 @@ a.mission-progress-node:hover { transform:translate(-1px, -1px); background:var(
 .mission-company-pills button.active { background:var(--primary); border-color:var(--primary); }
 .mission-intel-layer > summary { color:var(--primary-hover); }
 
+/* 面试版本横幅：投递版 / 准备中 / 无版本三态可辨认 */
+.interview-version-banner { border-left:4px solid var(--pixel-border); }
+.interview-version-delivered { border-left-color:var(--primary); background:var(--primary-soft); }
+.interview-version-preparing { border-left-color:var(--warning, #b26a00); background:var(--surface-muted); }
+.interview-version-fallback { border-left-color:var(--muted); }
+.interview-version-picker { display:flex; align-items:center; gap:.5rem; font-size:.82rem; }
+.interview-version-picker select { min-height:38px; padding:.35rem .5rem; border:1px solid var(--pixel-border); background:var(--surface); color:var(--ink); }
+
 @media (max-width:700px) {
   .mission-progress-list { grid-template-columns:repeat(2, minmax(0, 1fr)); }
   .mission-progress-item:nth-child(2)::after { display:none; }
@@ -3648,6 +3656,23 @@ pre.batch-draft-excerpt { white-space: pre-wrap; word-break: break-word; backgro
 .fact-check-actions {
   margin-top: 0.25rem;
 }
+
+/* 事实影响面：关联 N 份岗位、其中 M 份可能需要更新（逐岗位选择性同步） */
+.fact-impact { border-left: 3px solid var(--primary); padding-left: 0.6rem; }
+.fact-impact-summary { color: var(--text-primary, var(--ink)); font-weight: 600; }
+.fact-impact-note { font-size: 0.78rem !important; opacity: 0.75; }
+.fact-impact-list { display: grid; gap: 0.5rem; margin: 0.5rem 0 0; padding: 0; list-style: none; }
+.fact-impact-list li {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border, #e5e5ea);
+  border-radius: 0.4rem;
+}
+.fact-impact-list small { display: block; color: var(--text-secondary); font-size: 0.75rem; }
 
 .reference-answer {
   display: flex;
