@@ -429,6 +429,17 @@ def _bind_resume_and_snapshot(
         snapshot_path = _snapshot_dir() / f"{row.id}.pdf"
         snapshot_path.write_bytes(rendered.pdf)
         row.pdf_snapshot_path = str(snapshot_path)
+        # 指令 5.3：投递绑定时同时存一份正文快照，面试准备才知道「当初投的是哪份」。
+        from .delivery_version_service import record_snapshot
+
+        record_snapshot(
+            db,
+            db.get(models.JobMission, resume.mission_id),
+            studio,
+            application_id=row.id,
+            source="APPLICATION_BIND",
+            pdf_bytes=rendered.pdf,
+        )
     except ResumeRenderError as exc:
         # 快照失败不阻断投递：记录仍然绑定简历版本，只是没有 PDF 证据
         note = f"PDF 快照渲染失败（{exc}），投递记录仍已绑定简历版本。"

@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from . import models
 from .database import get_db
+from .delivery_version_service import list_delivery_versions, record_snapshot, resolve_interview_resume
 from .resume_studio_export import render_export
 from .resume_studio_render import ResumeRenderError, render_document
 from .resume_studio_schemas import StudioOperation
@@ -124,9 +125,32 @@ def confirm_studio(
     if not extracted.strip() or (name and name not in extracted):
         raise HTTPException(409, "PDF 文字无法正常提取，请检查字体和排版。")
     row.confirmed_revision = row.revision
+    # 指令 4.2 / 5.3：确认正式投递版时保存不可变快照，供面试准备回溯「当初投的是哪份」。
+    mission = db.get(models.JobMission, mission_id)
+    snapshot = None
+    if mission is not None:
+        snapshot = record_snapshot(
+            db,
+            mission,
+            row,
+            source="STUDIO_CONFIRM",
+            pdf_bytes=rendered.pdf,
+            filename=build_resume_filename(
+                name=name,
+                company=mission.company if mission else None,
+                role=mission.role if mission else None,
+                revision=row.revision,
+                draft=False,
+            ),
+        )
     db.commit()
     db.refresh(row)
-    return {**read_document(row), "page_count": rendered.page_count, "checks": checks}
+    return {
+        **read_document(row),
+        "page_count": rendered.page_count,
+        "checks": checks,
+        "snapshot_id": str(snapshot.id) if snapshot else None,
+    }
 
 
 @router.get("/job-missions/{mission_id}/resume-studio/export")
@@ -228,3 +252,35 @@ def download_studio_pdf(mission_id: UUID, draft: bool = False, db: Session = Dep
             "X-Resume-Filename": quote(filename),
         },
     )
+
+
+@router.get("/job-missions/{mission_id}/interview-resume")
+def read_interview_resume(
+    mission_id: UUID,
+    application_id: UUID | None = None,
+    db: Session = Depends(get_db),
+) -> dict:
+    """面试准备应该使用的简历版本（指令 5.3）。
+
+    默认读取**实际投递出去**的那一份（投递快照），多次投递可用 ``application_id`` 指定；
+    尚未投递时返回 ``studio_current``，并带「尚无正式投递版本，当前使用准备中的简历。」标注。
+    """
+    mission = db.get(models.JobMission, mission_id)
+    if mission is None:
+        raise HTTPException(404, "岗位任务不存在。")
+    resolved = resolve_interview_resume(db, mission, application_id=application_id)
+    if resolved is None:
+        return {
+            "source": "none",
+            "label": "这个岗位还没有可用来准备面试的简历版本。",
+            "warning": None,
+            "bullets": [],
+            "versions": [],
+        }
+    return resolved
+
+
+@router.get("/job-missions/{mission_id}/delivery-versions")
+def read_delivery_versions(mission_id: UUID, db: Session = Depends(get_db)) -> dict:
+    """列出该岗位的历史投递版本，供用户明确选择使用哪一次。"""
+    return {"mission_id": str(mission_id), "versions": list_delivery_versions(db, mission_id)}

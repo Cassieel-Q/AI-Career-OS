@@ -588,52 +588,30 @@ def _interview_turn_context(session: models.InterviewSession) -> list[dict[str, 
 
 
 def _final_resume_context(mission: models.JobMission | None) -> dict[str, object] | None:
-    """Use the confirmed Studio revision when available, then legacy target resume."""
+    """面试准备使用的简历版本（指令 5.3）：优先**实际投递出去**的那一版。
+
+    顺序：投递快照 → 投递记录绑定的修订 → 当前 Studio（明确标注尚未投递）→ 旧版定向简历。
+    绝不默认读取「最新 Studio」，否则会把投递之后才新增的经历当成面试官已经看到的内容。
+    """
     if mission is None:
         return None
     session = object_session(mission)
-    studio = session.scalar(select(models.ResumeStudioDocument).where(models.ResumeStudioDocument.mission_id == mission.id)) if session else None
-    if studio and studio.confirmed_revision == studio.revision:
-        document = studio.document_json or {}
-        bullets = []
-        for section in document.get("sections") or []:
-            for entry in section.get("entries") or []:
-                if entry.get("status") == "OMITTED":
-                    continue
-                for bullet in entry.get("bullets") or []:
-                    if bullet.get("claim_status") == "OMITTED" or not bullet.get("text"):
-                        continue
-                    bullets.append({
-                        "source_experience_id": entry.get("id"),
-                        "text": bullet["text"],
-                        "status": bullet.get("claim_status"),
-                        "evidence_refs": bullet.get("evidence_refs") or [],
-                    })
-        return {
-            "source": "resume_studio",
-            "revision": studio.revision,
-            "language": studio.language,
-            "source_target_resume_id": str(studio.source_target_resume_id),
-            "bullets": bullets,
-        }
-    resumes = [row for row in (mission.target_resumes or []) if str(row.status).upper() == "CONFIRMED"]
-    if not resumes:
+    if session is None:
         return None
-    resume = sorted(resumes, key=lambda row: (row.version, row.updated_at), reverse=True)[0]
-    return {
-        "version": resume.version,
-        "positioning_statement": resume.positioning_statement,
-        "bullets": [
-            {
-                "source_experience_id": str(bullet.source_experience_id) if bullet.source_experience_id else None,
-                "text": bullet.final_text or bullet.suggested_text,
-                "original_text": bullet.original_text,
-                "status": bullet.status,
-            }
-            for bullet in resume.bullets
-            if bullet.status in {"ACCEPTED", "EDITED"}
-        ],
-    }
+    from .delivery_version_service import resolve_interview_resume
+
+    resolved = resolve_interview_resume(session, mission)
+    if resolved is None:
+        return None
+    # 兼容旧字段：source 沿用 "resume_studio"（未投递时的工作台版本），
+    # 另附 delivery 标记，供 UI 判断是否来自真实投递。
+    if resolved.get("source") in {"delivered_snapshot", "delivered_application", "resume_studio"}:
+        resolved["revision"] = resolved.get("studio_revision")
+        studio = session.scalar(select(models.ResumeStudioDocument).where(models.ResumeStudioDocument.mission_id == mission.id))
+        if studio is not None:
+            resolved["language"] = studio.language
+            resolved["source_target_resume_id"] = str(studio.source_target_resume_id)
+    return resolved
 
 
 def _interview_pack_topics(mission: models.JobMission | None) -> list[dict[str, object]]:

@@ -1362,3 +1362,35 @@ class FactAttestation(Base):
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
+class DeliverySnapshot(Base):
+    """正式投递版本的不可变快照（可信求职 v1.2 · 指令 5.3）。
+
+    ``ResumeStudioDocument`` 只保存最新 ``document_json``，历史修订会被后续编辑覆盖，
+    无法回答「我当初投的是哪份简历」。本表在用户确认修订版 / 绑定投递记录时写入：
+
+    - ``document_json``：投递当时的完整正文（面试准备的事实来源）；
+    - ``content_hash``：正文哈希，用于校验快照未被改写；
+    - ``pdf_path``：同一次渲染产出的 PDF 文件；
+    - ``source``：``STUDIO_CONFIRM``（确认修订版）/ ``APPLICATION_BIND``（绑定投递记录）。
+
+    快照只增不改：后续 Studio 编辑形成新修订，旧快照保持不变。
+    """
+
+    __tablename__ = "delivery_snapshots"
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    profile_id: Mapped[UUID] = mapped_column(ForeignKey("user_profiles.id", ondelete="CASCADE"), nullable=False, index=True)
+    mission_id: Mapped[UUID] = mapped_column(ForeignKey("job_missions.id", ondelete="CASCADE"), nullable=False, index=True)
+    application_id: Mapped[UUID | None] = mapped_column(Uuid(as_uuid=True), nullable=True, index=True)
+    studio_revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    document_json: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict, server_default="{}")
+    content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    pdf_path: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    source: Mapped[str] = mapped_column(String(32), nullable=False, default="STUDIO_CONFIRM", server_default="STUDIO_CONFIRM")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    profile: Mapped[UserProfile] = relationship("UserProfile")
+    mission: Mapped[JobMission] = relationship("JobMission")
