@@ -98,7 +98,7 @@ PROVIDER_PRESETS: list[dict] = [
         "requires_key": False,
         "local": True,
         "key_url": "",
-        "hint": "需先在本机安装并启动 Ollama（默认 11434 端口）。本地地址会被显式放行，不会开放其它内网地址。",
+        "hint": "需先在本机安装并启动 Ollama（默认 11434 端口；改成其它端口也可以）。本机地址可用，内网与其它机器地址会被拒绝。",
     },
     {
         "id": "custom",
@@ -108,7 +108,7 @@ PROVIDER_PRESETS: list[dict] = [
         "requires_key": True,
         "local": False,
         "key_url": "",
-        "hint": "任何 OpenAI 兼容网关。为防 SSRF，仅限 HTTPS 公网地址，或本机的 Ollama 端口。",
+        "hint": "任何 OpenAI 兼容网关。公网仅限 HTTPS；本机地址（127.0.0.1/localhost）任意端口可用，内网与其它机器地址会被拒绝。",
     },
 ]
 
@@ -215,6 +215,8 @@ _MODULE_BY_KEY = {item["key"]: item for item in MODEL_MODULES}
 
 #: 本机回环地址里也禁止访问的敏感端口（防把本机服务当成模型网关误连/被诱导访问）
 _BLOCKED_LOCAL_PORTS = {22, 23, 25, 110, 143, 445, 1433, 3306, 3389, 5432, 6379, 9200, 11211, 27017}
+#: AI Career OS 自身占用的端口：不允许把本机应用自己当成模型服务（自指调用会打乱会话与日志）
+_SELF_LOCAL_PORTS = {8100, 8770}
 _LOOPBACK_NAMES = {"localhost", "127.0.0.1", "::1"}
 
 
@@ -356,6 +358,7 @@ def _public_view(item: dict, store: dict | None = None) -> dict:
         "base_url": item.get("base_url", ""),
         "model_id": item.get("model_id", ""),
         "timeout_seconds": item.get("timeout_seconds", 60),
+        "requires_key": config_requires_key(item),
         "enabled": item.get("enabled", True),
         "is_default": store.get("default_config_id") == item["id"],
         "created_at": item.get("created_at"),
@@ -376,9 +379,25 @@ def get_config(config_id: str) -> dict | None:
     return next((item for item in store["configs"] if item["id"] == config_id), None)
 
 
+def _preset_requires_key(provider_id: str) -> bool:
+    return bool(_PRESET_BY_ID.get(provider_id, {}).get("requires_key", True))
+
+
+def config_requires_key(item: dict) -> bool:
+    """该配置是否需要 API Key。
+
+    Ollama 这类本机服务不需要密钥；用户也可以对自定义网关显式声明不需要。
+    创建/更新时会把结果固化到配置里，之后读取、测试连接、网关调用都遵守同一个判断，
+    避免「保存时允许无密钥、使用时却要求密钥」的规则漂移。
+    """
+    value = item.get("requires_key")
+    if isinstance(value, bool):
+        return value
+    return _preset_requires_key(item.get("provider_id", ""))
+
+
 def _require_key_for(provider_id: str, api_key: str | None, *, has_existing: bool) -> str | None:
-    preset = _PRESET_BY_ID.get(provider_id, {})
-    requires = preset.get("requires_key", True)
+    requires = _preset_requires_key(provider_id)
     if api_key:
         return api_key
     if requires and not has_existing:
@@ -410,6 +429,10 @@ def create_config(payload: dict) -> dict:
         "updated_at": _now(),
         "capabilities": {},
         "secret": None,
+        # 固化「是否必须带密钥」，后续读取/测试/调用都以它为准（Ollama 等本机服务为 False）
+        "requires_key": (
+            payload["requires_key"] if isinstance(payload.get("requires_key"), bool) else _preset_requires_key(provider_id)
+        ),
     }
     if api_key:
         item["secret"] = secret_store.seal(api_key, provider_id=provider_id, base_url=base_url)
@@ -458,6 +481,13 @@ def update_config(config_id: str, payload: dict) -> dict:
         secret["bound_base_url"] = secret.get("bound_base_url", "")
         secret["unverified_after_change"] = True
 
+    if isinstance(payload.get("requires_key"), bool):
+        new_requires_key = payload["requires_key"]
+    elif provider_id != item.get("provider_id", ""):
+        new_requires_key = _preset_requires_key(provider_id)  # 换提供商后按新预设重算
+    else:
+        new_requires_key = config_requires_key(item)
+
     item.update(
         {
             "name": name,
@@ -465,6 +495,7 @@ def update_config(config_id: str, payload: dict) -> dict:
             "base_url": base_url,
             "model_id": model_id,
             "timeout_seconds": timeout_seconds,
+            "requires_key": new_requires_key,
             "enabled": bool(payload.get("enabled", item.get("enabled", True))),
             "updated_at": _now(),
             "secret": secret,
@@ -574,9 +605,18 @@ def validate_endpoint(base_url: str, *, allow_local: bool = True) -> tuple[bool,
         return False, "端口号非法"
 
     if _is_loopback_host(host):
+        # 本机模型服务端口没有统一标准：Ollama 默认 11434，LM Studio 常用 1234，
+        # vLLM / 自建网关端口各异。因此产品边界是「本机回环任意端口」，
+        # 只挡敏感服务端口与 AI Career OS 自身端口，而不是只认 11434。
         if not allow_local:
             return False, "不允许访问本机地址"
-        if port is not None and (port in _BLOCKED_LOCAL_PORTS or port < 1024 and port != 11434):
+        if port is None:
+            return True, ""
+        if port in _SELF_LOCAL_PORTS:
+            return False, f"本机 {port} 端口是 AI Career OS 自身服务，不允许作为模型地址"
+        if port in _BLOCKED_LOCAL_PORTS:
+            return False, f"本机 {port} 端口属于受保护服务，不允许作为模型地址"
+        if port < 1024 and port != 11434:
             return False, f"本机 {port} 端口属于受保护服务，不允许作为模型地址"
         return True, ""
 
@@ -626,25 +666,36 @@ def _pick_config(store: dict, module_key: str) -> dict | None:
 
 
 def _settings_from_config(item: dict, module_key: str) -> LLMSettings:
+    label = item.get("name") or "未命名配置"
     secret = item.get("secret")
-    if not secret:
-        raise ModelUnusableError(f"「{item.get('name', '未命名配置')}」还没有保存密钥，请编辑并填写 API Key。")
-    if secret.get("unverified_after_change") or not secret_store.binding_matches(
-        secret, provider_id=item.get("provider_id", ""), base_url=item.get("base_url", "")
-    ):
-        raise ModelUnusableError(
-            f"「{item.get('name', '未命名配置')}」的密钥与当前服务地址不匹配，"
-            "为避免把密钥发给错误的服务，请重新填写 API Key 并测试连接。"
-        )
-    try:
-        api_key = secret_store.open_sealed(secret)
-    except secret_store.SecretStoreError as exc:
-        raise ModelUnusableError(f"读取「{item.get('name', '未命名配置')}」的密钥失败：{exc}") from exc
+    api_key = ""
+
+    if config_requires_key(item):
+        if not secret:
+            raise ModelUnusableError(f"「{label}」还没有保存密钥，请编辑并填写 API Key。")
+        if secret.get("unverified_after_change") or not secret_store.binding_matches(
+            secret, provider_id=item.get("provider_id", ""), base_url=item.get("base_url", "")
+        ):
+            raise ModelUnusableError(
+                f"「{label}」的密钥与当前服务地址不匹配，"
+                "为避免把密钥发给错误的服务，请重新填写 API Key 并测试连接。"
+            )
+        try:
+            api_key = secret_store.open_sealed(secret) or ""
+        except secret_store.SecretStoreError as exc:
+            raise ModelUnusableError(f"读取「{label}」的密钥失败：{exc}") from exc
+        if not api_key:
+            raise ModelUnusableError(f"「{label}」的密钥为空。")
+    elif secret:
+        # 不需要密钥的服务（Ollama 等）也可以自带一个可选密钥：能用就用，读不出来就如实报错
+        try:
+            api_key = secret_store.open_sealed(secret) or ""
+        except secret_store.SecretStoreError as exc:
+            raise ModelUnusableError(f"读取「{label}」的密钥失败：{exc}") from exc
+
     module = _MODULE_BY_KEY[module_key]
     timeout = float(item.get("timeout_seconds") or module["default_timeout"])
     timeout = max(5.0, min(timeout, float(module["max_timeout"])))
-    if not api_key:
-        raise ModelUnusableError(f"「{item.get('name', '未命名配置')}」的密钥为空。")
     return LLMSettings(
         module=module_key,
         source="user",
@@ -886,8 +937,11 @@ def test_connection(payload: dict) -> dict:
         timeout = float(payload.get("timeout_seconds") or item.get("timeout_seconds") or 30)
         endpoint_overridden = bool(payload.get("base_url")) and _normalize_base_url(payload["base_url"]) != item.get("base_url", "")
         # 地址被改过却没给新密钥 → 不能拿旧配置已验证过的密钥去打新地址
+        # 但不需要密钥的本机服务（Ollama）不受此限，否则永远测不通
         if not raw_key:
-            if endpoint_overridden:
+            if not config_requires_key(item):
+                api_key = ""
+            elif endpoint_overridden:
                 return {
                     "ok": False,
                     "error": {
@@ -896,22 +950,23 @@ def test_connection(payload: dict) -> dict:
                     },
                     "steps": steps,
                 }
-            secret = item.get("secret")
-            if not secret:
-                return {"ok": False, "error": {"category": "key_required", "message": "该配置还没有密钥，请先填写 API Key。"}, "steps": steps}
-            if secret.get("unverified_after_change"):
-                return {
-                    "ok": False,
-                    "error": {
-                        "category": "key_required",
-                        "message": "该配置的密钥是在旧的服务地址下保存的，请重新填写 API Key 后再测试。",
-                    },
-                    "steps": steps,
-                }
-            try:
-                api_key = secret_store.open_sealed(secret) or ""
-            except secret_store.SecretStoreError as exc:
-                return {"ok": False, "error": {"category": "key_unreadable", "message": str(exc)}, "steps": steps}
+            else:
+                secret = item.get("secret")
+                if not secret:
+                    return {"ok": False, "error": {"category": "key_required", "message": "该配置还没有密钥，请先填写 API Key。"}, "steps": steps}
+                if secret.get("unverified_after_change"):
+                    return {
+                        "ok": False,
+                        "error": {
+                            "category": "key_required",
+                            "message": "该配置的密钥是在旧的服务地址下保存的，请重新填写 API Key 后再测试。",
+                        },
+                        "steps": steps,
+                    }
+                try:
+                    api_key = secret_store.open_sealed(secret) or ""
+                except secret_store.SecretStoreError as exc:
+                    return {"ok": False, "error": {"category": "key_unreadable", "message": str(exc)}, "steps": steps}
         else:
             api_key = raw_key
     else:
@@ -921,9 +976,10 @@ def test_connection(payload: dict) -> dict:
         timeout = float(payload.get("timeout_seconds") or 30)
         api_key = raw_key
         preset = _PRESET_BY_ID.get(provider_id, {})
-        if preset.get("requires_key", True) and not api_key:
-            return {"ok": False, "error": {"category": "key_required", "message": "请先填写 API Key。"}, "steps": steps}
-        if not api_key and not preset.get("local"):
+        requires_key = (
+            payload["requires_key"] if isinstance(payload.get("requires_key"), bool) else preset.get("requires_key", True)
+        )
+        if requires_key and not api_key:
             return {"ok": False, "error": {"category": "key_required", "message": "请先填写 API Key。"}, "steps": steps}
 
     # 1. 字段校验
@@ -1170,6 +1226,7 @@ __all__ = [
     "build_client",
     "clear_all",
     "config_path",
+    "config_requires_key",
     "create_config",
     "delete_config",
     "get_config",

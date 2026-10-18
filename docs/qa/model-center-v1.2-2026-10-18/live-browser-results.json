@@ -1,0 +1,17 @@
+{
+  "pages": [
+    {
+      "path": "/settings",
+      "status": 200,
+      "failedFetch": false
+    },
+    {
+      "path": "/missions",
+      "status": 200,
+      "failedFetch": false
+    }
+  ],
+  "failedRequests": [],
+  "pageErrors": [],
+  "pass": true
+}

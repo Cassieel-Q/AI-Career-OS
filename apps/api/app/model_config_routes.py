@@ -26,6 +26,8 @@ class ConfigIn(BaseModel):
     api_key: str | None = None
     clear_key: bool = False
     enabled: bool = True
+    # 显式声明「该服务不需要密钥」（如自建本机网关）；不传则按提供商预设
+    requires_key: bool | None = None
 
 
 class ActivateIn(BaseModel):
@@ -39,6 +41,7 @@ class TestIn(BaseModel):
     model_id: str | None = None
     api_key: str | None = None
     timeout_seconds: float | None = None
+    requires_key: bool | None = None
     confirm: bool = False
     probe_tools: bool = True
     probe_stream: bool = True

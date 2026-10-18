@@ -1,0 +1,44 @@
+{
+  "checks": [
+    {
+      "name": "4.6 cost confirmation",
+      "pass": true,
+      "requests": 0
+    },
+    {
+      "name": "4.1-4.2 save and 10 module routing",
+      "pass": true,
+      "cipher": "dpapi"
+    },
+    {
+      "name": "4.3 edit without key",
+      "pass": true
+    },
+    {
+      "name": "4.4 endpoint change blocks old key",
+      "pass": true,
+      "sources": [
+        "user-broken"
+      ]
+    },
+    {
+      "name": "4.5 delete",
+      "pass": true
+    },
+    {
+      "name": "4.7 Ollama unavailable",
+      "pass": true
+    },
+    {
+      "name": "4.8 and S14 onboarding and localStorage",
+      "pass": true,
+      "storage": [
+        [
+          "ai-career:onboarding:model-skipped",
+          "1"
+        ]
+      ]
+    }
+  ],
+  "errors": []
+}

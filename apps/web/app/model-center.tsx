@@ -420,7 +420,11 @@ export default function ModelCenter() {
             placeholder={draft.id && status.configs.find((item) => item.id === draft.id)?.key_present ? "已保存 " + (status.configs.find((item) => item.id === draft.id)?.key_masked ?? "") + "，留空不改" : (preset?.requires_key === false ? "本地模型可留空" : "sk-...")}
             onChange={(event) => setDraft((current) => ({ ...current, api_key: event.target.value }))}
           />
-          <p className="app-card-meta">密钥只保存在本机（Windows 用 DPAPI 按当前用户加密），不会写入 Git、日志或备份。</p>
+          <p className="app-card-meta">
+            {preset?.requires_key === false
+              ? "本机模型不需要密钥，可留空；填了也会作为可选密钥随请求发送。"
+              : "密钥只保存在本机（Windows 用 DPAPI 按当前用户加密），不会写入 Git、日志或备份。"}
+          </p>
         </div>
 
         <div className="app-field-block">
@@ -450,7 +454,10 @@ export default function ModelCenter() {
               placeholder="https://api.deepseek.com"
               onChange={(event) => setDraft((current) => ({ ...current, base_url: event.target.value }))}
             />
-            <p className="app-card-meta">只允许 HTTPS 公网地址，或本机 Ollama（127.0.0.1:11434）；内网与其它本机端口会被拒绝。</p>
+            <p className="app-card-meta">
+              公网只能用 HTTPS；本机地址（127.0.0.1 / localhost）可以填任意端口，例如 Ollama 默认 11434、LM Studio
+              常用 1234。局域网和其它机器地址，以及本机敏感服务端口（数据库、远程桌面、AI Career OS 自身端口）会被拒绝。
+            </p>
           </div>
         ) : (
           <p className="app-card-meta">Base URL：{draft.base_url || "（使用提供商默认）"}</p>

@@ -94,8 +94,9 @@ test("step navigation preserves the profile id and stops at JD", () => {
 });
 
 test("step labels are explicit and readable", () => {
-  assert.equal(stepLabel("role-exploration"), "Role Selection");
-  assert.equal(stepLabel("job-descriptions"), "Job Descriptions");
+  // 界面文案为中文，断言需与 app/workflow-navigation.ts 的 STEP_LABELS 保持一致
+  assert.equal(stepLabel("role-exploration"), "角色选择");
+  assert.equal(stepLabel("job-descriptions"), "岗位 JD");
 });
 
 test("next navigation requires the persisted completion for the current step", () => {

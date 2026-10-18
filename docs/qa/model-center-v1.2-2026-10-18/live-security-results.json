@@ -1,0 +1,115 @@
+[
+  {
+    "name": "S1 list redaction",
+    "status": 200,
+    "pass": true
+  },
+  {
+    "name": "S1 metadata only",
+    "pass": true,
+    "count": 0
+  },
+  {
+    "name": "S5 evil read",
+    "status": 403,
+    "pass": true
+  },
+  {
+    "name": "S6 evil write",
+    "status": 403,
+    "pass": true
+  },
+  {
+    "name": "S7 missing header",
+    "status": 403,
+    "pass": true
+  },
+  {
+    "name": "S8 cross site",
+    "status": 403,
+    "pass": true
+  },
+  {
+    "name": "S9 invalid DNS",
+    "status": 400,
+    "pass": true,
+    "detail": {
+      "detail": "Base URL 不可用：域名解析失败：example.invalid"
+    }
+  },
+  {
+    "name": "S11 arbitrary loopback port",
+    "status": 200,
+    "pass": true,
+    "cors": "http://127.0.0.1:3999"
+  },
+  {
+    "name": "S12 http://127.0.0.1.evil.com:3000",
+    "status": 403,
+    "pass": true
+  },
+  {
+    "name": "S12 http://192.168.1.9:3000",
+    "status": 403,
+    "pass": true
+  },
+  {
+    "name": "S2 backup export",
+    "status": 200,
+    "pass": true
+  },
+  {
+    "name": "S2 archive entries",
+    "pass": true,
+    "entries": [
+      "manifest.json",
+      "data/career.db"
+    ]
+  },
+  {
+    "name": "S3 live persisted cipher",
+    "status": "NO_SAVED_SECRETS",
+    "secret_count": 0,
+    "ciphers": []
+  },
+  {
+    "name": "page /",
+    "status": 200,
+    "pass": true
+  },
+  {
+    "name": "page /settings",
+    "status": 200,
+    "pass": true
+  },
+  {
+    "name": "page /missions",
+    "status": 200,
+    "pass": true
+  },
+  {
+    "name": "page /resumes",
+    "status": 200,
+    "pass": true
+  },
+  {
+    "name": "page /tracker",
+    "status": 200,
+    "pass": true
+  },
+  {
+    "name": "page /question-bank",
+    "status": 200,
+    "pass": true
+  },
+  {
+    "name": "page /assistant",
+    "status": 200,
+    "pass": true
+  },
+  {
+    "name": "page /interview-records",
+    "status": 200,
+    "pass": true
+  }
+]

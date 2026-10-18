@@ -1,0 +1,10 @@
+{
+  "http_status": 200,
+  "events": [
+    "start",
+    "delta",
+    "done"
+  ],
+  "pass": true,
+  "cleanup_status": 204
+}

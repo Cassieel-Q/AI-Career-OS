@@ -228,9 +228,11 @@ test("a target-role deletion racing the JD read invalidates the target in the sn
   assert.equal(latestValidStep(result), "role-exploration");
 });
 
-test("home page delegates to My Job Missions while the legacy workflow remains linked", async () => {
+test("home page renders the career hub itself instead of delegating to My Job Missions", async () => {
   const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
-  assert.match(source, /redirect\(["']\/missions["']\)/);
+  // 首页已改为独立首页组件（求职中心 + 首用引导），不再是 redirect('/missions') 的跳板
+  assert.doesNotMatch(source, /redirect\(["']\/missions["']\)/);
+  assert.match(source, /ModelOnboarding/);
   assert.doesNotMatch(source, /<section className="career-preferences"/);
 });
 

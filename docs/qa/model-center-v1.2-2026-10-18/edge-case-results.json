@@ -1,0 +1,148 @@
+[
+  {
+    "name": "saved Ollama keyless",
+    "create_status": 200,
+    "key_present": false,
+    "configured": false,
+    "modules": [
+      {
+        "key": "assistant",
+        "label": "顺顺 Agent",
+        "source": "user-broken",
+        "config_id": "d9f6fef5da07",
+        "config_name": "Ollama keyless",
+        "model": "llama3.2",
+        "base_url": "http://127.0.0.1:11434",
+        "note": "「Ollama keyless」还没有保存密钥，请编辑并填写 API Key。",
+        "usable": false
+      },
+      {
+        "key": "resume",
+        "label": "简历解析与定向改写",
+        "source": "user-broken",
+        "config_id": "d9f6fef5da07",
+        "config_name": "Ollama keyless",
+        "model": "llama3.2",
+        "base_url": "http://127.0.0.1:11434",
+        "note": "「Ollama keyless」还没有保存密钥，请编辑并填写 API Key。",
+        "usable": false
+      },
+      {
+        "key": "mission",
+        "label": "岗位分析与 JD 解析",
+        "source": "user-broken",
+        "config_id": "d9f6fef5da07",
+        "config_name": "Ollama keyless",
+        "model": "llama3.2",
+        "base_url": "http://127.0.0.1:11434",
+        "note": "「Ollama keyless」还没有保存密钥，请编辑并填写 API Key。",
+        "usable": false
+      },
+      {
+        "key": "insight",
+        "label": "岗位匹配分析",
+        "source": "user-broken",
+        "config_id": "d9f6fef5da07",
+        "config_name": "Ollama keyless",
+        "model": "llama3.2",
+        "base_url": "http://127.0.0.1:11434",
+        "note": "「Ollama keyless」还没有保存密钥，请编辑并填写 API Key。",
+        "usable": false
+      },
+      {
+        "key": "interview",
+        "label": "模拟面试",
+        "source": "user-broken",
+        "config_id": "d9f6fef5da07",
+        "config_name": "Ollama keyless",
+        "model": "llama3.2",
+        "base_url": "http://127.0.0.1:11434",
+        "note": "「Ollama keyless」还没有保存密钥，请编辑并填写 API Key。",
+        "usable": false
+      },
+      {
+        "key": "claim",
+        "label": "事实台账抽取",
+        "source": "user-broken",
+        "config_id": "d9f6fef5da07",
+        "config_name": "Ollama keyless",
+        "model": "llama3.2",
+        "base_url": "http://127.0.0.1:11434",
+        "note": "「Ollama keyless」还没有保存密钥，请编辑并填写 API Key。",
+        "usable": false
+      },
+      {
+        "key": "question",
+        "label": "题库生成",
+        "source": "user-broken",
+        "config_id": "d9f6fef5da07",
+        "config_name": "Ollama keyless",
+        "model": "llama3.2",
+        "base_url": "http://127.0.0.1:11434",
+        "note": "「Ollama keyless」还没有保存密钥，请编辑并填写 API Key。",
+        "usable": false
+      },
+      {
+        "key": "role_exploration",
+        "label": "角色探索",
+        "source": "user-broken",
+        "config_id": "d9f6fef5da07",
+        "config_name": "Ollama keyless",
+        "model": "llama3.2",
+        "base_url": "http://127.0.0.1:11434",
+        "note": "「Ollama keyless」还没有保存密钥，请编辑并填写 API Key。",
+        "usable": false
+      },
+      {
+        "key": "proof_action",
+        "label": "证据行动建议",
+        "source": "user-broken",
+        "config_id": "d9f6fef5da07",
+        "config_name": "Ollama keyless",
+        "model": "llama3.2",
+        "base_url": "http://127.0.0.1:11434",
+        "note": "「Ollama keyless」还没有保存密钥，请编辑并填写 API Key。",
+        "usable": false
+      },
+      {
+        "key": "other",
+        "label": "其它 AI 能力（差距分析 / 路线图）",
+        "source": "user-broken",
+        "config_id": "d9f6fef5da07",
+        "config_name": "Ollama keyless",
+        "model": "llama3.2",
+        "base_url": "http://127.0.0.1:11434",
+        "note": "「Ollama keyless」还没有保存密钥，请编辑并填写 API Key。",
+        "usable": false
+      }
+    ],
+    "saved_test": {
+      "ok": false,
+      "error": {
+        "category": "key_required",
+        "message": "该配置还没有密钥，请先填写 API Key。"
+      },
+      "steps": []
+    }
+  },
+  {
+    "name": "non-Ollama loopback port",
+    "create_status": 200,
+    "base_url": "http://127.0.0.1:18123",
+    "expected": "reject per settings UI only port 11434"
+  },
+  {
+    "name": "S1 S3 populated config",
+    "pass": true,
+    "cipher": "dpapi",
+    "mask": "***3456"
+  },
+  {
+    "name": "4.6 failed probe preserves configuration",
+    "pass": true,
+    "error": {
+      "category": "unreachable",
+      "message": "无法连接该地址（地址写错、服务未启动或被防火墙拦截）。"
+    }
+  }
+]

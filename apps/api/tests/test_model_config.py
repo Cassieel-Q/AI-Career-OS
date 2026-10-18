@@ -628,3 +628,106 @@ def test_frontend_cors_allows_drifted_loopback_port(client):
         },
     )
     assert response.headers.get("access-control-allow-origin") == "http://127.0.0.1:47821"
+
+
+# ---------------------------------------------------------------------------
+# 无密钥本机模型（Ollama）：草稿测试 / 已保存配置测试 / 网关调用 三条路径同一个规则
+# ---------------------------------------------------------------------------
+
+
+def test_keyless_local_config_is_usable_by_gateway():
+    """F1：Ollama 保存时允许无密钥，网关就必须能用它（此前读配置时仍强制要密钥）。"""
+    created = service.create_config(
+        {
+            "name": "本机 Ollama",
+            "provider_id": "ollama",
+            "base_url": "http://127.0.0.1:11434/v1",
+            "model_id": "llama3.2",
+        }
+    )
+    assert created["requires_key"] is False
+
+    settings = service.llm_settings("assistant")
+    assert settings.source == "user"
+    assert settings.base_url.startswith("http://127.0.0.1:11434")
+    assert settings.api_key == ""
+
+    status = service.status()
+    module = next(item for item in status["modules"] if item["key"] == "assistant")
+    assert module["source"] == "user"
+    assert module["usable"] is True
+
+
+def test_keyless_local_config_test_connection_reaches_out(fake_http):
+    """F1：已保存的无密钥配置点「测试」时应真正去连，未运行返回 unreachable 而不是 key_required。"""
+    created = service.create_config(
+        {
+            "name": "本机 Ollama",
+            "provider_id": "ollama",
+            "base_url": "http://127.0.0.1:11434/v1",
+            "model_id": "llama3.2",
+        }
+    )
+    fake_http.scenario = "unreachable"
+    result = service.test_connection({"config_id": created["id"], "confirm": True})
+    assert result["ok"] is False
+    assert result["error"]["category"] == "unreachable"
+    assert ("key_required" not in json.dumps(result)) and "密钥" not in json.dumps(result, ensure_ascii=False)
+
+
+def test_keyless_local_draft_test_connection(fake_http):
+    """F1：草稿（未保存）测试同样不能因为没有密钥就被挡在门外。"""
+    fake_http.scenario = "unreachable"
+    result = service.test_connection(
+        {
+            "provider_id": "ollama",
+            "base_url": "http://127.0.0.1:11434/v1",
+            "model_id": "llama3.2",
+            "confirm": True,
+        }
+    )
+    assert result["error"]["category"] == "unreachable"
+
+
+def test_keyless_local_config_can_carry_optional_key(fake_http):
+    """本机服务也允许自带可选密钥：填了就随请求发出。"""
+    service.create_config(
+        {
+            "name": "本机网关",
+            "provider_id": "ollama",
+            "base_url": "http://127.0.0.1:11434/v1",
+            "model_id": "qwen2.5:7b",
+            "api_key": "local-optional-key",
+        }
+    )
+    settings = service.llm_settings("assistant")
+    assert settings.api_key == "local-optional-key"
+
+
+def test_cloud_provider_without_key_still_rejected():
+    """无密钥只对本机/显式声明的服务放行，云模型仍必须有密钥。"""
+    with pytest.raises(ModelConfigError):
+        service.create_config(
+            {"name": "云模型", "provider_id": "deepseek", "base_url": "https://api.deepseek.com", "model_id": "deepseek-chat"}
+        )
+
+
+def test_local_endpoint_ports_allow_ollama_and_alternatives():
+    """F2：本机回环端口边界——默认 11434 与 LM Studio 等其它端口都允许。"""
+    for port in (11434, 1234, 18123, 8000):
+        ok, reason = service.validate_endpoint(f"http://127.0.0.1:{port}/v1")
+        assert ok, f"{port} 应被允许：{reason}"
+
+
+def test_local_endpoint_ports_reject_self_and_sensitive_ports():
+    """F2：AI Career OS 自身端口与敏感服务端口必须拒绝，避免自指与误连。"""
+    for port in (8100, 8770, 3306, 3389, 5432, 80):
+        ok, _reason = service.validate_endpoint(f"http://127.0.0.1:{port}")
+        assert not ok, f"{port} 不该被允许"
+
+
+def test_lan_and_remote_hosts_still_rejected():
+    """F2 边界的另一半：内网与其它机器地址不受本机放行规则影响。"""
+    for url in ("http://192.168.1.9:11434", "http://10.0.0.5:8000", "https://api.example.com:80"):
+        ok, _reason = service.validate_endpoint(url)
+        assert not ok, url
