@@ -3687,3 +3687,32 @@ pre.batch-draft-excerpt { white-space: pre-wrap; word-break: break-word; backgro
   color: var(--text-quaternary);
   font-style: normal;
 }
+
+.match-stale {
+  margin-bottom: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--accent-attention);
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+}
+
+.match-stale ul {
+  margin: 0.35rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+.match-stale-hint {
+  margin: 0.4rem 0 0 !important;
+  color: var(--text-quaternary) !important;
+  font-size: 0.78rem !important;
+}
+
+.match-note {
+  margin: 0.35rem 0 0;
+  color: var(--text-quaternary);
+  font-size: 0.78rem;
+  line-height: 1.6;
+}

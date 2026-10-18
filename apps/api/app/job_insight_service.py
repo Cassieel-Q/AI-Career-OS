@@ -22,12 +22,15 @@ from sqlalchemy.orm import Session
 
 from . import models
 from .job_insight_provider import analyze_job_keywords, analyze_job_match
+from .match_contract import (
+    GRADE_LABEL,
+    build_input_fingerprint,
+    build_match_result,
+    stale_status,
+)
 
-VERDICT_LABEL = {
-    "strong": "值得投递",
-    "maybe": "先补齐再投",
-    "weak": "暂不建议投递",
-}
+#: 兼容旧名：分档标签现在由统一契约给出，不再在服务层各写一份。
+VERDICT_LABEL = dict(GRADE_LABEL)
 
 SOURCE_LABEL = {
     "LLM": "模型分析",
@@ -185,27 +188,60 @@ def _has_meaningful_resume(db: Session, mission: models.JobMission) -> bool:
     return bool(resume_text.strip())
 
 
+def _current_match_inputs(db: Session, mission: models.JobMission) -> tuple[dict, str, bool, str, list[str]]:
+    """返回 (当前输入指纹, 简历文本, 是否来自用户原文, JD 文本, 岗位要求名)。"""
+    resume_text, from_raw = profile_resume_text(db, mission)
+    jd_text = mission_jd_text(db, mission)
+    requirement_names = mission_requirement_names(db, mission)
+    profile = effective_profile(db, mission)
+    fingerprint = build_input_fingerprint(
+        resume_text=resume_text,
+        jd_text=jd_text,
+        requirement_names=requirement_names,
+        profile_id=str(profile.id) if profile is not None else None,
+        target_job_id=str(mission.target_job_id) if mission.target_job_id else None,
+    )
+    return fingerprint, resume_text, from_raw, jd_text, requirement_names
+
+
 def get_match_analysis(db: Session, mission_id: UUID, *, refresh: bool = False) -> dict:
+    """读取或重新计算简历 × 岗位匹配度。
+
+    **只标记不替换**：输入变化后只给出 ``stale`` 提示，绝不后台偷偷重算或
+    覆盖用户已有的分析结果（指令 2.3）。重新分析必须用户显式触发。
+    """
     mission = _mission_or_404(db, mission_id)
     cached = _as_dict(mission.match_analysis)
+    fingerprint, resume_text, from_raw, jd_text, requirement_names = _current_match_inputs(db, mission)
+
     if cached.get("score") is not None and not refresh:
-        return cached
-    resume_text, from_raw = profile_resume_text(db, mission)
+        return {**cached, "stale": stale_status(cached, fingerprint)}
+
+    profile = effective_profile(db, mission)
     result = analyze_job_match(
         role=mission.role,
         company=mission.company,
         resume_text=resume_text,
-        jd_text=mission_jd_text(db, mission),
-        requirement_names=mission_requirement_names(db, mission),
+        jd_text=jd_text,
+        requirement_names=requirement_names,
         has_resume=bool(resume_text.strip()),
     )
-    payload = {
-        **result,
-        "verdict_label": VERDICT_LABEL.get(str(result.get("verdict")), "待评估"),
-        "resume_source": "EDITED_TEXT" if from_raw else ("PROFILE_FACTS" if resume_text.strip() else "MISSING"),
-        "resume_chars": len(resume_text),
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-    }
+    payload = build_match_result(
+        score=result.get("score"),
+        reasons=result.get("reasons"),
+        gaps=result.get("gaps"),
+        model_advice=result.get("advice"),
+        source=str(result.get("source") or "LOCAL_RULE"),
+        resume_text=resume_text,
+        jd_text=jd_text,
+        requirement_names=requirement_names,
+        parsed_jd=_as_dict(mission.parsed_jd),
+        what_matters=_as_dict(mission.what_matters),
+        profile_id=str(profile.id) if profile is not None else None,
+        target_job_id=str(mission.target_job_id) if mission.target_job_id else None,
+        resume_source="EDITED_TEXT" if from_raw else ("PROFILE_FACTS" if resume_text.strip() else "MISSING"),
+    )
+    payload["stale"] = stale_status(payload, fingerprint)
     mission.match_analysis = payload
     mission.updated_at = datetime.now(timezone.utc)
     db.commit()

@@ -28,6 +28,23 @@ export type JobMatchAnalysis = {
   resume_source?: string;
   resume_chars?: number;
   generated_at?: string;
+  /** 统一契约（v1.2）：分档与建议由同一处推导，前端不再自行换算。 */
+  grade?: JobMatchVerdict | string;
+  grade_label?: string;
+  recommendation?: string;
+  blocking_gaps?: string[];
+  supporting_evidence?: string[];
+  analysis_version?: string;
+  rule_version?: string;
+  model_advice_dropped?: boolean;
+  stale?: MatchStale | null;
+};
+
+/** 过期判定：输入指纹变了就提示，绝不后台偷偷重算。 */
+export type MatchStale = {
+  stale: boolean;
+  reasons: string[];
+  analyzed_at?: string | null;
 };
 
 export type ResumeTextRead = {

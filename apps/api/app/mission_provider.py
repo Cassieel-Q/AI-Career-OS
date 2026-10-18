@@ -73,6 +73,62 @@ class MissionProviderInvalidResponseError(MissionProviderError):
         self.validation_errors = validation_errors or []
 
 
+#: 只有这些才算「JD 确实要求硬件/端侧能力」。通用词「产品 / product」不算：
+#: 它命中所有产品岗，会把硬件项目草案塞进纯软件岗（用户实测问题）。
+HARDWARE_JD_SIGNALS: tuple[str, ...] = (
+    "智能硬件",
+    "硬件产品",
+    "物理ai",
+    "physical ai",
+    "physical-ai",
+    "传感器",
+    "sensor",
+    "嵌入式",
+    "embedded",
+    "单片机",
+    "端侧",
+    "边缘计算",
+    "edge",
+    "量产",
+    "结构件",
+    "bom",
+    "pcb",
+    "固件",
+    "firmware",
+    "机器人",
+    "robot",
+    "iot",
+    "物联网",
+    "智能设备",
+    "可穿戴",
+)
+
+
+def hardware_jd_signals(extraction: object) -> list[str]:
+    """返回 JD 里**确切命中**的硬件/端侧要求原文片段；没有就返回空列表。
+
+    指令 2.4：每条建议都必须能绑定到确切的 JD 要求，关联不足时保守处理（不推荐）。
+    """
+    buckets: list[object] = []
+    for attr in ("role", "role_family", "capabilities", "keywords", "responsibilities"):
+        value = getattr(extraction, attr, None)
+        if isinstance(value, list):
+            buckets.extend(value)
+        elif value is not None:
+            buckets.append(value)
+    hits: list[str] = []
+    for fragment in buckets:
+        text = str(fragment or "").strip()
+        if not text or text in hits:
+            continue
+        lowered = text.casefold()
+        if any(signal in lowered for signal in HARDWARE_JD_SIGNALS):
+            hits.append(text)
+        if len(hits) >= 6:
+            break
+    return hits
+
+
 class MissionProvider(Protocol):
 
     def parse_jd(self, raw_text: str) -> JobExtractionPayload: ...
@@ -1729,18 +1785,21 @@ class OpenAIMissionProvider:
             # overlooks a material JD gap. This is never exported as a fact;
             # it remains a clearly labelled suggestion until the candidate
             # actually completes and confirms it.
-            jd_tokens = " ".join([extraction.role, extraction.role_family, *extraction.capabilities, *extraction.keywords]).casefold()
-            is_hardware_product = any(token in jd_tokens for token in ("智能硬件", "物理ai", "physical ai", "product", "产品"))
+            hardware_hits = hardware_jd_signals(extraction)
             has_synthetic = any("SYNTHETIC_PROJECT" in {str(flag).upper() for flag in bullet.risk_flags} for bullet in payload.bullets)
-            if is_hardware_product and not has_synthetic:
+            if hardware_hits and not has_synthetic:
                 draft = {
                     "source_experience_id": None,
                     "project_title": "项目草案：智能硬件 AI 产品验证闭环",
                     "original_text": "建议补做项目（尚未完成）",
                     "suggested_text": "项目草案：智能硬件 AI 产品验证闭环——完成目标用户与竞品调研，输出端侧/云侧方案和传感器、算力选型对比；制作可交互原型或 Demo，设计测试指标与数据记录表，形成 PRD、技术选型表和测试报告。",
                     "final_text": None,
-                    "reason": "目标 JD 强调智能硬件产品定义、软硬件方案取舍和数据驱动验证；该项目用于补齐可展示的作品集证据，完成前不作为既有经历。",
-                    "jd_refs": [*extraction.capabilities[:4], *extraction.keywords[:4]],
+                    "reason": (
+                        "目标 JD 出现了与硬件/端侧相关的要求（"
+                        + "、".join(hardware_hits[:3])
+                        + "）；该项目草案用于补齐可展示的作品集证据，完成前不作为既有经历。"
+                    ),
+                    "jd_refs": hardware_hits[:6],
                     "evidence_refs": [],
                     "resume_skill_refs": [],
                     "risk_flags": ["SYNTHETIC_PROJECT", "GROUNDING:NEEDS_CONFIRMATION"],

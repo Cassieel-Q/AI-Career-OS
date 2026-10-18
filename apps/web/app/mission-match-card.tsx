@@ -79,17 +79,35 @@ export function MissionMatchCard({ missionId }: Props) {
     );
   }
 
-  const tone = verdictTone(match?.verdict);
+  // 分档与建议都由后端统一推导：这里只展示，不自己换算。
+  const grade = match?.grade ?? match?.verdict;
+  const recommendation = match?.recommendation ?? match?.advice;
+  const tone = verdictTone(grade);
   const toneClass = tone === "good" ? "filled" : tone === "warn" ? "attention" : tone === "bad" ? "danger" : "muted";
+  const stale = match?.stale;
 
   return (
     <section className="mission-card mission-match-card">
       <p className="section-kicker">简历匹配度</p>
+
+      {stale?.stale ? (
+        <div className="match-stale" role="status">
+          <strong>这份分析可能已经过期</strong>
+          <ul>
+            {stale.reasons.map((reason) => (
+              <li key={reason}>{reason}</li>
+            ))}
+          </ul>
+          <p className="match-stale-hint">
+            下面仍是当时那次分析的结果，没有被自动替换。确认后点「重新分析」生成新版本。
+          </p>
+        </div>
+      ) : null}
       <div className="mission-match-head">
         <ScoreRing score={match?.score ?? null} size={88} large />
         <div className="mission-match-head-text">
           <span className={`app-badge ${toneClass}`}>
-            {verdictLabel(match?.verdict, match?.verdict_label ?? "待评估")}
+            {verdictLabel(grade, match?.grade_label ?? match?.verdict_label ?? "待评估")}
           </span>
           {keywords?.keywords?.length ? (
             <div className="kw-chips">
@@ -108,9 +126,24 @@ export function MissionMatchCard({ missionId }: Props) {
           <section className="mission-match-block">
             <h4>是否值得投递</h4>
             <p className="summary">
-              {verdictLabel(match.verdict, match.verdict_label)}：{match.advice || "先补齐缺口再投。"}
+              {verdictLabel(grade, match.grade_label ?? match.verdict_label)}：{recommendation || "先补齐缺口再投。"}
             </p>
+            {match.model_advice_dropped ? (
+              <p className="match-note">
+                模型原本给出的建议与这个分数档位不一致，已按统一结论展示，不并列显示矛盾说法。
+              </p>
+            ) : null}
           </section>
+          {match.blocking_gaps?.length ? (
+            <section className="mission-match-block">
+              <h4>硬性缺口（技能相关度高也不能豁免）</h4>
+              <ul className="job-drawer-list bad">
+                {match.blocking_gaps.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
           <div className="mission-match-grid">
             <div>
               <h4>为什么匹配</h4>
