@@ -19,6 +19,20 @@ TEST_ENGINE = create_engine(
 
 
 @pytest.fixture(autouse=True)
+def isolated_model_config(tmp_path, monkeypatch) -> Generator[None, None, None]:
+    """把「AI 模型中心」的用户配置指向临时文件。
+
+    否则测试会读到用户在设置页真实保存的模型（例如设了默认模型后，resume provider
+    的默认值断言就会随用户配置漂移而假失败）。只隔离这一处，环境变量与数据目录
+    保持原样，避免影响依赖 .env 回退和数据目录的既有用例。
+    """
+    from app import model_config_service
+
+    monkeypatch.setattr(model_config_service, "config_path", lambda: tmp_path / "model_config.json")
+    yield
+
+
+@pytest.fixture(autouse=True)
 def database() -> Generator[None, None, None]:
     Base.metadata.create_all(TEST_ENGINE)
 
