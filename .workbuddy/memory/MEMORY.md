@@ -18,6 +18,7 @@
 - 后端 7 项：`test_claim_provider`、`test_gap_analysis`、`test_market_profile`、`test_priorities`、
   `test_resume_reliability`、`test_roadmap`、`test_target_jobs`（各 1 项）。
 - 前端 2 项：`workflow-navigation`（中文/英文标签断言）、`workflow-state`（首页重定向断言）。
+  **2026-10-18 已随 `12d6669` 修正为当前实现（中文标签 + 首页渲染 ModelOnboarding），Web 全量 243 passed / 0 failed。**
 - 判断方法：`git stash push -u` 后在基线重跑对比，再 `git stash pop`。
 
 ## 关键设计约定
@@ -29,17 +30,44 @@
 - **Pydantic 枚举**：`ExperienceInput.experience_type` 只接受 WORK/INTERNSHIP/CAMPUS/PROJECT/OTHER；
   `ProfileSkillInput.proficiency` 只接受 AWARE/BASIC/PROJECT_READY/PROFICIENT。
 - **岗位路由前缀**：mission 相关路由挂在 `/api/v1` 下（`/api/v1/job-missions/{id}/...`）。
-- **Studio 文档**需要先有 `TargetResume.status == "CONFIRMED"` 才能创建；确认与预览都用 `If-Match: <revision>`。
+- **Studio 文档**需要先有 `TargetResume.status == "CONFIRMED"` 才能创建；确认与预览都用 `If-Match: <revision>`，
+  **PATCH 编辑也必须带 `If-Match`**（缺了返回 428「请先读取最新简历修订号」）。
+- **事实可信三维**（v1.2）：事实来源（SOURCE_EXTRACTED/USER_PROVIDED/AI_PROPOSED）× 用户核对
+  （UNREVIEWED/USER_ATTESTED/REJECTED）× 文案采纳，三者互不推导；旧状态一律降级为 UNREVIEWED。
+  事实文本一变，旧签名由 `invalidate_changed_attestations` 退回 UNREVIEWED。
+- **已确认档案（CONFIRMED）的锁定范围**：`PUT /profiles/{id}`、换文件、重新解析全部 409
+  （`test_profiles.py::test_confirmed_profile_cannot_be_edited` 锁着）；改共享事实的唯一入口是
+  `POST /profiles/{id}/facts/attest` + `apply_to_source=true`，且它**只写回描述类文本**。
+  已知后果：`sync` 能更新的 title/organization/dates 在产品里够不到（P1 未决，见 v1.2 known-issues）。
+- **Studio PATCH 操作类型**：`set_text / add_entry / add_bullet / omit / restore / move /
+  set_template / confirm_fact / set_language / set_evidence / set_layout`。
+  「填了内容 ≠ 核对过事实」：`set_text` 后节点是 NEEDS_CONFIRMATION，正式版仍被 block，
+  必须再 `confirm_fact` 才放行。
 - 本地优先模式由 `AI_CAREER_DATA_DIR` 启用；启用后数据库由 `active_dataset` 指针决定，
   未启用时完全回退 `DATABASE_URL`。
 
 ## 本地数据与脚本
 
 - 本地数据目录：`%LOCALAPPDATA%\AICareerOS`（`career.db` + `datasets/` + `active_dataset`）。
+- **交付/交接类文档放 `docs/` 根目录**（与 `交付验收文档-模型中心v1.2.md` 同级）；
+  `docs/handoff/` 已被 .gitignore 忽略（其中 2026-10-11 那份是 ignore 前的遗留）。
+  最新交接文档：`docs/交接文档-2026-10-18.md`。
 - 一键：`start-all.cmd`；只起本地模式：`start-local.cmd`；浏览器桥：`start-browser-bridge.cmd`。
 - 新增迁移后要同步更新 `apps/api/tests/test_alembic_revisions.py` 的链定义与 head 断言。
 - **后端必须带 `AI_CAREER_DATA_DIR=%LOCALAPPDATA%\AICareerOS` 启动**，否则回退 `DATABASE_URL`
   （未装 psycopg2）→ 所有写接口 500。
+
+## 可信求职 v1.2 · 评估资产（可复用）
+
+- 分支 `feature/trusted-workflow-v12`；验收文档八份在 `docs/evaluation/trusted-workflow-v12/`。
+- 浏览器 E2E：桩模型 8801 / 后端 8100（`AI_CAREER_DATA_DIR=.runtime/e2e-v12`）/ 前端 3100，
+  `node docs/evaluation/trusted-workflow-v12/browser/e2e-trusted-workflow.cjs`（6 条主流程 35/35）。
+- **桩模型按关键词匹配提示词，顺序即优先级**：「岗位简历生成/What Matters」曾含
+  `question`+`interview-ready` 被误判成面试提问（502）；「面试提问」与「评分」都含
+  `reference_answer`，必须先按整句区分（422）。宽泛词只能放最后。
+- 事实核对面板挂在 `/resumes` 页，**没有独立 `/fact-check` 路由**。
+- 面试轮次的评分写在**被回答的那一轮**上；最后一轮常是系统补的追问（`evaluation` 为空）。
+- 最新全量基线：后端 1118 passed / 7 failed / 5 skipped；前端 276/0。
 
 ## 测试隔离（踩过真事故，务必遵守）
 
