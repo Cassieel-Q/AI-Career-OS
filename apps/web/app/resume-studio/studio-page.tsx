@@ -10,6 +10,7 @@ import {
 import { emptyHistory, findNode, inverseOperation, recordHistory, redoHistory, replayOperation, undoHistory } from "./history.ts";
 import type { StudioHistory } from "./history.ts";
 import { moveSection, normalizeLayout, sectionLabel } from "./layout-config.ts";
+import { deliveryGate } from "./export-gate.ts";
 import type { StudioOperation, StudioPreview, StudioSourceDiff, StudioState, StudioTemplate } from "./types.ts";
 import { bindMissionResumePdf, writeResumeBound } from "../missions.ts";
 import { publishAssistantContext } from "../assistant-context.ts";
@@ -195,6 +196,17 @@ export function StudioPage({ missionId }: { missionId: string }) {
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (caught) { setError(describeError(caught)); }
   };
+  const downloadDraft = async () => {
+    try {
+      const { blob, filename } = await downloadStudioPdf(missionId, true);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (caught) { setError(describeError(caught)); }
+  };
   const overwriteResume = async () => {
     if (!state) return;
     if (!window.confirm("将用这份投递版 PDF 覆盖当前岗位简历，覆盖后直接进入模拟面试。确定继续？")) return;
@@ -226,8 +238,7 @@ export function StudioPage({ missionId }: { missionId: string }) {
 
   const activeTemplate = templates.find(item => item.id === state?.template_id);
   const canDownload = Boolean(state && state.confirmed_revision === state.revision);
-  // 只剩内容质量问题会阻塞导出（占位残留 / 空简历）；「事实核对」已下线，不再参与拦截。
-  const exportBlocks = preview?.checks.filter(item => item.level === "block") ?? [];
+  const gate = deliveryGate(state, preview);
 
   if (!state) return <main className="rs-loading"><p>AI CAREER OS / RESUME STUDIO</p><h1>正在打开简历工作台</h1>{error && <p role="alert">{error}</p>}<Link href={`/missions/${missionId}/resume`}>返回简历优化</Link></main>;
 
@@ -309,7 +320,7 @@ export function StudioPage({ missionId }: { missionId: string }) {
           <label>页数上限<input type="number" min={1} max={5} step={1} value={layout.page_limit} onChange={event => patchLayout({ page_limit: Number(event.target.value) })} /></label>
           <label className="rs-layout-photo"><span>照片</span><input type="checkbox" checked={layout.photo_enabled} onChange={event => patchLayout({ photo_enabled: event.target.checked })} /></label>
         </div><div className="rs-layout-order"><span>栏目顺序</span><ul className="layout-order-list">{layout.section_order.map((kind, index) => <li key={kind} className="layout-order-item"><span>{sectionLabel(kind)}</span><span><button type="button" aria-label={`上移 ${sectionLabel(kind)}`} disabled={busy || index === 0} onClick={() => patchLayout({ section_order: moveSection(layout.section_order, kind, -1) })}>↑</button><button type="button" aria-label={`下移 ${sectionLabel(kind)}`} disabled={busy || index === layout.section_order.length - 1} onClick={() => patchLayout({ section_order: moveSection(layout.section_order, kind, 1) })}>↓</button></span></li>)}</ul></div></div>
-        <div className="rs-export"><h3>生成投递版</h3><p>{exportBlocks.length ? `还有 ${exportBlocks.length} 项内容待补全（占位标记等）。` : "确认当前修订版后，可下载可选中文字的真实 PDF。"}</p><button type="button" onClick={() => void confirm()} disabled={busy || rendering || exportBlocks.length > 0}>确认当前修订版</button><button type="button" className="rs-download" onClick={() => void download()} disabled={!canDownload}>下载 PDF ↗</button><button type="button" className="rs-secondary" onClick={() => void overwriteResume()} disabled={!canDownload}>用这份简历覆盖岗位简历</button><Link className="rs-next-interview" href={`/missions/${missionId}/interview`}>生成完成后，进入模拟面试 →</Link><Link className="rs-next-interview" href={`/assistant?mission_id=${missionId}${state?.source_target_resume_id ? `&target_resume_id=${state.source_target_resume_id}` : ""}&route=/resume-studio`}>让「顺顺」按这份岗位简历准备面试 →</Link><div className="rs-export-text"><p>文本存档（不含照片，不依赖排版环境）</p>{(["markdown", "txt", "json"] as const).map(format => <button key={format} type="button" className="rs-secondary" onClick={() => void downloadText(format)}>{format === "markdown" ? "Markdown" : format === "txt" ? "纯文本" : "JSON"}</button>)}</div></div>
+        <div className="rs-export"><h3>生成投递版</h3><p>{gate.blocks.length ? `正式投递版还有 ${gate.blocks.length} 项必须处理的问题：${gate.blocks.map(item => item.message).slice(0, 2).join("；")}` : "确认当前修订版后，可下载可选中文字的真实 PDF。"}</p><button type="button" onClick={() => void confirm()} disabled={busy || rendering || !gate.canConfirm}>确认当前修订版</button><button type="button" className="rs-download" onClick={() => void download()} disabled={!gate.canDownloadFinal}>下载正式投递版 PDF ↗</button><button type="button" className="rs-secondary" onClick={() => void downloadDraft()} disabled={!gate.canDownloadDraft || busy || rendering}>下载草稿 PDF（用于审阅）</button><button type="button" className="rs-secondary" onClick={() => void overwriteResume()} disabled={!canDownload}>用这份简历覆盖岗位简历</button>{gate.warns.length ? <p className="rs-export-note">还有 {gate.warns.length} 项提示：草稿可以先导出，正式投递前建议确认。</p> : null}<Link className="rs-next-interview" href={`/missions/${missionId}/interview`}>生成完成后，进入模拟面试 →</Link><Link className="rs-next-interview" href={`/assistant?mission_id=${missionId}${state?.source_target_resume_id ? `&target_resume_id=${state.source_target_resume_id}` : ""}&route=/resume-studio`}>让「顺顺」按这份岗位简历准备面试 →</Link><div className="rs-export-text"><p>文本存档（不含照片，不依赖排版环境）</p>{(["markdown", "txt", "json"] as const).map(format => <button key={format} type="button" className="rs-secondary" onClick={() => void downloadText(format)}>{format === "markdown" ? "Markdown" : format === "txt" ? "纯文本" : "JSON"}</button>)}</div></div>
       </aside>
     </div>
     {gallery && <div className="rs-gallery-backdrop" role="dialog" aria-modal="true" aria-label="选择简历模板"><div className="rs-gallery"><div className="rs-gallery-header"><div><span>02 / TEMPLATE LIBRARY</span><h2>选择简历模板</h2><p>九种原创版式，各有中英版本。卡片展示服务端真实编译的完整虚构样本。</p></div><button type="button" onClick={() => setGallery(false)} aria-label="关闭模板画廊">×</button></div><div className="rs-language-tabs"><button type="button" className={galleryLanguage === "zh" ? "active" : ""} onClick={() => setGalleryLanguage("zh")}>中文模板 <b>09</b></button><button type="button" className={galleryLanguage === "en" ? "active" : ""} onClick={() => setGalleryLanguage("en")}>English templates <b>09</b></button><span>当前正文：{state.language === "zh" ? "中文" : "English"}</span></div><div className="rs-template-grid">{templates.filter(item => item.language === galleryLanguage).map((item, index) => <article key={item.id} className={`rs-template-card ${item.id === state.template_id ? "active" : ""}`}><button type="button" className="rs-template-image" onClick={() => setSampleOpen(item.id)} aria-label={`放大查看 ${item.name} 完整样本`}>{samples[item.id]?.pages[0] ? <img src={svgUrl(samples[item.id].pages[0])} alt={`${item.name} 真实样本第 1 页`} /> : <span>正在生成实际页面…</span>}</button><div className="rs-template-info"><span>{String(index + 1).padStart(2, "0")} / {item.style as string}</span><h3>{item.name}</h3><p>{samples[item.id]?.page_count || "—"} 页 · {item.language === "zh" ? "中文" : "English"}</p>{item.language === state.language ? <button type="button" disabled={item.id === state.template_id || busy} onClick={async () => { if (await mutate({ type: "set_template", template_id: item.id })) setGallery(false); }}>{item.id === state.template_id ? "正在使用" : "使用此模板"}</button> : <small>需先完成对应语言的正文，再选择模板</small>}</div></article>)}</div></div></div>}

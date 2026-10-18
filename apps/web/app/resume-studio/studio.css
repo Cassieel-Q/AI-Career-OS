@@ -206,3 +206,10 @@
 }
 
 .rs-diff-warning ul { margin: 0.3rem 0 0 1.2rem; }
+
+.rs-export-note {
+  margin: 0.5rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  opacity: 0.72;
+}

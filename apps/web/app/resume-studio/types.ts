@@ -54,14 +54,17 @@ export type StudioTemplate = {
   description: string;
   [key: string]: unknown;
 };
-export type StudioCheck = { level: "block" | "warn"; code: string; node_id?: string; message: string };
+export type StudioCheck = { level: "block" | "warn" | "info"; code: string; node_id?: string; message: string };
 export type StudioPreview = {
   revision: number;
   template_id: string;
   page_count: number;
   pages: string[];
   layout_map: { id: string; page: number; x: number; y: number; width: number; height: number }[];
+  /** 草稿口径：未核对内容只提示。 */
   checks: StudioCheck[];
+  /** 正式投递口径：姓名 / 联系方式 / 高风险未核对事实会阻塞确认与正式导出。 */
+  final_checks?: StudioCheck[];
 };
 export type StudioSourceDiffSection = {
   section: string;

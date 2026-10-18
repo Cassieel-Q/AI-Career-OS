@@ -38,16 +38,31 @@ export const renderStudio = (missionId: string, revision: number) =>
   });
 export const confirmStudio = (missionId: string, revision: number) =>
   request<StudioState>(`${root(missionId)}/confirm`, { method: "POST", headers: { "If-Match": String(revision) } });
-export async function downloadStudioPdf(missionId: string): Promise<{ blob: Blob; filename: string }> {
-  const response = await fetch(`${root(missionId)}/pdf`);
+/**
+ * 从响应头里取服务端给的文件名。
+ * 优先 ``X-Resume-Filename``（服务端已转义），其次 ``Content-Disposition`` 的 filename*。
+ */
+export function filenameFromHeaders(headers: Headers, fallback: string): string {
+  const direct = headers.get("X-Resume-Filename");
+  if (direct) return decodeURIComponent(direct);
+  const disposition = headers.get("Content-Disposition") || "";
+  const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+  return encoded ? decodeURIComponent(encoded) : fallback;
+}
+
+/** 下载 PDF。draft=true 导出草稿（文件名带 _DRAFT、正文盖草稿标记、可跳过未完成检查）。 */
+export async function downloadStudioPdf(
+  missionId: string,
+  draft = false,
+): Promise<{ blob: Blob; filename: string; draft: boolean }> {
+  const suffix = draft ? "?draft=1" : "";
+  const response = await fetch(`${root(missionId)}/pdf${suffix}`);
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
     throw new StudioApiError(response.status, body.detail ?? body);
   }
-  const disposition = response.headers.get("Content-Disposition") || "";
-  const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
-  const filename = encoded ? decodeURIComponent(encoded) : "resume.pdf";
-  return { blob: await response.blob(), filename };
+  const filename = filenameFromHeaders(response.headers, draft ? "resume_DRAFT.pdf" : "resume.pdf");
+  return { blob: await response.blob(), filename, draft };
 }
 
 export type StudioExportFormat = "markdown" | "txt" | "json";
@@ -60,9 +75,7 @@ export async function downloadStudioExport(missionId: string, format: StudioExpo
     const body = await response.json().catch(() => ({}));
     throw new StudioApiError(response.status, body.detail ?? body);
   }
-  const disposition = response.headers.get("Content-Disposition") || "";
-  const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
   const ext = format === "markdown" ? "md" : format;
-  const filename = encoded ? decodeURIComponent(encoded) : `resume.${ext}`;
+  const filename = filenameFromHeaders(response.headers, `resume.${ext}`);
   return { blob: await response.blob(), filename };
 }
