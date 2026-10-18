@@ -398,6 +398,17 @@ def _list_containing(document: dict, node_id: str) -> list[dict] | None:
 
 _METRIC = re.compile(r"\d|[%％]|(?:主导|负责|led|increased|reduced|grew)", re.IGNORECASE)
 
+#: 连续 7 位以上数字：手机号 / 证件号片段，不进文件名
+_PHONE_DIGITS = re.compile(r"\d{7,}")
+#: 带明显前缀的密钥：sk-xxx / api_key=xxx / token:xxx / Bearer xxx
+_SECRET_TOKEN = re.compile(
+    r"(?i)\b(?:sk|api|apikey|access[_-]?token|token|bearer)(?:[-_:= ]?[A-Za-z0-9][A-Za-z0-9_-]{5,}|[-_][A-Za-z0-9_-]+)"
+)
+#: 32 位以上连续字母数字：各类随机令牌
+_LONG_TOKEN = re.compile(r"\b[A-Za-z0-9_-]{32,}\b")
+#: 邮箱（先整体去掉，否则 @ 与 . 被字符过滤抹掉后仍留下一串可辨认的账号）
+_EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
+
 # 与 ResumeForge 对齐：正文残留这类未完成标记时应拦截导出（宁可少拦、不可误拦，只认确定性的占位符）。
 _PLACEHOLDER_RESIDUE = re.compile(r"【[^】]*(?:待补|待确认|待补充|待核实|待完善)[^】]*】|待补充|待核实|待完善|待补全")
 
@@ -498,13 +509,26 @@ def build_resume_filename(
 ) -> str:
     """文件名：``姓名_公司_岗位_v{修订号}.pdf``，草稿追加 ``_DRAFT``。
 
-    过滤 Windows 非法字符；只包含姓名/公司/岗位与版本号，
-    不写入手机号、邮箱或任何密钥。
+    过滤 Windows 非法字符；只包含姓名/公司/岗位与版本号。
+
+    **为什么还要额外清洗数字串与密钥形状**：公司名与岗位名来自 JD 原文，姓名来自
+    用户自填，都可能夹带手机号、长随机串或 access token。文件名是要随 PDF 一起发给人
+    的，漏出去收不回来，因此这里按形状主动剔除：
+
+    - 连续 7 位以上数字 → 手机号 / 证件号片段；
+    - ``sk-`` / ``api_key`` / ``token`` / ``Bearer`` 开头的串；
+    - 32 位以上的连续字母数字串 → 各类令牌。
+
+    剔除后仍保留正常的年份（如「2026 届」）与岗位编号（如「P6」）。
     """
     parts: list[str] = []
     for raw in (name, company, role):
-        text = "".join(char for char in str(raw or "") if char.isalnum() or char in "-_ ").strip()
-        text = text.replace(" ", "_")
+        text = _EMAIL.sub(" ", str(raw or ""))
+        text = "".join(char for char in text if char.isalnum() or char in "-_ ").strip()
+        text = _PHONE_DIGITS.sub("", text)
+        text = _SECRET_TOKEN.sub("", text)
+        text = _LONG_TOKEN.sub("", text)
+        text = re.sub(r"_+", "_", text).strip("_").replace(" ", "_")
         if text:
             parts.append(text[:40])
     base = "_".join(parts) or "简历"
