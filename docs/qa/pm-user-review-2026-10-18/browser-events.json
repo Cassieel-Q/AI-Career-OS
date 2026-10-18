@@ -1,0 +1,17 @@
+[
+  {
+    "type": "http",
+    "status": 415,
+    "url": "/api/v1/resumes"
+  },
+  {
+    "type": "http",
+    "status": 415,
+    "url": "/api/v1/resumes"
+  },
+  {
+    "type": "http",
+    "status": 409,
+    "url": "/api/v1/job-missions/b76fce76-4163-4890-b331-543d349529e6/confirm-target-resume"
+  }
+]

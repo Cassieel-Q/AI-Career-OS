@@ -1,0 +1,174 @@
+[
+  {
+    "id": "8d4f14c1-893f-4a4e-941a-cf71f78c060a",
+    "mission_id": "b76fce76-4163-4890-b331-543d349529e6",
+    "version": 1,
+    "status": "DRAFT",
+    "positioning_statement": "以校园活动报名工具的项目负责人经历为主锚点，呈现用户访谈→需求分析→PRD+Figma原型→SQL数据分析的完整校园产品闭环；大模型幻觉与评测仅以项目草案形式展示可执行思路，作为AI产品评测能力的迁移证明，不虚构任何AI项目经验。",
+    "recommended_experience_order": [
+      "9631cf3d-fe5f-4ed3-b5d4-48d17fc81e0e"
+    ],
+    "strategy": {
+      "positioning_statement": "围绕星舟测试科技AI产品经理实习生岗位，将校园活动报名工具项目定位为覆盖用户访谈、需求分析、PRD撰写、Figma原型与SQL数据分析的完整校园产品实践，并对齐JD对2027届本科在校生、完整校园产品项目、SQL分析与用户访谈的要求；大模型幻觉与评测方面仅以对话样例整理、评测标准设计的迁移思路呈现，不虚构AI项目经验。",
+      "recommended_experience_order": [
+        "9631cf3d-fe5f-4ed3-b5d4-48d17fc81e0e"
+      ],
+      "experience_guidance": [
+        {
+          "experience_id": "9631cf3d-fe5f-4ed3-b5d4-48d17fc81e0e",
+          "role_in_story": "主项目锚点：以产品负责人身份展示从用户访谈到PRD与Figma原型的完整校园产品项目闭环，直接回应JD“具备一个完整的校园产品项目”及用户访谈、需求分析、原型设计、PRD撰写等核心能力要求。",
+          "what_to_highlight": [
+            "突出“访谈12名同学”这一具体事实，说明访谈对象、访谈目的与如何把访谈内容整理为报名流程问题清单，呼应JD对熟悉用户访谈的要求。",
+            "突出“整理报名流程问题”的过程，体现从原始访谈信息到结构化需求的转化，对应需求分析能力。",
+            "突出“完成PRD和Figma原型”两项可核对产出，说明PRD中如何描述需求、原型如何对应需求，对应PRD撰写与原型设计（Figma）能力。",
+            "以“产品负责人”身份说明自己在项目中的具体动作（如设计访谈提纲、汇总问题、撰写文档、绘制原型），与简历证据逐条对应，不夸大职责边界。"
+          ],
+          "what_to_avoid": [
+            "避免把“访谈12名同学”扩展为未提供的访谈轮次、样本量或洞察结论；不要编造访谈洞察数量、满意度或转化率等数字。",
+            "避免使用“主导从0到1”“独立完成全流程”等超出证据的表述，项目为校园项目且角色为“产品负责人”，不升级为正式AI产品经理经历。",
+            "避免声称具备大模型、AI学习助手或评测相关的实际项目经验；JD要求的大模型幻觉与评测只能在面试中表达学习与迁移思路，不在该项目中虚构。",
+            "避免添加未在证据中出现的工具（除Figma外）或未提供的成果指标。"
+          ],
+          "target_capabilities": [
+            "需求分析",
+            "用户访谈",
+            "原型设计（Figma）",
+            "PRD撰写",
+            "跨团队沟通协作"
+          ],
+          "evidence_refs": [
+            "9631cf3d-fe5f-4ed3-b5d4-48d17fc81e0e"
+          ],
+          "interview_risk_notes": [
+            "面试官可能追问访谈12名同学的提纲设计、筛选标准与如何从访谈中提炼问题，需基于事实准备具体过程，不补充未提供的数字。",
+            "可能要求展示PRD与Figma原型的具体内容，需提前准备真实文档与原型说明，避免现场描述与证据不一致。",
+            "若被问及对话样例整理或大模型评测，需明确说明本项目未涉及AI评测，只表达可迁移的需求整理与验收思路，不虚构AI经历。"
+          ]
+        }
+      ],
+      "_generation": {
+        "section_order": [
+          "教育背景",
+          "项目经历",
+          "技能",
+          "项目草案"
+        ],
+        "skills": [
+          "用户访谈",
+          "需求分析",
+          "PRD",
+          "Figma",
+          "SQL",
+          "Python"
+        ],
+        "excluded_suggestions": [],
+        "bullet_grounding": [
+          "NEEDS_CONFIRMATION",
+          "NEEDS_CONFIRMATION"
+        ],
+        "bullet_target_capabilities": [
+          [
+            "用户访谈",
+            "需求分析",
+            "PRD撰写",
+            "原型设计（Figma）",
+            "SQL分析",
+            "跨团队沟通协作"
+          ],
+          [
+            "智能硬件产品定义",
+            "原型与测试验证",
+            "数据驱动决策"
+          ]
+        ],
+        "bullet_project_titles": [
+          null,
+          "项目草案：智能硬件 AI 产品验证闭环"
+        ],
+        "provider": "llm"
+      }
+    },
+    "section_order": [
+      "教育背景",
+      "项目经历",
+      "技能",
+      "项目草案"
+    ],
+    "skills": [
+      "用户访谈",
+      "需求分析",
+      "PRD",
+      "Figma",
+      "SQL",
+      "Python"
+    ],
+    "excluded_suggestions": [],
+    "bullets": [
+      {
+        "id": "aa2c55e8-4130-4305-ab1b-12c323731211",
+        "source_experience_id": "9631cf3d-fe5f-4ed3-b5d4-48d17fc81e0e",
+        "original_text": "访谈12名同学，整理报名流程问题，完成PRD和Figma原型。\n使用SQL分析100条模拟报名数据，制定原型验收清单。",
+        "suggested_text": "作为产品负责人访谈12名同学，梳理报名流程中的问题，并将问题整理为结构化需求，据此撰写PRD并完成Figma原型。\n使用SQL分析100条模拟报名数据，基于分析结果制定原型验收清单，用于校验原型是否覆盖报名流程关键场景。\n与开发同学沟通原型方案，结合PRD说明需求背景与验收标准（需确认：是否确有与开发沟通的环节与具体形式）。",
+        "final_text": "访谈12名同学，梳理校园活动报名流程中的问题，完成PRD和Figma原型。使用SQL分析100条模拟报名数据，制定原型验收清单。",
+        "reason": "保留全部原始事实（12名、访谈、问题、PRD、Figma），仅明确“产品负责人”身份下的动作链条：访谈→整理问题→需求→PRD+原型，使行动-方法-结果更清晰，对齐JD的用户访谈、需求分析、PRD撰写与原型设计四项能力。；在保留“100条模拟报名数据”原始事实前提下，补足SQL分析结果的使用方式（用于验收清单），体现数据驱动的产品验证思路，对齐JD的SQL分析要求；不新增任何数字或工具。；JD要求“与开发讨论迭代方案”，但原始证据未提及跨团队协作，此条为补齐该能力的待确认事项，需候选人核实真实协作情况后再采用。",
+        "jd_refs": [
+          "req-3",
+          "req-4"
+        ],
+        "evidence_refs": [
+          "9631cf3d-fe5f-4ed3-b5d4-48d17fc81e0e",
+          "69e6f14c-751f-47f1-beee-547482173f95"
+        ],
+        "resume_skill_refs": [
+          "ACTION_METHOD_RESULT",
+          "JD_RELEVANCE",
+          "RESPONSIBILITY_BOUNDARY",
+          "NO_FABRICATED_METRICS",
+          "EVIDENCE_GROUNDED_WRITING",
+          "ASK_BEFORE_INVENTING"
+        ],
+        "risk_flags": [
+          "需候选人确认真实协作情况",
+          "未在证据中出现的协作事实"
+        ],
+        "status": "EDITED",
+        "sort_order": 0,
+        "grounding_status": "NEEDS_CONFIRMATION",
+        "target_capabilities": [
+          "用户访谈",
+          "需求分析",
+          "PRD撰写",
+          "原型设计（Figma）",
+          "SQL分析",
+          "跨团队沟通协作"
+        ],
+        "project_title": null
+      },
+      {
+        "id": "d73af73f-d9ec-4544-b0bb-53a2b442e47c",
+        "source_experience_id": null,
+        "original_text": "建议补做项目（尚未完成）",
+        "suggested_text": "项目草案：智能硬件 AI 产品验证闭环——完成目标用户与竞品调研，输出端侧/云侧方案和传感器、算力选型对比；制作可交互原型或 Demo，设计测试指标与数据记录表，形成 PRD、技术选型表和测试报告。",
+        "final_text": "项目草案：智能硬件 AI 产品验证闭环——完成目标用户与竞品调研，输出端侧/云侧方案和传感器、算力选型对比；制作可交互原型或 Demo，设计测试指标与数据记录表，形成 PRD、技术选型表和测试报告。",
+        "reason": "目标 JD 强调智能硬件产品定义、软硬件方案取舍和数据驱动验证；该项目用于补齐可展示的作品集证据，完成前不作为既有经历。",
+        "jd_refs": [],
+        "evidence_refs": [],
+        "resume_skill_refs": [],
+        "risk_flags": [
+          "SYNTHETIC_PROJECT"
+        ],
+        "status": "REJECTED",
+        "sort_order": 1,
+        "grounding_status": "NEEDS_CONFIRMATION",
+        "target_capabilities": [
+          "智能硬件产品定义",
+          "原型与测试验证",
+          "数据驱动决策"
+        ],
+        "project_title": "项目草案：智能硬件 AI 产品验证闭环"
+      }
+    ],
+    "created_at": "2026-10-18T10:43:11",
+    "updated_at": "2026-10-18T10:43:11"
+  }
+]

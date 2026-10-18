@@ -1,0 +1,19 @@
+{
+  "head": "0ddbef6",
+  "syntheticOnly": true,
+  "apiModelTests": 61,
+  "webTests": 243,
+  "typeCheckExit": 0,
+  "apiFull": {
+    "passed": 983,
+    "failed": 8,
+    "skipped": 5
+  },
+  "jobTasksRetry": {
+    "passed": 19
+  },
+  "pdfDownloaded": true,
+  "mockInterviewAnsweredRounds": 1,
+  "mockInterviewScore": 5,
+  "rawUploadRouteFetch415": "test-harness multipart forwarding artifact; excluded as product defect; cold upload verified with route.continue and live upload direct"
+}

@@ -1,0 +1,41 @@
+{
+  "no_ai_upload": {
+    "status": 503,
+    "body": {
+      "detail": "未配置 AI 模型，简历解析暂时不可用。请在「设置 → AI 模型」里配置并启用模型；未配置时仍可管理岗位、编辑简历与导出 PDF。"
+    }
+  },
+  "scanned_no_text": {
+    "status": 422,
+    "body": {
+      "detail": "The PDF contains no extractable text (可能是扫描件，请改用粘贴文本)"
+    }
+  },
+  "ollama_after_fix": {
+    "config_usable": true,
+    "connection_test": {
+      "ok": false,
+      "error": {
+        "category": "unreachable",
+        "message": "无法连接该地址（地址写错、服务未启动或被防火墙拦截）。"
+      },
+      "steps": [
+        {
+          "step": "字段校验",
+          "ok": true,
+          "detail": "ollama · llama3.2"
+        },
+        {
+          "step": "地址校验",
+          "ok": true,
+          "detail": "http://127.0.0.1:11434"
+        },
+        {
+          "step": "认证检查",
+          "ok": false,
+          "detail": "无法连接该地址（地址写错、服务未启动或被防火墙拦截）。"
+        }
+      ]
+    }
+  }
+}

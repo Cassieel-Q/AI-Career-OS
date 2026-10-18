@@ -1,0 +1,11 @@
+{
+  "profile_status": "CONFIRMED",
+  "workflow_state": "TARGET_RESUME_DRAFT",
+  "resume_source": {
+    "mode": "master",
+    "bound_at": "2026-10-18T10:42:49.065231+00:00",
+    "isolation": "shared_master",
+    "master_profile_id": "da8edbab-396c-4b51-ad07-91a200ff7a54",
+    "optimization_reset_at": "2026-10-18T10:42:49.081477+00:00"
+  }
+}
