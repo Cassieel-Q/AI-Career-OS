@@ -13,7 +13,7 @@ from .resume_studio_export import render_export
 from .resume_studio_render import ResumeRenderError, render_document
 from .resume_studio_schemas import StudioOperation
 from .resume_studio_sample import sample_document
-from .resume_studio_service import apply_operation, export_checks, get_or_create_document, read_document, reimport_source, source_diff
+from .resume_studio_service import apply_operation, build_resume_filename, export_checks, get_or_create_document, read_document, reimport_source, source_diff
 from .resume_studio_templates import get_template, list_templates
 
 router = APIRouter(prefix="/api/v1")
@@ -95,7 +95,10 @@ def preview_studio(mission_id: UUID, request: PreviewRequest, db: Session = Depe
         "page_count": result.page_count,
         "pages": result.pages,
         "layout_map": result.layout_map,
+        # 草稿口径（未核对内容只提示）
         "checks": export_checks(row.document_json),
+        # 正式投递口径（姓名 / 联系方式 / 高风险未核对事实会阻塞）
+        "final_checks": export_checks(row.document_json, final=True),
     }
 
 
@@ -108,9 +111,10 @@ def confirm_studio(
     row = get_or_create_document(db, mission_id)
     if _revision(if_match) != row.revision:
         raise HTTPException(409, {"message": "简历已更新，请重新检查。", "latest": read_document(row)})
-    checks = export_checks(row.document_json)
+    # 确认的是「正式投递版」，因此用 final=True：姓名、联系方式与高风险事实都会阻塞。
+    checks = export_checks(row.document_json, final=True)
     if any(check["level"] == "block" for check in checks):
-        raise HTTPException(409, {"message": "正文还有未完成内容（占位标记或空白简历），请补齐后再确认。", "checks": checks})
+        raise HTTPException(409, {"message": "正式投递版还有必须处理的问题，请处理后再确认。", "checks": checks})
     rendered = _render(row)
     if not 1 <= rendered.page_count <= 2:
         raise HTTPException(409, {"message": "简历应控制在一至两页。", "page_count": rendered.page_count})
@@ -134,11 +138,11 @@ def export_studio_text(
 ) -> Response:
     """Markdown / 纯文本 / JSON 导出（不依赖 Typst）。
 
-    默认沿用与 PDF 相同的导出自检（占位残留 / 空简历）；``draft=true``
-    允许跳过自检导出草稿自检，与 ResumeForge 的「仍要导出草稿」对齐。
+    与 PDF 同一口径：``draft=true`` 导出草稿（跳过投递前检查、文件名带 ``_DRAFT``）；
+    默认按正式投递版自检，占位残留、空简历、缺姓名/联系方式、高风险未核对事实都会阻塞。
     """
     row = get_or_create_document(db, mission_id)
-    checks = export_checks(row.document_json)
+    checks = export_checks(row.document_json, final=not draft)
     if not draft and any(check["level"] == "block" for check in checks):
         raise HTTPException(409, {"message": "正文还有未完成内容（占位标记或空白简历），请补齐后再导出。", "checks": checks})
     try:
@@ -148,38 +152,79 @@ def export_studio_text(
     ext = {"markdown": "md", "txt": "txt", "json": "json", "docx": "docx", "word": "docx"}.get(
         (format or "").strip().lower(), "txt"
     )
-    name = (row.document_json.get("basics") or {}).get("name", {}).get("text", "")
+    document = row.document_json or {}
+    name = (document.get("basics") or {}).get("name", {}).get("text", "")
     mission = db.get(models.JobMission, mission_id)
-    pieces = [name, mission.company if mission else "", mission.role if mission else ""]
-    safe_parts = ["".join(char for char in piece if char.isalnum() or char in "-_ ").strip()[:40] for piece in pieces]
-    base = "-".join(piece for piece in safe_parts if piece) or "简历"
-    filename = f"{base}.{ext}"
+    filename = build_resume_filename(
+        name=name,
+        company=mission.company if mission else None,
+        role=mission.role if mission else None,
+        revision=row.revision,
+        draft=draft,
+        ext=ext,
+    )
     return Response(
         body,
         media_type=media_type,
         headers={
-            "Content-Disposition": f"attachment; filename=resume.{ext}; filename*=UTF-8''{quote(filename)}",
+            "Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}",
             "X-Resume-Revision": str(row.revision),
+            "X-Resume-Draft": "1" if draft else "0",
+            "X-Resume-Filename": quote(filename),
         },
     )
 
 
+def _stamp_draft(pdf_bytes: bytes) -> bytes:
+    """给草稿 PDF 盖一个明确的草稿标记（ASCII 文案，避免字体缺字变乱码）。"""
+    try:
+        with fitz.open(stream=pdf_bytes, filetype="pdf") as document:
+            for page in document:
+                page.insert_text(
+                    (36, 26),
+                    "DRAFT - FOR REVIEW ONLY, NOT FOR SUBMISSION",
+                    fontsize=10,
+                    color=(0.72, 0.11, 0.11),
+                )
+            return document.tobytes()
+    except Exception:  # noqa: BLE001 - 水印失败不能让草稿也导不出来
+        return pdf_bytes
+
+
 @router.get("/job-missions/{mission_id}/resume-studio/pdf")
-def download_studio_pdf(mission_id: UUID, db: Session = Depends(get_db)) -> Response:
+def download_studio_pdf(mission_id: UUID, draft: bool = False, db: Session = Depends(get_db)) -> Response:
+    """导出 PDF。
+
+    - ``draft=true``：草稿，文件名带 ``_DRAFT``、正文盖草稿标记、可跳过未完成的检查；
+    - 默认：正式投递版，必须通过全部投递前检查，并绑定当前修订号。
+    """
     row = get_or_create_document(db, mission_id)
-    if row.confirmed_revision != row.revision:
-        raise HTTPException(409, "请先确认当前修订版，再下载 PDF。")
-    rendered = _render(row)
-    name = (row.document_json.get("basics") or {}).get("name", {}).get("text", "")
     mission = db.get(models.JobMission, mission_id)
-    pieces = [name, mission.company if mission else "", mission.role if mission else "", row.language]
-    safe_parts = ["".join(char for char in piece if char.isalnum() or char in "-_ ").strip()[:40] for piece in pieces]
-    filename = f"{'-'.join(piece for piece in safe_parts if piece)}.pdf"
+    document = row.document_json or {}
+    checks = export_checks(document, final=not draft)
+    blocking = [check for check in checks if check["level"] == "block"]
+    if not draft:
+        if row.confirmed_revision != row.revision:
+            raise HTTPException(409, "请先确认当前修订版，再下载正式投递版 PDF。")
+        if blocking:
+            raise HTTPException(409, {"message": "正式投递版还有必须处理的问题。", "checks": checks})
+    rendered = _render(row)
+    payload = _stamp_draft(rendered.pdf) if draft else rendered.pdf
+    name = (document.get("basics") or {}).get("name", {}).get("text", "")
+    filename = build_resume_filename(
+        name=name,
+        company=mission.company if mission else None,
+        role=mission.role if mission else None,
+        revision=row.revision,
+        draft=draft,
+    )
     return Response(
-        rendered.pdf,
+        payload,
         media_type="application/pdf",
         headers={
-            "Content-Disposition": f"attachment; filename=resume.pdf; filename*=UTF-8''{quote(filename)}",
+            "Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}",
             "X-Resume-Revision": str(row.revision),
+            "X-Resume-Draft": "1" if draft else "0",
+            "X-Resume-Filename": quote(filename),
         },
     )

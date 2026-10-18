@@ -2833,6 +2833,8 @@ app.add_middleware(
     allow_origin_regex=LOOPBACK_ORIGIN_REGEX,
     allow_methods=["POST", "GET", "PUT", "PATCH", "DELETE"],
     allow_headers=["*"],
+    # 不暴露这些头，浏览器读不到服务端给的文件名，下载会退化成 resume.pdf。
+    expose_headers=["Content-Disposition", "X-Resume-Revision", "X-Resume-Draft", "X-Resume-Filename"],
 )
 
 

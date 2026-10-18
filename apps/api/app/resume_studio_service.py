@@ -411,12 +411,15 @@ def _risk_for_text(text: str, previous: str = "LOW") -> str:
     return "HIGH" if previous == "HIGH" or _METRIC.search(text) else "LOW"
 
 
-def export_checks(document: dict) -> list[dict]:
-    """导出前自检。
+def export_checks(document: dict, *, final: bool = False) -> list[dict]:
+    """导出前自检，分 ``block`` / ``warn`` / ``info`` 三级。
 
-    「事实核对」已下线：未核对的内容不再拦截导出，只以 ``warn`` 返回提示
-    （信息不丢，供调用方自行决定是否展示）。仍然 ``block`` 的只剩两类
-    内容质量问题：正文残留占位标记、以及一条要点都没有的空简历。
+    - ``block``：占位残留、空简历；**正式投递版**还要求姓名与联系方式、
+      以及高风险事实已被核对 —— 这些会阻止确认与正式导出。
+    - ``warn``：尚未核对的普通内容。草稿可以带着它导出，正式投递前建议确认。
+    - ``info``：篇幅与版式提示，不阻塞任何操作。
+
+    ``final=True`` 表示这次检查服务于「正式投递版」。草稿导出仍允许跳过 block。
     """
     checks: list[dict] = []
     rendered_bullets = 0
@@ -426,11 +429,18 @@ def export_checks(document: dict) -> list[dict]:
             return
         status = node.get("claim_status")
         if status in {"NEEDS_CONFIRMATION", "BLOCKED_MISSING"}:
+            high_risk = status == "BLOCKED_MISSING" or node.get("risk_level") == "HIGH"
             checks.append({
-                "level": "warn",
+                "level": "block" if (final and high_risk) else "warn",
+                # code 保持向后兼容，是否高风险用单独的 high_risk 标记
                 "code": "unconfirmed_fact",
+                "high_risk": high_risk,
                 "node_id": node["id"],
-                "message": "这项内容尚未核对事实；不影响导出，建议投递前自行确认。",
+                "message": (
+                    "这项内容属于高风险事实且尚未核对，正式投递前必须确认或删除。"
+                    if high_risk
+                    else "这项内容尚未核对事实；不影响草稿导出，建议投递前自行确认。"
+                ),
             })
         residue = _placeholder_residue(node.get("text"))
         if residue:
@@ -455,7 +465,51 @@ def export_checks(document: dict) -> list[dict]:
                     rendered_bullets += 1
     if rendered_bullets == 0:
         checks.append({"level": "block", "code": "empty_resume", "message": "请先加入至少一条经历要点。"})
+
+    basics = document.get("basics") or {}
+    name_text = str((basics.get("name") or {}).get("text") or "").strip()
+    phone_text = str((basics.get("phone") or {}).get("text") or "").strip()
+    email_text = str((basics.get("email") or {}).get("text") or "").strip()
+    if not name_text:
+        checks.append({
+            "level": "block" if final else "warn",
+            "code": "missing_name",
+            "message": "缺少姓名。正式投递版必须填写姓名。" if final else "缺少姓名，投递前请补充。",
+        })
+    if not phone_text and not email_text:
+        checks.append({
+            "level": "block" if final else "warn",
+            "code": "missing_contact",
+            "message": "缺少联系电话或邮箱，正式投递版至少要有一项。" if final else "缺少联系电话或邮箱，投递前请补充。",
+        })
+    if rendered_bullets > 25:
+        checks.append({"level": "info", "code": "long_resume", "message": f"当前有 {rendered_bullets} 条要点，注意控制在两页以内。"})
     return checks
+
+
+def build_resume_filename(
+    *,
+    name: str | None,
+    company: str | None,
+    role: str | None,
+    revision: int,
+    draft: bool,
+    ext: str = "pdf",
+) -> str:
+    """文件名：``姓名_公司_岗位_v{修订号}.pdf``，草稿追加 ``_DRAFT``。
+
+    过滤 Windows 非法字符；只包含姓名/公司/岗位与版本号，
+    不写入手机号、邮箱或任何密钥。
+    """
+    parts: list[str] = []
+    for raw in (name, company, role):
+        text = "".join(char for char in str(raw or "") if char.isalnum() or char in "-_ ").strip()
+        text = text.replace(" ", "_")
+        if text:
+            parts.append(text[:40])
+    base = "_".join(parts) or "简历"
+    suffix = "_DRAFT" if draft else ""
+    return f"{base}_v{max(1, int(revision or 1))}{suffix}.{ext}"
 
 
 def apply_operation(db: Session, mission_id: UUID, expected_revision: int, raw_operation: StudioOperation | dict) -> dict:
