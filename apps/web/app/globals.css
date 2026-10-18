@@ -3787,3 +3787,29 @@ pre.batch-draft-excerpt { white-space: pre-wrap; word-break: break-word; backgro
   gap: 0.5rem;
   margin-top: 0.85rem;
 }
+
+.home-recovery {
+  margin-bottom: 1.75rem;
+}
+
+.home-recovery .summary {
+  margin: 0.35rem 0 0.75rem;
+}
+
+.home-recovery-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.home-recovery-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.08));
+  border-radius: 10px;
+}

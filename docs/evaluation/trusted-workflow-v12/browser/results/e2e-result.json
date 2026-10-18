@@ -1,0 +1,185 @@
+{
+  "web": "http://127.0.0.1:3100",
+  "api": "http://127.0.0.1:8100",
+  "finished_at": "2026-10-18T17:54:21.660Z",
+  "total": 35,
+  "passed": 35,
+  "failed": 0,
+  "results": [
+    {
+      "name": "流程1 · 首页打开",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "流程1 · 粘贴简历后建档成功",
+      "ok": true,
+      "detail": "profile=7e62c979-3f74-4b55-bc64-33d70f7b5715"
+    },
+    {
+      "name": "流程1 · 添加目标岗位",
+      "ok": true,
+      "detail": "mission=09d50798-cfb2-48d7-a673-5b998119e219"
+    },
+    {
+      "name": "流程1 · 生成岗位定向简历",
+      "ok": true,
+      "detail": "status=201"
+    },
+    {
+      "name": "流程1 · 确认岗位简历",
+      "ok": true,
+      "detail": "status=CONFIRMED"
+    },
+    {
+      "name": "流程1 · Studio 打开并读取修订版",
+      "ok": true,
+      "detail": "revision=1"
+    },
+    {
+      "name": "流程1 · 草稿 PDF 可导出且带 DRAFT 文件名",
+      "ok": true,
+      "detail": "%E6%8B%9B%E8%81%98_AI_%E4%BA%A7%E5%93%81%E7%BB%8F%E7%90%86%E5%AE%9E%E4%B9%A0%E7%94%9F_%E4%BA%A7%E5%93%81%E7%BB%8F%E7%90%86%E5%AE%9E%E4%B9%A0%E7%94%9F_v1_DRAFT.pdf"
+    },
+    {
+      "name": "流程1 · 缺姓名时正式投递版被拦下",
+      "ok": true,
+      "detail": "status=409 codes=missing_name"
+    },
+    {
+      "name": "流程1 · 高风险未核对事实仍然阻塞正式投递版",
+      "ok": true,
+      "detail": "status=409 unconfirmed_fact:block"
+    },
+    {
+      "name": "流程1 · 正式投递版 PDF 导出",
+      "ok": true,
+      "detail": "%E9%99%88%E6%9E%97_%E6%8B%9B%E8%81%98_AI_%E4%BA%A7%E5%93%81%E7%BB%8F%E7%90%86%E5%AE%9E%E4%B9%A0%E7%94%9F_%E4%BA%A7%E5%93%81%E7%BB%8F%E7%90%86%E5%AE%9E%E4%B9%A0%E7%94%9F_v3.pdf · confirm=200"
+    },
+    {
+      "name": "流程2 · 解析出可面试主张",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "流程2 · 开始一轮模拟面试",
+      "ok": true,
+      "detail": "status=201 {\"id\":\"4e9f58f4-4064-437b-8728-12d59d9de74a\",\"profile_id\":\"7e62c979-3f74-4b55-bc64-33d70f7b5715\",\"target_job_id\":\"3f5de0a9-f789-47b9-826e-fb8e4bfa55e0\",\"claim_id\":\"b32f6178-4d90-4076-930f-09585c289bc3"
+    },
+    {
+      "name": "流程2 · 参考回答返回结构化结果（已知事实 / 待补 / 示范表达）",
+      "ok": true,
+      "detail": "detail=true known=0 missing=1"
+    },
+    {
+      "name": "流程2 · 编造数字的示范表达被闸门拦下",
+      "ok": true,
+      "detail": "证据不足，不能把这项动作或数字写入候选人的回答。下面是已有的事实、还缺的信息和建"
+    },
+    {
+      "name": "流程2 · 降级时只给已知事实/待补，不给成稿",
+      "ok": true,
+      "detail": "grounded=false"
+    },
+    {
+      "name": "流程2 · 面试页可打开并给出下一步",
+      "ok": true,
+      "detail": "AI Career OS求职首页岗位简历投递网申面试设置工具顺顺证据库网申资料收起侧栏← 岗位档案招"
+    },
+    {
+      "name": "流程3 · 同一份简历关联三个岗位",
+      "ok": true,
+      "detail": "missions=3"
+    },
+    {
+      "name": "流程3 · 三份岗位各自生成自己的岗位版",
+      "ok": true,
+      "detail": "{\"09d50798-cfb2-48d7-a673-5b998119e219\":3,\"920458fc-8f47-4564-989b-348df16b00f6\":1,\"3e4e191f-b63d-4720-9a0c-dbe8320bcbca\":1}"
+    },
+    {
+      "name": "流程3 · 更新共享原始事实",
+      "ok": true,
+      "detail": "status=200 key=skill:fb7f19cf-3b07-4b34-aeef-ae2d57393082"
+    },
+    {
+      "name": "流程3 · 影响面提示「关联 N 份，其中 M 份可能需要更新」",
+      "ok": true,
+      "detail": "这项事实关联了 3 份岗位简历，其中 3 份可能需要更新。"
+    },
+    {
+      "name": "流程3 · 只更新选中的那一份",
+      "ok": true,
+      "detail": "mission=920458fc-8f47-4564-989b-348df16b00f6 changed=true skipped=0"
+    },
+    {
+      "name": "流程3 · 另外两份保持原版本",
+      "ok": true,
+      "detail": "{\"09d50798-cfb2-48d7-a673-5b998119e219\":3,\"920458fc-8f47-4564-989b-348df16b00f6\":2,\"3e4e191f-b63d-4720-9a0c-dbe8320bcbca\":1}"
+    },
+    {
+      "name": "流程3 · 事实核对面板渲染出待核对事实",
+      "ok": true,
+      "detail": "AI Career OS求职首页岗位简历投递网申面试设置工具顺顺证据库网申资料收起侧栏Resumes简历中心上传或修改简历原文，再针对每个岗位生成定向版本——一"
+    },
+    {
+      "name": "流程4 · 确认正式投递版",
+      "ok": true,
+      "detail": "revision=3"
+    },
+    {
+      "name": "流程4 · 创建投递记录",
+      "ok": true,
+      "detail": "application=e8df660a-6ea4-468c-8a57-ba8bbdf977a2"
+    },
+    {
+      "name": "流程4 · 绑定投递版本并生成快照",
+      "ok": true,
+      "detail": "studio_revision=3"
+    },
+    {
+      "name": "流程4 · 面试读取实际投递版本",
+      "ok": true,
+      "detail": "source=delivered_snapshot"
+    },
+    {
+      "name": "流程4 · 投递后新增内容不会混入面试",
+      "ok": true,
+      "detail": "改写框架：STAR（有完整过程）负责需求梳理与原型设计，输出 PRD 与交互稿。 与设计、开发协作完成一版可点击原型，组"
+    },
+    {
+      "name": "流程4 · 面试页标注使用的是投递版本",
+      "ok": true,
+      "detail": "AI Career OS求职首页岗位简历投递网申面试设置工具顺顺证据库网申资料收起侧栏← 岗位档案招聘 AI 产品经理实习生 · 产品经理实习生准备中✓岗位已完"
+    },
+    {
+      "name": "流程5 · 清理 LocalStorage 后仍可从服务端档案恢复",
+      "ok": true,
+      "detail": "AI Career OS求职首页岗位简历投递网申面试设置工具顺顺证据库网申资料收起侧栏Overview求职工作台从目标岗位到 offer，一条清晰的路径。已有档"
+    },
+    {
+      "name": "流程5 · 服务端档案列表可用（不需要记 UUID）",
+      "ok": true,
+      "detail": "count=15"
+    },
+    {
+      "name": "流程6 · 无模型建档（本地规则解析）",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "流程6 · 简历原文可查看/编辑",
+      "ok": true,
+      "detail": "AI Career OS求职首页岗位简历投递网申面试设置工具顺顺证据库网申资料收起侧栏Resumes"
+    },
+    {
+      "name": "流程6 · 无模型也能管理岗位",
+      "ok": true,
+      "detail": "status=201"
+    },
+    {
+      "name": "流程6 · AI 功能指向模型配置说明",
+      "ok": true,
+      "detail": "AI Career OS求职首页岗位简历投递网申面试设置工具顺顺证据库网申资料收起侧栏body{co"
+    }
+  ]
+}

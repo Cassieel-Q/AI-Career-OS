@@ -259,6 +259,41 @@ def _apply_to_source(db: Session, profile: models.UserProfile, fact_key: str, te
     return False
 
 
+def invalidate_changed_attestations(db: Session, profile: models.UserProfile) -> int:
+    """事实原文被改动后，撤销不再对应的「用户已核实」记录。
+
+    为什么需要它
+    ------------
+    「档案已确认（CONFIRMED）」只表示档案已就绪、可以继续走流程，**不等于事实被永久锁定**。
+    用户随时可能发现自己填错了一段经历的时间或职责，必须能改回去。
+
+    但只要事实文本变了，之前那一次核对就不再针对当前文本——继续让它保持
+    ``USER_ATTESTED``，等于**用旧签名给新文本背书**，这正是本轮要消灭的事实可信漏洞。
+
+    因此：改事实可以，改完必须重新核对。这里只做最小动作——把不再对应的记录
+    退回 ``UNREVIEWED`` 并清空签名时间与签名人，不删除历史、不影响其它事实。
+
+    由调用方负责在同一事务里提交（本函数不 commit）。
+    """
+    current = {key: text for key, _title, _sid, _stype, text in _iter_facts(profile)}
+    now = datetime.now(timezone.utc)
+    changed = 0
+    for row in db.scalars(
+        select(models.FactAttestation).where(models.FactAttestation.profile_id == profile.id)
+    ).all():
+        if not is_attested(row.status):
+            continue
+        text = current.get(row.fact_key)
+        if text is None or (row.fact_text or "").strip() != text.strip():
+            row.status = VerificationStatus.UNREVIEWED.value
+            row.verified_at = None
+            row.verified_by = None
+            row.note = "事实原文已变更，需要重新核对。"
+            row.updated_at = now
+            changed += 1
+    return changed
+
+
 def attested_fact_texts(db: Session, profile_id: UUID) -> list[str]:
     """返回用户已核实的事实文本，供参考答案 / 岗位简历的事实语料使用。"""
     rows = db.scalars(

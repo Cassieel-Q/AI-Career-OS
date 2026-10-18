@@ -260,6 +260,16 @@ def _replace_collection(
 
 
 def update_draft_profile(db: Session, profile_id: UUID, payload: ProfileUpdate) -> ProfileRead:
+    """逐字段修正档案事实（仅 DRAFT 档案；已确认档案走 facts/attest 的核对写回）。
+
+    **已确认档案在这里仍然拒绝**（``test_confirmed_profile_cannot_be_edited`` 锁的是这条）。
+    已确认档案要改共享事实，走 ``POST /profiles/{id}/facts/attest`` 且 ``apply_to_source=true``
+    ——「核对」与「写回」是同一次动作，不会出现绕过核对就改事实的口子
+    （见 ``apps/web/app/fact-check.tsx``）。
+
+    无论走哪条路，事实文本一旦变化，原本的「用户已核实」签名都会由
+    ``invalidate_changed_attestations`` 退回 ``UNREVIEWED``，必须重新核对。
+    """
     profile = _get_profile(db, profile_id, for_update=True)
     if profile.status == ProfileStatus.CONFIRMED.value:
         raise HTTPException(status_code=409, detail="Confirmed profiles cannot be edited")
@@ -290,6 +300,10 @@ def update_draft_profile(db: Session, profile_id: UUID, payload: ProfileUpdate) 
         models.Certification,
     )
     profile.updated_at = datetime.now(timezone.utc)
+    # 事实文本变了，旧签名不再对应当前文本 —— 退回 UNREVIEWED，要求重新核对。
+    from .fact_trust_service import invalidate_changed_attestations  # 延迟导入，避免模块循环
+
+    invalidate_changed_attestations(db, profile)
     db.commit()
     db.refresh(profile)
     return _profile_read(profile)

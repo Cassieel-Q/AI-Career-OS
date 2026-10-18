@@ -1,0 +1,83 @@
+{
+  "run_id": "offline-all-20261018T165202Z",
+  "created_at": "2026-10-18T16:52:03+00:00",
+  "git_head": "11131e8db0d08518243236cd357f6c8e69bfa7e2",
+  "mode": "offline",
+  "suites": [
+    {
+      "suite": "jd",
+      "status": "COMPLETED",
+      "fixture_count": 16,
+      "reason": null,
+      "metrics": {
+        "company": 1.0,
+        "role_title": 1.0,
+        "location": 1.0,
+        "years_experience": 1.0,
+        "education": 1.0,
+        "must_have_set_accuracy": 1.0
+      }
+    },
+    {
+      "suite": "match",
+      "status": "COMPLETED",
+      "fixture_count": 17,
+      "reason": null,
+      "metrics": {
+        "accuracy": 1.0,
+        "critical_omit_error_count": 0,
+        "per_class": {
+          "KEEP_AND_HIGHLIGHT": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
+          },
+          "KEEP": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
+          },
+          "DEEMPHASIZE": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
+          },
+          "OMIT": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
+          }
+        }
+      }
+    },
+    {
+      "suite": "rewrite",
+      "status": "COMPLETED",
+      "fixture_count": 17,
+      "reason": null,
+      "metrics": {
+        "critical_fact_error_rate": 0.058823529411764705,
+        "unsupported_number_rate": 0.058823529411764705,
+        "human_dimensions": "UNRATED",
+        "adoption_rate": null
+      }
+    },
+    {
+      "suite": "interview",
+      "status": "COMPLETED",
+      "fixture_count": 15,
+      "reason": null,
+      "metrics": {
+        "jd_grounded_rate": 0.7333333333333333,
+        "resume_grounded_rate": 0.6666666666666666,
+        "reference_answer_fact_error_count": 5
+      }
+    }
+  ],
+  "raw_run_path": "evals\\benchmark\\runs\\offline-all-20261018T165202Z.json",
+  "notes": [
+    "Offline scores use synthetic fixtures only.",
+    "Live mode may call the product API with synthetic fixtures; sample_class must be read from the run.",
+    "Do not report synthetic live numbers as consented-real product quality or as the full 30/90 plan sizes."
+  ]
+}

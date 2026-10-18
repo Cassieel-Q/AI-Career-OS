@@ -8,6 +8,8 @@ import { fetchOverview, readCurrentProfileId, STAGE_LABEL, stageBadgeClass, type
 import ModelOnboarding from "./model-onboarding.tsx";
 import { AFTER_APPLY_LINKS, nextStepFor } from "./home-next-step.ts";
 import { isUnknownIdentity } from "./mission-state.ts";
+import { PROFILE_STORAGE_KEY } from "./missions.ts";
+import { readLocalProfiles, type LocalProfileSummary } from "./local-profile.ts";
 
 /** 其它能力：保留全部功能，但作为次级入口，不抢首次使用的注意力。 */
 const FLOW: Array<{ key: string; title: string; desc: string; href: Route }> = [
@@ -16,6 +18,52 @@ const FLOW: Array<{ key: string; title: string; desc: string; href: Route }> = [
   { key: "track", title: "投递跟进", desc: "记录每一家进度", href: "/tracker" },
   { key: "interview", title: "面试题库", desc: "按公司场次准备", href: "/question-bank" },
 ];
+
+/**
+ * 服务端档案恢复。
+ *
+ * 清了浏览器存储（换浏览器 / 清缓存）之后，用户不该被当成新用户重新开始——
+ * 档案还在服务端，这里把它列出来让用户挑一份继续。列表只给标签与时间，不含简历正文。
+ */
+function ArchiveRecovery({ onPicked }: { onPicked: (profileId: string) => void }) {
+  const [profiles, setProfiles] = useState<LocalProfileSummary[] | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    readLocalProfiles()
+      .then((data) => { if (alive) setProfiles(data.profiles ?? []); })
+      .catch(() => { if (alive) setProfiles([]); });
+    return () => { alive = false; };
+  }, []);
+
+  if (!profiles || profiles.length === 0) return null;
+
+  return (
+    <section className="app-card home-recovery" aria-label="恢复已有档案">
+      <p className="section-kicker">已有档案</p>
+      <h2 className="app-card-title">这台电脑上已经有 {profiles.length} 份档案</h2>
+      <p className="summary">
+        浏览器记录被清掉了，但档案还在本机服务端。选一份继续，不需要重新导入简历，也不需要记 UUID。
+      </p>
+      <ul className="home-recovery-list">
+        {profiles.map((item) => (
+          <li key={item.profile_id}>
+            <div>
+              <div className="app-card-title">{item.label || "未命名档案"}</div>
+              <div className="app-card-meta">
+                {item.experience_count} 段经历 · {item.status === "CONFIRMED" ? "已就绪" : "草稿"}
+                {item.updated_at ? ` · 更新于 ${String(item.updated_at).slice(0, 10)}` : ""}
+              </div>
+            </div>
+            <button type="button" className="app-btn" onClick={() => onPicked(item.profile_id)}>
+              用这份继续
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 export default function HomePage() {
   const [profileId, setProfileId] = useState<string>("");
@@ -65,6 +113,16 @@ export default function HomePage() {
       </header>
 
       {error ? <p className="message error" role="alert">{error}</p> : null}
+
+      {profileId ? null : (
+        <ArchiveRecovery
+          onPicked={(picked) => {
+            window.localStorage.setItem(PROFILE_STORAGE_KEY, picked);
+            setProfileId(picked);
+            void load();
+          }}
+        />
+      )}
 
       <ModelOnboarding
         hasProfile={Boolean(profileId)}
