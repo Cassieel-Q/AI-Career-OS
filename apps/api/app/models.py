@@ -1331,3 +1331,34 @@ class WriteReceipt(Base):
     executed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
     proposal: Mapped[WriteProposal] = relationship("WriteProposal", back_populates="receipt")
+
+
+class FactAttestation(Base):
+    """候选事实的核对记录（可信求职 v1.2 · 指令 1.3 / 1.4）。
+
+    存在意义：把「系统提取到 / 用户采纳改写 / 用户核实事实」这三件事分开。
+    本表只记录**用户明确核对**的行为；没有本表记录的事实，无论档案状态是
+    ``CONFIRMED`` 还是改写状态是 ``ACCEPTED``，都不得视为「用户已核实」。
+
+    ``fact_key`` 是稳定键（如 ``experience:<uuid>:description:0``），同一档案内唯一，
+    便于在事实被编辑后重新判定是否需要再次核对。
+    """
+
+    __tablename__ = "fact_attestations"
+    __table_args__ = (UniqueConstraint("profile_id", "fact_key", name="uq_fact_attestation_profile_key"),)
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    profile_id: Mapped[UUID] = mapped_column(ForeignKey("user_profiles.id", ondelete="CASCADE"), nullable=False, index=True)
+    fact_key: Mapped[str] = mapped_column(String(200), nullable=False)
+    fact_text: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
+    # 事实来源：SOURCE_EXTRACTED / USER_PROVIDED / AI_PROPOSED（见 app.fact_trust.FactSource）
+    source_kind: Mapped[str] = mapped_column(String(32), nullable=False, default="SOURCE_EXTRACTED", server_default="SOURCE_EXTRACTED")
+    source_id: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    source_revision: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # 核对状态：UNREVIEWED / USER_ATTESTED / REJECTED（见 app.fact_trust.VerificationStatus）
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="UNREVIEWED", server_default="UNREVIEWED")
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    verified_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())

@@ -64,6 +64,27 @@ def _http(status: int, detail: str) -> HTTPException:
     return HTTPException(status_code=status, detail=detail)
 
 
+def _degraded_reference(
+    *,
+    known_facts: list[dict[str, str]],
+    missing_facts: list[dict[str, str]],
+    answer_structure: list[str],
+    reason: str | None = None,
+) -> str:
+    """渲染「已知事实 / 待补 / 结构」的安全参考答案。
+
+    降级路径同样不得产出第一人称成稿——模型不可用时更不能凭空替候选人作答。
+    """
+    from .fact_trust import render_degraded_reference
+
+    return render_degraded_reference(
+        known_facts=known_facts,
+        missing_facts=missing_facts,
+        answer_structure=answer_structure,
+        reason=reason,
+    )
+
+
 def _fallback_interview_response(claim_text: str, *, answered_rounds: int, answer: str | None) -> InterviewResponsePayload:
     """Keep the interview lane usable when the LLM provider is transiently unavailable.
 
@@ -88,7 +109,14 @@ def _fallback_interview_response(claim_text: str, *, answered_rounds: int, answe
                 "score": 5,
                 "strong_points": ["能够描述项目中的个人动作"],
                 "weak_points": ["还需要补充可核对的决策依据和结果"],
-                "reference_answer": "我先明确目标和约束，再比较候选方案，最后用测试或交付结果验证选择。",
+                "reference_answer": _degraded_reference(
+                    known_facts=[{"text": claim_text}],
+                    missing_facts=[
+                        {"aspect": "决策依据", "question": "当时比较了哪些方案或约束？"},
+                        {"aspect": "判定标准", "question": "你依据什么选择最终方案？"},
+                    ],
+                    answer_structure=["目标与约束", "候选方案", "取舍理由", "验证方式"],
+                ),
             },
         })
     return InterviewResponsePayload.model_validate({
@@ -103,7 +131,14 @@ def _fallback_interview_response(claim_text: str, *, answered_rounds: int, answe
             "why": "回答已经覆盖项目动作，但仍缺少可以复核的过程细节和结果证据。",
             "evidence_refs": [],
             "recommended_next_action": "补全项目背景、个人动作、决策依据和可核对结果。",
-            "reference_answer": "我会按背景、个人动作、方案取舍和结果证据说明这段项目经历。",
+            "reference_answer": _degraded_reference(
+                known_facts=[{"text": claim_text}],
+                missing_facts=[
+                    {"aspect": "个人动作", "question": "你亲自完成了哪些具体动作？"},
+                    {"aspect": "可核对结果", "question": "有哪些可以复核的产出或数据？"},
+                ],
+                answer_structure=["背景与目标", "个人动作", "方案取舍", "结果证据"],
+            ),
         },
     })
 
@@ -705,6 +740,37 @@ def list_interview_sessions(db: Session, claim_id: UUID) -> list[InterviewSessio
     return [_interview_read(row) for row in rows]
 
 
+def _trust_facts(db: Session, profile_id: UUID) -> tuple[list[str], list[str]]:
+    """取回该档案「用户已核实」与「用户已否认」的事实文本。
+
+    只有已核实的事实才能进入参考答案的事实语料；已否认的事实会被门禁拦截。
+    """
+    from .fact_trust import VerificationStatus
+
+    rows = db.scalars(
+        select(models.FactAttestation).where(models.FactAttestation.profile_id == profile_id)
+    ).all()
+    attested = [row.fact_text for row in rows if row.status == VerificationStatus.USER_ATTESTED.value and row.fact_text]
+    rejected = [row.fact_text for row in rows if row.status == VerificationStatus.REJECTED.value and row.fact_text]
+    return attested, rejected
+
+
+def _ask_with_trust(provider, base_kwargs: dict[str, object], attested: list[str], rejected: list[str]):
+    """把核对结果喂给 provider；老实现不支持这两个参数时退回原调用。"""
+    import inspect
+
+    try:
+        params = inspect.signature(provider.ask).parameters
+    except (TypeError, ValueError):  # pragma: no cover - 极少数内建对象
+        params = {}
+    supports = "attested_facts" in params or any(
+        getattr(parameter, "kind", None) is inspect.Parameter.VAR_KEYWORD for parameter in params.values()
+    )
+    if supports:
+        return provider.ask(**base_kwargs, attested_facts=attested, rejected_facts=rejected)
+    return provider.ask(**base_kwargs)
+
+
 def submit_interview_turn(db: Session, session_id: UUID, payload: InterviewTurnCreate, provider=None) -> InterviewSessionRead:
     session = db.scalar(select(models.InterviewSession).where(models.InterviewSession.id == session_id))
     if session is None:
@@ -723,13 +789,19 @@ def submit_interview_turn(db: Session, session_id: UUID, payload: InterviewTurnC
     pack_topics = _interview_pack_topics(mission)
     try:
         interview_intel = bounded_intel_records(mission.interview_intel if mission is not None else [])
-        response = provider.ask(
-            target_job={"id": str(target_job.id), "raw_text": target_job.raw_text, "interview_pack": pack_topics[:12], "interview_intel": interview_intel, "final_resume": _final_resume_context(mission)},
-            claim={"id": str(claim.id), "claim": claim.claim, "matched_capabilities": claim.matched_capabilities or []},
-            evidence=evidence,
-            skills=skill_records(),
-            turns=_interview_turn_context(session),
-            answer=payload.answer,
+        attested, rejected = _trust_facts(db, profile.id)
+        response = _ask_with_trust(
+            provider,
+            {
+                "target_job": {"id": str(target_job.id), "raw_text": target_job.raw_text, "interview_pack": pack_topics[:12], "interview_intel": interview_intel, "final_resume": _final_resume_context(mission)},
+                "claim": {"id": str(claim.id), "claim": claim.claim, "matched_capabilities": claim.matched_capabilities or []},
+                "evidence": evidence,
+                "skills": skill_records(),
+                "turns": _interview_turn_context(session),
+                "answer": payload.answer,
+            },
+            attested,
+            rejected,
         )
     except Exception as exc:
         response = _fallback_interview_response(claim.claim, answered_rounds=session.round_count, answer=payload.answer)

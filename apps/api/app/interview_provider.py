@@ -37,7 +37,18 @@ class InterviewProviderInvalidResponseError(InterviewProviderError):
 
 
 class InterviewProvider(Protocol):
-    def ask(self, *, target_job: dict[str, object], claim: dict[str, object], evidence: list[dict[str, object]], skills: list[dict[str, object]], turns: list[dict[str, object]], answer: str | None) -> InterviewResponsePayload: ...
+    def ask(
+        self,
+        *,
+        target_job: dict[str, object],
+        claim: dict[str, object],
+        evidence: list[dict[str, object]],
+        skills: list[dict[str, object]],
+        turns: list[dict[str, object]],
+        answer: str | None,
+        attested_facts: list[str] | None = None,
+        rejected_facts: list[str] | None = None,
+    ) -> InterviewResponsePayload: ...
 
 
 def _is_deepseek(base_url: str | None) -> bool:
@@ -74,8 +85,30 @@ class OpenAIInterviewProvider:
         except Exception as exc:
             raise InterviewProviderNotConfiguredError("interview provider configuration is invalid") from exc
 
-    @staticmethod
-    def _system_prompt() -> str:
+    #: 参考答案的硬性契约：把「已知事实 / 待补 / 方法 / 示范」分开，禁止补造第一人称经历。
+    _REFERENCE_CONTRACT = (
+        "Reference answer contract (must follow exactly):\n"
+        "1. Every substantive statement about the candidate must be traceable to supplied facts "
+        "(final_resume bullets, claim, evidence, or prior turns the candidate actually said).\n"
+        "2. You MUST NOT add numbers, people, teams, tools, dates, launches, results, or metrics "
+        "that the supplied facts do not contain. Do not turn participation into ownership, "
+        "a prototype into a shipped product, or a plan into a delivered result.\n"
+        "3. Put the answer into evaluation.reference_answer_detail with:\n"
+        "   - known_facts: [{text, source_kind: SOURCE_EXTRACTED|USER_PROVIDED|AI_PROPOSED, source_id, quote}] "
+        "for what is actually supported, with the source quote.\n"
+        "   - missing_facts: [{aspect, question}] for what the candidate must still supply "
+        "(actions taken, problems found, trade-offs, results).\n"
+        "   - answer_structure: [\"step\", ...] a STAR-like structure for this question.\n"
+        "   - sample_wording: a first-person sample paragraph. ONLY produce it when known_facts "
+        "already support the whole story; otherwise set it to null.\n"
+        "   - grounded: true only when sample_wording is fully supported by known_facts; otherwise false.\n"
+        "4. evaluation.reference_answer is the candidate-facing text. When grounded is true it may be the "
+        "sample_wording. When grounded is false it MUST be only the supported facts, the open questions, "
+        "and the answer structure - never a fabricated first-person narrative."
+    )
+
+    @classmethod
+    def _system_prompt(cls) -> str:
         return (
             "Run a claim-specific text interview. Use only the supplied target JD, the latest confirmed final_resume bullets "
             "(prefer those bullets when choosing what to ask), resume claim, Profile evidence, curated skill pack, interview pack topics, "
@@ -83,11 +116,13 @@ class OpenAIInterviewProvider:
             "and prior turns. Ask one concrete question at a time and return JSON only with "
             "question, skill_id, followup_dimensions, and evaluation. Evaluation must include a simple integer score 0-10 "
             "when an answer is present, plus 1-2 strong_points, 1-2 weak_points, a concise recommended_next_action, "
-            "and reference_answer showing a better concise answer grounded in supplied facts. "
+            "and reference_answer grounded in supplied facts. "
             "Use Simplified Chinese for every question, feedback, suggested answer, and next action. "
-            "Do not invent user outcomes or numbers. When interview_intel is present, prefer its matching question patterns and focus signals; do not present source IDs as user-facing text. "
+            "Do not invent user outcomes, numbers, tools, teams, launches or results. "
+            "When interview_intel is present, prefer its matching question patterns and focus signals; do not present source IDs as user-facing text. "
             "After enough turns, set question and skill_id to null and classify one gap type: KNOWLEDGE_GAP, "
-            "PROJECT_GAP, EVIDENCE_GAP, or ARTICULATION_GAP. Keep evidence_refs to supplied UUIDs and never add keys."
+            "PROJECT_GAP, EVIDENCE_GAP, or ARTICULATION_GAP. Keep evidence_refs to supplied UUIDs and never add keys.\n"
+            + cls._REFERENCE_CONTRACT
         )
 
     @staticmethod
@@ -206,13 +241,56 @@ class OpenAIInterviewProvider:
 
         return {
             "score": score,
-            "reference_answer": str(value.get("reference_answer") or value.get("sample_answer") or "").strip()[:1200] or None,
+            "reference_answer": str(value.get("reference_answer") or value.get("sample_answer") or "").strip()[:1_200] or None,
+            "reference_answer_detail": cls._normalize_reference_detail(value.get("reference_answer_detail")),
             "strong_points": cls._as_str_list(value.get("strong_points") or value.get("strengths"), max_items=8, max_len=300),
             "weak_points": cls._as_str_list(value.get("weak_points") or value.get("weaknesses"), max_items=8, max_len=300),
             "gap_type": cls._normalize_gap_type(value.get("gap_type") or value.get("gap")),
             "why": why,
             "evidence_refs": cls._as_uuid_list(value.get("evidence_refs") or value.get("evidence") or []),
             "recommended_next_action": recommended,
+        }
+
+    @classmethod
+    def _normalize_reference_detail(cls, value: object) -> dict[str, object] | None:
+        """把模型给出的结构化参考答案收成固定形状。形状不对就返回 None（后续按未自审处理）。"""
+        if not isinstance(value, dict):
+            return None
+
+        def _rows(raw: object, *, keys: tuple[str, ...], limit: int) -> list[dict[str, str]]:
+            if not isinstance(raw, list):
+                return []
+            rows: list[dict[str, str]] = []
+            for item in raw:
+                if isinstance(item, dict):
+                    text = ""
+                    for key in keys:
+                        candidate = item.get(key)
+                        if isinstance(candidate, str) and candidate.strip():
+                            text = candidate.strip()
+                            break
+                    if not text:
+                        continue
+                    row = {key: (str(item.get(key)).strip() if item.get(key) is not None else "") for key in keys}
+                    row[keys[0]] = text
+                    rows.append({k: v[:400] for k, v in row.items()})
+                elif isinstance(item, str) and item.strip():
+                    rows.append({keys[0]: item.strip()[:400], **{k: "" for k in keys[1:]}})
+                if len(rows) >= limit:
+                    break
+            return rows
+
+        sample = value.get("sample_wording")
+        sample = sample.strip()[:1_200] if isinstance(sample, str) and sample.strip() else None
+        blocked = value.get("blocked_reason")
+        return {
+            "grounded": bool(value.get("grounded") is True),
+            "known_facts": _rows(value.get("known_facts"), keys=("text", "source_kind", "source_id", "quote"), limit=12),
+            "missing_facts": _rows(value.get("missing_facts"), keys=("aspect", "question"), limit=12),
+            "answer_structure": cls._as_str_list(value.get("answer_structure") or value.get("structure"), max_items=8, max_len=200),
+            "sample_wording": sample,
+            "blocked_reason": blocked.strip()[:400] if isinstance(blocked, str) and blocked.strip() else None,
+            "screening": {},
         }
 
     @classmethod
@@ -261,37 +339,164 @@ class OpenAIInterviewProvider:
         }
 
     @staticmethod
-    def _gate_reference_answer(evaluation: dict[str, object], *, target_job: dict[str, object], claim: dict[str, object], evidence: list[dict[str, object]]) -> dict[str, object]:
-        """Fail closed when a reference answer adds candidate facts absent from supplied evidence."""
-        reference = str(evaluation.get("reference_answer") or "").strip()
-        grounding = " ".join(
-            [
-                json.dumps(target_job.get("final_resume") or {}, ensure_ascii=False),
-                str(claim.get("claim") or ""),
-                json.dumps(evidence or [], ensure_ascii=False),
-            ]
-        )
+    def _legacy_reference_risk(reference: str, grounding: str) -> list[str]:
+        """旧版确定性规则（数字 + 「访谈某人」）。保留以确保护栏能力不回退。"""
         if not reference or not grounding.strip(" {}[]\"'"):
-            return evaluation
-
+            return []
+        reasons: list[str] = []
         answer_numbers = re.findall(r"(?<!\w)\d+(?:\.\d+)?\s*[%％]?", reference)
         missing_numbers = [token.strip() for token in answer_numbers if token.strip() not in grounding]
+        if missing_numbers:
+            reasons.append(f"参考回答出现了证据里没有的数字：{missing_numbers}。")
         high_risk_actions = re.findall(r"(?:访谈|采访|访问)[^。；，,。\n]{0,16}(?:用户|创作者|客户|专家)", reference)
-        unsupported_action = bool(high_risk_actions) and not any(action in grounding for action in high_risk_actions)
-        if not missing_numbers and not unsupported_action:
+        if high_risk_actions and not any(action in grounding for action in high_risk_actions):
+            reasons.append("参考回答出现了证据里没有的用户访谈动作。")
+        return reasons
+
+    @staticmethod
+    def _rejected_fact_hits(candidate: str, rejected_facts: list[str] | None) -> list[str]:
+        """用户已否认的事实不得再次进入参考回答。"""
+        if not candidate or not rejected_facts:
+            return []
+        from .fact_trust import coverage_score
+
+        hits: list[str] = []
+        for fact in rejected_facts:
+            text = str(fact or "").strip()
+            if not text:
+                continue
+            if coverage_score(text, candidate) >= 0.6:
+                hits.append(text)
+        return hits
+
+    @classmethod
+    def _gate_reference_answer(
+        cls,
+        evaluation: dict[str, object],
+        *,
+        target_job: dict[str, object],
+        claim: dict[str, object],
+        evidence: list[dict[str, object]],
+        attested_facts: list[str] | None = None,
+        rejected_facts: list[str] | None = None,
+        context: str | None = None,
+    ) -> dict[str, object]:
+        """Fail closed when a reference answer adds candidate facts absent from supplied evidence.
+
+        三重保险，任一不通过即降级为「已知事实 / 待补 / 方法」，绝不产出第一人称成稿：
+
+        1. **模型自审**：``reference_answer_detail.grounded`` 必须为 true 才可能放行。
+        2. **确定性筛查**：证据中不存在的数量值、高风险动作/结果词、句子级覆盖率过低。
+        3. **旧版规则**：数字与「访谈某人」模式（保留既有拦截能力）。
+
+        判断不确定时一律保守降级，不默默放行。
+        """
+        from .fact_trust import merge_grounding, normalize_text, render_degraded_reference, screen_reference_wording
+
+        detail = evaluation.get("reference_answer_detail")
+        detail = detail if isinstance(detail, dict) else None
+        reference = str(evaluation.get("reference_answer") or "").strip()
+        sample = str(detail.get("sample_wording") or "").strip() if detail else ""
+        if not reference and not sample and detail is None:
+            # 模型既没给结构化详情也没给参考答案时保持原样，避免给空评价凭空塞内容。
             return evaluation
 
+        corpus_parts: list[object] = [
+            json.dumps(target_job.get("final_resume") or {}, ensure_ascii=False),
+            str(claim.get("claim") or ""),
+            json.dumps(evidence or [], ensure_ascii=False),
+        ]
+        if context:
+            corpus_parts.append(context)
+        if attested_facts:
+            corpus_parts.extend(attested_facts)
+        grounding = merge_grounding(corpus_parts)
+
+        known = list(detail.get("known_facts") or []) if detail else []
+        missing = list(detail.get("missing_facts") or []) if detail else []
+        structure = list(detail.get("answer_structure") or []) if detail else []
+        # 模型给了 sample_wording 就以它为准；否则退回旧字段（旧格式兼容）。
+        candidate = sample or reference
+
+        blocked: list[str] = []
+        screening = None
+        if candidate:
+            rejected_hits = cls._rejected_fact_hits(candidate, rejected_facts)
+            if rejected_hits:
+                blocked.append("参考回答使用了你已标记为不属实的事实。")
+            if not normalize_text(grounding):
+                blocked.append("没有可核对的事实依据，不能生成候选人陈述。")
+            if detail is not None and not detail.get("grounded"):
+                blocked.append("模型自审判定事实不足，示范表达已降级。")
+            screening = screen_reference_wording(candidate, grounding)
+            if not screening.supported:
+                blocked.extend(screening.reasons)
+            blocked.extend(cls._legacy_reference_risk(candidate, grounding))
+        else:
+            blocked.append("模型未提供可使用的示范表达。")
+
+        if not blocked and candidate:
+            return {
+                **evaluation,
+                "reference_answer": candidate,
+                "reference_answer_detail": {
+                    **(detail or {}),
+                    "grounded": True,
+                    "sample_wording": candidate,
+                    "blocked_reason": None,
+                    "screening": screening.as_dict() if screening else {},
+                },
+            }
+
         weak_points = list(evaluation.get("weak_points") or [])
-        if "参考回答含有未确认事实，已拦截。" not in weak_points:
-            weak_points.append("参考回答含有未确认事实，已拦截。")
+        note = "参考回答含有未确认事实，已拦截。"
+        if note not in weak_points:
+            weak_points.append(note)
+        reason = " ".join(blocked) or (str(detail.get("blocked_reason") or "") if detail else "")
+        friendly_reason = (
+            "证据不足，不能把这项动作或数字写入候选人的回答。下面是已有的事实、还缺的信息和建议的表达结构。"
+        )
+        if not missing:
+            missing = [
+                {"aspect": "你的具体动作", "question": "你亲自做了哪几步？"},
+                {"aspect": "过程中的发现或困难", "question": "遇到过什么问题，怎么取舍？"},
+                {"aspect": "可核对的结果", "question": "有什么能复核的产出、数据或反馈？"},
+            ]
+        degraded = render_degraded_reference(
+            known_facts=known,
+            missing_facts=missing,
+            answer_structure=structure,
+            reason=friendly_reason,
+        )
         return {
             **evaluation,
-            "reference_answer": "证据不足，不能把这项动作或数字写入候选人的回答。请先补充可核对事实。",
+            "reference_answer": degraded,
+            "reference_answer_detail": {
+                **(detail or {}),
+                "grounded": False,
+                "sample_wording": None,
+                "blocked_reason": (reason or None),
+                "known_facts": known,
+                "missing_facts": missing,
+                "answer_structure": structure,
+                "screening": screening.as_dict() if screening else {},
+            },
             "weak_points": weak_points[:8],
             "recommended_next_action": evaluation.get("recommended_next_action") or "补充对应项目的原始记录、过程或结果证据。",
         }
 
-    def ask(self, *, target_job: dict[str, object], claim: dict[str, object], evidence: list[dict[str, object]], skills: list[dict[str, object]], turns: list[dict[str, object]], answer: str | None) -> InterviewResponsePayload:
+    def ask(
+        self,
+        *,
+        target_job: dict[str, object],
+        claim: dict[str, object],
+        evidence: list[dict[str, object]],
+        skills: list[dict[str, object]],
+        turns: list[dict[str, object]],
+        answer: str | None,
+        attested_facts: list[str] | None = None,
+        rejected_facts: list[str] | None = None,
+    ) -> InterviewResponsePayload:
         request: dict[str, object] = {
             "model": self.model,
             "messages": [
@@ -325,7 +530,12 @@ class OpenAIInterviewProvider:
         try:
             normalized = self._normalize_interview_payload(data)
             normalized["evaluation"] = self._gate_reference_answer(
-                normalized["evaluation"], target_job=target_job, claim=claim, evidence=evidence
+                normalized["evaluation"],
+                target_job=target_job,
+                claim=claim,
+                evidence=evidence,
+                attested_facts=attested_facts,
+                rejected_facts=rejected_facts,
             )
             return InterviewResponsePayload.model_validate(normalized)
         except InterviewProviderInvalidResponseError:
@@ -334,8 +544,8 @@ class OpenAIInterviewProvider:
             raise InterviewProviderInvalidResponseError(reason="schema_validation") from exc
 
 
-    @staticmethod
-    def _evaluate_system_prompt() -> str:
+    @classmethod
+    def _evaluate_system_prompt(cls) -> str:
         return (
             "Evaluate one interview Q&A for a job candidate. "
             "Return ONLY a JSON object with an evaluation object. "
@@ -343,7 +553,10 @@ class OpenAIInterviewProvider:
             "weak_points (string list), gap_type (one of KNOWLEDGE_GAP, PROJECT_GAP, EVIDENCE_GAP, ARTICULATION_GAP or null), "
             "why (short Chinese reason), reference_answer (optional Chinese sample), "
             "recommended_next_action (short Chinese next step). "
-            "Do not invent employer-specific secrets. Prefer concrete, actionable Chinese feedback."
+            "Do not invent employer-specific secrets. Prefer concrete, actionable Chinese feedback.\n"
+            "The only facts you may use are the candidate's own answer and the supplied context. "
+            "Never add numbers, people, teams, tools, dates, launches or results they did not state.\n"
+            + cls._REFERENCE_CONTRACT
         )
 
     def evaluate_answer(
@@ -399,6 +612,14 @@ class OpenAIInterviewProvider:
         evaluation = data.get("evaluation") if isinstance(data.get("evaluation"), dict) else data
         try:
             normalized = self._normalize_evaluation(evaluation)
+            # 同一套事实闸门：参考答案只能复述候选人自己说过的话与给定上下文。
+            normalized = self._gate_reference_answer(
+                normalized,
+                target_job={"final_resume": {}},
+                claim={"claim": answer or ""},
+                evidence=[],
+                context=context,
+            )
             return InterviewEvaluation.model_validate(normalized)
         except (ValidationError, TypeError, ValueError) as exc:
             raise InterviewProviderInvalidResponseError(reason="schema_validation") from exc

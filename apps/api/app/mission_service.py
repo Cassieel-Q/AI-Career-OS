@@ -1136,6 +1136,11 @@ def _promote_master_confirmed_if_ready(db: Session, profile: models.UserProfile)
 
     Returns True if status is (or becomes) CONFIRMED. Empty DRAFT profiles stay DRAFT so the
     in-mission confirm card can still collect facts — never invent content.
+
+    **语义边界（可信求职 v1.2）：**这里的 ``CONFIRMED`` 只表示「档案已就绪、可以继续走
+    岗位流程」，**不等于事实已被用户核实**。事实核对状态只由
+    :class:`app.models.FactAttestation` 记录（见 ``app.fact_trust_service``）。
+    本函数绝不写任何 attestation，也不得被解读为「用户核实过这些经历」。
     """
     if profile.status == "CONFIRMED":
         return True

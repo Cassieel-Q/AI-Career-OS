@@ -142,7 +142,13 @@ def test_interview_provider_keeps_a_simple_answer_score() -> None:
     )
 
     assert result.evaluation.score == 7
-    assert result.evaluation.reference_answer.startswith("我先确认目标")
+    # 语料为空时没有任何可核对事实，参考答案必须降级成「已知事实 / 待补 / 结构」，
+    # 不能保留模型给的第一人称成稿（指令 1.2：不补造第一人称经历）。
+    assert result.evaluation.reference_answer is not None
+    assert "我先确认目标" not in result.evaluation.reference_answer
+    assert "【已知事实】" in result.evaluation.reference_answer
+    assert result.evaluation.reference_answer_detail is not None
+    assert result.evaluation.reference_answer_detail.grounded is False
 
 
 def test_ai_product_manager_skill_pack_has_ten_structured_skills() -> None:

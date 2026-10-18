@@ -61,6 +61,7 @@ from app.local_access import LOOPBACK_ORIGIN_REGEX
 from app.job_ingest_routes import router as job_ingest_router
 from app.manual_import_routes import router as manual_import_router
 from app.webform_routes import router as webform_router
+from app.fact_trust_routes import router as fact_trust_router
 from app.profile_schemas import CareerPreferencesInput, CareerPreferencesRead, ProfileRead, ProfileUpdate
 from app.profile_service import (
     confirm_profile,
@@ -2822,6 +2823,7 @@ app.include_router(model_config_router)
 app.include_router(job_ingest_router)
 app.include_router(manual_import_router)
 app.include_router(webform_router)
+app.include_router(fact_trust_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_allowed_frontend_origins(),

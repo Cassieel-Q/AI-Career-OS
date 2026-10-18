@@ -223,9 +223,45 @@ class InterviewQuestionPayload(_StrictModel):
     followup_dimensions: list[str] = Field(default_factory=list, max_length=8)
 
 
+class ReferenceKnownFact(_StrictModel):
+    """参考回答中引用的、可在原始材料里找到的已知事实。"""
+
+    text: str = Field(min_length=1, max_length=400)
+    source_kind: str = Field(default="SOURCE_EXTRACTED", max_length=40)
+    source_id: str | None = Field(default=None, max_length=120)
+    quote: str | None = Field(default=None, max_length=400)
+
+
+class ReferenceMissingFact(_StrictModel):
+    """要写出完整回答还缺什么。只提问题，不代答。"""
+
+    aspect: str = Field(min_length=1, max_length=200)
+    question: str = Field(default="", max_length=400)
+
+
+class ReferenceAnswerDetail(_StrictModel):
+    """结构化参考答案（指令 1.2）。
+
+    - ``known_facts``：已知事实，带来源引用。
+    - ``missing_facts``：需要补充的行动 / 发现 / 困难 / 结果。
+    - ``answer_structure``：STAR 之类的表达结构。
+    - ``sample_wording``：**仅在事实充分时**生成的可使用示范表达，不补造第一人称经历。
+    - ``grounded``：模型自审结论；为 False 或缺失时，示范表达一律降级。
+    """
+
+    grounded: bool = False
+    known_facts: list[ReferenceKnownFact] = Field(default_factory=list, max_length=12)
+    missing_facts: list[ReferenceMissingFact] = Field(default_factory=list, max_length=12)
+    answer_structure: list[str] = Field(default_factory=list, max_length=8)
+    sample_wording: str | None = Field(default=None, max_length=1_200)
+    blocked_reason: str | None = Field(default=None, max_length=400)
+    screening: dict[str, object] = Field(default_factory=dict)
+
+
 class InterviewEvaluation(_StrictModel):
     score: int | None = Field(default=None, ge=0, le=10)
-    reference_answer: str | None = Field(default=None, max_length=1_200)
+    reference_answer: str | None = Field(default=None, max_length=4_000)
+    reference_answer_detail: ReferenceAnswerDetail | None = None
     strong_points: list[str] = Field(default_factory=list, max_length=8)
     weak_points: list[str] = Field(default_factory=list, max_length=8)
     gap_type: InterviewGapType | None = None
