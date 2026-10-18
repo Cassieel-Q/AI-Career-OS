@@ -10,6 +10,8 @@ import {
   readInterviewRecord,
   type InterviewRecord,
 } from "./interview-records.ts";
+import { ReferenceAnswerView } from "./reference-answer.tsx";
+import type { ReferenceAnswerDetail } from "./fact-trust.ts";
 
 export function InterviewRecordsDetail({ recordId }: { recordId: string }) {
   const [record, setRecord] = useState<InterviewRecord | null>(null);
@@ -154,11 +156,12 @@ export function InterviewRecordsDetail({ recordId }: { recordId: string }) {
                       {item.evaluation.weak_points.join("；")}
                     </p>
                   ) : null}
-                  {item.evaluation?.reference_answer ? (
-                    <p>
-                      <b>参考回答：</b>
-                      {item.evaluation.reference_answer}
-                    </p>
+                  {item.evaluation?.reference_answer || item.evaluation?.reference_answer_detail ? (
+                    <ReferenceAnswerView
+                      title="参考回答"
+                      detail={(item.evaluation?.reference_answer_detail as ReferenceAnswerDetail | undefined) ?? null}
+                      text={item.evaluation?.reference_answer ?? null}
+                    />
                   ) : null}
                   {item.evaluation?.recommended_next_action ? (
                     <p>

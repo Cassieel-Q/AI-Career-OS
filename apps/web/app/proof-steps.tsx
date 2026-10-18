@@ -16,6 +16,8 @@ import { freshInterviewEntry } from "./proof-state.ts";
 import { interviewPresentation } from "./interview-presentation.ts";
 import { TaskProgress } from "./task-progress.tsx";
 import { withTaskTimeout } from "./task-progress.ts";
+import { ReferenceAnswerView } from "./reference-answer.tsx";
+import type { ReferenceAnswerDetail } from "./fact-trust.ts";
 import type { ProofStepControls } from "./proof-route.tsx";
 
 type Props = { step: ProofStep; snapshot: ProofSnapshot; controls: ProofStepControls; freshStart?: boolean };
@@ -283,7 +285,12 @@ export function ProofStepView({ step, snapshot, controls, freshStart = false }: 
           <strong>本题反馈：{typeof evaluation.score === "number" ? `${evaluation.score} / 10` : "已完成"}</strong>
           {evaluation.strong_points?.length ? <p>做得好的地方：{evaluation.strong_points.join("；")}</p> : null}
           {evaluation.weak_points?.length ? <p>可以加强：{evaluation.weak_points.join("；")}</p> : null}
-          {evaluation.reference_answer ? <p>参考回答：{evaluation.reference_answer}</p> : null}
+          {evaluation.reference_answer || evaluation.reference_answer_detail ? (
+            <ReferenceAnswerView
+              detail={(evaluation.reference_answer_detail as ReferenceAnswerDetail | undefined) ?? null}
+              text={evaluation.reference_answer ?? null}
+            />
+          ) : null}
         </div>}
         {complete ? <p className="message success">已完成 {view.answeredCount} 道题。查看本轮面试复盘。</p> : <>
           <div className="interview-question"><span>第 {displayRound} 题 · {questionStatus}</span><h2>{view.question || (interviewStarting ? "正在生成第 1 题…" : "问题尚未生成，请重试。")}</h2></div>

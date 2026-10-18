@@ -30,6 +30,7 @@ import {
 import { PROFILE_STORAGE_KEY, ingestResumeText, readProfile } from "../missions.ts";
 import { API_BASE_URL } from "../workflow-state.ts";
 import { fetchResumeText, saveResumeText } from "../job-insight.ts";
+import { FactCheckPanel } from "../fact-check.tsx";
 
 const FILTERS = [
   { key: "ALL", label: "全部版本" },
@@ -367,6 +368,8 @@ export default function ResumesPage() {
           </>
         )}
       </section>
+
+      {profileId ? <FactCheckPanel profileId={profileId} /> : null}
 
       <section className="app-card">
         <div className="start-card-head">

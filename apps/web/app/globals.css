@@ -3573,3 +3573,117 @@ pre.batch-draft-excerpt { white-space: pre-wrap; word-break: break-word; backgro
   align-items: center;
   justify-content: space-between;
 }
+
+/* ---- 事实核对 / 结构化参考答案（可信求职 v1.2） ---- */
+.fact-check-progress {
+  margin: 0 0 0.75rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.fact-check-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fact-check-item {
+  border: 1px solid var(--border-weak);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  background: var(--surface);
+}
+
+.fact-check-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.fact-check-title {
+  margin-right: 0.5rem;
+  font-weight: 600;
+}
+
+.fact-check-risk {
+  margin-left: 0.5rem;
+  color: var(--text-quaternary);
+  font-size: 0.75rem;
+}
+
+.fact-check-preview {
+  margin: 0.5rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.fact-check-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+}
+
+.fact-check-block p {
+  margin: 0.25rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.fact-check-sync {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.fact-check-actions {
+  margin-top: 0.25rem;
+}
+
+.reference-answer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.reference-answer p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.65;
+}
+
+.reference-blocked {
+  color: var(--accent-attention);
+}
+
+.reference-block ul,
+.reference-block ol {
+  margin: 0.25rem 0 0;
+  padding-left: 1.15rem;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+.reference-label {
+  display: block;
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.reference-source {
+  color: var(--text-quaternary);
+  font-style: normal;
+}
