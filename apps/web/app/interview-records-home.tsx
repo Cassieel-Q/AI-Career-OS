@@ -55,6 +55,9 @@ export function InterviewRecordsHome() {
           <p className="app-eyebrow">Interviews</p>
           <h1 className="app-page-title">面试</h1>
           <p className="app-page-subtitle">把一面 / 二面 / 三面的题目和回答留下来，录入后可走评分、复盘和补强建议。</p>
+          <p className="app-card-meta">
+            这里是<strong>真实面试记录</strong>（你自己填写的内容）。模拟面试生成的内容只用于练习，不会混入这里。
+          </p>
         </div>
         <Link className="app-btn primary" href={"/interview-records/new" as Route}>
           新建录入

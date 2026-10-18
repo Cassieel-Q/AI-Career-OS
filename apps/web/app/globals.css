@@ -3716,3 +3716,49 @@ pre.batch-draft-excerpt { white-space: pre-wrap; word-break: break-word; backgro
   font-size: 0.78rem;
   line-height: 1.6;
 }
+
+.resume-paste-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.recover-profile-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0.5rem 0 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.recover-profile-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border-weak);
+  border-radius: var(--radius-sm);
+}
+
+.recover-profile-label {
+  font-weight: 600;
+}
+
+.home-next-step {
+  margin-bottom: 1.75rem;
+}
+
+.home-next-step .summary {
+  margin: 0.35rem 0 0;
+}
+
+.home-next-step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}

@@ -6,9 +6,10 @@ import { useCallback, useEffect, useState } from "react";
 
 import { fetchOverview, readCurrentProfileId, STAGE_LABEL, stageBadgeClass, type OverviewRead } from "./career-hub.ts";
 import ModelOnboarding from "./model-onboarding.tsx";
+import { AFTER_APPLY_LINKS, nextStepFor } from "./home-next-step.ts";
 import { isUnknownIdentity } from "./mission-state.ts";
 
-/** 求职路径四步：一条横向前进的流程，而非功能入口堆叠。 */
+/** 其它能力：保留全部功能，但作为次级入口，不抢首次使用的注意力。 */
 const FLOW: Array<{ key: string; title: string; desc: string; href: Route }> = [
   { key: "find", title: "找岗位", desc: "明确目标与 JD", href: "/missions" },
   { key: "write", title: "写简历", desc: "岗位定向版本", href: "/resumes" },
@@ -42,6 +43,13 @@ export default function HomePage() {
 
   const totals = overview?.totals;
   const recent = overview?.recent_missions ?? [];
+  const nextStep = nextStepFor({
+    hasProfile: Boolean(profileId),
+    missionCount: totals?.missions ?? 0,
+    resumeCount: totals?.resumes ?? 0,
+    appliedCount: totals?.applied ?? 0,
+    latestMissionId: recent[0]?.mission_id ?? null,
+  });
 
   return (
     <main className="app-page">
@@ -64,11 +72,30 @@ export default function HomePage() {
         resumeCount={overview?.totals?.resumes ?? 0}
       />
 
-      <section aria-label="求职路径" style={{ marginBottom: "1.75rem" }}>
+      {/* 主线：一次只突出一个动作（导入简历 → 添加岗位 → 审阅并导出 → 按投递版准备面试） */}
+      <section className="app-card home-next-step" aria-label="下一步">
+        <p className="section-kicker">下一步</p>
+        <h2 className="app-card-title">{nextStep.title}</h2>
+        <p className="summary">{nextStep.desc}</p>
+        <div className="home-next-step-actions">
+          <Link className="app-btn primary" href={nextStep.href as Route}>
+            {nextStep.action}
+          </Link>
+          {nextStep.key === "AFTER_APPLY"
+            ? AFTER_APPLY_LINKS.map((item) => (
+                <Link key={item.href} className="app-btn" href={item.href as Route}>
+                  {item.label}
+                </Link>
+              ))
+            : null}
+        </div>
+      </section>
+
+      <section aria-label="其它能力" style={{ marginBottom: "1.75rem" }}>
+        <p className="section-kicker" style={{ marginBottom: "0.5rem" }}>其它能力</p>
         <div className="app-flow">
-          {FLOW.map((step, index) => (
+          {FLOW.map((step) => (
             <Link key={step.key} className="app-flow-step" href={step.href}>
-              <span className="app-flow-index">{index + 1}</span>
               <span className="app-flow-title">{step.title}</span>
               <span className="app-flow-desc">{step.desc}</span>
             </Link>

@@ -27,10 +27,11 @@ import {
   upsertProfileLabelFromFilename,
   upsertProfileLabelFromSnapshot,
 } from "../profile-label.ts";
-import { PROFILE_STORAGE_KEY, ingestResumeText, readProfile } from "../missions.ts";
+import { PROFILE_STORAGE_KEY, createDraftProfile, ingestResumeText, readProfile } from "../missions.ts";
 import { API_BASE_URL } from "../workflow-state.ts";
 import { fetchResumeText, saveResumeText } from "../job-insight.ts";
 import { FactCheckPanel } from "../fact-check.tsx";
+import { ingestResumeLocally, readLocalProfiles, type LocalProfileSummary } from "../local-profile.ts";
 
 const FILTERS = [
   { key: "ALL", label: "全部版本" },
@@ -67,6 +68,28 @@ export default function ResumesPage() {
   const [savingText, setSavingText] = useState(false);
   const [reparsing, setReparsing] = useState(false);
   const studioRef = useRef<HTMLElement | null>(null);
+
+  // 无模型建档 / 解析失败回退
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [pastedText, setPastedText] = useState("");
+  const [buildingLocally, setBuildingLocally] = useState(false);
+  const [uploadHint, setUploadHint] = useState("");
+  // 服务端档案列表（清了浏览器存储后也能找回）
+  const [serverProfiles, setServerProfiles] = useState<LocalProfileSummary[]>([]);
+  const [serverLoading, setServerLoading] = useState(false);
+
+  const loadServerProfiles = useCallback(async () => {
+    setServerLoading(true);
+    try {
+      const payload = await readLocalProfiles();
+      setServerProfiles(payload.profiles);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "读取本机档案列表失败。");
+      setServerProfiles([]);
+    } finally {
+      setServerLoading(false);
+    }
+  }, []);
 
   const refreshLabel = useCallback((id: string) => {
     const option = listProfileLabelOptions().find((item) => item.profileId === id);
@@ -111,6 +134,13 @@ export default function ResumesPage() {
   }, [loadOverview]);
 
   useEffect(() => {
+    // 本机没有记住档案 ID 时，主动把服务端已有档案列出来，避免「档案像丢了」。
+    if (!profileId) {
+      void loadServerProfiles();
+    }
+  }, [profileId, loadServerProfiles]);
+
+  useEffect(() => {
     if (!profileId) {
       setResumeText("");
       setResumeTextSource("");
@@ -148,9 +178,92 @@ export default function ResumesPage() {
       // 上传后自动滚到工作台，避免用户以为「上传了却没有简历」。
       window.setTimeout(() => studioRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "简历上传失败，请重试。");
+      const message = caught instanceof Error ? caught.message : "简历上传失败，请重试。";
+      setError(message);
+      // 指令 3.3：扫描件 / 解析失败 / 没配模型，都要给出「粘贴简历文字」出口，
+      // 不能只显示一句看不懂的技术错误。
+      if (
+        message.includes("未配置 AI 模型") ||
+        message.includes("扫描件") ||
+        message.includes("503") ||
+        message.includes("422")
+      ) {
+        setUploadHint(
+          "这份文件现在走不了 AI 解析。可以直接粘贴简历文字建档——不调用模型，也能编辑原文、管理岗位和导出 PDF。",
+        );
+        setPasteOpen(true);
+      }
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function buildFromPastedText() {
+    const text = pastedText.trim();
+    if (text.length < 10 || buildingLocally) {
+      if (text.length < 10) setError("至少粘贴 10 个字才能建档。");
+      return;
+    }
+    setBuildingLocally(true);
+    setError("");
+    setNotice("");
+    try {
+      const target = profileId || (await createDraftProfile()).profile_id;
+      const result = await ingestResumeLocally(target, text);
+      window.localStorage.setItem(PROFILE_STORAGE_KEY, target);
+      upsertProfileLabelFromSnapshot(target, { full_name: null });
+      setProfileId(target);
+      refreshLabel(target);
+      await loadOverview();
+      setNotice(
+        `已用本地规则建档（不调用模型）：识别出 ${result.parsed_counts.experiences} 段经历、`
+        + `${result.parsed_counts.skills} 项技能、${result.parsed_counts.education} 条教育。`
+        + "可在下面的工作台继续修改；配置好模型后再点「保存并重新提取事实」即可换成模型解析。",
+      );
+      setPasteOpen(false);
+      setPastedText("");
+      setUploadHint("");
+      window.setTimeout(() => studioRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "粘贴建档失败，请重试。");
+    } finally {
+      setBuildingLocally(false);
+    }
+  }
+
+  async function createBlankProfile() {
+    setBuildingLocally(true);
+    setError("");
+    setNotice("");
+    try {
+      const draft = await createDraftProfile();
+      window.localStorage.setItem(PROFILE_STORAGE_KEY, draft.profile_id);
+      setProfileId(draft.profile_id);
+      refreshLabel(draft.profile_id);
+      await loadOverview();
+      setNotice("已新建空白档案。可以直接在工作台里粘贴或手写简历原文。");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "新建空白档案失败，请重试。");
+    } finally {
+      setBuildingLocally(false);
+    }
+  }
+
+  async function switchToProfile(id: string) {
+    setRecovering(true);
+    setError("");
+    try {
+      const snapshot = await readProfile(id);
+      window.localStorage.setItem(PROFILE_STORAGE_KEY, id);
+      upsertProfileLabelFromSnapshot(id, snapshot);
+      setProfileId(id);
+      refreshLabel(id);
+      setNotice("已切换到该档案。");
+      await loadOverview();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "无法切换到该档案。");
+    } finally {
+      setRecovering(false);
     }
   }
 
@@ -286,8 +399,25 @@ export default function ResumesPage() {
           hint="拖拽 PDF 到此处，或点击选择；单个不超过 10MB"
         />
         {uploading ? <p className="start-status" role="status">正在解析简历，请稍候…</p> : null}
+        {uploadHint ? <p className="start-note" role="status">{uploadHint}</p> : null}
 
         <div className="start-row resume-archive-actions">
+          <button
+            type="button"
+            className="app-btn primary"
+            disabled={buildingLocally || uploading}
+            onClick={() => setPasteOpen((open) => !open)}
+          >
+            {pasteOpen ? "收起粘贴框" : "粘贴简历文字建档"}
+          </button>
+          <button
+            type="button"
+            className="app-btn"
+            disabled={buildingLocally || uploading || Boolean(profileId)}
+            onClick={() => void createBlankProfile()}
+          >
+            {buildingLocally ? "处理中…" : "新建空白档案"}
+          </button>
           <Link className="app-btn" href="/missions">进入岗位准备</Link>
           <button
             type="button"
@@ -299,8 +429,62 @@ export default function ResumesPage() {
           </button>
         </div>
 
+        {pasteOpen ? (
+          <div className="resume-paste-box">
+            <label className="field-label" htmlFor="resume-paste">
+              粘贴简历文字（不调用 AI 模型，按规则切分，可在工作台继续改）
+            </label>
+            <textarea
+              id="resume-paste"
+              className="textarea"
+              rows={10}
+              value={pastedText}
+              disabled={buildingLocally}
+              placeholder="把简历内容整段粘贴进来；支持教育 / 技能 / 实习 / 项目等段落标题。"
+              onChange={(event) => setPastedText(event.target.value)}
+            />
+            <div className="start-row">
+              <button
+                type="button"
+                className="app-btn primary"
+                disabled={buildingLocally || pastedText.trim().length < 10}
+                onClick={() => void buildFromPastedText()}
+              >
+                {buildingLocally ? "建档中…" : "按这段文字建档"}
+              </button>
+              <span className="start-note">
+                {profileId ? "会写入当前档案。" : "会自动新建一个档案。"}
+              </span>
+            </div>
+          </div>
+        ) : null}
+
         <details className="start-recover">
-          <summary>换一个档案 / 用档案 ID 恢复</summary>
+          <summary>换一个档案 / 从本机已有档案恢复</summary>
+          {serverLoading ? (
+            <p className="start-note">正在读取本机档案…</p>
+          ) : serverProfiles.length ? (
+            <ul className="recover-profile-list">
+              {serverProfiles.map((item) => (
+                <li key={item.profile_id}>
+                  <span className="recover-profile-label">{item.label}</span>
+                  <span className="cell-muted">
+                    {item.experience_count} 段经历 · {item.updated_at ? new Date(item.updated_at).toLocaleDateString("zh-CN") : "—"}
+                  </span>
+                  <button
+                    type="button"
+                    className="app-btn"
+                    disabled={recovering}
+                    onClick={() => void switchToProfile(item.profile_id)}
+                  >
+                    切换
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="start-note">本机还没有其它档案；也可以直接粘贴档案 ID。</p>
+          )}
           <label htmlFor="recover-profile-id">档案 ID</label>
           <div className="start-row">
             <input
