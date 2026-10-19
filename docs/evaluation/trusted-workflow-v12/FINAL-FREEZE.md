@@ -208,10 +208,16 @@ career-app.ps1 -Action stop   → [OK] 已停止（其他项目的服务未受�
 
 > 本报告提交后会把 `v1.2.0-rc1` 打在它上面；`git rev-parse HEAD` 即为该提交的完整 SHA。
 > 本轮**未移动 `main`**：合并候选见下节。
+>
+> **后续（2026-10-19 Git 交付整理）**：经用户确认，`main` 已快进到 `903db2f`，
+> 远程 `main` 的**当前树已无真实姓名**；历史级清理**未执行**（属破坏性操作，等用户确认），
+> 仓库维持 Public。方案、影响范围与回滚办法见
+> [`git-history-cleanup-plan.md`](git-history-cleanup-plan.md)。
 
 ### D1. 隐私历史检查（既有 filter-repo 清理是否仍有效）
 
-- **分支 HEAD 的树是干净的**：`git grep '潘佳琪' HEAD` → 0 命中（本轮 `57972e8` 清掉了 9 处）。
+- **分支 HEAD 的树是干净的**：`git grep '<真实姓名>' HEAD` → 0 命中（本轮 `57972e8` 清掉了 9 处；
+  2026-10-19 又补清了本报告自身里的一处引用——用它做 grep 示例反而会把姓名写进公开文件）。
 - **`main` 当前的树不干净**：仍有 9 个文件含真实姓名（`.workbuddy/memory/2026-10-17.md`、
   `apps/api/app/main.py`、3 个前端测试夹具、3 个文档、`apps/api/tests/test_profile_contacts.py`）。
 - **历史提交里也存在**：`daf50ff`、`3e7ca60` 等仍含该姓名。
