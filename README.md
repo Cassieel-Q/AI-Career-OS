@@ -8,6 +8,11 @@
 
 <sub>Next.js 15 · React 18 · TypeScript · FastAPI · SQLAlchemy 2.0 · SQLite · Edge 独立窗口 · OpenAI 兼容模型</sub>
 
+**当前版本：`v1.2.0-rc1`（维护状态）**　本版本已于 2026-10-19 完成工程收尾并冻结代码：
+不再新增功能，只接受必要的缺陷修复。最终交付报告与已知边界见
+[`FINAL-FREEZE.md`](docs/evaluation/trusted-workflow-v12/FINAL-FREEZE.md)、
+[`known-issues.md`](docs/evaluation/trusted-workflow-v12/known-issues.md)。
+
 </div>
 
 ![首页](docs/screenshots/v1.1/01-home.png)
@@ -24,6 +29,7 @@
 - [技术架构](#技术架构)
 - [目录结构](#目录结构)
 - [测试](#测试)
+- [版本与维护状态](#版本与维护状态)
 - [设计原则](#设计原则)
 
 ---
@@ -245,7 +251,40 @@ npm run type-check
 
 # 扩展安全性 E2E
 node apps/web/scripts/e2e-extension-safety.cjs
+
+# 浏览器主流程 E2E（7 条主流程）
+node docs/evaluation/trusted-workflow-v12/browser/e2e-trusted-workflow.cjs
 ```
+
+`v1.2.0-rc1` 的真实执行结果（2026-10-19，全部跑在隔离数据集上，不碰用户真实数据）：
+
+| 项目 | 结果 |
+|---|---|
+| 后端 pytest | **1140 passed / 6 failed / 5 skipped**（6 项失败均为能力簇中英文标签的历史断言口径问题，逐条列在 `known-issues.md`，未隐藏） |
+| 前端 vitest | **276 / 276 通过** |
+| TypeScript | `tsc --noEmit` **0 error** |
+| 生产构建 | `next build` **EXIT=0** |
+| 浏览器 E2E | **43 / 43**（7 条主流程，跑在 production 构建上） |
+| 备份 / 恢复 | 105,631 B 导出 → 恢复为新数据集 → 档案 / 岗位 / 投递计数一致 |
+
+明细：[`final-freeze-tests.md`](docs/evaluation/trusted-workflow-v12/final-freeze-tests.md) ·
+[`browser-e2e.md`](docs/evaluation/trusted-workflow-v12/browser-e2e.md)
+
+---
+
+## 版本与维护状态
+
+| 项 | 值 |
+|---|---|
+| 稳定版本候选 | **`v1.2.0-rc1`**（本地标签，未发布公开 Release） |
+| 代码冻结提交 | `c518b5c` |
+| 开发分支 | `feature/trusted-workflow-v12` |
+| 当前状态 | **维护状态**：不再新增功能，只接受必要的缺陷修复 |
+| 已知问题与边界 | [`known-issues.md`](docs/evaluation/trusted-workflow-v12/known-issues.md) |
+| 最终交付报告 | [`FINAL-FREEZE.md`](docs/evaluation/trusted-workflow-v12/FINAL-FREEZE.md) |
+
+未完成的项如实记录在上面两份文档里（真实模型下的效果未验证、人工评分 `UNRATED`、
+BOSS 直聘采集需本人登录、没有真实用户调研），不写成「已支持 / 已验证」。
 
 ---
 
