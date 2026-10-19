@@ -202,7 +202,7 @@ career-app.ps1 -Action stop   → [OK] 已停止（其他项目的服务未受�
 | 冻结提交的父提交 | `684a163`（P1-A / P1-B / 主张分析只标记不替换 / 闸门 A/B 重放） |
 | `main` | `a033b21` |
 | 与 `main` 的关系 | `merge-base(HEAD, main) == a033b21 == main HEAD` → **`main` 是 HEAD 的祖先，合并为快进** |
-| 领先 `main` | 25 个提交（含本报告提交） |
+| 领先 `main` | `57972e8` 时点领先 **24** 个提交；`v1.2.0-rc1` 标签提交在其之上（实时值以 `git rev-list --count main..HEAD` 为准） |
 | 工作区 | 干净 |
 | 是否强推过 | **否**（本轮未强推任何分支，未 force-push `main`） |
 
