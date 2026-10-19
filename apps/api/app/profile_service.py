@@ -273,6 +273,11 @@ def update_draft_profile(db: Session, profile_id: UUID, payload: ProfileUpdate) 
     profile = _get_profile(db, profile_id, for_update=True)
     if profile.status == ProfileStatus.CONFIRMED.value:
         raise HTTPException(status_code=409, detail="Confirmed profiles cannot be edited")
+    from .fact_trust_service import invalidate_changed_attestations, lock_legacy_signatures  # 延迟导入，避免模块循环
+
+    # 先把旧格式核对记录的签名锁定为「改动前」的状态（P1-B）：
+    # 之后标题/组织/起止时间/描述任何一个字段变化都会让签名失配。
+    lock_legacy_signatures(db, profile)
     profile.full_name = payload.full_name.strip() if payload.full_name else None
     profile.phone = payload.phone.strip() if payload.phone else None
     profile.email = payload.email.strip() if payload.email else None
@@ -300,9 +305,7 @@ def update_draft_profile(db: Session, profile_id: UUID, payload: ProfileUpdate) 
         models.Certification,
     )
     profile.updated_at = datetime.now(timezone.utc)
-    # 事实文本变了，旧签名不再对应当前文本 —— 退回 UNREVIEWED，要求重新核对。
-    from .fact_trust_service import invalidate_changed_attestations  # 延迟导入，避免模块循环
-
+    # 事实变了，旧签名不再对应当前事实（含起止时间）—— 退回 UNREVIEWED，要求重新核对。
     invalidate_changed_attestations(db, profile)
     db.commit()
     db.refresh(profile)

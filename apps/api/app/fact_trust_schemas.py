@@ -32,6 +32,8 @@ class FactItem(_StrictModel):
     missing_aspects: list[str] = Field(default_factory=list, max_length=8)
     risk: str = Field(default="LOW", max_length=8)
     note: str | None = Field(default=None, max_length=1_000)
+    #: 受控修正可改字段的当前值（P1-A），前端据此展示旧值并组装修改框。
+    field_values: dict[str, str] = Field(default_factory=dict)
 
 
 class FactListRead(_StrictModel):
@@ -42,11 +44,31 @@ class FactListRead(_StrictModel):
     pending_count: int = 0
 
 
+class FactFieldChange(_StrictModel):
+    """一次受控字段修正的新旧值对照（让用户看到改了什么）。"""
+
+    field: str = Field(min_length=1, max_length=32)
+    old_value: str = Field(default="", max_length=4_000)
+    new_value: str = Field(default="", max_length=4_000)
+
+
+#: 受控修正允许写回源档案的字段（按事实类型）。
+CONTROLLED_FIELDS: dict[str, tuple[str, ...]] = {
+    "experience": ("title", "organization", "dates", "description"),
+    "skill": ("name",),
+}
+
+
 class FactAttestCreate(_StrictModel):
     """一次明确的用户核对动作。
 
     ``status`` 只接受 ``USER_ATTESTED`` / ``REJECTED`` / ``UNREVIEWED``（撤回核对）。
     不接受 ``CONFIRMED`` 之类的旧值——系统状态不能冒充用户核对。
+
+    ``field_updates`` 是受控字段修正（FINAL FREEZE P1-A）：已确认档案不允许整体
+    PUT，但允许通过这里修正单项事实。只开放 CONTROLLED_FIELDS 列出的字段，
+    且必须与 ``apply_to_source=True`` 一起提交——「修正」与「写回」是同一次
+    用户确认动作。
     """
 
     fact_key: str = Field(min_length=1, max_length=200)
@@ -54,6 +76,7 @@ class FactAttestCreate(_StrictModel):
     fact_text: str | None = Field(default=None, max_length=4_000)
     note: str | None = Field(default=None, max_length=1_000)
     apply_to_source: bool = False
+    field_updates: dict[str, str] | None = Field(default=None)
 
 
 class FactAttestRead(_StrictModel):
@@ -64,4 +87,6 @@ class FactAttestRead(_StrictModel):
     source_kind: str
     verified_at: datetime | None
     applied_to_source: bool
+    applied_fields: list[str] = Field(default_factory=list)
+    field_changes: list[FactFieldChange] = Field(default_factory=list)
     note: str | None = None

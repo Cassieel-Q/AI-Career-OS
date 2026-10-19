@@ -1359,6 +1359,9 @@ class FactAttestation(Base):
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="UNREVIEWED", server_default="UNREVIEWED")
     verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     verified_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # 内部签名（覆盖标题/组织/起止时间/描述），与页面展示用的 fact_text 分离（FINAL FREEZE P1-B）。
+    # NULL 表示旧记录：按「展示文本仍一致」判定有效，判定时补写当前签名（保守迁移）。
+    signature_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())

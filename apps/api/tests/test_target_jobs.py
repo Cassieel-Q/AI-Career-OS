@@ -94,11 +94,39 @@ def test_claim_analysis_rejects_unknown_profile_evidence_reference(db_session, p
     assert db_session.query(models.ResumeClaim).count() == 0
 
 
-def test_claim_analysis_fingerprint_requires_regeneration_after_profile_change(db_session, persisted_profile):
+def test_claim_analysis_is_marked_stale_after_profile_change(db_session, persisted_profile):
+    """改了事实 → 旧主张分析必须被**标记**为过期（只标记不替换）。
+
+    2026-10-19：此前这条断言「必须 409 拒绝读取」，而实现走的是 soft-heal——
+    发现指纹不一致后**刷新指纹**再照常返回，等于把旧分析伪装成新鲜结果，
+    与本版本「只标记不替换」的约定冲突。现在改为：不静默刷新，返回
+    ``stale=True`` 与原因，由用户决定「重新分析 / 继续查看历史结果」。
+    """
     persisted_profile.status = "CONFIRMED"
     db_session.commit()
     target_job = create_target_job(db_session, persisted_profile.id, TargetJobCreate(raw_text="Build an AI product."))
     generate_claim_analysis(db_session, target_job.id, provider=FakeClaimProvider(claim_payload(persisted_profile.skills[0].id)))
+    original_fingerprint = db_session.query(models.ResumeClaim).first().fingerprint
+
+    persisted_profile.skills[0].name = "Changed skill"
+    db_session.commit()
+
+    read = get_claim_analysis(db_session, target_job.id)
+    assert read.stale is True
+    assert read.stale_reasons
+    # 历史结果仍在（可继续查看），但不得被刷新成「新鲜」
+    assert read.claims
+    assert db_session.query(models.ResumeClaim).first().fingerprint == original_fingerprint
+
+
+def test_claim_analysis_empty_claim_still_blocks_after_profile_change(db_session, persisted_profile):
+    """对照项：主张文本为空时无法继续，必须要求重新生成。"""
+    persisted_profile.status = "CONFIRMED"
+    db_session.commit()
+    target_job = create_target_job(db_session, persisted_profile.id, TargetJobCreate(raw_text="Build an AI product."))
+    generate_claim_analysis(db_session, target_job.id, provider=FakeClaimProvider(claim_payload(persisted_profile.skills[0].id)))
+    for row in db_session.query(models.ResumeClaim).all():
+        row.claim = ""
     persisted_profile.skills[0].name = "Changed skill"
     db_session.commit()
 

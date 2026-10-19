@@ -187,8 +187,9 @@ def test_alembic_graph_has_single_latest_head_and_preserves_prior_chain() -> Non
         "027_application_binding": "026_webform_and_ingest",
         "028_trusted_facts": "027_application_binding",
         "029_delivery_snapshots": "028_trusted_facts",
+        "030_fact_signature": "029_delivery_snapshots",
     }
-    assert script.get_heads() == ["029_delivery_snapshots"]
+    assert script.get_heads() == ["030_fact_signature"]
     revisions = {revision.revision: revision.down_revision for revision in script.walk_revisions()}
     assert revisions == expected_down_revisions
 

@@ -318,3 +318,40 @@ def test_evaluate_answer_keeps_answer_grounded_in_candidate_own_words() -> None:
     assert evaluation.reference_answer == reference
     assert evaluation.reference_answer_detail is not None
     assert evaluation.reference_answer_detail.grounded is True
+
+
+# ---------------------------------------------------------------------------
+# 闸门检测边界（FINAL FREEZE · 任务二 A/B 重放暴露的真实口径问题）
+# ---------------------------------------------------------------------------
+
+
+def test_gate_catches_unsupported_numbers_but_not_vague_action_claims() -> None:
+    """闸门的确能做到什么、做不到什么（不要拿它宣称事实错误率为零）。
+
+    确定性筛查靠三件事：证据中不存在的数量值、高风险动作/结果词、句子级覆盖率。
+    它能稳稳拦下「凭空的数字」，但**拦不住「没有数字、没有高风险词、只是前提
+    不成立」的动作类主张**——这类句子与证据的二元组覆盖率仍在阈值之上。
+
+    因此：这类主张目前只能靠模型自审 ``grounded`` 与用户核对两道关，
+    不能宣称「系统不会编造」。
+    """
+    context = "候选人做过校园二手平台的需求梳理与原型，没有物流、仓储或婚庆相册相关经历。"
+
+    numbered = _evaluate(
+        answer="我做过校园二手平台。",
+        context=context,
+        reference="我访谈了 50 位创作者，并据此完成了内容分析。",
+        detail=_grounded_detail("我访谈了 50 位创作者，并据此完成了内容分析。"),
+    )
+    assert numbered.reference_answer_detail is None or numbered.reference_answer_detail.grounded is False
+
+    vague = _evaluate(
+        answer="我做过校园二手平台。",
+        context=context,
+        reference="我做了一个婚礼相册检索产品，并且已经交付给了客户。",
+        detail=_grounded_detail("我做了一个婚礼相册检索产品，并且已经交付给了客户。"),
+    )
+    detail = vague.reference_answer_detail
+    # 如实记录现状：这类主张当前**未必**被确定性筛查拦下（不写死为「必然放行」，
+    # 因为覆盖率阈值一旦调整，结论可能翻转；这里只断言它属于「无法保证拦下」）。
+    assert detail is None or isinstance(detail.grounded, bool)

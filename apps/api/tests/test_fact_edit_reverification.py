@@ -84,9 +84,9 @@ def _row(db: Session, profile_id, fact_key: str) -> models.FactAttestation:
 def _payload(profile: models.UserProfile, *, description_override: str | None = None) -> ProfileUpdate:
     """按 id 回写（带 id 才会复用同一行，事实键才稳定）。
 
-    改的是 ``description``：事实签名比对的文本目前由「标题 / 组织 / 描述」组成
-    （``fact_trust_service._iter_facts``），时间不在其中——这点作为残留风险记在
-    known-issues.md，本轮不扩大改动面。
+    2026-10-19 起起止时间也进入签名（P1-B：``signature_text`` 内部签名覆盖
+    标题 / 组织 / 时间 / 描述）；时间维度的用例见
+    ``test_controlled_fact_correction.py``，本文件保持以描述文本为主。
     """
     return ProfileUpdate(
         full_name="测试同学",

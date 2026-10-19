@@ -1,0 +1,593 @@
+{
+  "created_at": "2026-10-19T03:10:34.125860+00:00",
+  "provider_called": false,
+  "real_model_runs": 0,
+  "estimated_cost_cny": 0,
+  "method": "重放既有固定输入；A=原始输出不经过闸门，B=同一输出经过产品闸门",
+  "caveats": [
+    "A 侧原始输出为确定性重放语料（按 fixture 标签构造），不是真实模型输出",
+    "interview 列的『含无依据主张』与 fixture 标签一致，不是独立测量",
+    "rewrite 列的文本与标签均来自既有固定语料，可用于观察误伤",
+    "未检出编造不代表系统不会编造；人工维度仍为 UNRATED"
+  ],
+  "interview": {
+    "summary": {
+      "total": 15,
+      "labeled_unsupported": 5,
+      "gate_blocked": 1,
+      "false_block_on_grounded": 0,
+      "missed_by_gate": 4
+    },
+    "cases": [
+      {
+        "question_id": "syn-interview-001-q1",
+        "question": "How did you design the LLM evaluation set for Acme-like AI PM work?",
+        "labeled_fact_error": false,
+        "labeled_resume_grounded": true,
+        "a_raw_output": "我做过这件事：LLM evaluation, experiment design, RAG, SQL literacy, product metrics, PRD writing, cross-functional leadership",
+        "a_ungrounded_numbers": [],
+        "a_has_unsupported_claim": false,
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_output_is_degraded": false,
+        "b_screening": {
+          "supported": true,
+          "coverage": 0.928,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "question_id": "syn-interview-001-q2",
+        "question": "Tell me about a time you interviewed 50 creators for content analysis.",
+        "labeled_fact_error": true,
+        "labeled_resume_grounded": false,
+        "a_raw_output": "我我 interviewed 50 creators for content analysis。",
+        "a_ungrounded_numbers": [
+          50
+        ],
+        "a_has_unsupported_claim": true,
+        "b_blocked": true,
+        "b_blocked_reason": "陈述中出现证据里没有的数量值：[50]。 参考回答出现了证据里没有的数字：['50']。",
+        "b_output_is_degraded": true,
+        "b_screening": {
+          "supported": false,
+          "coverage": 0.694,
+          "reasons": [
+            "陈述中出现证据里没有的数量值：[50]。"
+          ],
+          "unsupported_sentences": [
+            "我我 interviewed 50 creators for content analysis。"
+          ],
+          "missing_numbers": [
+            50
+          ]
+        }
+      },
+      {
+        "question_id": "syn-interview-001-q3",
+        "question": "How would you partner with engineering on RAG quality metrics?",
+        "labeled_fact_error": false,
+        "labeled_resume_grounded": true,
+        "a_raw_output": "我做过这件事：Partnered with two engineers on RAG quality metrics for an internal demo.",
+        "a_ungrounded_numbers": [],
+        "a_has_unsupported_claim": false,
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_output_is_degraded": false,
+        "b_screening": {
+          "supported": true,
+          "coverage": 0.9,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "question_id": "syn-interview-002-q1",
+        "question": "Describe an Agent workflow you shipped and how you measured effect.",
+        "labeled_fact_error": false,
+        "labeled_resume_grounded": true,
+        "a_raw_output": "我做过这件事：Shipped an internal Agent workflow builder used by 40 ops specialists; cut ticket handling time 18%.",
+        "a_ungrounded_numbers": [],
+        "a_has_unsupported_claim": false,
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_output_is_degraded": false,
+        "b_screening": {
+          "supported": true,
+          "coverage": 0.898,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "question_id": "syn-interview-002-q2",
+        "question": "How do you design sandbox experiments for enterprise agents?",
+        "labeled_fact_error": false,
+        "labeled_resume_grounded": true,
+        "a_raw_output": "我做过这件事：Designed prompt templates, human-in-the-loop review, and weekly quality dashboards with engineering.",
+        "a_ungrounded_numbers": [],
+        "a_has_unsupported_claim": false,
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_output_is_degraded": false,
+        "b_screening": {
+          "supported": true,
+          "coverage": 0.92,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "question_id": "syn-interview-002-q3",
+        "question": "Walk through a courier logistics optimization you led at Baidu.",
+        "labeled_fact_error": true,
+        "labeled_resume_grounded": false,
+        "a_raw_output": "我a courier logistics optimization 我 led at Baidu。",
+        "a_ungrounded_numbers": [],
+        "a_has_unsupported_claim": true,
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_output_is_degraded": false,
+        "b_screening": {
+          "supported": true,
+          "coverage": 0.73,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "question_id": "syn-interview-003-q1",
+        "question": "How did you build Agentic Evals for coding agents?",
+        "labeled_fact_error": false,
+        "labeled_resume_grounded": true,
+        "a_raw_output": "我做过这件事：Built Agentic Evals covering task success, latency, and crash recovery for an IDE coding agent.",
+        "a_ungrounded_numbers": [],
+        "a_has_unsupported_claim": false,
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_output_is_degraded": false,
+        "b_screening": {
+          "supported": true,
+          "coverage": 0.913,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "question_id": "syn-interview-003-q2",
+        "question": "What readiness criteria do you use before releasing an agent model?",
+        "labeled_fact_error": false,
+        "labeled_resume_grounded": true,
+        "a_raw_output": "我做过这件事：Daily user of Cursor and Copilot; wrote readiness criteria before model releases.",
+        "a_ungrounded_numbers": [],
+        "a_has_unsupported_claim": false,
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_output_is_degraded": false,
+        "b_screening": {
+          "supported": true,
+          "coverage": 0.806,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "question_id": "syn-interview-003-q3",
+        "question": "Explain how you optimized supermarket POS conversion with LLMs.",
+        "labeled_fact_error": true,
+        "labeled_resume_grounded": false,
+        "a_raw_output": "我我 optimized supermarket POS conversion with LLMs。",
+        "a_ungrounded_numbers": [],
+        "a_has_unsupported_claim": true,
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_output_is_degraded": false,
+        "b_screening": {
+          "supported": true,
+          "coverage": 0.575,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "question_id": "syn-interview-004-q1",
+        "question": "How did you define safety refusal for in-car voice?",
+        "labeled_fact_error": false,
+        "labeled_resume_grounded": true,
+        "a_raw_output": "我做过这件事：Defined car voice scenes, safety refusal policy, and multi-turn dialog metrics with cockpit software.",
+        "a_ungrounded_numbers": [],
+        "a_has_unsupported_claim": false,
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_output_is_degraded": false,
+        "b_screening": {
+          "supported": true,
+          "coverage": 0.92,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "question_id": "syn-interview-004-q2",
+        "question": "How do you balance latency and wake-word accuracy with vendors?",
+        "labeled_fact_error": false,
+        "labeled_resume_grounded": true,
+        "a_raw_output": "我做过这件事：Partnered with cloud LLM vendors on latency and wake-word tradeoffs.",
+        "a_ungrounded_numbers": [],
+        "a_has_unsupported_claim": false,
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_output_is_degraded": false,
+        "b_screening": {
+          "supported": true,
+          "coverage": 0.897,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "question_id": "syn-interview-004-q3",
+        "question": "Describe library shelving automation you productized.",
+        "labeled_fact_error": true,
+        "labeled_resume_grounded": false,
+        "a_raw_output": "我library shelving automation 我 productized。",
+        "a_ungrounded_numbers": [],
+        "a_has_unsupported_claim": true,
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_output_is_degraded": false,
+        "b_screening": {
+          "supported": true,
+          "coverage": 0.778,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "question_id": "syn-interview-005-q1",
+        "question": "How did you set acceptance metrics for manufacturing CV QA?",
+        "labeled_fact_error": false,
+        "labeled_resume_grounded": true,
+        "a_raw_output": "我做过这件事：Productized computer-vision solutions for manufacturing QA; defined acceptance metrics with customers.",
+        "a_ungrounded_numbers": [],
+        "a_has_unsupported_claim": false,
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_output_is_degraded": false,
+        "b_screening": {
+          "supported": true,
+          "coverage": 0.882,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "question_id": "syn-interview-005-q2",
+        "question": "How do you run ToB lighthouse customer discovery?",
+        "labeled_fact_error": false,
+        "labeled_resume_grounded": true,
+        "a_raw_output": "我做过这件事：CV products, ToB delivery, customer discovery, RAG permissions, acceptance metrics",
+        "a_ungrounded_numbers": [],
+        "a_has_unsupported_claim": false,
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_output_is_degraded": false,
+        "b_screening": {
+          "supported": true,
+          "coverage": 0.909,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "question_id": "syn-interview-005-q3",
+        "question": "Tell me about wedding photo RAG search product you shipped for SenseTime.",
+        "labeled_fact_error": true,
+        "labeled_resume_grounded": false,
+        "a_raw_output": "我wedding photo RAG search product 我 shipped for SenseTime。",
+        "a_ungrounded_numbers": [],
+        "a_has_unsupported_claim": true,
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_output_is_degraded": false,
+        "b_screening": {
+          "supported": true,
+          "coverage": 0.696,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      }
+    ]
+  },
+  "rewrite": {
+    "summary": {
+      "total": 17,
+      "labeled_unsupported": 1,
+      "gate_blocked": 1,
+      "false_block_on_grounded": 0,
+      "missed_by_gate": 0
+    },
+    "cases": [
+      {
+        "unit_id": "syn-rewrite-001",
+        "labeled_critical_fact_error": false,
+        "a_raw_output": "Built an offline LLM evaluation set with 120 labeled prompts and tracked agreement vs human raters.",
+        "a_ungrounded_numbers": [],
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_screening": {
+          "supported": true,
+          "coverage": 0.468,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "unit_id": "syn-rewrite-002",
+        "labeled_critical_fact_error": true,
+        "a_raw_output": "Interviewed 50 creators about RAG quality and improved conversion by 28%.",
+        "a_ungrounded_numbers": [
+          28,
+          50
+        ],
+        "b_blocked": true,
+        "b_blocked_reason": "陈述中出现证据里没有的数量值：[28, 50]。 参考回答出现了证据里没有的数字：['50', '28%']。",
+        "b_screening": {
+          "supported": false,
+          "coverage": 0.179,
+          "reasons": [
+            "陈述中出现证据里没有的数量值：[28, 50]。"
+          ],
+          "unsupported_sentences": [
+            "Interviewed 50 creators about RAG quality and improved conversion by 28%."
+          ],
+          "missing_numbers": [
+            28,
+            50
+          ]
+        }
+      },
+      {
+        "unit_id": "syn-rewrite-003",
+        "labeled_critical_fact_error": false,
+        "a_raw_output": "Shipped Agent workflow builder used by 40 ops specialists",
+        "a_ungrounded_numbers": [],
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_screening": {
+          "supported": true,
+          "coverage": 1.0,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "unit_id": "syn-rewrite-004",
+        "labeled_critical_fact_error": false,
+        "a_raw_output": "Delivered meals across three districts",
+        "a_ungrounded_numbers": [],
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_screening": {
+          "supported": true,
+          "coverage": 1.0,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "unit_id": "syn-rewrite-005",
+        "labeled_critical_fact_error": false,
+        "a_raw_output": "Owned search ranking requirements; NDCG with ML team",
+        "a_ungrounded_numbers": [],
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_screening": {
+          "supported": true,
+          "coverage": 1.0,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "unit_id": "syn-rewrite-006",
+        "labeled_critical_fact_error": false,
+        "a_raw_output": "Prepared drinks and managed inventory",
+        "a_ungrounded_numbers": [],
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_screening": {
+          "supported": true,
+          "coverage": 1.0,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "unit_id": "syn-rewrite-007",
+        "labeled_critical_fact_error": false,
+        "a_raw_output": "Built Agentic Evals for IDE coding agent",
+        "a_ungrounded_numbers": [],
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_screening": {
+          "supported": true,
+          "coverage": 1.0,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "unit_id": "syn-rewrite-008",
+        "labeled_critical_fact_error": false,
+        "a_raw_output": "Weekend cashier shifts",
+        "a_ungrounded_numbers": [],
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_screening": {
+          "supported": true,
+          "coverage": 1.0,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "unit_id": "syn-rewrite-009",
+        "labeled_critical_fact_error": false,
+        "a_raw_output": "Owned developer docs and quota UX for LLM API",
+        "a_ungrounded_numbers": [],
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_screening": {
+          "supported": true,
+          "coverage": 1.0,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "unit_id": "syn-rewrite-010",
+        "labeled_critical_fact_error": false,
+        "a_raw_output": "Defined car voice scenes and safety refusal policy",
+        "a_ungrounded_numbers": [],
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_screening": {
+          "supported": true,
+          "coverage": 1.0,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "unit_id": "syn-rewrite-011",
+        "labeled_critical_fact_error": false,
+        "a_raw_output": "Shipped on-device assistant features",
+        "a_ungrounded_numbers": [],
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_screening": {
+          "supported": true,
+          "coverage": 1.0,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "unit_id": "syn-rewrite-012",
+        "labeled_critical_fact_error": false,
+        "a_raw_output": "Productized CV solutions for manufacturing QA",
+        "a_ungrounded_numbers": [],
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_screening": {
+          "supported": true,
+          "coverage": 1.0,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "unit_id": "syn-rewrite-013",
+        "labeled_critical_fact_error": false,
+        "a_raw_output": "Shipped enterprise knowledge QA with permissions",
+        "a_ungrounded_numbers": [],
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_screening": {
+          "supported": true,
+          "coverage": 1.0,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "unit_id": "syn-rewrite-014",
+        "labeled_critical_fact_error": false,
+        "a_raw_output": "Prototyped image+text generation demo",
+        "a_ungrounded_numbers": [],
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_screening": {
+          "supported": true,
+          "coverage": 1.0,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "unit_id": "syn-rewrite-015",
+        "labeled_critical_fact_error": false,
+        "a_raw_output": "Built offline LLM judge set with 120 labeled prompts",
+        "a_ungrounded_numbers": [],
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_screening": {
+          "supported": true,
+          "coverage": 1.0,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "unit_id": "syn-rewrite-016",
+        "labeled_critical_fact_error": false,
+        "a_raw_output": "Launched template marketplace; measured creator retention",
+        "a_ungrounded_numbers": [],
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_screening": {
+          "supported": true,
+          "coverage": 1.0,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      },
+      {
+        "unit_id": "syn-rewrite-017",
+        "labeled_critical_fact_error": false,
+        "a_raw_output": "Example galleries for LLM API product",
+        "a_ungrounded_numbers": [],
+        "b_blocked": false,
+        "b_blocked_reason": null,
+        "b_screening": {
+          "supported": true,
+          "coverage": 1.0,
+          "reasons": [],
+          "unsupported_sentences": [],
+          "missing_numbers": []
+        }
+      }
+    ]
+  }
+}

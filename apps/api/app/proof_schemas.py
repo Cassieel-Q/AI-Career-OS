@@ -168,6 +168,18 @@ class ClaimAnalysisRead(_StrictModel):
     profile_id: UUID
     fingerprint: str
     claims: list[ResumeClaimRead]
+    # 事实改了之后「只标记不替换」：不静默重算，也不把旧分析伪装成新鲜结果。
+    stale: bool = False
+    stale_reasons: list[str] = Field(default_factory=list, max_length=8)
+
+
+class ClaimAnalysisStaleRead(_StrictModel):
+    """事实变更后的过期提示（与 match_contract.stale_status 的口径一致）。"""
+
+    target_job_id: UUID
+    stale: bool
+    reasons: list[str] = Field(default_factory=list, max_length=8)
+    analyzed_at: datetime | None = None
 
 
 class InterviewSessionCreate(_StrictModel):

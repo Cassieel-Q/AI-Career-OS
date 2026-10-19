@@ -319,10 +319,23 @@ def _claim_provider_error(exc: Exception) -> HTTPException:
     return _http(502, "主张分析失败，请重试")
 
 
-def _analysis_read(target_job: models.TargetJob, claims: list[models.ResumeClaim]) -> ClaimAnalysisRead:
+def _analysis_read(
+    target_job: models.TargetJob,
+    claims: list[models.ResumeClaim],
+    *,
+    stale: bool = False,
+    stale_reasons: list[str] | None = None,
+) -> ClaimAnalysisRead:
     fingerprint = claims[0].fingerprint if claims else ""
     analysis_profile_id = claims[0].profile_id if claims else target_job.profile_id
-    return ClaimAnalysisRead(target_job_id=target_job.id, profile_id=analysis_profile_id, fingerprint=fingerprint, claims=[_claim_read(row) for row in claims])
+    return ClaimAnalysisRead(
+        target_job_id=target_job.id,
+        profile_id=analysis_profile_id,
+        fingerprint=fingerprint,
+        claims=[_claim_read(row) for row in claims],
+        stale=stale,
+        stale_reasons=list(stale_reasons or []),
+    )
 
 
 def get_claim_analysis(db: Session, target_job_id: UUID) -> ClaimAnalysisRead:
@@ -337,20 +350,16 @@ def get_claim_analysis(db: Session, target_job_id: UUID) -> ClaimAnalysisRead:
     profile = _profile(db, analysis_profile_id)
     fingerprint = claim_fingerprint(profile, target_job, db.scalars(select(models.ProofArtifact).where(models.ProofArtifact.profile_id == profile.id)).all())
     if any(row.fingerprint != fingerprint for row in claims):
-        # Soft-heal: usable claim text can continue proof/interview after stamp refresh.
+        # 事实改了 → 只标记，不替换：既不静默重算，也不刷新指纹把旧结果伪装成新鲜结果
+        # （与 match_contract.stale_status「只标记不替换」同一口径）。
         if any(not (row.claim or "").strip() for row in claims):
             raise _http(409, "主张分析已过期，请重新生成后再继续")
-        for row in claims:
-            if row.fingerprint != fingerprint:
-                row.fingerprint = fingerprint
-                row.updated_at = datetime.now(timezone.utc)
-        try:
-            db.commit()
-            for row in claims:
-                db.refresh(row)
-        except SQLAlchemyError as exc:
-            db.rollback()
-            raise _http(409, "主张分析已过期，请重新生成后再继续") from exc
+        return _analysis_read(
+            target_job,
+            claims,
+            stale=True,
+            stale_reasons=["简历事实已经修改，这份主张分析基于旧版事实；可重新生成，或继续查看历史结果。"],
+        )
     return _analysis_read(target_job, claims)
 
 
