@@ -69,6 +69,19 @@
 - 面试轮次的评分写在**被回答的那一轮**上；最后一轮常是系统补的追问（`evaluation` 为空）。
 - 最新全量基线：后端 1118 passed / 7 failed / 5 skipped；前端 276/0。
 
+## 可信求职 v1.2（FINAL FREEZE，2026-10-19）
+
+- **受控字段修正**：已确认档案整体 `PUT` 仍 409；改单项走 `POST /profiles/{id}/facts/attest`
+  带 `apply_to_source=true` + `field_updates`（白名单：经历 title/organization/dates/description、技能 name）。
+- **事实签名**：`FactAttestation.signature_text` 覆盖标题/组织/**起止时间**/描述，与展示用的
+  `fact_text` 分离；`lock_legacy_signatures()` 必须在改动前调用（保守迁移，不批量升级）。
+- **分析过期只标记不替换**：`get_claim_analysis` 返回 `stale=True` + 原因，**不要**静默刷新指纹。
+- **确认投递版前必须逐条接受改写要点**，否则 409「还没有任何被接受的要点」（防空白简历的真实闸门）；
+  自动化要跑 `PATCH /api/v1/target-resume-bullets/{id}`（`status=ACCEPTED` + `fact_confirmed`）。
+- **「简历」页的当前档案读 localStorage**（`ai-career-os-dogfood-profile-id`），**不是** URL 参数。
+- 当前稳定版本候选标签：`v1.2.0-rc1`（本地，未推送）。
+- **发布阻塞**：`main` 的树与历史提交仍含真实姓名，历史级 filter-repo 清理完成前不要公开仓库。
+
 ## 测试隔离（踩过真事故，务必遵守）
 
 - **任何触碰数据集的测试必须隔离 `AI_CAREER_DATA_DIR`**（monkeypatch 到 tmp_path）。
