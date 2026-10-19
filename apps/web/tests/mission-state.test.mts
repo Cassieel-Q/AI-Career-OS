@@ -816,13 +816,13 @@ test("boundResumeSourceSummary shows name/source without UUID", () => {
     resume_source: {
       mode: "upload",
       isolation: "mission_local",
-      filename: "潘佳琪-简历.pdf",
+      filename: "示例用户-简历.pdf",
       bound_profile_id: "942d35b3-835f-44e9-82b0-193d3ca9d192",
     },
   });
   assert.ok(upload);
   assert.match(upload!.line, /上传 PDF/);
-  assert.match(upload!.line, /潘佳琪-简历/);
+  assert.match(upload!.line, /示例用户-简历/);
   assert.match(upload!.line, /仅本岗位/);
   assert.doesNotMatch(upload!.line, /942d35b3/);
 

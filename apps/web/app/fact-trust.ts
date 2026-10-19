@@ -18,6 +18,8 @@ export type FactItem = {
   missing_aspects: string[];
   risk: string;
   note: string | null;
+  /** 受控修正可改字段的当前值（P1-A）。 */
+  field_values?: Record<string, string>;
 };
 
 export type FactList = {
@@ -28,6 +30,22 @@ export type FactList = {
   pending_count: number;
 };
 
+/** 受控字段修正允许改的字段（与后端 CONTROLLED_FIELDS 一致）。 */
+export const CONTROLLED_FACT_FIELDS = ["title", "organization", "dates", "description"] as const;
+
+export const FACT_FIELD_LABEL: Record<string, string> = {
+  title: "经历标题",
+  organization: "所属组织 / 公司",
+  dates: "起止时间",
+  description: "经历描述",
+};
+
+export type FactFieldChange = {
+  field: string;
+  old_value: string;
+  new_value: string;
+};
+
 export type FactAttestResult = {
   fact_key: string;
   status: FactVerificationStatus;
@@ -36,6 +54,8 @@ export type FactAttestResult = {
   source_kind: string;
   verified_at: string | null;
   applied_to_source: boolean;
+  applied_fields: string[];
+  field_changes: FactFieldChange[];
   note: string | null;
 };
 
@@ -63,6 +83,11 @@ export const attestFact = (
     fact_text?: string;
     note?: string;
     apply_to_source?: boolean;
+    /**
+     * 受控字段修正（FINAL FREEZE P1-A）：只开放 title/organization/dates/description，
+     * 必须与 apply_to_source=true 一起提交——修正与写回是同一次用户确认动作。
+     */
+    field_updates?: Partial<Record<string, string>>;
   },
   send: Requester = fetch,
 ) =>

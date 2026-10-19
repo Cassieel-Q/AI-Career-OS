@@ -65,7 +65,7 @@ test("export resolves bound profile and keeps campus work separate from projects
       { source_experience_id: "campus", status: "ACCEPTED", suggested_text: "组织学生会活动" },
       { source_experience_id: "project", status: "ACCEPTED", suggested_text: "完成评测项目" },
     ] },
-    profile: { full_name: "潘佳琪", phone: "138", email: "p@example.com", experiences: [
+    profile: { full_name: "示例用户", phone: "138", email: "p@example.com", experiences: [
       { id: "campus", title: "学生会副部长", experience_type: "CAMPUS" },
       { id: "project", title: "评测项目", experience_type: "PROJECT" },
     ], skills: ["MS Excel", "Excel", "python"] },
@@ -73,7 +73,7 @@ test("export resolves bound profile and keeps campus work separate from projects
   assert.match(html, /校园经历/);
   assert.match(html, /项目/);
   assert.doesNotMatch(html, /ENTRY_LEVEL/);
-  assert.equal(buildExportFileName({ name: "潘佳琪", company: "百度", role: "产品经理", extension: "pdf" }), "潘佳琪-百度-产品经理.pdf");
+  assert.equal(buildExportFileName({ name: "示例用户", company: "百度", role: "产品经理", extension: "pdf" }), "示例用户-百度-产品经理.pdf");
 });
 
 test("export keeps synthetic project drafts out until facts are confirmed", () => {

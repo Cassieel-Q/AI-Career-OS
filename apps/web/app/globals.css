@@ -3674,6 +3674,24 @@ pre.batch-draft-excerpt { white-space: pre-wrap; word-break: break-word; backgro
 }
 .fact-impact-list small { display: block; color: var(--text-secondary); font-size: 0.75rem; }
 
+.fact-field-edit {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+  border: 1px solid var(--border-subtle, rgba(120, 130, 150, 0.24));
+  border-radius: 10px;
+}
+
+.fact-field-row { display: grid; gap: 0.3rem; }
+
+.fact-field-diff {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+
 .reference-answer {
   display: flex;
   flex-direction: column;

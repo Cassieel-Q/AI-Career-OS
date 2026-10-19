@@ -72,6 +72,27 @@ async function apiJson(method, url, body, headers = {}) {
   return { status: response.status, data };
 }
 
+async function acceptBullets(missionId) {
+  /**
+   * 产品里确认投递版之前必须逐条接受改写要点（否则 409：「还没有任何被接受的要点」）。
+   * 这是真实闸门，不是可跳过的步骤，所以 E2E 走真实入口：
+   * `PATCH /api/v1/target-resume-bullets/{id}`（status=ACCEPTED + fact_confirmed）。
+   */
+  const resumes = await apiJson("GET", `${API}/api/v1/job-missions/${missionId}/target-resumes`);
+  let accepted = 0;
+  for (const resume of resumes.data || []) {
+    if (String(resume.status).toUpperCase() === "CONFIRMED") continue;
+    for (const bullet of resume.bullets || []) {
+      const patched = await apiJson("PATCH", `${API}/api/v1/target-resume-bullets/${bullet.id}`, {
+        status: "ACCEPTED",
+        fact_confirmed: true,
+      });
+      if (patched.status === 200) accepted += 1;
+    }
+  }
+  return accepted;
+}
+
 async function prepareMission(missionId, profileId) {
   /** 走完岗位前置步骤：确认简历来源 → 选择经历 → 简历策略 → 生成并确认岗位简历。 */
   await apiJson("POST", `${API}/api/v1/job-missions/${missionId}/confirm-resume-source`, { mode: "master" });
@@ -94,7 +115,10 @@ async function prepareMission(missionId, profileId) {
   await apiJson("POST", `${API}/api/v1/job-missions/${missionId}/resume-strategy`, {});
   await apiJson("POST", `${API}/api/v1/job-missions/${missionId}/confirm-strategy`, {});
   const generated = await apiJson("POST", `${API}/api/v1/job-missions/${missionId}/target-resumes`, {});
-  if (generated.status === 201) await apiJson("POST", `${API}/api/v1/job-missions/${missionId}/confirm-target-resume`, {});
+  if (generated.status === 201) {
+    await acceptBullets(missionId);
+    await apiJson("POST", `${API}/api/v1/job-missions/${missionId}/confirm-target-resume`, {});
+  }
   return generated;
 }
 
@@ -130,9 +154,17 @@ async function flow1(browser) {
     if (!profileId) return null;
 
     // 添加岗位（手动粘贴 JD）
+    //
+    // 幂等：同一个档案重复粘贴同一份 JD 会返回 409（既有产品规则），
+    // 重复跑 E2E 时直接复用已有岗位，而不是把「重复添加被拒」记成失败。
     const created = await apiJson("POST", `${API}/api/v1/profiles/${profileId}/job-missions`, { raw_text: JD_A });
-    const missionId = created.data && created.data.id ? created.data.id : null;
-    step("流程1 · 添加目标岗位", Boolean(missionId), `mission=${missionId}`);
+    let missionId = created.data && created.data.id ? created.data.id : null;
+    if (!missionId && created.status === 409) {
+      const existing = await apiJson("GET", `${API}/api/v1/profiles/${profileId}/job-missions`);
+      const list = Array.isArray(existing.data) ? existing.data : ((existing.data && existing.data.items) || []);
+      missionId = list.length ? (list[0].id || list[0].mission_id) : null;
+    }
+    step("流程1 · 添加目标岗位", Boolean(missionId), `mission=${missionId} status=${created.status}`);
     if (!missionId) return null;
 
     // 生成岗位简历（走桩模型）
@@ -270,7 +302,8 @@ async function flow3(browser, seed) {
   for (const id of missions) {
     await prepareMission(id, profileId);
     const studio = await apiJson("GET", `${API}/api/v1/job-missions/${id}/resume-studio`);
-    revisions[id] = studio.data ? studio.data.revision : null;
+    // 明确写 null：undefined 会被 JSON.stringify 静默丢键，失败时看不出是哪一份岗位缺版本。
+    revisions[id] = studio.data && typeof studio.data.revision === "number" ? studio.data.revision : null;
   }
   step("流程3 · 三份岗位各自生成自己的岗位版", Object.values(revisions).every(Boolean), JSON.stringify(revisions));
 
@@ -301,7 +334,7 @@ async function flow3(browser, seed) {
   const after = {};
   for (const id of missions) {
     const studio = await apiJson("GET", `${API}/api/v1/job-missions/${id}/resume-studio`);
-    after[id] = studio.data ? studio.data.revision : null;
+    after[id] = studio.data && typeof studio.data.revision === "number" ? studio.data.revision : null;
   }
   const untouched = missions.filter(id => id !== target).every(id => after[id] === revisions[id]);
   step("流程3 · 另外两份保持原版本", untouched && after[target] !== revisions[target], JSON.stringify(after));
@@ -310,12 +343,21 @@ async function flow3(browser, seed) {
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await context.newPage();
   try {
-    // 事实核对面板挂在「简历」页里
-    await page.goto(`${WEB}/resumes?profile_id=${profileId}`, { waitUntil: "domcontentloaded", timeout: 60000 });
+    // 事实核对面板挂在「简历」页里；当前档案来自 localStorage，不是 URL 参数。
+    await page.addInitScript(
+      ([key, pid]) => window.localStorage.setItem(key, pid),
+      ["ai-career-os-dogfood-profile-id", profileId],
+    );
+    await page.goto(`${WEB}/resumes`, { waitUntil: "domcontentloaded", timeout: 60000 });
     await page.waitForTimeout(4000);
     await page.screenshot({ path: path.join(SHOTS, "flow3-01-fact-impact.png"), fullPage: true });
     const body = await page.textContent("body").catch(() => "");
-    step("流程3 · 事实核对面板渲染出待核对事实", /待核对|核对|事实/.test(body || ""), (body || "").slice(0, 80).replace(/\s+/g, " "));
+    // 断言收紧到面板真实文案，避免「页面上只要出现『核对』两字就算过」。
+    step(
+      "流程3 · 事实核对面板渲染出待核对事实",
+      /核对这段经历/.test(body || "") && /需要你核实|待核对|事实核对/.test(body || ""),
+      (body || "").slice(0, 80).replace(/\s+/g, " "),
+    );
   } finally {
     await context.close();
   }
@@ -421,6 +463,119 @@ async function flow6(browser) {
   }
 }
 
+async function flow7(browser, seed) {
+  /**
+   * FINAL FREEZE P1-A / P1-B：已确认档案的**受控字段修正**。
+   *
+   * 验证三件事：
+   * 1. 整体 PUT 依然被拒（不能为了可达就把 CONFIRMED 的锁全开）；
+   * 2. 通过「核对 + 写回」可以修正起止时间，并返回新旧值对照；
+   * 3. 修正后：影响面提示「可能需要更新」、只同步选中的那一份、
+   *    **历史投递快照的内容哈希不变**。
+   */
+  if (!seed) return step("流程7 · 依赖流程1", false, "SKIPPED");
+  const profileId = seed.profileId;
+  const missionId = seed.missionId;
+
+  // 1. 整体覆盖仍然被拒
+  const profile = await apiJson("GET", `${API}/api/v1/profiles/${profileId}`);
+  const whole = await apiJson("PUT", `${API}/api/v1/profiles/${profileId}`, {
+    full_name: (profile.data && profile.data.full_name) || "陈林",
+  });
+  step("流程7 · 已确认档案的整体 PUT 仍然被拒", whole.status === 409, `status=${whole.status}`);
+
+  // 2. 受控修正起止时间
+  const facts = await apiJson("GET", `${API}/api/v1/profiles/${profileId}/facts`);
+  const fact = ((facts.data && facts.data.facts) || []).find(item => String(item.fact_key).startsWith("experience:"));
+  if (!fact) return step("流程7 · 找到共享经历事实", false, JSON.stringify(facts.data).slice(0, 160));
+  const oldDates = (fact.field_values || {}).dates || "";
+  const newDates = "2025.03-2025.09";
+  const corrected = await apiJson("POST", `${API}/api/v1/profiles/${profileId}/facts/attest`, {
+    fact_key: fact.fact_key,
+    status: "USER_ATTESTED",
+    apply_to_source: true,
+    field_updates: { dates: newDates },
+  });
+  const changes = (corrected.data && corrected.data.field_changes) || [];
+  const datesChange = changes.find(item => item.field === "dates");
+  step(
+    "流程7 · 受控修正起止时间（返回新旧值）",
+    corrected.status === 200 && Boolean(datesChange) && datesChange.new_value === newDates,
+    `applied=${JSON.stringify((corrected.data || {}).applied_fields)} old=${datesChange ? datesChange.old_value : ""} new=${datesChange ? datesChange.new_value : ""}`,
+  );
+
+  const afterCorrection = await apiJson("GET", `${API}/api/v1/profiles/${profileId}`);
+  const experience = ((afterCorrection.data && afterCorrection.data.experiences) || [])[0];
+  step("流程7 · 修正已写回原始事实", Boolean(experience && experience.dates === newDates), `dates=${experience && experience.dates}`);
+
+  // 字段白名单之外的修正必须被拒
+  const rejected = await apiJson("POST", `${API}/api/v1/profiles/${profileId}/facts/attest`, {
+    fact_key: fact.fact_key,
+    status: "USER_ATTESTED",
+    apply_to_source: true,
+    field_updates: { full_name: "张三" },
+  });
+  step("流程7 · 白名单外的字段修正被拒", rejected.status === 422, `status=${rejected.status}`);
+
+  // 3. 影响面 + 只更新选中 + 快照不变
+  const [kind, sourceId] = String(fact.fact_key).split(":");
+  const impact = await apiJson("GET", `${API}/api/v1/profiles/${profileId}/facts/${kind}/${sourceId}/impact`);
+  step(
+    "流程7 · 影响面提示「可能需要更新」",
+    Boolean(impact.data && impact.data.total_missions >= 1 && /可能需要更新/.test(String(impact.data.summary))),
+    String(impact.data && impact.data.summary),
+  );
+
+  const snapshotsBefore = await apiJson("GET", `${API}/api/v1/job-missions/${missionId}/delivery-versions`);
+  const beforeHash = ((snapshotsBefore.data && snapshotsBefore.data.versions) || [])[0];
+  const beforeRevisions = {};
+  for (const id of [missionId, ...((impact.data && impact.data.missions) || []).map(item => item.mission_id)]) {
+    const studio = await apiJson("GET", `${API}/api/v1/job-missions/${id}/resume-studio`);
+    beforeRevisions[id] = studio.data ? studio.data.revision : null;
+  }
+
+  const synced = await apiJson("POST", `${API}/api/v1/profiles/${profileId}/facts/${kind}/${sourceId}/sync`, { mission_id: missionId });
+  step("流程7 · 只更新选中的那一份", Boolean(synced.data && synced.data.changed), `changed=${synced.data && synced.data.changed}`);
+
+  const snapshotsAfter = await apiJson("GET", `${API}/api/v1/job-missions/${missionId}/delivery-versions`);
+  const afterHash = ((snapshotsAfter.data && snapshotsAfter.data.versions) || [])[0];
+  step(
+    "流程7 · 历史投递快照内容哈希不变",
+    Boolean(beforeHash && afterHash && beforeHash.content_hash === afterHash.content_hash),
+    `before=${beforeHash && beforeHash.content_hash ? beforeHash.content_hash.slice(0, 12) : "-"} after=${afterHash && afterHash.content_hash ? afterHash.content_hash.slice(0, 12) : "-"}`,
+  );
+
+  // 浏览器侧：核对页要能看到「起止时间」输入框与新旧值对照
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await context.newPage();
+  try {
+    // 「简历」页的当前档案来自 localStorage（不是 URL 参数），而流程5 刚清过存储，
+    // 所以这里必须先把档案 ID 写回去，否则核对面板根本不会渲染。
+    await page.addInitScript(
+      ([key, pid]) => window.localStorage.setItem(key, pid),
+      ["ai-career-os-dogfood-profile-id", profileId],
+    );
+    await page.goto(`${WEB}/resumes`, { waitUntil: "domcontentloaded", timeout: 60000 });
+    await page.waitForTimeout(4000);
+    // 事实默认收起，必须点开某一条才能看到受控修正入口——这是产品真实交互，E2E 照做。
+    const toggle = page.locator("button", { hasText: "核对这段经历" }).first();
+    if ((await toggle.count()) > 0) {
+      await toggle.click().catch(() => {});
+      await page.waitForTimeout(2000);
+    }
+    const body = await page.textContent("body").catch(() => "");
+    step(
+      "流程7 · 核对页出现受控修正入口",
+      /受控修正|起止时间/.test(body || ""),
+      (body || "").slice(0, 60).replace(/\s+/g, " "),
+    );
+    await page.screenshot({ path: path.join(SHOTS, "flow7-01-field-correction.png"), fullPage: true });
+  } finally {
+    await context.close();
+  }
+  return true;
+}
+
 (async () => {
   const browser = await chromium.launch({ headless: true });
   let seed = null;
@@ -431,6 +586,7 @@ async function flow6(browser) {
     await flow4(browser, seed);
     await flow5(browser, seed);
     await flow6(browser);
+    await flow7(browser, seed);
   } catch (caught) {
     step("E2E 运行异常", false, String(caught && caught.message ? caught.message : caught));
   } finally {

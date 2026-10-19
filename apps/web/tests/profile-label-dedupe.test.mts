@@ -32,20 +32,20 @@ function installMemoryStorage() {
 
 test("dedupeProfileOptions keeps first row per profile_id", () => {
   const rows = [
-    { profileId: "a", label: "潘佳琪-简历" },
-    { profileId: "a", label: "潘佳琪-简历-dup" },
+    { profileId: "a", label: "示例用户-简历" },
+    { profileId: "a", label: "示例用户-简历-dup" },
     { profileId: "b", label: "个人简历" },
   ];
   const out = dedupeProfileOptions(rows);
   assert.equal(out.length, 2);
-  assert.equal(out[0]?.label, "潘佳琪-简历");
+  assert.equal(out[0]?.label, "示例用户-简历");
   assert.equal(out[1]?.profileId, "b");
 });
 
 test("formatProfileOptionLabel shows a readable resume name and date without internal flags", () => {
   const text = formatProfileOptionLabel(
     {
-      label: "潘佳琪-简历",
+      label: "示例用户-简历",
       updatedAt: "2026-09-24T09:16:00.000Z",
       origin: "mission_local",
       isMissionLocal: true,
@@ -53,7 +53,7 @@ test("formatProfileOptionLabel shows a readable resume name and date without int
     },
     { profileId: "e0e40271-25ec-4d6a-8219-da206be34512", currentMissionBoundId: "e0e40271-25ec-4d6a-8219-da206be34512" },
   );
-  assert.match(text, /潘佳琪-简历/);
+  assert.match(text, /示例用户-简历/);
   assert.match(text, /岗位专属/);
   assert.doesNotMatch(text, /Master|岗位专属:|未知来源/);
   assert.equal(text.includes("e0e40271"), false);
@@ -62,17 +62,17 @@ test("formatProfileOptionLabel shows a readable resume name and date without int
 test("listProfileLabelOptions dedupes by profile_id and exposes displayLabel", () => {
   const store = installMemoryStorage();
   store.clear();
-  upsertProfileLabel("id-1", "潘佳琪-简历", "resume", {
+  upsertProfileLabel("id-1", "示例用户-简历", "resume", {
     origin: "mission_local",
     isMissionLocal: true,
     isMaster: false,
   });
-  upsertProfileLabel("id-1", "潘佳琪-简历", "resume", {
+  upsertProfileLabel("id-1", "示例用户-简历", "resume", {
     origin: "mission_local",
     isMissionLocal: true,
     isMaster: false,
   });
-  upsertProfileLabel("id-2", "潘佳琪-简历", "resume", {
+  upsertProfileLabel("id-2", "示例用户-简历", "resume", {
     origin: "master",
     isMissionLocal: false,
     isMaster: true,

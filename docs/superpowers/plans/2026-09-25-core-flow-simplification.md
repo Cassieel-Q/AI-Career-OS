@@ -110,6 +110,6 @@
 - Modify: `docs/superpowers/plans/2026-09-25-core-flow-simplification.md`
 
 - [ ] **Step 1:** 强制刷新 `/missions`、`/resume`、`/interview`、`/outcome`，确认主导航无补强入口、简历页无压力测试、优化建议最多 4 条、导出顺序正确。
-- [ ] **Step 2:** 用真实 JD 与 `G:\myself\个人简历2.pdf` 或 `G:\myself\潘佳琪-简历.pdf` 跑一遍；记录 API/页面证据。
+- [ ] **Step 2:** 用真实 JD 与 `G:\myself\个人简历2.pdf` 或 `G:\myself\示例用户-简历.pdf` 跑一遍；记录 API/页面证据。
 - [ ] **Step 3:** 跑 `npm --prefix apps/web run type-check`、`npm --prefix apps/web test`、`python -m pytest apps/api/tests -q`。
 - [ ] **Step 4:** 写 Before/After flow、改动 routes/files、数据链路、Prompt 结构、E2E 结果和未完成项。

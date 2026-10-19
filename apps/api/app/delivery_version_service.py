@@ -143,6 +143,8 @@ def list_delivery_versions(db: Session, mission_id: UUID) -> list[dict]:
             "studio_revision": application.studio_revision,
             "has_snapshot": snapshot is not None,
             "snapshot_id": str(snapshot.id) if snapshot else None,
+            # 正文哈希：用于校验「投出去的那一版」此后没有被改写（只读元数据，不含正文）。
+            "content_hash": snapshot.content_hash if snapshot else None,
             "label": f"{application.applied_at.isoformat() if application.applied_at else '未记录日期'} 投递 · 修订版 v{application.studio_revision or '—'}",
         })
     return versions

@@ -10,7 +10,15 @@
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { attestFact, FACT_STATUS_LABEL, readFacts, type FactItem, type FactList } from "./fact-trust.ts";
+import {
+  attestFact,
+  FACT_FIELD_LABEL,
+  FACT_STATUS_LABEL,
+  readFacts,
+  type FactAttestResult,
+  type FactItem,
+  type FactList,
+} from "./fact-trust.ts";
 import {
   IMPACT_LABEL,
   impactSummary,
@@ -34,6 +42,10 @@ export function FactCheckPanel({ profileId }: { profileId: string }) {
   const [draft, setDraft] = useState("");
   const [note, setNote] = useState("");
   const [syncSource, setSyncSource] = useState(false);
+  /** 受控字段修正：只开放标题/组织/起止时间（P1-A），初始值取自事实当前值。 */
+  const [fieldDraft, setFieldDraft] = useState<Record<string, string>>({});
+  /** 上一次修正的新旧值对照，让用户看得见改了什么。 */
+  const [lastChanges, setLastChanges] = useState<FactAttestResult["field_changes"]>([]);
   const [busyKey, setBusyKey] = useState("");
   /** 这项事实被哪些岗位简历引用（只读影响面；更新必须由用户逐岗位点选）。 */
   const [impact, setImpact] = useState<FactImpact | null>(null);
@@ -74,29 +86,51 @@ export function FactCheckPanel({ profileId }: { profileId: string }) {
   const total = facts.length;
   const attested = data?.attested_count ?? 0;
 
+  /** 字段修正草稿里真正发生变化的部分（空值表示没有要写回的修正）。 */
+  const pendingFieldUpdates = useMemo(() => {
+    const fact = facts.find((item) => item.fact_key === openKey);
+    if (!fact) return {};
+    const updates: Record<string, string> = {};
+    for (const [field, value] of Object.entries(fieldDraft)) {
+      const original = (fact.field_values ?? {})[field] ?? "";
+      if (value.trim() && value.trim() !== original.trim()) updates[field] = value.trim();
+    }
+    return updates;
+  }, [facts, fieldDraft, openKey]);
+
   async function submit(fact: FactItem, status: "USER_ATTESTED" | "REJECTED" | "UNREVIEWED") {
     setBusyKey(fact.fact_key);
     setError("");
     setNotice("");
+    const fieldUpdates = pendingFieldUpdates;
+    const hasFieldUpdates = Object.keys(fieldUpdates).length > 0;
     try {
-      await attestFact(profileId, {
+      const result = await attestFact(profileId, {
         fact_key: fact.fact_key,
         status,
-        fact_text: draft.trim() || undefined,
+        // 有字段修正时由后端按修正后的源记录重算展示文本，不再用编辑框里的旧文本覆盖。
+        fact_text: hasFieldUpdates ? undefined : draft.trim() || undefined,
         note: note.trim() || undefined,
-        apply_to_source: syncSource && status === "USER_ATTESTED" && draft.trim().length > 0,
+        apply_to_source: hasFieldUpdates || (syncSource && status === "USER_ATTESTED" && draft.trim().length > 0),
+        ...(hasFieldUpdates ? { field_updates: fieldUpdates } : {}),
       });
+      setLastChanges(result.field_changes ?? []);
       setNotice(
-        status === "USER_ATTESTED"
-          ? "已记录：你确认这段内容属实。"
-          : status === "REJECTED"
-            ? "已标记为不属实，后续不会进入参考回答。"
-            : "已撤回核对，这段内容回到待核对状态。",
+        hasFieldUpdates
+          ? status === "USER_ATTESTED"
+            ? `已修正 ${result.applied_fields?.length ?? 0} 个字段并确认为属实；岗位简历不会自动改动，可在下方选择要更新的岗位。`
+            : `已修正 ${result.applied_fields?.length ?? 0} 个字段；未确认属实，导出时仍会被拦下。`
+          : status === "USER_ATTESTED"
+            ? "已记录：你确认这段内容属实。"
+            : status === "REJECTED"
+              ? "已标记为不属实，后续不会进入参考回答。"
+              : "已撤回核对，这段内容回到待核对状态。",
       );
       setOpenKey("");
       setDraft("");
       setNote("");
       setSyncSource(false);
+      setFieldDraft({});
       await load();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "保存核对结果失败。");
@@ -110,6 +144,8 @@ export function FactCheckPanel({ profileId }: { profileId: string }) {
     setDraft(fact.original_text);
     setNote(fact.note ?? "");
     setSyncSource(false);
+    setFieldDraft({ ...(fact.field_values ?? {}) });
+    setLastChanges([]);
     setNotice("");
     void loadImpact(fact);
   }
@@ -197,6 +233,58 @@ export function FactCheckPanel({ profileId }: { profileId: string }) {
                     <p>{fact.missing_aspects.length ? fact.missing_aspects.join("、") : "不缺，信息较完整"}</p>
                   </div>
 
+                  {Object.keys(fact.field_values ?? {}).filter((field) => field !== "description").length ? (
+                    <div className="fact-field-edit">
+                      <span className="reference-label">受控修正（改完点「确认属实」才会写回原始简历）</span>
+                      {Object.keys(fact.field_values ?? {})
+                        .filter((field) => field !== "description")
+                        .map((field) => {
+                          const original = (fact.field_values ?? {})[field] ?? "";
+                          const value = fieldDraft[field] ?? original;
+                          const changed = value.trim() !== original.trim();
+                          return (
+                            <div key={field} className="fact-field-row">
+                              <label className="field-label" htmlFor={`fact-field-${fact.fact_key}-${field}`}>
+                                {FACT_FIELD_LABEL[field] ?? field}
+                              </label>
+                              <input
+                                id={`fact-field-${fact.fact_key}-${field}`}
+                                className="start-select"
+                                value={value}
+                                onChange={(event) =>
+                                  setFieldDraft((current) => ({ ...current, [field]: event.target.value }))
+                                }
+                                placeholder={original || "（空）"}
+                              />
+                              {changed ? (
+                                <p className="fact-field-diff">
+                                  原值：{original || "（空）"} → 新值：{value.trim() || "（空）"}
+                                </p>
+                              ) : null}
+                            </div>
+                          );
+                        })}
+                    </div>
+                  ) : null}
+
+                  {lastChanges.length && openKey === fact.fact_key ? (
+                    <div className="fact-field-edit">
+                      <span className="reference-label">上一次修正的新旧值</span>
+                      <ul className="fact-impact-list">
+                        {lastChanges.map((change) => (
+                          <li key={change.field}>
+                            <div>
+                              <strong>{FACT_FIELD_LABEL[change.field] ?? change.field}</strong>
+                              <small>
+                                {change.old_value || "（空）"} → {change.new_value || "（空）"}
+                              </small>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+
                   <label className="field-label" htmlFor={`fact-draft-${fact.fact_key}`}>编辑事实（可选）</label>
                   <textarea
                     id={`fact-draft-${fact.fact_key}`}
@@ -262,7 +350,7 @@ export function FactCheckPanel({ profileId }: { profileId: string }) {
                       disabled={busyKey === fact.fact_key}
                       onClick={() => void submit(fact, "USER_ATTESTED")}
                     >
-                      确认属实
+                      {Object.keys(pendingFieldUpdates).length ? "确认修正并记为属实" : "确认属实"}
                     </button>
                     <button
                       type="button"

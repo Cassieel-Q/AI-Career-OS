@@ -5,17 +5,17 @@ from app.resume_schemas import ResumeExtractionResult
 
 def test_profile_contact_fields_round_trip_from_resume_and_confirmation_edit(db_session):
     profile = create_draft_profile(db_session, ResumeExtractionResult(
-        full_name="潘佳琪",
+        full_name="示例用户",
         phone="13800138000",
         email="pan@example.com",
         city="上海",
         education=[{"institution": "上海大学", "evidence_text": "上海大学"}],
     ))
     read = get_profile(db_session, profile.id)
-    assert (read.full_name, read.phone, read.email, read.city) == ("潘佳琪", "13800138000", "pan@example.com", "上海")
+    assert (read.full_name, read.phone, read.email, read.city) == ("示例用户", "13800138000", "pan@example.com", "上海")
 
     updated = update_draft_profile(db_session, profile.id, ProfileUpdate(
-        full_name="潘佳琪",
+        full_name="示例用户",
         phone="13900139000",
         email="new@example.com",
         city="北京",

@@ -70,6 +70,6 @@
 
 - [ ] Run backend focused/full pytest, frontend tests/type-check/lint, `compileall`, `git diff --check`, and `git status`.
 - [ ] Use `G:\myself\个人简历.pdf` for at least three synthetic live runs and report category/count summaries only.
-- [ ] Use `G:\myself\潘佳琪-简历.pdf` exactly once for redacted category-level live smoke.
+- [ ] Use `G:\myself\示例用户-简历.pdf` exactly once for redacted category-level live smoke.
 - [ ] Run synthetic persistence smoke through DRAFT, GET, harmless edit/save, GET, confirm, GET, and locked-state checks.
 - [ ] Commit implementation and tests as `fix: stabilize resume section routing`, push `feature/resume-profile-normalization`, and verify local/remote SHAs.

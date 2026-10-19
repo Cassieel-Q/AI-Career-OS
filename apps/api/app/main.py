@@ -1423,7 +1423,7 @@ def _guess_name_from_head(source_text: str) -> str | None:
     """Heuristic name guess from the text before phone/email.
 
     PDF text extraction often squeezes the name onto a line with other tokens
-    (e.g. 「潘佳琪 女 25岁」or「潘佳琪 求职意向：产品经理」), so accept both a
+    (e.g. 「示例用户 女 25岁」or「示例用户 求职意向：产品经理」), so accept both a
     standalone 2-4 char Chinese line and the first such token of a line.
     """
     contact_match = re.search(r"1[3-9]\d{9}|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+", source_text)
