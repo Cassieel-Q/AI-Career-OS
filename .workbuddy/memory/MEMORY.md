@@ -79,8 +79,21 @@
 - **确认投递版前必须逐条接受改写要点**，否则 409「还没有任何被接受的要点」（防空白简历的真实闸门）；
   自动化要跑 `PATCH /api/v1/target-resume-bullets/{id}`（`status=ACCEPTED` + `fact_confirmed`）。
 - **「简历」页的当前档案读 localStorage**（`ai-career-os-dogfood-profile-id`），**不是** URL 参数。
-- 当前稳定版本候选标签：`v1.2.0-rc1`（本地，未推送）。
-- **发布阻塞**：`main` 的树与历史提交仍含真实姓名，历史级 filter-repo 清理完成前不要公开仓库。
+- 当前稳定版本候选标签：`v1.2.0-rc1`（已推送到远程，指向代码冻结提交 `c518b5c`；未发公开 Release）。
+
+## Git 交付整理（2026-10-19，只做隐私与 Git）
+
+- 远程 `Cassieel-Q/AI-Career-OS` 为 **Public**，默认分支 `main`；`main` 已快进到 `69dc19e`，
+  **当前树无真实姓名**；`feature/trusted-workflow-v12` 同点。
+- **历史提交里仍有真实姓名（35 个 blob）**，用户决定**暂不执行** filter-repo 重写 + 强推。
+  方案、影响范围、回滚办法见 `docs/evaluation/trusted-workflow-v12/git-history-cleanup-plan.md`。
+- 本地备份：`D:\ai-career-local-final-20261019.bundle`（35 refs，含标签）；
+  更早含隐私历史的 `D:\ai-career-backup-20261017.bundle` **保留不删、绝不上传、绝不纳入 Git**。
+  **旧 bundle 里的分支（feat/*、feature/boss-local-app、resumeforge-*、旧 main db9ec58）永远不要推送**，
+  它们携带此前删除的隐私截图。
+- 扫描结论：无 API Key / 无真实手机邮箱身份证 / 无数据库 / 无简历原件；
+  疑似真号 `18381088901`、`19049093719` 是 SHA-256 哈希子串（误报，别再当真号处理）。
+- **写文档时不要用真实姓名做 grep/替换示例**——`FINAL-FREEZE.md` 曾因此把姓名写进公开文件，已改占位符。
 
 ## 测试隔离（踩过真事故，务必遵守）
 
